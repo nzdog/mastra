@@ -59,10 +59,13 @@ export class FieldDiagnosticAgent {
     // Step 2: Determine mode
     const mode = this.determineMode(classification);
 
-    // Step 3: Retrieve appropriate chunk
-    const chunk = this.registry.retrieve(mode, this.state.theme_index);
+    // Step 3: Determine theme index for this response (before state update)
+    const themeIndexForResponse = this.getThemeIndexForResponse(mode, classification);
 
-    // Step 4: Compose response
+    // Step 4: Retrieve appropriate chunk
+    const chunk = this.registry.retrieve(mode, themeIndexForResponse);
+
+    // Step 5: Compose response
     const response = await this.composer.compose(
       mode,
       chunk,
@@ -70,12 +73,12 @@ export class FieldDiagnosticAgent {
       userMessage,
       {
         themeAnswers: this.themeAnswers,
-        currentThemeIndex: this.state.theme_index ?? undefined,
+        currentThemeIndex: themeIndexForResponse ?? undefined,
         awaitingConfirmation: this.state.awaiting_confirmation,
       }
     );
 
-    // Step 5: Update state
+    // Step 6: Update state
     this.updateState(mode, classification, userMessage);
 
     // Add assistant response to history
@@ -85,6 +88,34 @@ export class FieldDiagnosticAgent {
     });
 
     return response;
+  }
+
+  /**
+   * Determine what theme index will be used for this response
+   * This needs to be calculated before state update but match the logic of updateState
+   */
+  private getThemeIndexForResponse(mode: Mode, classification: ClassificationResult): number | null {
+    if (mode !== 'WALK') {
+      return null;
+    }
+
+    // Starting the walk
+    if (classification.intent === 'walk' && this.state.theme_index === null) {
+      return 1;
+    }
+
+    // Advancing to next theme after completion
+    if ((classification.continuity || classification.intent === 'memory') &&
+        this.state.last_completion_confirmed &&
+        this.state.theme_index !== null) {
+      const totalThemes = this.registry.getTotalThemes();
+      if (this.state.theme_index < totalThemes) {
+        return this.state.theme_index + 1;
+      }
+    }
+
+    // Otherwise use current theme
+    return this.state.theme_index;
   }
 
   /**
