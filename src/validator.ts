@@ -200,9 +200,7 @@ export class WalkResponseValidator {
       // User shared reflection, provide completion prompt
       let response = '';
 
-      if (userReflection) {
-        response += `Thank you for sharing that reflection.\n\n`;
-      }
+      // Don't add pleasantries in fallback - we're correcting a hallucination
 
       response += `**Completion Prompt:**\n`;
       response += `"${themeContent.completion_prompt}"\n\n`;
