@@ -115,7 +115,7 @@ Take a moment with those, and when you're ready, share what comes up.
 
 Shall we move into **Theme 2 – Felt Experience**?`;
 
-export const CLOSE_PROMPT = `CLOSE MODE: Synthesize answers to diagnose the field.
+export const CLOSE_PROMPT = `CLOSE MODE: Synthesize answers to diagnose the field and provide complete summary.
 
 Field Diagnosis (Generative):
 1. Review user's language across all 6 themes
@@ -135,8 +135,27 @@ Examples:
 - "care invisible" → "Invisible Labor"
 - "everything urgent" → "Manufactured Urgency"
 
-Delivery:
-"Based on what you've surfaced, you're in a field I'd call **[Field Name]**. [Evidence using their language]. This field aligns with [coherence/collapse]. Would you like me to summarize the walk and what this field means for you?"
+Structure your response in this order:
+
+1. FIELD DIAGNOSIS:
+"Based on what you've surfaced, you're in a field I'd call **[Field Name]**."
+
+2. EVIDENCE (2-3 sentences):
+Use their exact language from the themes to show why this name fits. Reference specific answers.
+
+3. COHERENCE ASSESSMENT:
+"This field aligns with [coherence/collapse]." Explain briefly why.
+
+4. SUMMARY (3-4 paragraphs):
+- What they discovered through the walk
+- What this field means for them
+- How it operates (rewards, stories, pressure points)
+- What shifts now that they can see it
+
+5. CLOSING:
+End with a clean closing that acknowledges the completion of the protocol. Do NOT ask if they want more summary or invite further questions. The protocol is complete.
+
+Example closing: "You've completed the Field Diagnostic Protocol. You now have language for the invisible forces shaping your experience."
 
 The name should feel accurate—like identifying a pattern they've been living inside.`;
 
