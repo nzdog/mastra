@@ -30,10 +30,13 @@ export class Composer {
     const systemPrompt = this.getSystemPrompt(mode);
     const messages = this.buildMessages(mode, chunk, conversationHistory, userMessage, context);
 
+    console.log(`\n📝 COMPOSER: Mode = ${mode}, Theme = ${context?.currentThemeIndex || 'N/A'}, Awaiting = ${context?.awaitingConfirmation || false}`);
+
     let response = await this.client.sendMessage(systemPrompt, messages);
 
     // Validate WALK mode responses
     if (mode === 'WALK' && this.validator && context?.currentThemeIndex) {
+      console.log('🔍 COMPOSER: Running validation...');
       const validation = this.validator.validateThemeResponse(response, context.currentThemeIndex);
 
       if (!validation.valid) {
