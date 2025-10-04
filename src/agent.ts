@@ -62,6 +62,9 @@ export class FieldDiagnosticAgent {
     // Step 3: Determine theme index for this response (before state update)
     const themeIndexForResponse = this.getThemeIndexForResponse(mode, classification);
 
+    // Step 3b: Determine awaiting confirmation state for this response
+    const awaitingConfirmationForResponse = this.getAwaitingConfirmationForResponse(mode, classification);
+
     // Step 4: Retrieve appropriate chunk
     const chunk = this.registry.retrieve(mode, themeIndexForResponse);
 
@@ -74,12 +77,35 @@ export class FieldDiagnosticAgent {
       {
         themeAnswers: this.themeAnswers,
         currentThemeIndex: themeIndexForResponse ?? undefined,
-        awaitingConfirmation: this.state.awaiting_confirmation,
+        awaitingConfirmation: awaitingConfirmationForResponse,
       }
     );
 
-    // Step 6: Update state
-    this.updateState(mode, classification, userMessage);
+    // Step 6: Store user's answer BEFORE updating last_response
+    // (need to check the PREVIOUS state to know if they just answered questions)
+    // BUT: Don't store if they're asking for clarification (discover intent)
+    if (mode === 'WALK' &&
+        this.state.last_response === 'theme_questions' &&
+        (classification.continuity || classification.intent === 'memory') &&
+        classification.intent !== 'discover' &&
+        themeIndexForResponse !== null) {
+      this.themeAnswers.set(themeIndexForResponse, userMessage);
+      console.log(`📝 AGENT: Stored answer for theme ${themeIndexForResponse}`);
+    }
+
+    // Step 7: Track what we just showed the user
+    if (mode === 'WALK') {
+      if (awaitingConfirmationForResponse) {
+        this.state.last_response = 'interpretation_and_completion';
+        console.log('📌 AGENT: Set last_response = interpretation_and_completion');
+      } else {
+        this.state.last_response = 'theme_questions';
+        console.log('📌 AGENT: Set last_response = theme_questions');
+      }
+    }
+
+    // Step 8: Update state
+    this.updateState(mode, classification, userMessage, themeIndexForResponse);
 
     // Add assistant response to history
     this.conversationHistory.push({
@@ -96,6 +122,7 @@ export class FieldDiagnosticAgent {
    */
   private getThemeIndexForResponse(mode: Mode, classification: ClassificationResult): number | null {
     console.log(`\n🔍 AGENT: getThemeIndexForResponse - mode=${mode}, intent=${classification.intent}, current_theme=${this.state.theme_index}`);
+    console.log(`   last_response=${this.state.last_response}`);
 
     if (mode !== 'WALK') {
       console.log('   → Returning null (not WALK mode)');
@@ -108,14 +135,15 @@ export class FieldDiagnosticAgent {
       return 1;
     }
 
-    // Advancing to next theme after completion
-    if ((classification.continuity || classification.intent === 'memory') &&
-        this.state.last_completion_confirmed &&
+    // If we just showed interpretation + completion and user says continuity/memory (like "go", "yes"),
+    // advance to next theme
+    if (this.state.last_response === 'interpretation_and_completion' &&
+        (classification.continuity || classification.intent === 'memory') &&
         this.state.theme_index !== null) {
       const totalThemes = this.registry.getTotalThemes();
       if (this.state.theme_index < totalThemes) {
         const nextTheme = this.state.theme_index + 1;
-        console.log(`   → Advancing to next theme: ${nextTheme}`);
+        console.log(`   → User confirming completion, advancing to next theme: ${nextTheme}`);
         return nextTheme;
       }
     }
@@ -123,6 +151,55 @@ export class FieldDiagnosticAgent {
     // Otherwise use current theme
     console.log(`   → Using current theme: ${this.state.theme_index}`);
     return this.state.theme_index;
+  }
+
+  /**
+   * Determine if we should be awaiting confirmation for this response
+   * Returns true if we should show interpretation + completion prompt
+   * Returns false if we should show theme questions
+   */
+  private getAwaitingConfirmationForResponse(mode: Mode, classification: ClassificationResult): boolean {
+    console.log(`\n🔍 AGENT: getAwaitingConfirmationForResponse - mode=${mode}, intent=${classification.intent}`);
+    console.log(`   last_response=${this.state.last_response}`);
+
+    if (mode !== 'WALK') {
+      console.log('   → Returning false (not WALK mode)');
+      return false;
+    }
+
+    // If user is asking for clarification (discover intent), stay in current mode
+    if (classification.intent === 'discover') {
+      console.log('   → User asking for clarification, keeping current state');
+      // Return current state - if we showed questions, show questions again
+      // If we showed interpretation, we're probably still awaiting their answer
+      return this.state.last_response === 'interpretation_and_completion';
+    }
+
+    // If we just showed theme questions and user is providing input, they're answering
+    // So next response should be interpretation + completion
+    if (this.state.last_response === 'theme_questions' &&
+        (classification.continuity || classification.intent === 'memory')) {
+      console.log('   → User answered questions, returning true (show interpretation + completion)');
+      return true;
+    }
+
+    // If we just showed interpretation + completion and user is confirming,
+    // next response should be new theme questions
+    if (this.state.last_response === 'interpretation_and_completion' &&
+        (classification.continuity || classification.intent === 'memory')) {
+      console.log('   → User confirming, returning false (show next theme questions)');
+      return false;
+    }
+
+    // Starting walk - show theme questions
+    if (this.state.theme_index === null || this.state.last_response === 'none') {
+      console.log('   → Starting walk, returning false (show theme questions)');
+      return false;
+    }
+
+    // Default
+    console.log(`   → Default: returning false`);
+    return false;
   }
 
   /**
@@ -137,11 +214,14 @@ export class FieldDiagnosticAgent {
     }
 
     // Check if should transition to CLOSE
+    // After Theme 6 completion, when user confirms to move forward
     if (
       this.state.theme_index === 6 &&
-      this.state.last_completion_confirmed &&
+      this.state.last_response === 'interpretation_and_completion' &&
+      (intent === 'memory' || continuity) &&
       this.state.active_protocol
     ) {
+      console.log('🎯 AGENT: Transitioning to CLOSE mode after Theme 6 completion');
       return 'CLOSE';
     }
 
@@ -184,7 +264,8 @@ export class FieldDiagnosticAgent {
   private updateState(
     mode: Mode,
     classification: ClassificationResult,
-    userMessage: string
+    userMessage: string,
+    themeIndexForResponse: number | null
   ): void {
     this.state.mode = mode;
     this.state.turn_counter++;
@@ -203,41 +284,9 @@ export class FieldDiagnosticAgent {
         this.state.active_protocol = 'field_diagnostic';
       }
 
-      // Handle theme progression
-      if (this.state.theme_index === null && (classification.intent === 'walk' || classification.intent === 'memory')) {
-        // Starting the walk - enter Theme 1 (handles both 'walk' and 'memory' intents)
-        this.state.theme_index = 1;
-        this.state.awaiting_confirmation = false;
-        this.state.last_completion_confirmed = false;
-      } else if (classification.intent === 'discover') {
-        // User is asking for clarification - don't change state
-        // Just stay on the current theme
-      } else if (this.state.awaiting_confirmation) {
-        // User just shared their reflection
-        // Now waiting for them to confirm completion prompt and move to next theme
-        this.state.last_completion_confirmed = true;
-        this.state.awaiting_confirmation = false;
-        this.state.resume_hint = 'ready_to_advance';
-      } else if (classification.continuity || classification.intent === 'memory') {
-        // Check if advancing to next theme
-        if (this.state.last_completion_confirmed && this.state.theme_index !== null) {
-          // Advance to next theme
-          const totalThemes = this.registry.getTotalThemes();
-          if (this.state.theme_index < totalThemes) {
-            this.state.theme_index++;
-            this.state.awaiting_confirmation = false;
-            this.state.last_completion_confirmed = false;
-          }
-        } else {
-          // User is sharing their reflection on the theme questions
-          if (this.state.theme_index !== null) {
-            // Store their answer for this theme
-            this.themeAnswers.set(this.state.theme_index, userMessage);
-
-            // Set awaiting confirmation flag
-            this.state.awaiting_confirmation = true;
-          }
-        }
+      // Update theme index based on what we just showed
+      if (themeIndexForResponse !== null) {
+        this.state.theme_index = themeIndexForResponse;
       }
 
       // Store last chunk reference
@@ -278,8 +327,7 @@ export class FieldDiagnosticAgent {
       active_protocol: null,
       mode: 'ENTRY',
       theme_index: null,
-      awaiting_confirmation: false,
-      last_completion_confirmed: false,
+      last_response: 'none',
       resume_hint: 'none',
       last_answer_summary: '',
       last_chunk_refs: [],

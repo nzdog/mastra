@@ -66,13 +66,14 @@ CRITICAL: Look in the CURRENT THEME content for the section labeled **Guiding Qu
 **Completion Prompt:**
 "[Extract the EXACT text from the theme's **Completion Prompt:** section - this is located AFTER the Guiding Questions in the theme markdown]"
 
-[If not final theme] Shall we move into **Theme [N+1] – [Next Theme Title]**?
-[If final theme] Move to CLOSE mode for field diagnosis.
+CRITICAL: DO NOT mention the next theme name yourself - the system will inject it automatically.
 
 CRITICAL: The Completion Prompt is found in the theme content under **Completion Prompt:** - look for this section AFTER **Guiding Questions:**. Use it EXACTLY as written. DO NOT use completion prompts from the end of the protocol file.
 
-**When user says clarification (asks for examples, "what do you mean?"):**
-Provide helpful clarification while staying on current theme, then re-present the Guiding Questions and ask them to share what comes up.
+**When user asks clarification (asks for examples, "what do you mean?", "can you show me the evidence?"):**
+If on Theme 6 and they ask for evidence, summarize their answers from previous themes briefly (you'll receive EVIDENCE FROM PREVIOUS THEMES in context).
+Otherwise, provide helpful clarification while staying on current theme.
+Do NOT move to the next theme - just answer their question.
 
 **When user gives continuation signal (go, continue, yes, next, etc.):**
 If they confirmed the completion prompt, move to next theme using the structure above.

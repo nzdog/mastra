@@ -6,12 +6,13 @@ export type Intent = 'discover' | 'walk' | 'memory' | 'none';
 
 export type ResumeHint = 'awaiting_theme_completion' | 'ready_to_advance' | 'none';
 
+export type LastResponse = 'theme_questions' | 'interpretation_and_completion' | 'none';
+
 export interface SessionState {
   active_protocol: string | null;
   mode: Mode;
   theme_index: number | null;
-  awaiting_confirmation: boolean; // Track if waiting for user to move to next theme after completion prompt
-  last_completion_confirmed: boolean;
+  last_response: LastResponse; // Track what we just showed the user
   resume_hint: ResumeHint;
   last_answer_summary: string;
   last_chunk_refs: string[];

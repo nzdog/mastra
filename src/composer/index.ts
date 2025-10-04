@@ -35,9 +35,20 @@ export class Composer {
     let response = await this.client.sendMessage(systemPrompt, messages);
 
     // Validate WALK mode responses
-    if (mode === 'WALK' && this.validator && context?.currentThemeIndex) {
+    // SKIP validation if user is asking for clarification (discover intent)
+    // We detect this by checking if the user message looks like a question
+    const isClarification = userMessage.toLowerCase().includes('evidence') ||
+                            userMessage.toLowerCase().includes('what do you mean') ||
+                            userMessage.toLowerCase().includes('example') ||
+                            userMessage.toLowerCase().includes('clarif');
+
+    if (mode === 'WALK' && this.validator && context?.currentThemeIndex && !isClarification) {
       console.log('🔍 COMPOSER: Running validation...');
-      const validation = this.validator.validateThemeResponse(response, context.currentThemeIndex);
+      const validation = this.validator.validateThemeResponse(
+        response,
+        context.currentThemeIndex,
+        context.awaitingConfirmation || false
+      );
 
       if (!validation.valid) {
         console.log('\n⚠️  Validation failed. Issues detected:');
@@ -50,13 +61,17 @@ export class Composer {
         response = await this.client.sendMessage(strengthenedPrompt, messages);
 
         // Validate again
-        const secondValidation = this.validator.validateThemeResponse(response, context.currentThemeIndex);
+        const secondValidation = this.validator.validateThemeResponse(
+          response,
+          context.currentThemeIndex,
+          context.awaitingConfirmation || false
+        );
 
         if (!secondValidation.valid) {
           console.log('⚠️  Second validation failed. Using deterministic fallback.\n');
 
           // Use deterministic fallback
-          return (
+          response = (
             '⚠️  Hang on, I was hallucinating. Let me try again.\n\n' +
             this.validator.generateDeterministicThemeResponse(
               context.currentThemeIndex,
@@ -64,6 +79,33 @@ export class Composer {
               userMessage
             )
           );
+        }
+      }
+
+      // If awaiting confirmation, inject next theme mention deterministically
+      if (context.awaitingConfirmation && this.validator) {
+        const nextThemeIndex = context.currentThemeIndex + 1;
+        const nextThemeChunk = this.validator.getRegistry().retrieve('WALK', nextThemeIndex);
+
+        if (nextThemeChunk) {
+          const nextThemeContent = this.validator.getParser().parseThemeContent(nextThemeChunk.content);
+
+          // Remove any existing theme mention from Claude (might be hallucinated)
+          // Pattern: "Shall we move into **Theme X – [anything]**?"
+          const themePattern = new RegExp(`Shall we move into \\*\\*Theme ${nextThemeIndex}[^?]+\\?`, 'g');
+          response = response.replace(themePattern, '').trim();
+
+          // Always inject the correct theme mention
+          console.log(`✅ COMPOSER: Injecting next theme mention: Theme ${nextThemeIndex} – ${nextThemeContent.title}`);
+          response += `\n\nShall we move into **Theme ${nextThemeIndex} – ${nextThemeContent.title}**?`;
+        } else {
+          // Last theme - move to CLOSE
+          // Remove any hallucinated theme mention
+          const themePattern = /Shall we move into \*\*Theme \d+[^?]+\?/g;
+          response = response.replace(themePattern, '').trim();
+
+          console.log('✅ COMPOSER: Injecting field diagnosis transition');
+          response += '\n\nReady to diagnose the field?';
         }
       }
     }
@@ -119,6 +161,16 @@ export class Composer {
       currentMessage += `Current Theme Index: ${context?.currentThemeIndex ?? 1}\n`;
       currentMessage += `Awaiting Confirmation: ${context?.awaitingConfirmation ? 'YES - user just shared their reflection, provide interpretation + completion prompt' : 'NO - present theme with Frame + all 3 Guiding Questions together'}\n`;
       currentMessage += `Total Themes: 6\n\n`;
+
+      // If user is asking for evidence (Theme 6), include their previous answers
+      if (context?.currentThemeIndex === 6 && context?.themeAnswers && context.themeAnswers.size > 0) {
+        currentMessage += `=== EVIDENCE FROM PREVIOUS THEMES ===\n`;
+        context.themeAnswers.forEach((answer, themeIndex) => {
+          currentMessage += `Theme ${themeIndex}: ${answer}\n`;
+        });
+        currentMessage += `\n`;
+      }
+
       currentMessage += `=== USER MESSAGE ===\n${userMessage}`;
     } else if (mode === 'CLOSE' && context?.themeAnswers) {
       currentMessage = `=== USER'S ANSWERS ACROSS ALL THEMES ===\n\n`;

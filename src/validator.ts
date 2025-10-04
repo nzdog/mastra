@@ -14,6 +14,20 @@ export class WalkResponseValidator {
   }
 
   /**
+   * Get the registry (for injecting next theme mentions)
+   */
+  getRegistry(): ProtocolRegistry {
+    return this.registry;
+  }
+
+  /**
+   * Get the parser (for parsing theme content)
+   */
+  getParser(): ProtocolParser {
+    return this.parser;
+  }
+
+  /**
    * Escape special regex characters in a string
    */
   private escapeRegExp(str: string): string {
@@ -24,10 +38,11 @@ export class WalkResponseValidator {
    * Check if Claude's response contains the correct theme content
    * Returns true if valid, false if hallucinating
    */
-  validateThemeResponse(response: string, themeIndex: number): { valid: boolean; issues: string[] } {
+  validateThemeResponse(response: string, themeIndex: number, awaitingConfirmation: boolean = false): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
 
     console.log('\n🔍 VALIDATOR: Starting validation for Theme', themeIndex);
+    console.log('📋 VALIDATOR: Awaiting confirmation:', awaitingConfirmation);
 
     // Get the actual theme content
     const chunk = this.registry.retrieve('WALK', themeIndex);
@@ -38,9 +53,43 @@ export class WalkResponseValidator {
 
     const themeContent = this.parser.parseThemeContent(chunk.content);
     console.log('📋 VALIDATOR: Expected theme title:', themeContent.title);
-    console.log('📋 VALIDATOR: Expected questions:');
-    themeContent.questions.forEach((q, i) => console.log(`   ${i + 1}. ${q}`));
 
+    if (!awaitingConfirmation) {
+      console.log('📋 VALIDATOR: Expected questions:');
+      themeContent.questions.forEach((q, i) => console.log(`   ${i + 1}. ${q}`));
+    } else {
+      console.log('📋 VALIDATOR: Expected completion prompt:', themeContent.completion_prompt);
+    }
+
+    // When awaiting confirmation, we expect interpretation + completion prompt, NOT questions
+    // So we should validate differently
+    if (awaitingConfirmation) {
+      // Check 1: Should contain the completion prompt
+      const completionPromptNormalized = themeContent.completion_prompt.toLowerCase().replace(/\s+/g, ' ').trim();
+      const responseNormalized = response.toLowerCase().replace(/\s+/g, ' ');
+      const hasCompletionPrompt = responseNormalized.includes(completionPromptNormalized);
+
+      console.log('🔍 VALIDATOR: Completion prompt match:', hasCompletionPrompt);
+
+      if (!hasCompletionPrompt) {
+        console.log('❌ VALIDATOR: Missing completion prompt');
+        issues.push(`Missing completion prompt. Expected: "${themeContent.completion_prompt}"`);
+      }
+
+      // Check 2: Should NOT re-present all the guiding questions (interpretation is okay, but not the formal question list)
+      const hasGuidingQuestionsHeader = response.includes('**Guiding Questions:**');
+      if (hasGuidingQuestionsHeader) {
+        console.log('❌ VALIDATOR: Should not re-present guiding questions when awaiting confirmation');
+        issues.push('Should provide interpretation + completion prompt, not re-present guiding questions');
+      }
+
+      // Don't check for next theme mention - we'll inject it deterministically
+      console.log('✅ VALIDATOR: Skipping next theme mention check (will be injected)');
+
+      return { valid: issues.length === 0, issues };
+    }
+
+    // Normal validation (when NOT awaiting confirmation - presenting theme questions)
     // Check 1: Theme title should be present and exact
     const themeTitlePattern = new RegExp(`Theme ${themeIndex}\\s*[–-]\\s*${this.escapeRegExp(themeContent.title)}`, 'i');
     const titleMatch = themeTitlePattern.test(response);
