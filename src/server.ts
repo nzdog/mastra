@@ -192,6 +192,56 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
+// Root endpoint
+app.get('/', (_req: Request, res: Response) => {
+  res.send(`
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title>Field Diagnostic Protocol API</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0a0a0a; color: #e0e0e0; padding: 40px; }
+          .container { max-width: 800px; margin: 0 auto; }
+          h1 { color: #fff; }
+          .endpoint { background: #1a1a1a; padding: 15px; margin: 10px 0; border-radius: 8px; border-left: 3px solid #4CAF50; }
+          code { background: #252525; padding: 2px 6px; border-radius: 4px; }
+          a { color: #4CAF50; text-decoration: none; }
+          a:hover { text-decoration: underline; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <h1>🌿 Field Diagnostic Protocol - API Server</h1>
+          <p>The backend is running and ready for connections.</p>
+
+          <h2>Available Endpoints</h2>
+          <div class="endpoint">
+            <strong>POST</strong> <code>/api/walk/start</code> - Start new protocol session
+          </div>
+          <div class="endpoint">
+            <strong>POST</strong> <code>/api/walk/continue</code> - Continue protocol walk
+          </div>
+          <div class="endpoint">
+            <strong>POST</strong> <code>/api/walk/complete</code> - Complete protocol
+          </div>
+          <div class="endpoint">
+            <strong>GET</strong> <code>/api/session/:id</code> - Get session state (debug)
+          </div>
+          <div class="endpoint">
+            <strong>GET</strong> <code>/health</code> - Health check
+          </div>
+
+          <h2>Documentation</h2>
+          <p>See <a href="https://github.com/your-repo/API.md">API.md</a> for complete API documentation.</p>
+
+          <h2>Test Interface</h2>
+          <p>Open <code>test-frontend.html</code> in your browser to test the integration.</p>
+        </div>
+      </body>
+    </html>
+  `);
+});
+
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
   res.json({
