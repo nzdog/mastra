@@ -22,14 +22,19 @@ export class ProtocolRegistry {
     }
 
     if (mode === 'WALK' && themeIndex !== null) {
+      console.log(`\n🗂️  REGISTRY: Looking for theme ${themeIndex}`);
+      console.log(`   Available themes:`, Array.from(this.protocol.theme_chunks.keys()));
       const themeContent = this.protocol.theme_chunks.get(themeIndex);
       if (themeContent) {
+        console.log(`   ✅ Found theme ${themeIndex}`);
         return {
           id: `${this.protocol.metadata.id}:theme:${themeIndex}`,
           type: 'WALK',
           content: themeContent,
           theme_index: themeIndex,
         };
+      } else {
+        console.log(`   ❌ Theme ${themeIndex} not found in chunks`);
       }
     }
 
