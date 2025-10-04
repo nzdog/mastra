@@ -42,6 +42,7 @@ export class WalkResponseValidator {
     }
 
     // Additional check: make sure it's not using a completely different theme title
+    // These are common hallucinations Claude makes up
     const wrongThemeTitles = [
       'Underlying Assumptions',
       'Field Recognition',
@@ -49,6 +50,9 @@ export class WalkResponseValidator {
       'Current Field Signature',
       'Checking the Signal',
       'Spotting Distortions',
+      'Field Diagnosis',
+      'Identifying the Field',
+      'Decision-making patterns',
     ];
 
     for (const wrongTitle of wrongThemeTitles) {
@@ -57,25 +61,20 @@ export class WalkResponseValidator {
       }
     }
 
-    // Check 2: All three guiding questions should be present (strict matching)
+    // Check 2: All three guiding questions should be present (EXACT matching)
     const questionsPresent = themeContent.questions.map(question => {
-      // Normalize for matching but keep it strict - must match at least 70% of the question
-      const questionWords = question.toLowerCase().split(/\s+/);
+      // Normalize whitespace but require exact text match
+      const questionNormalized = question.toLowerCase().replace(/\s+/g, ' ').trim();
       const responseNormalized = response.toLowerCase().replace(/\s+/g, ' ');
 
-      // Count how many words from the question appear in the response
-      const matchedWords = questionWords.filter(word =>
-        word.length > 3 && responseNormalized.includes(word)
-      );
-
-      // Require at least 70% of significant words to match
-      const matchRatio = matchedWords.length / questionWords.filter(w => w.length > 3).length;
-      return matchRatio >= 0.7;
+      // Check if the exact question text appears in the response
+      // Allow for bullet points and formatting but text must match exactly
+      return responseNormalized.includes(questionNormalized);
     });
 
     const missingQuestions = themeContent.questions.filter((_, i) => !questionsPresent[i]);
     if (missingQuestions.length > 0) {
-      issues.push(`Missing or altered ${missingQuestions.length} guiding question(s). Expected these exact questions: ${missingQuestions.join(' | ')}`);
+      issues.push(`Missing or altered ${missingQuestions.length} guiding question(s). Expected exact text: ${missingQuestions.join(' | ')}`);
     }
 
     // Check 3: If awaiting confirmation, completion prompt should be present
