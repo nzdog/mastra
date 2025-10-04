@@ -24,7 +24,9 @@ Your task:
 
 [1 sentence acknowledging that's the overall frame]
 
-Would you like me to now guide you into **Theme 1 – [First Theme Title]**?
+Would you like me to now guide you into **Theme 1 – [Extract EXACT first theme title from PROTOCOL CONTENT]**?
+
+CRITICAL: Look in the PROTOCOL CONTENT for "### 1." to find the first theme's exact title (e.g., "Surface Behaviors"). DO NOT make up a title like "Field Recognition".
 
 Constraints:
 - Use ONLY content from the PROTOCOL CONTENT provided

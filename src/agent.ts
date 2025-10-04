@@ -204,8 +204,8 @@ export class FieldDiagnosticAgent {
       }
 
       // Handle theme progression
-      if (classification.intent === 'walk' && this.state.theme_index === null) {
-        // Starting the walk - enter Theme 1
+      if (this.state.theme_index === null && (classification.intent === 'walk' || classification.intent === 'memory')) {
+        // Starting the walk - enter Theme 1 (handles both 'walk' and 'memory' intents)
         this.state.theme_index = 1;
         this.state.awaiting_confirmation = false;
         this.state.last_completion_confirmed = false;
