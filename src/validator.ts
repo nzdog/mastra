@@ -56,7 +56,7 @@ export class WalkResponseValidator {
 
     if (!awaitingConfirmation) {
       // console.log('📋 VALIDATOR: Expected questions:');
-      themeContent.questions.forEach((q, i) => // console.log(`   ${i + 1}. ${q}`));
+      // themeContent.questions.forEach((q, i) => console.log(`   ${i + 1}. ${q}`));
     } else {
       // console.log('📋 VALIDATOR: Expected completion prompt:', themeContent.completion_prompt);
     }
@@ -161,7 +161,7 @@ export class WalkResponseValidator {
     // console.log('\n🔍 VALIDATOR: Validation result:', isValid ? '✅ VALID' : '❌ INVALID');
     if (!isValid) {
       // console.log('📋 VALIDATOR: Issues found:', issues.length);
-      issues.forEach((issue, i) => // console.log(`   ${i + 1}. ${issue}`));
+      // issues.forEach((issue, i) => console.log(`   ${i + 1}. ${issue}`));
     }
 
     return {

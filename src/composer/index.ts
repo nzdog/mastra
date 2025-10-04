@@ -52,7 +52,7 @@ export class Composer {
 
       if (!validation.valid) {
         // console.log('\n⚠️  Validation failed. Issues detected:');
-        validation.issues.forEach(issue => // console.log(`   - ${issue}`));
+        // validation.issues.forEach(issue => console.log(`   - ${issue}`));
 
         // Try once more with stronger guardrails
         // console.log('🔄 Retrying with stronger constraints...\n');
