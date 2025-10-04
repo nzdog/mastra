@@ -2,6 +2,8 @@ import { IntentClassifier } from './classifier';
 import { Composer } from './composer';
 import { ProtocolRegistry } from './tools/registry';
 import { loadProtocol } from './protocol/parser';
+import { WalkResponseValidator } from './validator';
+import * as path from 'path';
 import {
   SessionState,
   ConversationTurn,
@@ -14,17 +16,24 @@ export class FieldDiagnosticAgent {
   private classifier: IntentClassifier;
   private composer: Composer;
   private registry: ProtocolRegistry;
+  private validator: WalkResponseValidator;
   private state: SessionState;
   private conversationHistory: ConversationTurn[] = [];
   private themeAnswers: Map<number, string> = new Map();
 
   constructor(apiKey: string) {
     this.classifier = new IntentClassifier(apiKey);
-    this.composer = new Composer(apiKey);
 
     // Load protocol
     const protocol = loadProtocol();
     this.registry = new ProtocolRegistry(protocol);
+
+    // Create validator
+    const protocolPath = path.join(__dirname, '../protocols/field_diagnostic.md');
+    this.validator = new WalkResponseValidator(this.registry, protocolPath);
+
+    // Create composer with validator
+    this.composer = new Composer(apiKey, this.validator);
 
     // Initialize state
     this.state = this.createInitialState();

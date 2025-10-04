@@ -1,12 +1,16 @@
 import { ClaudeClient } from './client';
 import { ENTRY_PROMPT, WALK_PROMPT, CLOSE_PROMPT } from './prompts';
 import { Mode, ConversationTurn, ProtocolChunk } from '../types';
+import { WalkResponseValidator } from '../validator';
+import * as path from 'path';
 
 export class Composer {
   private client: ClaudeClient;
+  private validator: WalkResponseValidator | null = null;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, validator?: WalkResponseValidator) {
     this.client = new ClaudeClient(apiKey);
+    this.validator = validator || null;
   }
 
   /**
@@ -26,7 +30,42 @@ export class Composer {
     const systemPrompt = this.getSystemPrompt(mode);
     const messages = this.buildMessages(mode, chunk, conversationHistory, userMessage, context);
 
-    return await this.client.sendMessage(systemPrompt, messages);
+    let response = await this.client.sendMessage(systemPrompt, messages);
+
+    // Validate WALK mode responses
+    if (mode === 'WALK' && this.validator && context?.currentThemeIndex) {
+      const validation = this.validator.validateThemeResponse(response, context.currentThemeIndex);
+
+      if (!validation.valid) {
+        console.log('\n⚠️  Validation failed. Issues detected:');
+        validation.issues.forEach(issue => console.log(`   - ${issue}`));
+
+        // Try once more with stronger guardrails
+        console.log('🔄 Retrying with stronger constraints...\n');
+
+        const strengthenedPrompt = systemPrompt + '\n\nWARNING: Your previous response did not follow the protocol exactly. You MUST copy the theme title and guiding questions WORD FOR WORD from the theme content. DO NOT improvise.';
+        response = await this.client.sendMessage(strengthenedPrompt, messages);
+
+        // Validate again
+        const secondValidation = this.validator.validateThemeResponse(response, context.currentThemeIndex);
+
+        if (!secondValidation.valid) {
+          console.log('⚠️  Second validation failed. Using deterministic fallback.\n');
+
+          // Use deterministic fallback
+          return (
+            '⚠️  Hang on, I was hallucinating. Let me try again.\n\n' +
+            this.validator.generateDeterministicThemeResponse(
+              context.currentThemeIndex,
+              context.awaitingConfirmation || false,
+              userMessage
+            )
+          );
+        }
+      }
+    }
+
+    return response;
   }
 
   /**
