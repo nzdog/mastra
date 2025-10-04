@@ -27,18 +27,31 @@ export class WalkResponseValidator {
   validateThemeResponse(response: string, themeIndex: number): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
 
+    console.log('\n🔍 VALIDATOR: Starting validation for Theme', themeIndex);
+
     // Get the actual theme content
     const chunk = this.registry.retrieve('WALK', themeIndex);
     if (!chunk) {
+      console.log('⚠️  VALIDATOR: No chunk found for theme', themeIndex);
       return { valid: true, issues: [] }; // Can't validate without chunk
     }
 
     const themeContent = this.parser.parseThemeContent(chunk.content);
+    console.log('📋 VALIDATOR: Expected theme title:', themeContent.title);
+    console.log('📋 VALIDATOR: Expected questions:');
+    themeContent.questions.forEach((q, i) => console.log(`   ${i + 1}. ${q}`));
 
     // Check 1: Theme title should be present and exact
     const themeTitlePattern = new RegExp(`Theme ${themeIndex}\\s*[–-]\\s*${this.escapeRegExp(themeContent.title)}`, 'i');
-    if (!themeTitlePattern.test(response)) {
-      issues.push(`Missing or incorrect theme title. Expected: "Theme ${themeIndex} – ${themeContent.title}"`);
+    const titleMatch = themeTitlePattern.test(response);
+    console.log('🔍 VALIDATOR: Theme title match:', titleMatch);
+
+    if (!titleMatch) {
+      // Extract what title was actually used
+      const actualTitleMatch = response.match(/Theme \d+\s*[–-]\s*([^*\n]+)/);
+      const actualTitle = actualTitleMatch ? actualTitleMatch[1].trim() : 'NOT FOUND';
+      console.log('❌ VALIDATOR: Actual title found:', actualTitle);
+      issues.push(`Missing or incorrect theme title. Expected: "Theme ${themeIndex} – ${themeContent.title}", Got: "${actualTitle}"`);
     }
 
     // Additional check: make sure it's not using a completely different theme title
@@ -53,27 +66,36 @@ export class WalkResponseValidator {
       'Field Diagnosis',
       'Identifying the Field',
       'Decision-making patterns',
+      'Field Gravity',
     ];
 
     for (const wrongTitle of wrongThemeTitles) {
       if (response.includes(wrongTitle)) {
+        console.log('❌ VALIDATOR: Hallucinated title detected:', wrongTitle);
         issues.push(`Hallucinated theme title detected: "${wrongTitle}". Expected: "${themeContent.title}"`);
       }
     }
 
     // Check 2: All three guiding questions should be present (EXACT matching)
-    const questionsPresent = themeContent.questions.map(question => {
+    console.log('\n🔍 VALIDATOR: Checking questions...');
+    const questionsPresent = themeContent.questions.map((question, idx) => {
       // Normalize whitespace but require exact text match
       const questionNormalized = question.toLowerCase().replace(/\s+/g, ' ').trim();
       const responseNormalized = response.toLowerCase().replace(/\s+/g, ' ');
 
       // Check if the exact question text appears in the response
       // Allow for bullet points and formatting but text must match exactly
-      return responseNormalized.includes(questionNormalized);
+      const found = responseNormalized.includes(questionNormalized);
+      console.log(`   Q${idx + 1} match:`, found ? '✅' : '❌');
+      if (!found) {
+        console.log(`      Expected: "${question}"`);
+      }
+      return found;
     });
 
     const missingQuestions = themeContent.questions.filter((_, i) => !questionsPresent[i]);
     if (missingQuestions.length > 0) {
+      console.log('❌ VALIDATOR:', missingQuestions.length, 'question(s) missing or altered');
       issues.push(`Missing or altered ${missingQuestions.length} guiding question(s). Expected exact text: ${missingQuestions.join(' | ')}`);
     }
 
@@ -86,8 +108,15 @@ export class WalkResponseValidator {
       }
     }
 
+    const isValid = issues.length === 0;
+    console.log('\n🔍 VALIDATOR: Validation result:', isValid ? '✅ VALID' : '❌ INVALID');
+    if (!isValid) {
+      console.log('📋 VALIDATOR: Issues found:', issues.length);
+      issues.forEach((issue, i) => console.log(`   ${i + 1}. ${issue}`));
+    }
+
     return {
-      valid: issues.length === 0,
+      valid: isValid,
       issues,
     };
   }
