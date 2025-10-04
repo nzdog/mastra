@@ -26,18 +26,18 @@ export class ProtocolParser {
       stones: frontmatter.stones || [],
     };
 
-    console.log('\n📄 PARSER: Parsing protocol file...');
-    console.log(`   Protocol ID: ${metadata.id}`);
-    console.log(`   Expected themes: ${metadata.themes.length}`);
+    // console.log('\n📄 PARSER: Parsing protocol file...');
+    // console.log(`   Protocol ID: ${metadata.id}`);
+    // console.log(`   Expected themes: ${metadata.themes.length}`);
 
     // Extract ENTRY chunk
     const entry_chunk = this.extractEntryChunk(content, metadata);
-    console.log(`   ✅ Entry chunk extracted (${entry_chunk.length} chars)`);
+    // console.log(`   ✅ Entry chunk extracted (${entry_chunk.length} chars)`);
 
     // Extract WALK chunks (per theme)
     const theme_chunks = this.extractThemeChunks(content, metadata);
-    console.log(`   ✅ Theme chunks extracted: ${theme_chunks.size} themes`);
-    console.log(`   Theme indices:`, Array.from(theme_chunks.keys()));
+    // console.log(`   ✅ Theme chunks extracted: ${theme_chunks.size} themes`);
+    // console.log(`   Theme indices:`, Array.from(theme_chunks.keys()));
 
     return {
       metadata,
@@ -107,8 +107,8 @@ export class ProtocolParser {
     const theme_chunks = new Map<number, string>();
     const lines = content.split('\n');
 
-    console.log('\n📋 PARSER: Extracting themes from content...');
-    console.log(`   Total lines: ${lines.length}`);
+    // console.log('\n📋 PARSER: Extracting themes from content...');
+    // console.log(`   Total lines: ${lines.length}`);
 
     let inThemesSection = false;
     let currentThemeIndex: number | null = null;
@@ -120,16 +120,16 @@ export class ProtocolParser {
       // Enter Themes section
       if (line.startsWith('## Themes')) {
         inThemesSection = true;
-        console.log(`   ✅ Found "## Themes" at line ${i + 1}`);
+        // console.log(`   ✅ Found "## Themes" at line ${i + 1}`);
         continue;
       }
 
       // Stop at Completion Prompts or second horizontal rule
       if (inThemesSection && (line.startsWith('## Completion Prompts') || (line.startsWith('---') && i > 20))) {
-        console.log(`   ⏹️  Stopping at line ${i + 1}: "${line.substring(0, 50)}"`);
+        // console.log(`   ⏹️  Stopping at line ${i + 1}: "${line.substring(0, 50)}"`);
         if (currentThemeIndex !== null && themeContent.length > 0) {
           theme_chunks.set(currentThemeIndex, this.buildThemeChunk(themeContent));
-          console.log(`   ✅ Saved theme ${currentThemeIndex} (${themeContent.length} lines)`);
+          // console.log(`   ✅ Saved theme ${currentThemeIndex} (${themeContent.length} lines)`);
         }
         break;
       }
@@ -141,13 +141,13 @@ export class ProtocolParser {
           // Save previous theme
           if (currentThemeIndex !== null && themeContent.length > 0) {
             theme_chunks.set(currentThemeIndex, this.buildThemeChunk(themeContent));
-            console.log(`   ✅ Saved theme ${currentThemeIndex} (${themeContent.length} lines)`);
+            // console.log(`   ✅ Saved theme ${currentThemeIndex} (${themeContent.length} lines)`);
           }
 
           // Start new theme
           currentThemeIndex = parseInt(themeMatch[1]);
           themeContent = [line];
-          console.log(`   🆕 Started theme ${currentThemeIndex}: "${themeMatch[2].substring(0, 30)}..."`);
+          // console.log(`   🆕 Started theme ${currentThemeIndex}: "${themeMatch[2].substring(0, 30)}..."`);
         } else if (currentThemeIndex !== null) {
           themeContent.push(line);
         }
@@ -157,10 +157,10 @@ export class ProtocolParser {
     // Save last theme
     if (currentThemeIndex !== null && themeContent.length > 0) {
       theme_chunks.set(currentThemeIndex, this.buildThemeChunk(themeContent));
-      console.log(`   ✅ Saved final theme ${currentThemeIndex} (${themeContent.length} lines)`);
+      // console.log(`   ✅ Saved final theme ${currentThemeIndex} (${themeContent.length} lines)`);
     }
 
-    console.log(`\n   📊 Total themes extracted: ${theme_chunks.size}`);
+    // console.log(`\n   📊 Total themes extracted: ${theme_chunks.size}`);
     return theme_chunks;
   }
 

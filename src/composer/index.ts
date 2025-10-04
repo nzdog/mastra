@@ -30,7 +30,7 @@ export class Composer {
     const systemPrompt = this.getSystemPrompt(mode);
     const messages = this.buildMessages(mode, chunk, conversationHistory, userMessage, context);
 
-    console.log(`\n📝 COMPOSER: Mode = ${mode}, Theme = ${context?.currentThemeIndex || 'N/A'}, Awaiting = ${context?.awaitingConfirmation || false}`);
+    // console.log(`\n📝 COMPOSER: Mode = ${mode}, Theme = ${context?.currentThemeIndex || 'N/A'}, Awaiting = ${context?.awaitingConfirmation || false}`);
 
     let response = await this.client.sendMessage(systemPrompt, messages);
 
@@ -43,7 +43,7 @@ export class Composer {
                             userMessage.toLowerCase().includes('clarif');
 
     if (mode === 'WALK' && this.validator && context?.currentThemeIndex && !isClarification) {
-      console.log('🔍 COMPOSER: Running validation...');
+      // console.log('🔍 COMPOSER: Running validation...');
       const validation = this.validator.validateThemeResponse(
         response,
         context.currentThemeIndex,
@@ -51,11 +51,11 @@ export class Composer {
       );
 
       if (!validation.valid) {
-        console.log('\n⚠️  Validation failed. Issues detected:');
-        validation.issues.forEach(issue => console.log(`   - ${issue}`));
+        // console.log('\n⚠️  Validation failed. Issues detected:');
+        validation.issues.forEach(issue => // console.log(`   - ${issue}`));
 
         // Try once more with stronger guardrails
-        console.log('🔄 Retrying with stronger constraints...\n');
+        // console.log('🔄 Retrying with stronger constraints...\n');
 
         const strengthenedPrompt = systemPrompt + '\n\nWARNING: Your previous response did not follow the protocol exactly. You MUST copy the theme title and guiding questions WORD FOR WORD from the theme content. DO NOT improvise.';
         response = await this.client.sendMessage(strengthenedPrompt, messages);
@@ -68,7 +68,7 @@ export class Composer {
         );
 
         if (!secondValidation.valid) {
-          console.log('⚠️  Second validation failed. Using deterministic fallback.\n');
+          // console.log('⚠️  Second validation failed. Using deterministic fallback.\n');
 
           // Use deterministic fallback
           response = (
@@ -96,7 +96,7 @@ export class Composer {
           response = response.replace(themePattern, '').trim();
 
           // Always inject the correct theme mention
-          console.log(`✅ COMPOSER: Injecting next theme mention: Theme ${nextThemeIndex} – ${nextThemeContent.title}`);
+          // console.log(`✅ COMPOSER: Injecting next theme mention: Theme ${nextThemeIndex} – ${nextThemeContent.title}`);
           response += `\n\nShall we move into **Theme ${nextThemeIndex} – ${nextThemeContent.title}**?`;
         } else {
           // Last theme - move to CLOSE
@@ -104,7 +104,7 @@ export class Composer {
           const themePattern = /Shall we move into \*\*Theme \d+[^?]+\?/g;
           response = response.replace(themePattern, '').trim();
 
-          console.log('✅ COMPOSER: Injecting field diagnosis transition');
+          // console.log('✅ COMPOSER: Injecting field diagnosis transition');
           response += '\n\nReady to diagnose the field?';
         }
       }

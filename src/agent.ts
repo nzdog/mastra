@@ -90,17 +90,17 @@ export class FieldDiagnosticAgent {
         classification.intent !== 'discover' &&
         themeIndexForResponse !== null) {
       this.themeAnswers.set(themeIndexForResponse, userMessage);
-      console.log(`📝 AGENT: Stored answer for theme ${themeIndexForResponse}`);
+      // console.log(`📝 AGENT: Stored answer for theme ${themeIndexForResponse}`);
     }
 
     // Step 7: Track what we just showed the user
     if (mode === 'WALK') {
       if (awaitingConfirmationForResponse) {
         this.state.last_response = 'interpretation_and_completion';
-        console.log('📌 AGENT: Set last_response = interpretation_and_completion');
+        // console.log('📌 AGENT: Set last_response = interpretation_and_completion');
       } else {
         this.state.last_response = 'theme_questions';
-        console.log('📌 AGENT: Set last_response = theme_questions');
+        // console.log('📌 AGENT: Set last_response = theme_questions');
       }
     }
 
@@ -121,17 +121,17 @@ export class FieldDiagnosticAgent {
    * This needs to be calculated before state update but match the logic of updateState
    */
   private getThemeIndexForResponse(mode: Mode, classification: ClassificationResult): number | null {
-    console.log(`\n🔍 AGENT: getThemeIndexForResponse - mode=${mode}, intent=${classification.intent}, current_theme=${this.state.theme_index}`);
-    console.log(`   last_response=${this.state.last_response}`);
+    // console.log(`\n🔍 AGENT: getThemeIndexForResponse - mode=${mode}, intent=${classification.intent}, current_theme=${this.state.theme_index}`);
+    // console.log(`   last_response=${this.state.last_response}`);
 
     if (mode !== 'WALK') {
-      console.log('   → Returning null (not WALK mode)');
+      // console.log('   → Returning null (not WALK mode)');
       return null;
     }
 
     // Starting the walk - handles both 'walk' intent and 'memory' when theme is null
     if (this.state.theme_index === null && (classification.intent === 'walk' || classification.intent === 'memory')) {
-      console.log('   → Starting walk, returning 1');
+      // console.log('   → Starting walk, returning 1');
       return 1;
     }
 
@@ -143,13 +143,13 @@ export class FieldDiagnosticAgent {
       const totalThemes = this.registry.getTotalThemes();
       if (this.state.theme_index < totalThemes) {
         const nextTheme = this.state.theme_index + 1;
-        console.log(`   → User confirming completion, advancing to next theme: ${nextTheme}`);
+        // console.log(`   → User confirming completion, advancing to next theme: ${nextTheme}`);
         return nextTheme;
       }
     }
 
     // Otherwise use current theme
-    console.log(`   → Using current theme: ${this.state.theme_index}`);
+    // console.log(`   → Using current theme: ${this.state.theme_index}`);
     return this.state.theme_index;
   }
 
@@ -159,17 +159,17 @@ export class FieldDiagnosticAgent {
    * Returns false if we should show theme questions
    */
   private getAwaitingConfirmationForResponse(mode: Mode, classification: ClassificationResult): boolean {
-    console.log(`\n🔍 AGENT: getAwaitingConfirmationForResponse - mode=${mode}, intent=${classification.intent}`);
-    console.log(`   last_response=${this.state.last_response}`);
+    // console.log(`\n🔍 AGENT: getAwaitingConfirmationForResponse - mode=${mode}, intent=${classification.intent}`);
+    // console.log(`   last_response=${this.state.last_response}`);
 
     if (mode !== 'WALK') {
-      console.log('   → Returning false (not WALK mode)');
+      // console.log('   → Returning false (not WALK mode)');
       return false;
     }
 
     // If user is asking for clarification (discover intent), stay in current mode
     if (classification.intent === 'discover') {
-      console.log('   → User asking for clarification, keeping current state');
+      // console.log('   → User asking for clarification, keeping current state');
       // Return current state - if we showed questions, show questions again
       // If we showed interpretation, we're probably still awaiting their answer
       return this.state.last_response === 'interpretation_and_completion';
@@ -179,7 +179,7 @@ export class FieldDiagnosticAgent {
     // So next response should be interpretation + completion
     if (this.state.last_response === 'theme_questions' &&
         (classification.continuity || classification.intent === 'memory')) {
-      console.log('   → User answered questions, returning true (show interpretation + completion)');
+      // console.log('   → User answered questions, returning true (show interpretation + completion)');
       return true;
     }
 
@@ -187,18 +187,18 @@ export class FieldDiagnosticAgent {
     // next response should be new theme questions
     if (this.state.last_response === 'interpretation_and_completion' &&
         (classification.continuity || classification.intent === 'memory')) {
-      console.log('   → User confirming, returning false (show next theme questions)');
+      // console.log('   → User confirming, returning false (show next theme questions)');
       return false;
     }
 
     // Starting walk - show theme questions
     if (this.state.theme_index === null || this.state.last_response === 'none') {
-      console.log('   → Starting walk, returning false (show theme questions)');
+      // console.log('   → Starting walk, returning false (show theme questions)');
       return false;
     }
 
     // Default
-    console.log(`   → Default: returning false`);
+    // console.log(`   → Default: returning false`);
     return false;
   }
 
@@ -221,7 +221,7 @@ export class FieldDiagnosticAgent {
       (intent === 'memory' || continuity) &&
       this.state.active_protocol
     ) {
-      console.log('🎯 AGENT: Transitioning to CLOSE mode after Theme 6 completion');
+      // console.log('🎯 AGENT: Transitioning to CLOSE mode after Theme 6 completion');
       return 'CLOSE';
     }
 

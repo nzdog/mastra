@@ -41,24 +41,24 @@ export class WalkResponseValidator {
   validateThemeResponse(response: string, themeIndex: number, awaitingConfirmation: boolean = false): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
 
-    console.log('\n🔍 VALIDATOR: Starting validation for Theme', themeIndex);
-    console.log('📋 VALIDATOR: Awaiting confirmation:', awaitingConfirmation);
+    // console.log('\n🔍 VALIDATOR: Starting validation for Theme', themeIndex);
+    // console.log('📋 VALIDATOR: Awaiting confirmation:', awaitingConfirmation);
 
     // Get the actual theme content
     const chunk = this.registry.retrieve('WALK', themeIndex);
     if (!chunk) {
-      console.log('⚠️  VALIDATOR: No chunk found for theme', themeIndex);
+      // console.log('⚠️  VALIDATOR: No chunk found for theme', themeIndex);
       return { valid: true, issues: [] }; // Can't validate without chunk
     }
 
     const themeContent = this.parser.parseThemeContent(chunk.content);
-    console.log('📋 VALIDATOR: Expected theme title:', themeContent.title);
+    // console.log('📋 VALIDATOR: Expected theme title:', themeContent.title);
 
     if (!awaitingConfirmation) {
-      console.log('📋 VALIDATOR: Expected questions:');
-      themeContent.questions.forEach((q, i) => console.log(`   ${i + 1}. ${q}`));
+      // console.log('📋 VALIDATOR: Expected questions:');
+      themeContent.questions.forEach((q, i) => // console.log(`   ${i + 1}. ${q}`));
     } else {
-      console.log('📋 VALIDATOR: Expected completion prompt:', themeContent.completion_prompt);
+      // console.log('📋 VALIDATOR: Expected completion prompt:', themeContent.completion_prompt);
     }
 
     // When awaiting confirmation, we expect interpretation + completion prompt, NOT questions
@@ -69,22 +69,22 @@ export class WalkResponseValidator {
       const responseNormalized = response.toLowerCase().replace(/\s+/g, ' ');
       const hasCompletionPrompt = responseNormalized.includes(completionPromptNormalized);
 
-      console.log('🔍 VALIDATOR: Completion prompt match:', hasCompletionPrompt);
+      // console.log('🔍 VALIDATOR: Completion prompt match:', hasCompletionPrompt);
 
       if (!hasCompletionPrompt) {
-        console.log('❌ VALIDATOR: Missing completion prompt');
+        // console.log('❌ VALIDATOR: Missing completion prompt');
         issues.push(`Missing completion prompt. Expected: "${themeContent.completion_prompt}"`);
       }
 
       // Check 2: Should NOT re-present all the guiding questions (interpretation is okay, but not the formal question list)
       const hasGuidingQuestionsHeader = response.includes('**Guiding Questions:**');
       if (hasGuidingQuestionsHeader) {
-        console.log('❌ VALIDATOR: Should not re-present guiding questions when awaiting confirmation');
+        // console.log('❌ VALIDATOR: Should not re-present guiding questions when awaiting confirmation');
         issues.push('Should provide interpretation + completion prompt, not re-present guiding questions');
       }
 
       // Don't check for next theme mention - we'll inject it deterministically
-      console.log('✅ VALIDATOR: Skipping next theme mention check (will be injected)');
+      // console.log('✅ VALIDATOR: Skipping next theme mention check (will be injected)');
 
       return { valid: issues.length === 0, issues };
     }
@@ -93,13 +93,13 @@ export class WalkResponseValidator {
     // Check 1: Theme title should be present and exact
     const themeTitlePattern = new RegExp(`Theme ${themeIndex}\\s*[–-]\\s*${this.escapeRegExp(themeContent.title)}`, 'i');
     const titleMatch = themeTitlePattern.test(response);
-    console.log('🔍 VALIDATOR: Theme title match:', titleMatch);
+    // console.log('🔍 VALIDATOR: Theme title match:', titleMatch);
 
     if (!titleMatch) {
       // Extract what title was actually used
       const actualTitleMatch = response.match(/Theme \d+\s*[–-]\s*([^*\n]+)/);
       const actualTitle = actualTitleMatch ? actualTitleMatch[1].trim() : 'NOT FOUND';
-      console.log('❌ VALIDATOR: Actual title found:', actualTitle);
+      // console.log('❌ VALIDATOR: Actual title found:', actualTitle);
       issues.push(`Missing or incorrect theme title. Expected: "Theme ${themeIndex} – ${themeContent.title}", Got: "${actualTitle}"`);
     }
 
@@ -120,13 +120,13 @@ export class WalkResponseValidator {
 
     for (const wrongTitle of wrongThemeTitles) {
       if (response.includes(wrongTitle)) {
-        console.log('❌ VALIDATOR: Hallucinated title detected:', wrongTitle);
+        // console.log('❌ VALIDATOR: Hallucinated title detected:', wrongTitle);
         issues.push(`Hallucinated theme title detected: "${wrongTitle}". Expected: "${themeContent.title}"`);
       }
     }
 
     // Check 2: All three guiding questions should be present (EXACT matching)
-    console.log('\n🔍 VALIDATOR: Checking questions...');
+    // console.log('\n🔍 VALIDATOR: Checking questions...');
     const questionsPresent = themeContent.questions.map((question, idx) => {
       // Normalize whitespace but require exact text match
       const questionNormalized = question.toLowerCase().replace(/\s+/g, ' ').trim();
@@ -135,16 +135,16 @@ export class WalkResponseValidator {
       // Check if the exact question text appears in the response
       // Allow for bullet points and formatting but text must match exactly
       const found = responseNormalized.includes(questionNormalized);
-      console.log(`   Q${idx + 1} match:`, found ? '✅' : '❌');
+      // console.log(`   Q${idx + 1} match:`, found ? '✅' : '❌');
       if (!found) {
-        console.log(`      Expected: "${question}"`);
+        // console.log(`      Expected: "${question}"`);
       }
       return found;
     });
 
     const missingQuestions = themeContent.questions.filter((_, i) => !questionsPresent[i]);
     if (missingQuestions.length > 0) {
-      console.log('❌ VALIDATOR:', missingQuestions.length, 'question(s) missing or altered');
+      // console.log('❌ VALIDATOR:', missingQuestions.length, 'question(s) missing or altered');
       issues.push(`Missing or altered ${missingQuestions.length} guiding question(s). Expected exact text: ${missingQuestions.join(' | ')}`);
     }
 
@@ -158,10 +158,10 @@ export class WalkResponseValidator {
     }
 
     const isValid = issues.length === 0;
-    console.log('\n🔍 VALIDATOR: Validation result:', isValid ? '✅ VALID' : '❌ INVALID');
+    // console.log('\n🔍 VALIDATOR: Validation result:', isValid ? '✅ VALID' : '❌ INVALID');
     if (!isValid) {
-      console.log('📋 VALIDATOR: Issues found:', issues.length);
-      issues.forEach((issue, i) => console.log(`   ${i + 1}. ${issue}`));
+      // console.log('📋 VALIDATOR: Issues found:', issues.length);
+      issues.forEach((issue, i) => // console.log(`   ${i + 1}. ${issue}`));
     }
 
     return {
