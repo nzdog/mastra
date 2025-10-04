@@ -231,15 +231,31 @@ app.get('/', (_req: Request, res: Response) => {
             <strong>GET</strong> <code>/health</code> - Health check
           </div>
 
-          <h2>Documentation</h2>
-          <p>See <a href="https://github.com/your-repo/API.md">API.md</a> for complete API documentation.</p>
+          <h2>Quick Links</h2>
+          <p>
+            <a href="/health">Health Check</a> |
+            <a href="/test">Test Interface</a>
+          </p>
 
-          <h2>Test Interface</h2>
-          <p>Open <code>test-frontend.html</code> in your browser to test the integration.</p>
+          <h2>Documentation</h2>
+          <p>API documentation available in the project repository.</p>
         </div>
       </body>
     </html>
   `);
+});
+
+// Test interface
+app.get('/test', (_req: Request, res: Response) => {
+  const fs = require('fs');
+  const path = require('path');
+  const testFilePath = path.join(__dirname, '../test-frontend.html');
+
+  if (fs.existsSync(testFilePath)) {
+    res.sendFile(testFilePath);
+  } else {
+    res.status(404).send('Test interface not found. Please ensure test-frontend.html exists in the project root.');
+  }
 });
 
 // Health check
