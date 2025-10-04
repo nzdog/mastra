@@ -7,7 +7,9 @@
       "Bash(git branch:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(git checkout:*)",
+      "Bash(npm run build:*)"
     ],
     "deny": [],
     "ask": []

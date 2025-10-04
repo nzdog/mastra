@@ -62,7 +62,6 @@ export class FieldDiagnosticAgent {
       {
         themeAnswers: this.themeAnswers,
         currentThemeIndex: this.state.theme_index ?? undefined,
-        questionIndex: this.state.question_index,
         awaitingConfirmation: this.state.awaiting_confirmation,
       }
     );
@@ -159,42 +158,33 @@ export class FieldDiagnosticAgent {
 
       // Handle theme progression
       if (classification.intent === 'walk' && this.state.theme_index === null) {
-        // Starting the walk
+        // Starting the walk - enter Theme 1
         this.state.theme_index = 1;
-        this.state.question_index = 0;
         this.state.awaiting_confirmation = false;
         this.state.last_completion_confirmed = false;
       } else if (classification.intent === 'discover') {
         // User is asking for clarification - don't change state
-        // Just stay on the current question
+        // Just stay on the current theme
       } else if (this.state.awaiting_confirmation) {
-        // User just gave confirmation to continue
-        // Advance to next question
-        this.state.question_index++;
+        // User just shared their reflection
+        // Now waiting for them to confirm completion prompt and move to next theme
+        this.state.last_completion_confirmed = true;
         this.state.awaiting_confirmation = false;
-
-        // Check if we've completed all 3 questions for this theme
-        if (this.state.question_index >= 3) {
-          // Theme complete, ready to advance to next theme
-          this.state.last_completion_confirmed = true;
-          this.state.resume_hint = 'ready_to_advance';
-        }
+        this.state.resume_hint = 'ready_to_advance';
       } else if (classification.continuity || classification.intent === 'memory') {
         // Check if advancing to next theme
         if (this.state.last_completion_confirmed && this.state.theme_index !== null) {
-          // Advance theme
+          // Advance to next theme
           const totalThemes = this.registry.getTotalThemes();
           if (this.state.theme_index < totalThemes) {
             this.state.theme_index++;
-            this.state.question_index = 0;
             this.state.awaiting_confirmation = false;
             this.state.last_completion_confirmed = false;
           }
         } else {
-          // User is answering current question
+          // User is sharing their reflection on the theme questions
           if (this.state.theme_index !== null) {
-            // Store the answer
-            const answerKey = `${this.state.theme_index}_${this.state.question_index}`;
+            // Store their answer for this theme
             this.themeAnswers.set(this.state.theme_index, userMessage);
 
             // Set awaiting confirmation flag
@@ -241,7 +231,6 @@ export class FieldDiagnosticAgent {
       active_protocol: null,
       mode: 'ENTRY',
       theme_index: null,
-      question_index: 0,
       awaiting_confirmation: false,
       last_completion_confirmed: false,
       resume_hint: 'none',

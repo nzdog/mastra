@@ -80,6 +80,9 @@ By naming the field, they reclaim the ability to choose how to respond and wheth
 - How do I act under pressure—push harder, freeze, comply, withdraw?
 - What behaviors would others notice first in me this week?
 
+**Completion Prompt:**
+I have named the visible patterns in my behavior and language without judgment.
+
 ### 2. Felt Experience *(Stone 5: Presence Is Productivity)*
 **Purpose:** Attend to how the body and emotions register the field.
 **Why this matters:** Fields show up in the nervous system before logic.
@@ -92,6 +95,9 @@ By naming the field, they reclaim the ability to choose how to respond and wheth
 - What sensations arise when I picture continuing as I am?
 - Where does tension, heaviness, or lightness sit in my body?
 - What emotions repeat most often this week?
+
+**Completion Prompt:**
+I have noticed how my body registers this field, and I trust these signals.
 
 ### 3. Rewards and Punishments *(Stone 8: Integrity Is the Growth Strategy)*
 **Purpose:** Identify what the field rewards and punishes.
@@ -106,6 +112,9 @@ By naming the field, they reclaim the ability to choose how to respond and wheth
 - What is ignored, punished, or made invisible?
 - When do I feel compelled to comply even if misaligned?
 
+**Completion Prompt:**
+I have identified what this field rewards and punishes, and I see how it trains behavior.
+
 ### 4. Source Stories *(Stone 1: Light Before Form)*
 **Purpose:** Uncover narratives and myths the field is built on.
 **Why this matters:** Stories carry fields; until named, they remain unquestioned.
@@ -118,6 +127,9 @@ By naming the field, they reclaim the ability to choose how to respond and wheth
 - What story does this field tell about success and failure?
 - What story does it tell about rest, productivity, or worth?
 - What story does it tell about relationships and power?
+
+**Completion Prompt:**
+I have named the stories this field tells, and I recognize they are not inevitable truths.
 
 ### 5. Pressure Points *(Stone 6: Nothing Forced, Nothing Withheld)*
 **Purpose:** Examine how the field behaves under stress.
@@ -132,6 +144,9 @@ By naming the field, they reclaim the ability to choose how to respond and wheth
 - What is demanded under stress?
 - How do I find myself reacting in parallel?
 
+**Completion Prompt:**
+I have seen how this field behaves under stress, and I notice how I respond in parallel.
+
 ### 6. Naming the Field *(Stone 2: The Speed of Trust)*
 **Purpose:** Gather evidence and explicitly name the field.
 **Why this matters:** Naming breaks spellwork; invisibility ends, choice returns.
@@ -144,6 +159,9 @@ By naming the field, they reclaim the ability to choose how to respond and wheth
 - Based on all evidence, what field am I in?
 - Does this field align with coherence, or collapse?
 - What shifts if I trust this naming?
+
+**Completion Prompt:**
+I have named the field I am in and trust this perception, even if others cannot see it.
 
 ---
 

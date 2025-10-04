@@ -20,7 +20,6 @@ export class Composer {
     context?: {
       themeAnswers?: Map<number, string>;
       currentThemeIndex?: number;
-      questionIndex?: number;
       awaitingConfirmation?: boolean;
     }
   ): Promise<string> {
@@ -57,7 +56,6 @@ export class Composer {
     context?: {
       themeAnswers?: Map<number, string>;
       currentThemeIndex?: number;
-      questionIndex?: number;
       awaitingConfirmation?: boolean;
     }
   ): Array<{ role: 'user' | 'assistant'; content: string }> {
@@ -76,9 +74,9 @@ export class Composer {
     } else if (mode === 'WALK' && chunk) {
       currentMessage = `=== CURRENT THEME (Theme ${chunk.theme_index}) ===\n${chunk.content}\n\n`;
       currentMessage += `=== STATE ===\n`;
-      currentMessage += `Question Index: ${context?.questionIndex ?? 0} (0=first question, 1=second question, 2=third question)\n`;
-      currentMessage += `Awaiting Confirmation: ${context?.awaitingConfirmation ? 'YES - user just answered, mirror briefly and STOP' : 'NO - user gave continuation signal, immediately ask the next question using full WALK structure'}\n`;
-      currentMessage += `Total Questions Per Theme: 3\n\n`;
+      currentMessage += `Current Theme Index: ${context?.currentThemeIndex ?? 1}\n`;
+      currentMessage += `Awaiting Confirmation: ${context?.awaitingConfirmation ? 'YES - user just shared their reflection, provide interpretation + completion prompt' : 'NO - present theme with Frame + all 3 Guiding Questions together'}\n`;
+      currentMessage += `Total Themes: 6\n\n`;
       currentMessage += `=== USER MESSAGE ===\n${userMessage}`;
     } else if (mode === 'CLOSE' && context?.themeAnswers) {
       currentMessage = `=== USER'S ANSWERS ACROSS ALL THEMES ===\n\n`;

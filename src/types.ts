@@ -10,8 +10,7 @@ export interface SessionState {
   active_protocol: string | null;
   mode: Mode;
   theme_index: number | null;
-  question_index: number; // Track which question within current theme (0-2)
-  awaiting_confirmation: boolean; // Track if waiting for "continue" confirmation
+  awaiting_confirmation: boolean; // Track if waiting for user to move to next theme after completion prompt
   last_completion_confirmed: boolean;
   resume_hint: ResumeHint;
   last_answer_summary: string;
