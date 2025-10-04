@@ -61,6 +61,15 @@ ANTHROPIC_API_KEY=your_anthropic_api_key_here
 npm run dev
 ```
 
+### Run the API Server
+
+```bash
+npm run server
+# Server runs on http://localhost:3000
+```
+
+**For frontend integration, see [INTEGRATION.md](./INTEGRATION.md)**
+
 ### CLI Commands
 
 - **exit** or **quit**: End the session
@@ -114,10 +123,15 @@ field-diagnostic-agent/
 ├── tsconfig.json
 ├── .env.example
 ├── README.md
+├── API.md                   # API documentation
+├── INTEGRATION.md           # Frontend integration guide
+├── test-frontend.html       # Simple test interface
 ├── src/
 │   ├── index.ts            # CLI entry point
+│   ├── server.ts           # Express API server ✨ NEW
 │   ├── agent.ts            # Main orchestrator
 │   ├── classifier.ts       # Intent detection
+│   ├── validator.ts        # Response validation
 │   ├── types.ts            # Shared types
 │   ├── protocol/
 │   │   ├── parser.ts       # Markdown → chunks

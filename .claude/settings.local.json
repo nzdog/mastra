@@ -9,7 +9,17 @@
       "Bash(git commit:*)",
       "WebSearch",
       "Bash(git checkout:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(git merge:*)",
+      "Bash(curl -X POST http://localhost:3000/api/walk/start -H \"Content-Type: application/json\" -d '{\"\"\"\"user_input\"\"\"\": \"\"\"\"What field am I in?\"\"\"\"}')",
+      "Bash(python3:*)",
+      "Bash(curl -X POST http://localhost:3000/api/walk/start -H \"Content-Type: application/json\" -d \"{\"\"user_input\"\": \"\"What field am I in?\"\"}\")",
+      "Read(//private/tmp/**)",
+      "Bash(cat:*)",
+      "Bash(curl -s -X POST http://localhost:3000/api/walk/start -H \"Content-Type: application/json\" -d \"{\"\"user_input\"\": \"\"What field am I in?\"\"}\")",
+      "Bash(npx tsc:*)",
+      "Bash(curl:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []
