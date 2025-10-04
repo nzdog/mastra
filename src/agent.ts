@@ -95,12 +95,16 @@ export class FieldDiagnosticAgent {
    * This needs to be calculated before state update but match the logic of updateState
    */
   private getThemeIndexForResponse(mode: Mode, classification: ClassificationResult): number | null {
+    console.log(`\n🔍 AGENT: getThemeIndexForResponse - mode=${mode}, intent=${classification.intent}, current_theme=${this.state.theme_index}`);
+
     if (mode !== 'WALK') {
+      console.log('   → Returning null (not WALK mode)');
       return null;
     }
 
-    // Starting the walk
-    if (classification.intent === 'walk' && this.state.theme_index === null) {
+    // Starting the walk - handles both 'walk' intent and 'memory' when theme is null
+    if (this.state.theme_index === null && (classification.intent === 'walk' || classification.intent === 'memory')) {
+      console.log('   → Starting walk, returning 1');
       return 1;
     }
 
@@ -110,11 +114,14 @@ export class FieldDiagnosticAgent {
         this.state.theme_index !== null) {
       const totalThemes = this.registry.getTotalThemes();
       if (this.state.theme_index < totalThemes) {
-        return this.state.theme_index + 1;
+        const nextTheme = this.state.theme_index + 1;
+        console.log(`   → Advancing to next theme: ${nextTheme}`);
+        return nextTheme;
       }
     }
 
     // Otherwise use current theme
+    console.log(`   → Using current theme: ${this.state.theme_index}`);
     return this.state.theme_index;
   }
 
