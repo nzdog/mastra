@@ -14,6 +14,13 @@ export class WalkResponseValidator {
   }
 
   /**
+   * Escape special regex characters in a string
+   */
+  private escapeRegExp(str: string): string {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /**
    * Check if Claude's response contains the correct theme content
    * Returns true if valid, false if hallucinating
    */
@@ -28,23 +35,47 @@ export class WalkResponseValidator {
 
     const themeContent = this.parser.parseThemeContent(chunk.content);
 
-    // Check 1: Theme title should be present
-    const themeTitlePattern = new RegExp(`Theme ${themeIndex}\\s*[–-]\\s*${themeContent.title}`, 'i');
+    // Check 1: Theme title should be present and exact
+    const themeTitlePattern = new RegExp(`Theme ${themeIndex}\\s*[–-]\\s*${this.escapeRegExp(themeContent.title)}`, 'i');
     if (!themeTitlePattern.test(response)) {
       issues.push(`Missing or incorrect theme title. Expected: "Theme ${themeIndex} – ${themeContent.title}"`);
     }
 
-    // Check 2: All three guiding questions should be present (allowing for minor formatting differences)
+    // Additional check: make sure it's not using a completely different theme title
+    const wrongThemeTitles = [
+      'Underlying Assumptions',
+      'Field Recognition',
+      'Field Effects',
+      'Current Field Signature',
+      'Checking the Signal',
+      'Spotting Distortions',
+    ];
+
+    for (const wrongTitle of wrongThemeTitles) {
+      if (response.includes(wrongTitle)) {
+        issues.push(`Hallucinated theme title detected: "${wrongTitle}". Expected: "${themeContent.title}"`);
+      }
+    }
+
+    // Check 2: All three guiding questions should be present (strict matching)
     const questionsPresent = themeContent.questions.map(question => {
-      // Normalize the question for matching (remove extra whitespace, case insensitive)
-      const normalized = question.toLowerCase().replace(/\s+/g, ' ').trim();
+      // Normalize for matching but keep it strict - must match at least 70% of the question
+      const questionWords = question.toLowerCase().split(/\s+/);
       const responseNormalized = response.toLowerCase().replace(/\s+/g, ' ');
-      return responseNormalized.includes(normalized);
+
+      // Count how many words from the question appear in the response
+      const matchedWords = questionWords.filter(word =>
+        word.length > 3 && responseNormalized.includes(word)
+      );
+
+      // Require at least 70% of significant words to match
+      const matchRatio = matchedWords.length / questionWords.filter(w => w.length > 3).length;
+      return matchRatio >= 0.7;
     });
 
     const missingQuestions = themeContent.questions.filter((_, i) => !questionsPresent[i]);
     if (missingQuestions.length > 0) {
-      issues.push(`Missing ${missingQuestions.length} guiding question(s): ${missingQuestions.join('; ')}`);
+      issues.push(`Missing or altered ${missingQuestions.length} guiding question(s). Expected these exact questions: ${missingQuestions.join(' | ')}`);
     }
 
     // Check 3: If awaiting confirmation, completion prompt should be present
