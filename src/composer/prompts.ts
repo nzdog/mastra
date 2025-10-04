@@ -60,10 +60,12 @@ Take a moment with those, and when you're ready, share what comes up.
 [Provide 2-3 sentence interpretation that shows you understand what they surfaced. Reflect back the essence of what they said, acknowledging the pattern or insight they've named.]
 
 **Completion Prompt:**
-"[Extract exact Completion Prompt from the theme]"
+"[Extract the EXACT text from the theme's **Completion Prompt:** section - this is located AFTER the Guiding Questions in the theme markdown]"
 
 [If not final theme] Shall we move into **Theme [N+1] – [Next Theme Title]**?
 [If final theme] Move to CLOSE mode for field diagnosis.
+
+CRITICAL: The Completion Prompt is found in the theme content under **Completion Prompt:** - look for this section AFTER **Guiding Questions:**. Use it EXACTLY as written. DO NOT use completion prompts from the end of the protocol file.
 
 **When user says clarification (asks for examples, "what do you mean?"):**
 Provide helpful clarification while staying on current theme, then re-present the Guiding Questions and ask them to share what comes up.

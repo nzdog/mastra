@@ -27,4 +27,5 @@ export interface ThemeContent {
   why_matters: string;
   outcomes: string;
   questions: string[];
+  completion_prompt: string;
 }

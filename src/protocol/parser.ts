@@ -165,6 +165,7 @@ export class ProtocolParser {
     let purpose = '';
     let why_matters = '';
     let outcomes = '';
+    let completion_prompt = '';
     const questions: string[] = [];
 
     let currentField = '';
@@ -184,6 +185,9 @@ export class ProtocolParser {
       } else if (line.startsWith('**Guiding Questions:**')) {
         currentField = 'questions';
         continue;
+      } else if (line.startsWith('**Completion Prompt:**')) {
+        currentField = 'completion_prompt';
+        continue;
       } else if (line.startsWith('- ')) {
         if (currentField === 'questions') {
           questions.push(line.replace('- ', '').trim());
@@ -192,6 +196,8 @@ export class ProtocolParser {
         }
       } else if (line.trim() && currentField === 'outcomes') {
         outcomes += line + '\n';
+      } else if (line.trim() && currentField === 'completion_prompt') {
+        completion_prompt = line.trim();
       }
     }
 
@@ -202,6 +208,7 @@ export class ProtocolParser {
       why_matters,
       outcomes: outcomes.trim(),
       questions,
+      completion_prompt,
     };
   }
 }
