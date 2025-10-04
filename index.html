@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lichen Field</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #FAFAF9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        *:focus-visible {
+            outline: 2px solid #57534E;
+            outline-offset: 2px;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* State Header */
+        .state-header {
+            border-bottom: 1px solid #E7E5E4;
+            padding: 1.25rem 2rem;
+            background: #FCFCFB;
+            display: none;
+            gap: 2rem;
+            align-items: baseline;
+        }
+
+        .state-header.active {
+            display: flex;
+        }
+
+        .mode-indicator {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #57534E;
+        }
+
+        .protocol-name {
+            font-size: 0.8125rem;
+            color: #78716C;
+            font-weight: 500;
+        }
+
+        .theme-position {
+            font-size: 0.8125rem;
+            color: #78716C;
+            margin-left: auto;
+        }
+
+        /* Content Area */
+        .content-area {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+        }
+
+        .field-container {
+            max-width: 680px;
+            width: 100%;
+            padding: 4rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        /* Entry State */
+        .entry-view {
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        .field-title {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #78716C;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .entry-input {
+            width: 100%;
+            font-size: 1.5rem;
+            line-height: 1.7;
+            padding: 1.5rem 0;
+            border: none;
+            border-bottom: 1px solid #E7E5E4;
+            background: transparent;
+            color: #1C1917;
+            transition: border-color 0.3s ease;
+        }
+
+        .entry-input:focus {
+            outline: none;
+            border-bottom-color: #78716C;
+        }
+
+        .entry-input::placeholder {
+            color: #A8A29E;
+        }
+
+        .entry-hint {
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            color: #A8A29E;
+        }
+
+        /* Composer Output */
+        .composer-output {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .output-section {
+            line-height: 1.7;
+            color: #292524;
+        }
+
+        .section-label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #78716C;
+            margin-bottom: 0.75rem;
+        }
+
+        .section-content {
+            font-size: 1.0625rem;
+            line-height: 1.7;
+        }
+
+        /* Response Area */
+        .response-area {
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #E7E5E4;
+        }
+
+        .response-input {
+            width: 100%;
+            font-size: 1.125rem;
+            line-height: 1.7;
+            padding: 1.25rem 0;
+            border: none;
+            border-bottom: 1px solid #E7E5E4;
+            background: transparent;
+            color: #1C1917;
+            transition: border-color 0.3s ease;
+            font-family: inherit;
+            resize: none;
+            min-height: 80px;
+        }
+
+        .response-input:focus {
+            outline: none;
+            border-bottom-color: #78716C;
+        }
+
+        .response-input::placeholder {
+            color: #A8A29E;
+        }
+
+        /* Walk Controls */
+        .walk-control {
+            margin-top: 1.5rem;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .walk-button {
+            background: transparent;
+            border: 1px solid #D6D3D1;
+            color: #57534E;
+            padding: 0.75rem 1.5rem;
+            font-size: 0.9375rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .walk-button:hover:not(:disabled) {
+            border-color: #78716C;
+            background: #FAFAF9;
+        }
+
+        .walk-button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .walk-button.loading {
+            opacity: 0.6;
+        }
+
+        /* Error Strip */
+        .error-strip {
+            background: #FAFAF9;
+            border: 1px solid #E7E5E4;
+            border-left: 2px solid #DC2626;
+            padding: 0.875rem 1rem;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .error-strip.active {
+            display: block;
+        }
+
+        .error-message {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #78716C;
+        }
+
+        /* Completion Overlay */
+        .completion-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(250, 249, 249, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .completion-overlay.active {
+            display: flex;
+        }
+
+        .completion-message {
+            text-align: center;
+        }
+
+        .completion-title {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: #1C1917;
+            margin-bottom: 0.75rem;
+        }
+
+        .completion-subtitle {
+            font-size: 0.9375rem;
+            color: #78716C;
+            font-style: italic;
+        }
+
+        /* Supports Strip */
+        .supports-strip {
+            border-top: 1px solid #F5F5F4;
+            background: #FCFCFB;
+            padding: 1rem 2rem;
+            overflow-x: auto;
+            display: none;
+        }
+
+        .supports-strip.active {
+            display: block;
+        }
+
+        .supports-container {
+            display: flex;
+            gap: 0.75rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .supports-label {
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #A8A29E;
+            padding: 0.625rem 0;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+
+        .support-card {
+            border: 1px solid #F5F5F4;
+            background: #FEFEFE;
+            transition: all 0.2s ease;
+            min-width: 200px;
+            max-width: 280px;
+            cursor: pointer;
+        }
+
+        .support-card:hover {
+            border-color: #E7E5E4;
+        }
+
+        .support-header {
+            padding: 0.625rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .support-source {
+            font-size: 0.625rem;
+            font-weight: 600;
+            color: #78716C;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .support-theme {
+            font-size: 0.6875rem;
+            color: #A8A29E;
+            line-height: 1.4;
+        }
+
+        .support-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .support-body.expanded {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .support-content {
+            padding: 0 0.625rem 0.625rem 0.625rem;
+            font-size: 0.75rem;
+            line-height: 1.5;
+            color: #57534E;
+            font-family: ui-monospace, monospace;
+            white-space: pre-wrap;
+            border-top: 1px solid #F5F5F4;
+            padding-top: 0.625rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- State Header -->
+    <div class="state-header" id="state-header">
+        <div class="mode-indicator" id="mode-indicator">Entry</div>
+        <div class="protocol-name" id="protocol-name"></div>
+        <div class="theme-position" id="theme-position"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content-area">
+        <div class="field-container" id="main-content">
+            <!-- Entry View -->
+            <div class="entry-view" id="entry-view">
+                <div class="field-title">Lichen Field</div>
+                
+                <input 
+                    type="text" 
+                    class="entry-input" 
+                    id="entry-input"
+                    placeholder="Begin by naming what's present."
+                    autofocus
+                />
+                
+                <div class="entry-hint">
+                    The field is listening. Take your time.
+                </div>
+
+                <div class="walk-control">
+                    <button class="walk-button" id="begin-button" disabled>Begin walk</button>
+                </div>
+            </div>
+
+            <!-- Walk View (hidden initially) -->
+            <div id="walk-view" style="display: none;">
+                <!-- Error Strip -->
+                <div class="error-strip" id="error-strip">
+                    <div class="error-message" id="error-message"></div>
+                </div>
+
+                <!-- Composer Output -->
+                <div class="composer-output" id="composer-output"></div>
+
+                <!-- Response Area -->
+                <div class="response-area">
+                    <textarea 
+                        class="response-input" 
+                        id="response-input"
+                        placeholder="Your response..."
+                        rows="3"
+                    ></textarea>
+                    
+                    <div class="walk-control">
+                        <button class="walk-button" id="continue-button" disabled>Continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supports Strip -->
+    <div class="supports-strip" id="supports-strip">
+        <div class="supports-container" id="supports-container"></div>
+    </div>
+
+    <!-- Completion Overlay -->
+    <div class="completion-overlay" id="completion-overlay">
+        <div class="completion-message">
+            <div class="completion-title" id="overlay-title">Protocol complete.</div>
+            <div class="completion-subtitle" id="overlay-subtitle">The field rests.</div>
+        </div>
+    </div>
+
+    <script type="module">
+        // API Integration
+        const API_BASE = 'http://localhost:3000';
+        
+        let sessionId = null;
+        let currentMode = 'ENTRY';
+        let protocolData = null;
+
+        // DOM Elements
+        const entryView = document.getElementById('entry-view');
+        const walkView = document.getElementById('walk-view');
+        const entryInput = document.getElementById('entry-input');
+        const beginButton = document.getElementById('begin-button');
+        const responseInput = document.getElementById('response-input');
+        const continueButton = document.getElementById('continue-button');
+        const stateHeader = document.getElementById('state-header');
+        const modeIndicator = document.getElementById('mode-indicator');
+        const protocolName = document.getElementById('protocol-name');
+        const themePosition = document.getElementById('theme-position');
+        const composerOutput = document.getElementById('composer-output');
+        const supportsStrip = document.getElementById('supports-strip');
+        const supportsContainer = document.getElementById('supports-container');
+        const errorStrip = document.getElementById('error-strip');
+        const errorMessage = document.getElementById('error-message');
+
+        // Enable begin button when entry has content
+        entryInput.addEventListener('input', () => {
+            beginButton.disabled = !entryInput.value.trim();
+        });
+
+        // Enable continue button when response has content
+        responseInput.addEventListener('input', () => {
+            continueButton.disabled = !responseInput.value.trim();
+        });
+
+        // Begin walk
+        beginButton.addEventListener('click', async () => {
+            const userInput = entryInput.value.trim();
+            if (!userInput) return;
+
+            beginButton.textContent = '...';
+            beginButton.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/walk/start`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user_input: userInput })
+                });
+
+                const data = await response.json();
+                sessionId = data.session_id;
+                protocolData = data;
+                
+                renderWalkState(data);
+            } catch (error) {
+                showError('The field lost connection. Please try again.');
+                beginButton.textContent = 'Begin walk';
+                beginButton.disabled = false;
+            }
+        });
+
+        // Continue walk
+        continueButton.addEventListener('click', async () => {
+            const userResponse = responseInput.value.trim();
+            if (!userResponse || !sessionId) return;
+
+            continueButton.textContent = '...';
+            continueButton.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/walk/continue`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        session_id: sessionId,
+                        user_response: userResponse
+                    })
+                });
+
+                const data = await response.json();
+                protocolData = data;
+                
+                responseInput.value = '';
+                renderWalkState(data);
+                
+                continueButton.textContent = 'Continue';
+            } catch (error) {
+                showError('The field lost connection. Please try again.');
+                continueButton.textContent = 'Continue';
+                continueButton.disabled = false;
+            }
+        });
+
+        // Render walk state
+        function renderWalkState(data) {
+            // Hide entry, show walk
+            entryView.style.display = 'none';
+            walkView.style.display = 'block';
+            stateHeader.classList.add('active');
+            supportsStrip.classList.add('active');
+
+            // Update header
+            modeIndicator.textContent = data.mode;
+            protocolName.textContent = data.protocol_name;
+            themePosition.textContent = `Theme ${data.theme_number} of ${data.total_themes}`;
+
+            // Parse and render composer output
+            renderComposerOutput(data.composer_output);
+
+            // Render supports
+            renderSupports(data);
+
+            // Handle completion
+            if (data.mode === 'COMPLETE') {
+                handleCompletion(data);
+            }
+        }
+
+        // Render composer output
+        function renderComposerOutput(markdown) {
+            composerOutput.innerHTML = '';
+
+            // Parse markdown sections
+            const sections = parseMarkdown(markdown);
+
+            // Render based on available sections
+            if (sections.orientation) {
+                composerOutput.innerHTML += `
+                    <div class="output-section">
+                        <div class="section-label">Orientation</div>
+                        <div class="section-content">${sections.orientation}</div>
+                    </div>
+                `;
+            }
+
+            if (sections.guiding_question) {
+                composerOutput.innerHTML += `
+                    <div class="output-section">
+                        <div class="section-label">Guiding Question</div>
+                        <div class="section-content">${sections.guiding_question}</div>
+                    </div>
+                `;
+            }
+
+            if (sections.why_this_matters) {
+                composerOutput.innerHTML += `
+                    <div class="output-section">
+                        <div class="section-label">Why This Matters</div>
+                        <div class="section-content">${sections.why_this_matters}</div>
+                    </div>
+                `;
+            }
+
+            if (sections.acknowledgment) {
+                composerOutput.innerHTML += `
+                    <div class="output-section">
+                        <div class="section-content">${sections.acknowledgment}</div>
+                    </div>
+                `;
+            }
+
+            if (sections.completion_prompt) {
+                composerOutput.innerHTML += `
+                    <div class="output-section">
+                        <div class="section-label">Completion Prompt</div>
+                        <div class="section-content" style="font-style: italic;">${sections.completion_prompt}</div>
+                    </div>
+                `;
+            }
+
+            if (sections.transition) {
+                composerOutput.innerHTML += `
+                    <div class="output-section">
+                        <div class="section-content" style="color: #78716C; font-size: 1rem;">${sections.transition}</div>
+                    </div>
+                `;
+            }
+        }
+
+        // Parse markdown into sections
+        function parseMarkdown(markdown) {
+            const sections = {};
+
+            // ENTRY mode sections
+            const purposeMatch = markdown.match(/\*\*Purpose\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
+            if (purposeMatch) sections.orientation = purposeMatch[1].trim();
+
+            const outcomesMatch = markdown.match(/\*\*Protocol-Level Outcomes\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
+            if (outcomesMatch) sections.guiding_question = outcomesMatch[1].trim();
+
+            // WALK mode sections
+            const orientationMatch = markdown.match(/\*\*Orientation\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
+            if (orientationMatch) sections.orientation = orientationMatch[1].trim();
+
+            const questionMatch = markdown.match(/\*\*Guiding Question\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
+            if (questionMatch) sections.guiding_question = questionMatch[1].trim();
+
+            // Common sections
+            const whyMatch = markdown.match(/\*\*Why This Matters\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
+            if (whyMatch) sections.why_this_matters = whyMatch[1].trim();
+
+            const ackMatch = markdown.match(/^(I hear you.*?(?=\n\n|\*\*|$))/im);
+            if (ackMatch) sections.acknowledgment = ackMatch[1].trim();
+
+            const promptMatch = markdown.match(/\*\*Completion Prompt\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
+            if (promptMatch) sections.completion_prompt = promptMatch[1].trim();
+
+            const transitionMatch = markdown.match(/Shall we move into \*\*(Theme \d+[^*]*)\*\*/i);
+            if (transitionMatch) sections.transition = `Shall we move into <strong>${transitionMatch[1]}</strong>?`;
+
+            // Also check for "Would you like me to" pattern (ENTRY mode)
+            const wouldYouMatch = markdown.match(/(Would you like me to.*?\*\*Theme \d+[^*]*\*\*\??)/i);
+            if (wouldYouMatch) sections.transition = wouldYouMatch[1];
+
+            return sections;
+        }
+
+        // Render supports
+        function renderSupports(data) {
+            supportsContainer.innerHTML = `<div class="supports-label">Supports (1)</div>`;
+
+            const card = document.createElement('div');
+            card.className = 'support-card';
+            card.innerHTML = `
+                <div class="support-header">
+                    <div class="support-source">${data.protocol_name}</div>
+                    <div class="support-theme">Theme ${data.theme_number}</div>
+                </div>
+                <div class="support-body">
+                    <div class="support-content">${data.composer_output.substring(0, 300)}...</div>
+                </div>
+            `;
+
+            card.addEventListener('click', () => {
+                card.querySelector('.support-body').classList.toggle('expanded');
+            });
+
+            supportsContainer.appendChild(card);
+        }
+
+        // Handle completion
+        function handleCompletion(data) {
+            continueButton.textContent = 'Mark complete';
+            continueButton.onclick = async () => {
+                const overlay = document.getElementById('completion-overlay');
+                overlay.classList.add('active');
+
+                setTimeout(async () => {
+                    overlay.classList.remove('active');
+                    
+                    // Call complete endpoint
+                    await fetch(`${API_BASE}/api/walk/complete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            generate_summary: false
+                        })
+                    });
+
+                    // Reset to entry
+                    location.reload();
+                }, 4000);
+            };
+        }
+
+        // Show error
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorStrip.classList.add('active');
+            setTimeout(() => errorStrip.classList.remove('active'), 5000);
+        }
+    </script>
+</body>
+</html>
