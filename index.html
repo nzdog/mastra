@@ -19,6 +19,10 @@
             flex-direction: column;
         }
 
+        html {
+            overflow-y: scroll;
+        }
+
         *:focus-visible {
             outline: 2px solid #57534E;
             outline-offset: 2px;
@@ -31,7 +35,122 @@
             }
         }
 
-        /* State Header */
+        /* Fade in animation */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .fade-in-section {
+            opacity: 0;
+            animation: fadeInUp 0.8s ease-out forwards;
+        }
+
+        .fade-in-only {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        /* Fade out animation */
+        @keyframes fadeOut {
+            from {
+                opacity: 1;
+            }
+            to {
+                opacity: 0;
+            }
+        }
+
+        .fade-out {
+            animation: fadeOut 1.2s ease-out forwards;
+        }
+
+        /* Section reveal button */
+        .section-reveal-btn {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #78716C;
+            background: transparent;
+            border: none;
+            box-shadow: inset 0 0 0 1px #D6D3D1;
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            transition: box-shadow 0.5s ease-out, background-color 0.5s ease-out;
+            font-family: inherit;
+            margin-top: 2rem;
+            margin-bottom: 0.75rem;
+            width: 100%;
+            text-align: left;
+        }
+
+        .section-reveal-btn:hover:not(.revealed) {
+            box-shadow: inset 0 0 0 1px #78716C;
+            background: #FAFAF9;
+        }
+
+        .section-reveal-btn.revealed {
+            box-shadow: inset 0 0 0 1px transparent;
+            background: transparent;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .section-reveal-btn.fade-in-section,
+        .walk-button.fade-in-section {
+            animation: none;
+            opacity: 1;
+            transform: none;
+        }
+
+        /* Header */
+        .page-header {
+            border-bottom: 1px solid #E7E5E4;
+            padding: 1.25rem 2rem;
+            background: #FCFCFB;
+            display: flex;
+            gap: 2rem;
+            align-items: baseline;
+        }
+
+        .header-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: #1C1917;
+        }
+
+        .header-state {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            color: #78716C;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .theme-position {
+            font-size: 0.8125rem;
+            color: #78716C;
+            margin-left: auto;
+        }
+
+        /* State Header (legacy - keeping for walk mode) */
         .state-header {
             border-bottom: 1px solid #E7E5E4;
             padding: 1.25rem 2rem;
@@ -59,12 +178,6 @@
             font-weight: 500;
         }
 
-        .theme-position {
-            font-size: 0.8125rem;
-            color: #78716C;
-            margin-left: auto;
-        }
-
         /* Content Area */
         .content-area {
             flex: 1;
@@ -76,7 +189,7 @@
         .field-container {
             max-width: 680px;
             width: 100%;
-            padding: 4rem 2rem;
+            padding: 2rem 2rem 4rem 2rem;
             display: flex;
             flex-direction: column;
             gap: 3rem;
@@ -86,7 +199,9 @@
         .entry-view {
             display: flex;
             flex-direction: column;
-            gap: 3rem;
+            justify-content: center;
+            align-items: center;
+            min-height: 60vh;
         }
 
         .field-title {
@@ -359,11 +474,17 @@
     </style>
 </head>
 <body>
-    <!-- State Header -->
-    <div class="state-header" id="state-header">
+    <!-- Page Header -->
+    <div class="page-header" id="page-header">
+        <div class="header-title">Lichen Protocol</div>
+        <div class="header-state" id="header-state">Entry</div>
+        <div class="theme-position" id="theme-position"></div>
+    </div>
+
+    <!-- State Header (legacy - for walk mode) -->
+    <div class="state-header" id="state-header" style="display: none;">
         <div class="mode-indicator" id="mode-indicator">Entry</div>
         <div class="protocol-name" id="protocol-name"></div>
-        <div class="theme-position" id="theme-position"></div>
     </div>
 
     <!-- Main Content -->
@@ -371,23 +492,9 @@
         <div class="field-container" id="main-content">
             <!-- Entry View -->
             <div class="entry-view" id="entry-view">
-                <div class="field-title">Lichen Field</div>
-                
-                <input 
-                    type="text" 
-                    class="entry-input" 
-                    id="entry-input"
-                    placeholder="Begin by naming what's present."
-                    autofocus
-                />
-                
-                <div class="entry-hint">
-                    The field is listening. Take your time.
-                </div>
-
-                <div class="walk-control">
-                    <button class="walk-button" id="begin-button" disabled>Begin walk</button>
-                </div>
+                <img src="/assets/lichen-logo.png" alt="Lichen" style="height: 80px; width: auto; margin-bottom: 2rem;">
+                <div style="font-size: 1.5rem; font-weight: 500; color: #1C1917; margin-bottom: 3rem; text-align: center;">Field Diagnostic Protocol</div>
+                <button class="walk-button" id="begin-button">Begin walk</button>
             </div>
 
             <!-- Walk View (hidden initially) -->
@@ -445,6 +552,8 @@
         const beginButton = document.getElementById('begin-button');
         const responseInput = document.getElementById('response-input');
         const continueButton = document.getElementById('continue-button');
+        const pageHeader = document.getElementById('page-header');
+        const headerState = document.getElementById('header-state');
         const stateHeader = document.getElementById('state-header');
         const modeIndicator = document.getElementById('mode-indicator');
         const protocolName = document.getElementById('protocol-name');
@@ -455,11 +564,6 @@
         const errorStrip = document.getElementById('error-strip');
         const errorMessage = document.getElementById('error-message');
 
-        // Enable begin button when entry has content
-        entryInput.addEventListener('input', () => {
-            beginButton.disabled = !entryInput.value.trim();
-        });
-
         // Enable continue button when response has content
         responseInput.addEventListener('input', () => {
             continueButton.disabled = !responseInput.value.trim();
@@ -467,23 +571,30 @@
 
         // Begin walk
         beginButton.addEventListener('click', async () => {
-            const userInput = entryInput.value.trim();
-            if (!userInput) return;
+            // Add fade-out to landing page elements (except button)
+            const logo = entryView.querySelector('img');
+            const title = entryView.querySelectorAll('div')[0];
+
+            if (logo) logo.classList.add('fade-out');
+            if (title) title.classList.add('fade-out');
 
             beginButton.textContent = '...';
             beginButton.disabled = true;
+
+            // Wait for fade-out to complete
+            await new Promise(resolve => setTimeout(resolve, 1200));
 
             try {
                 const response = await fetch(`${API_BASE}/api/walk/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_input: userInput })
+                    body: JSON.stringify({ user_input: 'begin' })
                 });
 
                 const data = await response.json();
                 sessionId = data.session_id;
                 protocolData = data;
-                
+
                 renderWalkState(data);
             } catch (error) {
                 showError('The field lost connection. Please try again.');
@@ -526,16 +637,28 @@
 
         // Render walk state
         function renderWalkState(data) {
-            // Hide entry, show walk
+            // In ENTRY mode, stay in entry view but show protocol introduction
+            if (data.mode === 'ENTRY') {
+                headerState.textContent = 'Protocol Introduction';
+                renderEntryResponse(data);
+                return;
+            }
+
+            // Update page header
+            headerState.textContent = data.mode;
+            themePosition.textContent = `Theme ${data.theme_number} of ${data.total_themes}`;
+
+            // Hide entry, show walk with fade in
             entryView.style.display = 'none';
             walkView.style.display = 'block';
-            stateHeader.classList.add('active');
-            supportsStrip.classList.add('active');
 
-            // Update header
-            modeIndicator.textContent = data.mode;
-            protocolName.textContent = data.protocol_name;
-            themePosition.textContent = `Theme ${data.theme_number} of ${data.total_themes}`;
+            // Add fade-in class to walk view children
+            const walkChildren = walkView.querySelectorAll('.output-container, .response-area');
+            walkChildren.forEach(child => {
+                child.classList.add('fade-in-section');
+            });
+
+            supportsStrip.classList.add('active');
 
             // Parse and render composer output
             renderComposerOutput(data.composer_output);
@@ -545,8 +668,165 @@
 
             // Handle completion
             if (data.mode === 'COMPLETE') {
+                headerState.textContent = 'Complete';
                 handleCompletion(data);
             }
+        }
+
+        // Render ENTRY mode response (protocol introduction)
+        function renderEntryResponse(data) {
+            // Hide begin button
+            beginButton.style.display = 'none';
+
+            // Remove fade-out and add fade-in to logo and title
+            const logo = entryView.querySelector('img');
+            const title = entryView.querySelector('div');
+            if (logo) {
+                logo.classList.remove('fade-out');
+                logo.classList.add('fade-in-only');
+            }
+            if (title) {
+                title.classList.remove('fade-out');
+                title.classList.add('fade-in-only');
+            }
+
+            // Create response area in entry view (only if it doesn't exist)
+            let entryResponseArea = document.getElementById('entry-response-area');
+            if (!entryResponseArea) {
+                entryResponseArea = document.createElement('div');
+                entryResponseArea.id = 'entry-response-area';
+                entryResponseArea.style.cssText = 'margin-top: 1rem; line-height: 1.7;';
+            }
+
+            // Parse and group sections with their titles
+            const lines = data.composer_output.split('\n');
+            const sectionData = [];
+            let currentSectionTitle = '';
+            let currentSectionContent = '';
+
+            for (let line of lines) {
+                if (line.startsWith('**') && line.endsWith('**')) {
+                    // Save previous section
+                    if (currentSectionTitle && currentSectionContent.trim()) {
+                        sectionData.push({ title: currentSectionTitle, content: currentSectionContent });
+                        currentSectionContent = '';
+                    }
+                    const headerText = line.replace(/\*\*/g, '').trim();
+                    if (headerText !== 'Field Diagnostic Protocol') {
+                        currentSectionTitle = headerText;
+                    }
+                } else if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
+                    currentSectionContent += `<div style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: #292524;">${line.trim()}</div>`;
+                } else if (line.trim()) {
+                    currentSectionContent += `<div style="margin-bottom: 1rem; color: #292524; font-size: 1.0625rem;">${line}</div>`;
+                }
+            }
+
+            // Add last section
+            if (currentSectionTitle && currentSectionContent.trim()) {
+                sectionData.push({ title: currentSectionTitle, content: currentSectionContent });
+            }
+
+            // Show first section immediately
+            if (sectionData.length > 0) {
+                const firstSection = document.createElement('div');
+                firstSection.className = 'fade-in-only';
+                firstSection.innerHTML = `
+                    <div style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #78716C; margin-bottom: 0.75rem;">${sectionData[0].title}</div>
+                    ${sectionData[0].content}
+                `;
+                entryResponseArea.appendChild(firstSection);
+            }
+
+            // Create buttons for remaining sections
+            let currentIndex = 1;
+
+            function showNextSection(event) {
+                if (currentIndex < sectionData.length) {
+                    const section = sectionData[currentIndex];
+
+                    // Fade out the box by adding class to the clicked button
+                    const button = event.target;
+                    if (button) {
+                        button.classList.add('revealed');
+
+                        // After transition, add content and next button
+                        setTimeout(() => {
+                            // Create content container
+                            const contentDiv = document.createElement('div');
+                            contentDiv.className = 'fade-in-only';
+                            contentDiv.innerHTML = section.content;
+
+                            // Insert content after button
+                            button.after(contentDiv);
+
+                            currentIndex++;
+
+                            // Add next button or continue button
+                            if (currentIndex < sectionData.length) {
+                                addRevealButton(sectionData[currentIndex].title);
+                            } else {
+                                addContinueButton();
+                            }
+                        }, 500);
+                    }
+                }
+            }
+
+            function addRevealButton(nextTitle) {
+                const btn = document.createElement('button');
+                btn.className = 'section-reveal-btn fade-in-only section-reveal-button';
+                btn.textContent = nextTitle;
+                btn.onclick = showNextSection;
+
+                entryResponseArea.appendChild(btn);
+            }
+
+            function addContinueButton() {
+                const continueControl = document.createElement('div');
+                continueControl.className = 'walk-control';
+                continueControl.style.marginTop = '2rem';
+
+                const continueBtn = document.createElement('button');
+                continueBtn.className = 'walk-button fade-in-only';
+                continueBtn.textContent = 'Continue to Theme 1';
+                continueBtn.onclick = async () => {
+                    continueBtn.textContent = '...';
+                    continueBtn.disabled = true;
+
+                    try {
+                        const response = await fetch(`${API_BASE}/api/walk/continue`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                session_id: sessionId,
+                                user_response: 'yes'
+                            })
+                        });
+
+                        const data = await response.json();
+                        protocolData = data;
+                        renderWalkState(data);
+                    } catch (error) {
+                        showError('The field lost connection. Please try again.');
+                        continueBtn.textContent = 'Continue to Theme 1';
+                        continueBtn.disabled = false;
+                    }
+                };
+
+                continueControl.appendChild(continueBtn);
+                entryResponseArea.appendChild(continueControl);
+            }
+
+            // Add first reveal button if there are more sections
+            if (sectionData.length > 1) {
+                addRevealButton(sectionData[1].title);
+            } else {
+                addContinueButton();
+            }
+
+            // Add to entry view
+            entryView.appendChild(entryResponseArea);
         }
 
         // Render composer output
@@ -560,17 +840,26 @@
             if (sections.orientation) {
                 composerOutput.innerHTML += `
                     <div class="output-section">
-                        <div class="section-label">Orientation</div>
+                        <div class="section-label">Frame</div>
                         <div class="section-content">${sections.orientation}</div>
                     </div>
                 `;
             }
 
             if (sections.guiding_question) {
+                const label = sections.guiding_question.includes('•') ? 'Guiding Questions' : 'Guiding Question';
                 composerOutput.innerHTML += `
                     <div class="output-section">
-                        <div class="section-label">Guiding Question</div>
-                        <div class="section-content">${sections.guiding_question}</div>
+                        <div class="section-label">${label}</div>
+                        <div class="section-content" style="white-space: pre-line;">${sections.guiding_question}</div>
+                    </div>
+                `;
+            }
+
+            if (sections.instruction) {
+                composerOutput.innerHTML += `
+                    <div class="output-section">
+                        <div class="section-content" style="color: #78716C; font-style: italic; margin-top: 1.5rem;">${sections.instruction}</div>
                     </div>
                 `;
             }
@@ -621,10 +910,20 @@
             const outcomesMatch = markdown.match(/\*\*Protocol-Level Outcomes\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (outcomesMatch) sections.guiding_question = outcomesMatch[1].trim();
 
-            // WALK mode sections
+            // WALK mode sections - Frame is the orientation
+            const frameMatch = markdown.match(/\*\*Frame:\*\*\s*([\s\S]*?)(?=\n\*\*|$)/i);
+            if (frameMatch) sections.orientation = frameMatch[1].trim();
+
             const orientationMatch = markdown.match(/\*\*Orientation\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (orientationMatch) sections.orientation = orientationMatch[1].trim();
 
+            // Guiding Questions (plural) - extract the bullet points
+            const questionsMatch = markdown.match(/\*\*Guiding Questions:\*\*\s*\n([\s\S]*?)(?=\n\n[^•\n]|\n\*\*|$)/i);
+            if (questionsMatch) {
+                sections.guiding_question = questionsMatch[1].trim();
+            }
+
+            // Guiding Question (singular)
             const questionMatch = markdown.match(/\*\*Guiding Question\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (questionMatch) sections.guiding_question = questionMatch[1].trim();
 
@@ -632,7 +931,8 @@
             const whyMatch = markdown.match(/\*\*Why This Matters\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (whyMatch) sections.why_this_matters = whyMatch[1].trim();
 
-            const ackMatch = markdown.match(/^(I hear you.*?(?=\n\n|\*\*|$))/im);
+            // Acknowledgment - capture from "I hear you" until completion prompt or transition
+            const ackMatch = markdown.match(/^(I hear you[\s\S]*?)(?=\n\*\*Completion Prompt\*\*|Ready to move|Shall we move|\n\*\*Theme)/im);
             if (ackMatch) sections.acknowledgment = ackMatch[1].trim();
 
             const promptMatch = markdown.match(/\*\*Completion Prompt\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
@@ -644,6 +944,10 @@
             // Also check for "Would you like me to" pattern (ENTRY mode)
             const wouldYouMatch = markdown.match(/(Would you like me to.*?\*\*Theme \d+[^*]*\*\*\??)/i);
             if (wouldYouMatch) sections.transition = wouldYouMatch[1];
+
+            // Extract final instruction like "Take a moment..."
+            const instructionMatch = markdown.match(/\n\n([A-Z][^*\n]+(?:moment|ready)[^*\n]+\.)/);
+            if (instructionMatch) sections.instruction = instructionMatch[1].trim();
 
             return sections;
         }
