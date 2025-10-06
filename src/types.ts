@@ -13,6 +13,7 @@ export interface SessionState {
   mode: Mode;
   theme_index: number | null;
   last_response: LastResponse; // Track what we just showed the user
+  is_revisiting: boolean; // Track if user explicitly went back to a previous theme
   resume_hint: ResumeHint;
   last_answer_summary: string;
   last_chunk_refs: string[];
@@ -30,6 +31,7 @@ export interface ClassificationResult {
     theme_index: number | null;
   };
   confidence: number;
+  requested_theme?: number; // When user requests to navigate to a specific theme
 }
 
 export interface ConversationTurn {
