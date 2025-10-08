@@ -664,6 +664,9 @@
             const userResponse = responseInput.value.trim();
             if (!userResponse || !sessionId) return;
 
+            // Blur input to stop cursor blinking
+            responseInput.blur();
+
             continueButton.textContent = '...';
             continueButton.disabled = true;
 
@@ -707,7 +710,6 @@
                 // Hide everything for blank screen
                 console.log('🔲 Hiding all elements for blank screen (ENTRY mode)');
                 entryView.style.display = 'none';
-                pageHeader.style.opacity = '0';
 
                 console.log('⏳ Waiting 1 second...');
                 // Wait 1 second before showing content
@@ -715,7 +717,6 @@
 
                 console.log('✨ Showing ENTRY content now');
                 entryView.style.display = 'flex';
-                pageHeader.style.opacity = '1';
 
                 headerState.textContent = 'Protocol Introduction';
                 renderEntryResponse(data);
@@ -740,7 +741,6 @@
             console.log('🔲 Hiding all elements for blank screen');
             entryView.style.display = 'none';
             walkView.style.display = 'none';
-            pageHeader.style.opacity = '0';
             supportsStrip.style.opacity = '0';
 
             console.log('⏳ Waiting 1 second...');
@@ -757,7 +757,6 @@
 
             console.log('🎨 Fading in elements');
             walkView.style.opacity = '1';
-            pageHeader.style.opacity = '1';
             supportsStrip.style.opacity = '1';
             console.log('✅ Fade in complete');
 
@@ -1085,8 +1084,17 @@
             if (sections.orientation) {
                 composerOutput.innerHTML += `
                     <div class="output-section">
-                        <div class="section-label">Frame</div>
+                        <div class="section-label">Purpose</div>
                         <div class="section-content">${sections.orientation}</div>
+                    </div>
+                `;
+            }
+
+            if (sections.why_this_matters) {
+                composerOutput.innerHTML += `
+                    <div class="output-section">
+                        <div class="section-label">Why This Matters</div>
+                        <div class="section-content">${sections.why_this_matters}</div>
                     </div>
                 `;
             }
@@ -1105,15 +1113,6 @@
                 composerOutput.innerHTML += `
                     <div class="output-section">
                         <div class="section-content" style="color: #78716C; font-style: italic; margin-top: 1.5rem;">${sections.instruction}</div>
-                    </div>
-                `;
-            }
-
-            if (sections.why_this_matters) {
-                composerOutput.innerHTML += `
-                    <div class="output-section">
-                        <div class="section-label">Why This Matters</div>
-                        <div class="section-content">${sections.why_this_matters}</div>
                     </div>
                 `;
             }
@@ -1149,7 +1148,7 @@
             const sections = {};
 
             // Extract theme name from markdown (e.g., **Theme 1 – Surface Behaviors**)
-            const themeMatch = markdown.match(/\*\*Theme\s+\d+\s*[–—:-]\s*([^*]+)\*\*/i);
+            const themeMatch = markdown.match(/\*\*(Theme\s+\d+\s*[–—:-]\s*[^*]+)\*\*/i);
             if (themeMatch) sections.theme_name = themeMatch[1].trim();
 
             // ENTRY mode sections
@@ -1159,7 +1158,10 @@
             const outcomesMatch = markdown.match(/\*\*Protocol-Level Outcomes\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (outcomesMatch) sections.guiding_question = outcomesMatch[1].trim();
 
-            // WALK mode sections - Frame is the orientation
+            // WALK mode sections - Purpose/Frame is the orientation
+            const purposeWalkMatch = markdown.match(/\*\*Purpose:\*\*\s*([\s\S]*?)(?=\n\*\*|$)/i);
+            if (purposeWalkMatch) sections.orientation = purposeWalkMatch[1].trim();
+
             const frameMatch = markdown.match(/\*\*Frame:\*\*\s*([\s\S]*?)(?=\n\*\*|$)/i);
             if (frameMatch) sections.orientation = frameMatch[1].trim();
 

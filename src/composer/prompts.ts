@@ -48,7 +48,10 @@ TEMPLATE A: Presenting theme questions (first time entering theme)
 
 **Theme [N] – [Exact Theme Title]**
 
-**Frame:** [Derive from Purpose - 1-2 sentences explaining what this theme reveals]
+**Purpose:** [Extract exact Purpose content from protocol - 1-2 sentences explaining what this theme reveals]
+
+**Why This Matters**
+[Extract exact "Why This Matters" content from protocol]
 
 **Guiding Questions:**
 • [Exact Question 1 from protocol]
