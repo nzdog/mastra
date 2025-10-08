@@ -188,9 +188,39 @@ function formatResponse(
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Temporarily disable static middleware to test logo route
+const fs = require('fs');
+const assetsPath = path.join(__dirname, '../assets');
+console.log(`📁 Assets path: ${assetsPath}`);
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Test route
+app.get('/test-route', (_req: Request, res: Response) => {
+  console.log('✅ Test route hit!');
+  res.send('Test route works!');
+});
+
+// Logo endpoint
+app.get('/lichen-logo.png', (_req: Request, res: Response) => {
+  console.log(`🖼️  Logo route hit!`);
+  const logoPath = path.join(__dirname, '../lichen-logo.png');
+  console.log(`🖼️  Serving logo from: ${logoPath}`);
+  console.log(`🖼️  File exists: ${fs.existsSync(logoPath)}`);
+
+  try {
+    const imageBuffer = fs.readFileSync(logoPath);
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Content-Length', imageBuffer.length);
+    res.send(imageBuffer);
+    console.log(`✅ Logo served successfully`);
+  } catch (error) {
+    console.error(`❌ Error serving logo:`, error);
+    res.status(404).send('Logo not found');
+  }
+});
 
 // Root endpoint - Serve the production frontend
 app.get('/', (_req: Request, res: Response) => {

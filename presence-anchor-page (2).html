@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Presence Anchor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+            background: #FAFAF9;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        /* Logo */
+        .logo-container {
+            position: absolute;
+            top: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            animation: fadeInLogo 1s ease forwards;
+            animation-delay: 0.1s;
+            z-index: 100;
+        }
+
+        .logo {
+            width: 48px;
+            height: 48px;
+            opacity: 0.85;
+        }
+
+        @keyframes fadeInLogo {
+            to {
+                opacity: 1;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        .anchor-container {
+            max-width: 680px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+            padding-top: 5rem;
+        }
+
+        /* Core Anchor Section */
+        .core-anchor {
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+        }
+
+        .acknowledgment {
+            font-size: 1.5rem;
+            line-height: 1.7;
+            color: #292524;
+        }
+
+        .breath-space {
+            height: 3rem;
+        }
+
+        .orientation {
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            color: #78716C;
+            padding-left: 1.5rem;
+            border-left: 1px solid #E7E5E4;
+        }
+
+        .permission {
+            font-size: 1.0625rem;
+            line-height: 1.7;
+            color: #57534E;
+        }
+
+        .breath-space-small {
+            height: 2rem;
+        }
+
+        .companion {
+            font-size: 0.9375rem;
+            line-height: 1.6;
+            color: #A8A29E;
+            font-style: italic;
+        }
+
+        /* Optional Depth Section */
+        .depth-section {
+            border-top: 1px solid #F5F5F4;
+            padding-top: 3rem;
+            margin-top: 2rem;
+        }
+
+        .depth-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #A8A29E;
+            margin-bottom: 2rem;
+        }
+
+        /* Accordion */
+        .accordion-item {
+            border-bottom: 1px solid #F5F5F4;
+        }
+
+        .accordion-header {
+            width: 100%;
+            padding: 1.25rem 0;
+            background: transparent;
+            border: none;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: color 0.2s ease;
+        }
+
+        .accordion-header:hover {
+            color: #57534E;
+        }
+
+        .accordion-title {
+            font-size: 1rem;
+            font-weight: 500;
+            color: #292524;
+        }
+
+        .accordion-icon {
+            font-size: 0.875rem;
+            color: #A8A29E;
+            transition: transform 0.3s ease;
+        }
+
+        .accordion-header.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        .accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.4s ease;
+        }
+
+        .accordion-body.active {
+            max-height: 1000px;
+            padding-bottom: 1.5rem;
+        }
+
+        .accordion-content {
+            font-size: 0.9375rem;
+            line-height: 1.7;
+            color: #57534E;
+        }
+
+        .accordion-content p {
+            margin-bottom: 1rem;
+        }
+
+        .accordion-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        .content-subsection {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #F5F5F4;
+        }
+
+        .subsection-label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #78716C;
+            margin-bottom: 0.75rem;
+        }
+
+        .outcome-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-top: 0.75rem;
+        }
+
+        .outcome-item {
+            font-size: 0.875rem;
+            line-height: 1.6;
+            color: #57534E;
+            padding-left: 1.25rem;
+            position: relative;
+        }
+
+        .outcome-item::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: #A8A29E;
+        }
+
+        /* Threshold */
+        .threshold {
+            margin-top: 3rem;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            text-align: center;
+        }
+
+        .threshold.visible {
+            opacity: 1;
+        }
+
+        .threshold-text {
+            font-size: 0.8125rem;
+            color: #78716C;
+            letter-spacing: 0.05em;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .threshold-text:hover {
+            color: #57534E;
+        }
+
+        /* Fade-in animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .core-anchor > * {
+            animation: fadeIn 0.6s ease forwards;
+            opacity: 0;
+        }
+
+        .acknowledgment { animation-delay: 0.2s; }
+        .breath-space { animation-delay: 0.3s; }
+        .orientation { animation-delay: 0.5s; }
+        .permission { animation-delay: 0.8s; }
+        .breath-space-small { animation-delay: 1s; }
+        .companion { animation-delay: 1.2s; }
+    </style>
+</head>
+<body>
+    <!-- Logo -->
+    <div class="logo-container">
+        <img src="./assets/lichen-logo.png" alt="Lichen Protocol" class="logo">
+    </div>
+
+    <div class="anchor-container">
+        <!-- Core Anchor (untouched) -->
+        <div class="core-anchor">
+            <div class="acknowledgment">
+                You've seen the field you've been operating in. That seeing is the first movement.
+            </div>
+
+            <div class="breath-space"></div>
+
+            <div class="permission">
+                You don't need to do anything with this yet. Integration happens at its own pace.
+            </div>
+        </div>
+
+        <!-- Optional Depth Section -->
+        <div class="depth-section">
+            <div class="depth-label">If you're curious</div>
+
+            <!-- Accordion 1: What Just Happened -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title">What just happened in the diagnostic</span>
+                    <span class="accordion-icon">↓</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="accordion-content">
+                        <p>The Field Diagnostic revealed the invisible architecture shaping your decisions, pace, and energy. It named the field you've been operating in—whether urgency, proof-seeking, burnout, or early coherence.</p>
+                        
+                        <p>This isn't a personality assessment. It's a mirror showing the energetic environment that's been training your behavior. What feels like personal failure is often field pressure. What feels like clarity might be the field rewarding a specific pattern.</p>
+                        
+                        <p>The diagnostic gave you the first proof of trust: seeing without judgment. That awareness—the recognition that "this is the field I've been in"—is the foundation everything else builds from.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accordion 2: What Comes Next -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title">What comes next and why it matters</span>
+                    <span class="accordion-icon">↓</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="accordion-content">
+                        <p>The next movement is Field Exit—a five-part process for leaving a field that no longer serves you. Not abandonment, but composting: transformation through conscious closure.</p>
+
+                        <div class="content-subsection">
+                            <div class="subsection-label">The Five Field Exit Protocols</div>
+                            <div class="outcome-list">
+                                <div class="outcome-item"><strong>11.1 — Knowing When a Field Must End:</strong> Sensing when energy or rhythm has faded, even before collapse is visible</div>
+                                <div class="outcome-item"><strong>11.2 — Composting the Old Signal:</strong> Transforming what was into nourishment for what's next, without denial or attachment</div>
+                                <div class="outcome-item"><strong>11.3 — Extracting the Gifts:</strong> Distilling wisdom without dragging the pattern forward into the new field</div>
+                                <div class="outcome-item"><strong>11.4 — Designing a Clean Exit:</strong> Closing loops with integrity—relationships, commitments, structures</div>
+                                <div class="outcome-item"><strong>11.5 — Walking Forward Without Residue:</strong> Re-entering movement with coherence intact, no energetic leaks backward</div>
+                            </div>
+                        </div>
+
+                        <p>This sequence matters because staying in a collapsing field drains energy and distorts signal. Exiting cleanly preserves clarity and prevents the next field from inheriting unresolved patterns.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accordion 3: Why This Pacing -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title">Why this pacing protects coherence</span>
+                    <span class="accordion-icon">↓</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="accordion-content">
+                        <p>The system moves at the speed of trust, not urgency. After seeing your field clearly, your nervous system needs time to recalibrate. Rushing into action would collapse the insight back into the very urgency patterns the diagnostic revealed.</p>
+                        
+                        <p>This pause isn't delay—it's integration. The body needs to register that it's safe to stop performing, that awareness itself is progress. Without this buffer, most people unconsciously re-enter the distorted field within hours, trading one urgency for another.</p>
+
+                        <div class="content-subsection">
+                            <div class="subsection-label">What Integration Looks Like</div>
+                            <p>Integration is complete when stillness stops feeling productive and starts feeling complete. When you naturally begin exploring edges—not from anxiety, but curiosity. When your attention softens from relief into readiness.</p>
+                            
+                            <p>The system senses this shift. It doesn't demand it, track it, or rush it. The threshold to Field Exit appears only when your presence signals coherence has rooted.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accordion 4: What to Expect -->
+            <div class="accordion-item">
+                <button class="accordion-header">
+                    <span class="accordion-title">What to expect as you walk through</span>
+                    <span class="accordion-icon">↓</span>
+                </button>
+                <div class="accordion-body">
+                    <div class="accordion-content">
+                        <p>Each protocol in the Field Exit series brings a specific kind of clarity. You'll walk through themes that help you recognize endings, transform attachments, extract wisdom, close loops, and step forward without contamination.</p>
+
+                        <div class="content-subsection">
+                            <div class="subsection-label">Emotional Landscape</div>
+                            <p>Expect relief and lightness as you release what no longer serves. Also expect moments of emptiness or disorientation—the "who am I now?" feeling after letting go of old identity structures.</p>
+                            
+                            <p>These aren't problems. They're signals that the field is actually releasing its hold. The void you might feel is fertile, not broken. It's where new coherence germinates before taking form.</p>
+                        </div>
+
+                        <div class="content-subsection">
+                            <div class="subsection-label">What Success Looks Like</div>
+                            <div class="outcome-list">
+                                <div class="outcome-item"><strong>Expected:</strong> You'll identify the field clearly, accept its natural end, and prepare to leave with care—preserving clarity for what's next</div>
+                                <div class="outcome-item"><strong>Excellent:</strong> You'll recognize the shift early, walk in rhythm with the field's closure, and cross the threshold with restored agency and deepened attunement</div>
+                                <div class="outcome-item"><strong>Transcendent:</strong> You'll become a field steward across lifecycles—exiting at peak timing, able to sense and leave fields before they collapse, imprinting architectures of graceful completion</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Threshold -->
+        <div class="threshold" id="threshold">
+            <a href="#" class="threshold-text" id="threshold-link">When you're ready: Field Exit</a>
+        </div>
+    </div>
+
+    <script>
+        // Accordion functionality
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const body = header.nextElementSibling;
+                const isActive = header.classList.contains('active');
+                
+                // Close all other accordions
+                document.querySelectorAll('.accordion-header').forEach(h => {
+                    h.classList.remove('active');
+                    h.nextElementSibling.classList.remove('active');
+                });
+                
+                // Toggle current accordion
+                if (!isActive) {
+                    header.classList.add('active');
+                    body.classList.add('active');
+                }
+            });
+        });
+
+        // Readiness detection
+        let interactionCount = 0;
+        let hasScrolled = false;
+        let hasReturned = false;
+
+        window.addEventListener('scroll', () => {
+            if (!hasScrolled) {
+                hasScrolled = true;
+                interactionCount++;
+                checkReadiness();
+            }
+        });
+
+        document.querySelector('.companion').addEventListener('mouseenter', () => {
+            interactionCount++;
+            checkReadiness();
+        });
+
+        // Opening an accordion signals curiosity
+        document.querySelectorAll('.accordion-header').forEach(header => {
+            header.addEventListener('click', () => {
+                interactionCount++;
+                checkReadiness();
+            });
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && hasReturned) {
+                interactionCount++;
+                checkReadiness();
+            }
+            if (document.hidden) {
+                hasReturned = true;
+            }
+        });
+
+        function checkReadiness() {
+            if (interactionCount >= 2) {
+                showThreshold();
+            }
+        }
+
+        function showThreshold() {
+            const threshold = document.getElementById('threshold');
+            if (!threshold.classList.contains('visible')) {
+                setTimeout(() => {
+                    threshold.classList.add('visible');
+                }, 800);
+            }
+        }
+
+        setTimeout(() => {
+            showThreshold();
+        }, 15000);
+
+        document.getElementById('threshold-link').addEventListener('click', (e) => {
+            e.preventDefault();
+            console.log('Ready to transition to Field Exit');
+            // In production: window.location.href = '/field-exit';
+        });
+    </script>
+</body>
+</html>

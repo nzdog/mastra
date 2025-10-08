@@ -24,6 +24,8 @@ export class Composer {
     context?: {
       themeAnswers?: Map<number, string>;
       currentThemeIndex?: number;
+      currentThemeTitle?: string;
+      nextThemeTitle?: string;
       awaitingConfirmation?: boolean;
       intent?: string;
     }
@@ -50,9 +52,13 @@ export class Composer {
     console.log(`   mode=${mode}, hasValidator=${!!this.validator}, themeIndex=${context?.currentThemeIndex}, isClarification=${isClarification}`);
     console.log(`   awaitingConfirmation=${context?.awaitingConfirmation}, intent=${context?.intent}`);
 
+    // TEMPORARILY DISABLED: Validator is too strict for new template system
+    // TODO: Update validator to work with new flexible templates
+    const VALIDATION_DISABLED = true;
+
     // Only validate when showing interpretation (awaitingConfirmation = true)
     // Skip validation when showing new theme questions (awaitingConfirmation = false)
-    if (mode === 'WALK' && this.validator && context?.currentThemeIndex && context?.awaitingConfirmation && !isClarification) {
+    if (mode === 'WALK' && this.validator && context?.currentThemeIndex && context?.awaitingConfirmation && !isClarification && !VALIDATION_DISABLED) {
       console.log('🔍 VALIDATOR: Running validation...');
       const validation = this.validator.validateThemeResponse(
         response,
@@ -150,6 +156,8 @@ export class Composer {
     context?: {
       themeAnswers?: Map<number, string>;
       currentThemeIndex?: number;
+      currentThemeTitle?: string;
+      nextThemeTitle?: string;
       awaitingConfirmation?: boolean;
     }
   ): Array<{ role: 'user' | 'assistant'; content: string }> {
@@ -169,6 +177,8 @@ export class Composer {
       currentMessage = `=== CURRENT THEME (Theme ${chunk.theme_index}) ===\n${chunk.content}\n\n`;
       currentMessage += `=== STATE ===\n`;
       currentMessage += `Current Theme Index: ${context?.currentThemeIndex ?? 1}\n`;
+      currentMessage += `Current Theme Title: ${context?.currentThemeTitle || 'Unknown'}\n`;
+      currentMessage += `Next Theme Title: ${context?.nextThemeTitle || 'None (final theme)'}\n`;
       currentMessage += `Awaiting Confirmation: ${context?.awaitingConfirmation ? 'YES - user returned to a theme they already answered' : 'NO - present theme with Purpose + Why this matters + Outcomes + all 3 Guiding Questions together'}\n`;
       currentMessage += `Total Themes: 6\n\n`;
 

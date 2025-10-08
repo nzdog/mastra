@@ -261,6 +261,14 @@
             gap: 1.5rem;
         }
 
+        .theme-title {
+            font-size: 1.75rem;
+            font-weight: 500;
+            color: #1C1917;
+            margin-bottom: 1rem;
+            line-height: 1.4;
+        }
+
         .output-section {
             line-height: 1.7;
             color: #292524;
@@ -676,6 +684,8 @@
                 renderWalkState(data);
 
                 continueButton.textContent = 'Continue';
+
+                // Focus will be set in renderWalkState after animation
             } catch (error) {
                 showError('The field lost connection. Please try again.');
                 continueButton.textContent = 'Continue';
@@ -759,13 +769,18 @@
 
             // Apply jigsaw animation after fade-in is complete
             setTimeout(() => {
-                const contentElements = composerOutput.querySelectorAll('.section-content');
+                const contentElements = composerOutput.querySelectorAll('.theme-title, .section-content');
                 contentElements.forEach(el => {
                     if (el.textContent.trim()) {
                         animateTextReveal(el);
                     }
                 });
             }, 100);
+
+            // Focus the response input after content is visible
+            setTimeout(() => {
+                responseInput.focus();
+            }, 900);
 
             // Handle completion
             if (data.mode === 'COMPLETE') {
@@ -1059,6 +1074,13 @@
             const sections = parseMarkdown(markdown);
             console.log('📋 Parsed sections:', sections);
 
+            // Render theme title if available
+            if (sections.theme_name) {
+                composerOutput.innerHTML += `
+                    <div class="theme-title">${sections.theme_name}</div>
+                `;
+            }
+
             // Render based on available sections
             if (sections.orientation) {
                 composerOutput.innerHTML += `
@@ -1126,6 +1148,10 @@
         function parseMarkdown(markdown) {
             const sections = {};
 
+            // Extract theme name from markdown (e.g., **Theme 1 – Surface Behaviors**)
+            const themeMatch = markdown.match(/\*\*Theme\s+\d+\s*[–—:-]\s*([^*]+)\*\*/i);
+            if (themeMatch) sections.theme_name = themeMatch[1].trim();
+
             // ENTRY mode sections
             const purposeMatch = markdown.match(/\*\*Purpose\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (purposeMatch) sections.orientation = purposeMatch[1].trim();
@@ -1169,8 +1195,13 @@
             const promptMatch = markdown.match(/\*\*Completion Prompt\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (promptMatch) sections.completion_prompt = promptMatch[1].trim();
 
-            const transitionMatch = markdown.match(/Shall we move into \*\*(Theme \d+[^*]*)\*\*/i);
-            if (transitionMatch) sections.transition = `Shall we move into <strong>${transitionMatch[1]}</strong>?`;
+            // Check for "Ready to move into Theme X" pattern
+            const readyMatch = markdown.match(/Ready to move into \*\*(Theme \d+[^*]*)\*\*\??/i);
+            if (readyMatch) sections.transition = `Ready to move into <strong>${readyMatch[1]}</strong>?`;
+
+            // Check for "Shall we move into Theme X" pattern (older)
+            const shallMatch = markdown.match(/Shall we move into \*\*(Theme \d+[^*]*)\*\*\??/i);
+            if (shallMatch) sections.transition = `Shall we move into <strong>${shallMatch[1]}</strong>?`;
 
             // Also check for "Would you like me to" pattern (ENTRY mode)
             const wouldYouMatch = markdown.match(/(Would you like me to.*?\*\*Theme \d+[^*]*\*\*\??)/i);

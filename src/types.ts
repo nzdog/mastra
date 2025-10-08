@@ -14,6 +14,8 @@ export interface SessionState {
   theme_index: number | null;
   last_response: LastResponse; // Track what we just showed the user
   is_revisiting: boolean; // Track if user explicitly went back to a previous theme
+  conversation_depth: number; // Track turns within current theme
+  has_answered_theme: boolean; // User has provided initial answer to theme questions
   resume_hint: ResumeHint;
   last_answer_summary: string;
   last_chunk_refs: string[];
@@ -21,6 +23,13 @@ export interface SessionState {
   emotion_last?: string;
   field_diagnosed?: string;
   updated_at: string;
+}
+
+export interface UserIntent {
+  advance_to_next_theme: boolean;
+  request_elaboration: boolean;
+  add_more_reflection: boolean;
+  navigate_to_theme: number | null;
 }
 
 export interface ClassificationResult {
@@ -31,7 +40,8 @@ export interface ClassificationResult {
     theme_index: number | null;
   };
   confidence: number;
-  requested_theme?: number; // When user requests to navigate to a specific theme
+  requested_theme?: number; // When user requests to navigate to a specific theme (legacy, will use user_wants_to)
+  user_wants_to: UserIntent; // AI-driven semantic intent understanding
 }
 
 export interface ConversationTurn {

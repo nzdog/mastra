@@ -39,6 +39,12 @@ export class IntentClassifier {
           protocol_slug: 'field_diagnostic',
           theme_index: null,
         },
+        user_wants_to: {
+          advance_to_next_theme: false,
+          request_elaboration: false,
+          add_more_reflection: false,
+          navigate_to_theme: null,
+        },
         confidence: 0.5,
       };
     }
@@ -58,7 +64,10 @@ export class IntentClassifier {
     context += `Active Protocol: ${state.active_protocol || 'none'}\n`;
     context += `Current Mode: ${state.mode}\n`;
     context += `Theme Index: ${state.theme_index ?? 'none'}\n`;
-    context += `Last Completion Confirmed: ${state.last_completion_confirmed}\n`;
+    context += `Last Response Type: ${state.last_response}\n`;
+    context += `Has Answered Theme: ${state.has_answered_theme}\n`;
+    context += `Conversation Depth: ${state.conversation_depth}\n`;
+    context += `Is Revisiting: ${state.is_revisiting}\n`;
     context += `Turn Counter: ${state.turn_counter}\n\n`;
 
     if (recentTurns.length > 0) {
@@ -82,6 +91,16 @@ export class IntentClassifier {
     result: ClassificationResult,
     state: SessionState
   ): ClassificationResult {
+    // Ensure user_wants_to exists (for backward compatibility)
+    if (!result.user_wants_to) {
+      result.user_wants_to = {
+        advance_to_next_theme: false,
+        request_elaboration: false,
+        add_more_reflection: false,
+        navigate_to_theme: null,
+      };
+    }
+
     // If confidence < 0.55 → default to ENTRY mode
     if (result.confidence < 0.55) {
       return {
@@ -90,6 +109,12 @@ export class IntentClassifier {
         protocol_pointer: {
           protocol_slug: 'field_diagnostic',
           theme_index: null,
+        },
+        user_wants_to: {
+          advance_to_next_theme: false,
+          request_elaboration: false,
+          add_more_reflection: false,
+          navigate_to_theme: null,
         },
         confidence: result.confidence,
       };
@@ -111,6 +136,11 @@ export class IntentClassifier {
         intent: 'discover',
         continuity: false,
       };
+    }
+
+    // Map navigate_to_theme to requested_theme for backward compatibility
+    if (result.user_wants_to.navigate_to_theme !== null) {
+      result.requested_theme = result.user_wants_to.navigate_to_theme;
     }
 
     return result;

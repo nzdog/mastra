@@ -19,7 +19,14 @@
       "Bash(curl -s -X POST http://localhost:3000/api/walk/start -H \"Content-Type: application/json\" -d \"{\"\"user_input\"\": \"\"What field am I in?\"\"}\")",
       "Bash(npx tsc:*)",
       "Bash(curl:*)",
-      "Bash(pkill:*)"
+      "Bash(pkill:*)",
+      "Bash(git push:*)",
+      "Bash(npm run dev:*)",
+      "Bash(npm run server:*)",
+      "Bash(node:*)",
+      "Bash(lsof:*)",
+      "Bash(base64:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []

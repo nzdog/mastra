@@ -75,6 +75,10 @@ export class FieldDiagnosticAgent {
     // Step 4: Retrieve appropriate chunk
     const chunk = this.registry.retrieve(mode, themeIndexForResponse);
 
+    // Step 4b: Get theme titles for context
+    const currentThemeTitle = themeIndexForResponse ? this.registry.getThemeTitle(themeIndexForResponse) : null;
+    const nextThemeTitle = themeIndexForResponse ? this.registry.getThemeTitle(themeIndexForResponse + 1) : null;
+
     // Step 5: Compose response
     const response = await this.composer.compose(
       mode,
@@ -84,6 +88,8 @@ export class FieldDiagnosticAgent {
       {
         themeAnswers: this.themeAnswers,
         currentThemeIndex: themeIndexForResponse ?? undefined,
+        currentThemeTitle: currentThemeTitle ?? undefined,
+        nextThemeTitle: nextThemeTitle ?? undefined,
         awaitingConfirmation: awaitingConfirmationForResponse,
         intent: classification.intent,
       }
@@ -142,21 +148,22 @@ export class FieldDiagnosticAgent {
 
   /**
    * Determine what theme index will be used for this response
-   * This needs to be calculated before state update but match the logic of updateState
+   * Uses AI-driven semantic intent from classification
    */
   private getThemeIndexForResponse(mode: Mode, classification: ClassificationResult, userMessage: string): number | null {
     console.log(`\n🔍 AGENT: getThemeIndexForResponse - mode=${mode}, intent=${classification.intent}, current_theme=${this.state.theme_index}`);
-    console.log(`   last_response=${this.state.last_response}, requested_theme=${classification.requested_theme}`);
+    console.log(`   last_response=${this.state.last_response}`);
+    console.log(`   user_wants_to:`, classification.user_wants_to);
 
     if (mode !== 'WALK') {
       console.log('   → Returning null (not WALK mode)');
       return null;
     }
 
-    // User explicitly requested to navigate to a specific theme
-    if (classification.requested_theme !== undefined) {
-      console.log(`   → User requested theme ${classification.requested_theme}, returning it`);
-      return classification.requested_theme;
+    // User explicitly navigating to a specific theme
+    if (classification.user_wants_to.navigate_to_theme !== null) {
+      console.log(`   → User navigating to theme ${classification.user_wants_to.navigate_to_theme}`);
+      return classification.user_wants_to.navigate_to_theme;
     }
 
     // Starting the walk - handles both 'walk' intent and 'memory' when theme is null
@@ -165,36 +172,20 @@ export class FieldDiagnosticAgent {
       return 1;
     }
 
-    // If we just showed interpretation + completion and user says continuity/memory (like "go", "yes"),
-    // check if we should advance to next theme
-    // BUT: If intent is 'discover' (asking for clarification/elaboration), stay on current theme
-    if (this.state.last_response === 'interpretation_and_completion' &&
-        (classification.continuity || classification.intent === 'memory') &&
-        classification.intent !== 'discover' &&
-        this.state.theme_index !== null) {
-
+    // User wants to advance to next theme
+    if (classification.user_wants_to.advance_to_next_theme && this.state.theme_index !== null) {
       const totalThemes = this.registry.getTotalThemes();
-
-      // Detect continuation signals: short messages that indicate user wants to move forward
-      // Trust the classifier for most cases, but add safeguard for very short continuation words
-      const trimmed = userMessage.trim().toLowerCase();
-      const isContinuationSignal = trimmed.length <= 5 &&
-        ['ok', 'okay', 'yes', 'yep', 'yeah', 'go', 'next', 'sure', 'y', 'k'].includes(trimmed);
-
-      console.log(`   → Continuation signal check: "${trimmed}" (length: ${trimmed.length}) = ${isContinuationSignal}`);
-
-      // If user is revisiting and provides substantive content (not continuation signal), stay on theme
-      if (this.state.is_revisiting && !isContinuationSignal) {
-        console.log(`   → User adding substantive content to revisited theme ${this.state.theme_index}, staying here`);
-        return this.state.theme_index;
-      }
-
-      // Otherwise advance to next theme when user confirms
       if (this.state.theme_index < totalThemes) {
         const nextTheme = this.state.theme_index + 1;
-        console.log(`   → User confirming completion, advancing to next theme: ${nextTheme}`);
+        console.log(`   → User wants to advance, moving to theme: ${nextTheme}`);
         return nextTheme;
       }
+    }
+
+    // User wants elaboration or adding reflection - stay on current theme
+    if (classification.user_wants_to.request_elaboration || classification.user_wants_to.add_more_reflection) {
+      console.log(`   → User wants elaboration/more reflection, staying on theme: ${this.state.theme_index}`);
+      return this.state.theme_index;
     }
 
     // Otherwise use current theme
@@ -204,12 +195,14 @@ export class FieldDiagnosticAgent {
 
   /**
    * Determine if we should be awaiting confirmation for this response
+   * Uses AI-driven semantic intent from classification
    * Returns true if we should show interpretation + completion prompt
    * Returns false if we should show theme questions
    */
   private getAwaitingConfirmationForResponse(mode: Mode, classification: ClassificationResult, themeIndexForResponse: number | null): boolean {
     console.log(`\n🔍 AGENT: getAwaitingConfirmationForResponse - mode=${mode}, intent=${classification.intent}`);
-    console.log(`   last_response=${this.state.last_response}, requested_theme=${classification.requested_theme}`);
+    console.log(`   last_response=${this.state.last_response}`);
+    console.log(`   user_wants_to:`, classification.user_wants_to);
     console.log(`   themeIndexForResponse=${themeIndexForResponse}, current_theme=${this.state.theme_index}`);
 
     if (mode !== 'WALK') {
@@ -217,54 +210,31 @@ export class FieldDiagnosticAgent {
       return false;
     }
 
-    // If user requested a specific theme, check if they already answered it
-    if (classification.requested_theme !== undefined) {
-      const hasAnswer = this.themeAnswers.has(classification.requested_theme);
-      console.log(`   → User requested theme ${classification.requested_theme}, has answer: ${hasAnswer}`);
-      // If they already answered this theme, show the conversation (interpretation state)
-      // Otherwise show the questions
+    // If user explicitly navigating to a theme, check if already answered
+    if (classification.user_wants_to.navigate_to_theme !== null) {
+      const hasAnswer = this.themeAnswers.has(classification.user_wants_to.navigate_to_theme);
+      console.log(`   → User navigating to theme ${classification.user_wants_to.navigate_to_theme}, has answer: ${hasAnswer}`);
+      // If answered, show interpretation + advance option; otherwise show questions
       return hasAnswer;
     }
 
-    // If user is asking for clarification (discover intent), stay in current mode
-    if (classification.intent === 'discover') {
-      console.log('   → User asking for clarification, keeping current state');
-      // Return current state - if we showed questions, show questions again
-      // If we showed interpretation, we're probably still awaiting their answer
-      return this.state.last_response === 'interpretation_and_completion';
+    // If user wants to advance to next theme, show next theme's questions
+    if (classification.user_wants_to.advance_to_next_theme) {
+      console.log('   → User wants to advance, returning false (show next theme questions)');
+      return false;
     }
 
-    // If we just showed theme questions and user is providing input, they're answering
-    // So next response should be interpretation + completion
+    // If user wants elaboration or adding more reflection, stay in interpretation mode
+    if (classification.user_wants_to.request_elaboration || classification.user_wants_to.add_more_reflection) {
+      console.log('   → User wants elaboration/more reflection, returning true (show interpretation + advance option)');
+      return true;
+    }
+
+    // If we just showed theme questions and user provided substantive answer
     if (this.state.last_response === 'theme_questions' &&
         (classification.continuity || classification.intent === 'memory')) {
       console.log('   → User answered questions, returning true (show interpretation + completion)');
       return true;
-    }
-
-    // If we just showed interpretation + completion and user is providing input
-    if (this.state.last_response === 'interpretation_and_completion' &&
-        (classification.continuity || classification.intent === 'memory') &&
-        themeIndexForResponse !== null) {
-
-      // Check if advancing to next theme (theme number going up)
-      const isAdvancing = this.state.theme_index !== null && themeIndexForResponse > this.state.theme_index;
-
-      // If advancing, show new theme questions (even if is_revisiting is true)
-      if (isAdvancing) {
-        console.log(`   → User confirming to advance from ${this.state.theme_index} to ${themeIndexForResponse}, returning false (show next theme questions)`);
-        return false;
-      }
-
-      // If user is revisiting and NOT advancing, they're adding to answer - show interpretation again
-      if (this.state.is_revisiting) {
-        console.log(`   → User revisiting theme ${themeIndexForResponse}, returning true (show interpretation + completion)`);
-        return true;
-      } else {
-        // First time completing - they're confirming to advance - show next theme's questions
-        console.log(`   → User confirming theme ${themeIndexForResponse}, returning false (show next theme questions)`);
-        return false;
-      }
     }
 
     // Starting walk - show theme questions
@@ -273,9 +243,10 @@ export class FieldDiagnosticAgent {
       return false;
     }
 
-    // Default
-    console.log(`   → Default: returning false`);
-    return false;
+    // Default: if in doubt, check what we last showed
+    const result = this.state.last_response === 'interpretation_and_completion';
+    console.log(`   → Default: returning ${result} (based on last_response)`);
+    return result;
   }
 
   /**
@@ -360,6 +331,22 @@ export class FieldDiagnosticAgent {
         this.state.active_protocol = 'field_diagnostic';
       }
 
+      // Track if theme is changing
+      const themeChanging = themeIndexForResponse !== null &&
+                           this.state.theme_index !== null &&
+                           themeIndexForResponse !== this.state.theme_index;
+
+      // Reset conversation_depth when changing themes
+      if (themeChanging) {
+        this.state.conversation_depth = 0;
+        this.state.has_answered_theme = false;
+        console.log(`🔄 AGENT: Reset conversation_depth (theme changing from ${this.state.theme_index} to ${themeIndexForResponse})`);
+      } else if (mode === 'WALK') {
+        // Increment conversation depth if staying on same theme
+        this.state.conversation_depth++;
+        console.log(`📊 AGENT: Incremented conversation_depth to ${this.state.conversation_depth}`);
+      }
+
       // Clear is_revisiting when advancing AWAY from a revisited theme
       // Only clear if we're moving to a HIGHER theme number (advancing forward)
       if (this.state.is_revisiting &&
@@ -416,6 +403,8 @@ export class FieldDiagnosticAgent {
       theme_index: null,
       last_response: 'none',
       is_revisiting: false,
+      conversation_depth: 0,
+      has_answered_theme: false,
       resume_hint: 'none',
       last_answer_summary: '',
       last_chunk_refs: [],

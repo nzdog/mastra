@@ -61,6 +61,14 @@ export class ProtocolRegistry {
   }
 
   /**
+   * Get theme title by index
+   */
+  getThemeTitle(index: number): string | null {
+    const theme = this.protocol.metadata.themes.find((t) => t.index === index);
+    return theme ? theme.title : null;
+  }
+
+  /**
    * Get protocol metadata
    */
   getMetadata() {
