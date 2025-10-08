@@ -80,6 +80,20 @@
             animation: fadeOut 1.2s ease-out forwards;
         }
 
+        /* Spin animation */
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .logo-spin {
+            animation: spin 20s linear infinite;
+        }
+
         /* Section reveal button */
         .section-reveal-btn {
             font-size: 0.8125rem;
@@ -127,6 +141,7 @@
             display: flex;
             gap: 2rem;
             align-items: baseline;
+            transition: opacity 0.8s ease-out;
         }
 
         .header-title {
@@ -296,6 +311,13 @@
             color: #A8A29E;
         }
 
+        .response-hint {
+            font-size: 0.8125rem;
+            color: #A8A29E;
+            margin-top: 0.5rem;
+            text-align: left;
+        }
+
         /* Walk Controls */
         .walk-control {
             margin-top: 1.5rem;
@@ -391,6 +413,7 @@
             padding: 1rem 2rem;
             overflow-x: auto;
             display: none;
+            transition: opacity 0.8s ease-out;
         }
 
         .supports-strip.active {
@@ -492,13 +515,13 @@
         <div class="field-container" id="main-content">
             <!-- Entry View -->
             <div class="entry-view" id="entry-view">
-                <img src="/assets/lichen-logo.png" alt="Lichen" style="height: 80px; width: auto; margin-bottom: 2rem;">
+                <img src="/lichen-logo.png" alt="Lichen" id="lichen-logo" style="height: 80px; width: auto; margin-bottom: 2rem;">
                 <div style="font-size: 1.5rem; font-weight: 500; color: #1C1917; margin-bottom: 3rem; text-align: center;">Field Diagnostic Protocol</div>
                 <button class="walk-button" id="begin-button">Begin walk</button>
             </div>
 
             <!-- Walk View (hidden initially) -->
-            <div id="walk-view" style="display: none;">
+            <div id="walk-view" style="display: none; transition: opacity 0.8s ease-out;">
                 <!-- Error Strip -->
                 <div class="error-strip" id="error-strip">
                     <div class="error-message" id="error-message"></div>
@@ -509,15 +532,16 @@
 
                 <!-- Response Area -->
                 <div class="response-area">
-                    <textarea 
-                        class="response-input" 
+                    <textarea
+                        class="response-input"
                         id="response-input"
                         placeholder="Your response..."
                         rows="3"
                     ></textarea>
-                    
+                    <div class="response-hint" id="response-hint"></div>
+
                     <div class="walk-control">
-                        <button class="walk-button" id="continue-button" disabled>Continue</button>
+                        <button class="walk-button" id="continue-button" disabled aria-label="Continue (Ctrl or Cmd + Enter)">Continue</button>
                     </div>
                 </div>
             </div>
@@ -563,25 +587,49 @@
         const supportsContainer = document.getElementById('supports-container');
         const errorStrip = document.getElementById('error-strip');
         const errorMessage = document.getElementById('error-message');
+        const responseHint = document.getElementById('response-hint');
+
+        // Detect platform for keyboard shortcuts
+        const isMac = navigator.platform.toUpperCase().includes('MAC');
+
+        // Set helper text based on platform
+        responseHint.textContent = isMac ? 'Press ⌘ + Enter to continue' : 'Press Ctrl + Enter to continue';
 
         // Enable continue button when response has content
         responseInput.addEventListener('input', () => {
             continueButton.disabled = !responseInput.value.trim();
         });
 
+        // Handle keyboard shortcuts for continue action
+        responseInput.addEventListener('keydown', (e) => {
+            const modifier = isMac ? e.metaKey : e.ctrlKey;
+
+            // Cmd/Ctrl + Enter: trigger Continue
+            if (modifier && e.key === 'Enter') {
+                e.preventDefault();
+                if (responseInput.value.trim() && !continueButton.disabled) {
+                    handleContinue();
+                }
+            }
+            // Shift + Enter: allow new line (default behavior)
+            // Enter alone: allow new line (default behavior)
+        });
+
         // Begin walk
         beginButton.addEventListener('click', async () => {
-            // Add fade-out to landing page elements (except button)
-            const logo = entryView.querySelector('img');
+            // Just fade out title
             const title = entryView.querySelectorAll('div')[0];
-
-            if (logo) logo.classList.add('fade-out');
-            if (title) title.classList.add('fade-out');
+            const logo = document.getElementById('lichen-logo');
 
             beginButton.textContent = '...';
             beginButton.disabled = true;
 
-            // Wait for fade-out to complete
+            // Start logo spinning
+            if (logo) logo.classList.add('logo-spin');
+
+            if (title) title.classList.add('fade-out');
+
+            // Wait for title fade-out to complete
             await new Promise(resolve => setTimeout(resolve, 1200));
 
             try {
@@ -603,8 +651,8 @@
             }
         });
 
-        // Continue walk
-        continueButton.addEventListener('click', async () => {
+        // Continue walk handler function
+        async function handleContinue() {
             const userResponse = responseInput.value.trim();
             if (!userResponse || !sessionId) return;
 
@@ -623,34 +671,85 @@
 
                 const data = await response.json();
                 protocolData = data;
-                
+
                 responseInput.value = '';
                 renderWalkState(data);
-                
+
                 continueButton.textContent = 'Continue';
             } catch (error) {
                 showError('The field lost connection. Please try again.');
                 continueButton.textContent = 'Continue';
                 continueButton.disabled = false;
             }
-        });
+        }
+
+        // Continue walk
+        continueButton.addEventListener('click', handleContinue);
 
         // Render walk state
-        function renderWalkState(data) {
+        async function renderWalkState(data) {
+            console.log('🚀 renderWalkState called, mode:', data.mode);
+
             // In ENTRY mode, stay in entry view but show protocol introduction
             if (data.mode === 'ENTRY') {
+                console.log('📝 ENTRY mode - showing protocol introduction');
+
+                // Hide everything for blank screen
+                console.log('🔲 Hiding all elements for blank screen (ENTRY mode)');
+                entryView.style.display = 'none';
+                pageHeader.style.opacity = '0';
+
+                console.log('⏳ Waiting 1 second...');
+                // Wait 1 second before showing content
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                console.log('✨ Showing ENTRY content now');
+                entryView.style.display = 'flex';
+                pageHeader.style.opacity = '1';
+
                 headerState.textContent = 'Protocol Introduction';
                 renderEntryResponse(data);
                 return;
             }
 
+            console.log('🎬 Starting WALK mode transition');
+
             // Update page header
             headerState.textContent = data.mode;
             themePosition.textContent = `Theme ${data.theme_number} of ${data.total_themes}`;
 
-            // Hide entry, show walk with fade in
+            // Parse and render composer output (but keep hidden)
+            renderComposerOutput(data.composer_output);
+
+            // Render supports
+            renderSupports(data);
+
+            supportsStrip.classList.add('active');
+
+            // Hide everything for blank screen
+            console.log('🔲 Hiding all elements for blank screen');
             entryView.style.display = 'none';
+            walkView.style.display = 'none';
+            pageHeader.style.opacity = '0';
+            supportsStrip.style.opacity = '0';
+
+            console.log('⏳ Waiting 1 second...');
+            // Wait 1 second before showing content
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            console.log('✨ Showing content now');
+            // Show and fade in everything
+            walkView.style.opacity = '0';
             walkView.style.display = 'block';
+
+            // Force reflow to ensure transition works
+            walkView.offsetHeight;
+
+            console.log('🎨 Fading in elements');
+            walkView.style.opacity = '1';
+            pageHeader.style.opacity = '1';
+            supportsStrip.style.opacity = '1';
+            console.log('✅ Fade in complete');
 
             // Add fade-in class to walk view children
             const walkChildren = walkView.querySelectorAll('.output-container, .response-area');
@@ -658,18 +757,103 @@
                 child.classList.add('fade-in-section');
             });
 
-            supportsStrip.classList.add('active');
-
-            // Parse and render composer output
-            renderComposerOutput(data.composer_output);
-
-            // Render supports
-            renderSupports(data);
+            // Apply jigsaw animation after fade-in is complete
+            setTimeout(() => {
+                const contentElements = composerOutput.querySelectorAll('.section-content');
+                contentElements.forEach(el => {
+                    if (el.textContent.trim()) {
+                        animateTextReveal(el);
+                    }
+                });
+            }, 100);
 
             // Handle completion
             if (data.mode === 'COMPLETE') {
                 headerState.textContent = 'Complete';
                 handleCompletion(data);
+            }
+        }
+
+        // Animate text revealing randomly like a jigsaw puzzle
+        function animateTextReveal(element, duration = 400) {
+            const text = element.textContent;
+            const words = text.split(/(\s+)/); // Split by whitespace but keep the spaces
+
+            // Create spans for each word/space
+            element.textContent = '';
+            const spans = [];
+
+            words.forEach(word => {
+                if (word.trim() === '') {
+                    // It's a space, add it directly
+                    element.appendChild(document.createTextNode(word));
+                } else {
+                    // It's a word, wrap in span
+                    const span = document.createElement('span');
+                    span.textContent = word;
+                    span.style.opacity = '0';
+                    span.style.transition = 'opacity 0.2s ease-in';
+                    element.appendChild(span);
+                    spans.push(span);
+                }
+            });
+
+            // Create random order for revealing
+            const indices = spans.map((_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+
+            // Reveal words/letters in random order
+            const totalSteps = Math.ceil(spans.length * 1.5); // More steps for variation
+            const interval = duration / totalSteps;
+
+            let revealed = 0;
+            for (let step = 0; step < totalSteps && revealed < spans.length; step++) {
+                setTimeout(() => {
+                    if (revealed < spans.length) {
+                        // Randomly decide: reveal full word (50%) or break into letters (50%)
+                        if (Math.random() > 0.5) {
+                            // Reveal full word
+                            spans[indices[revealed]].style.opacity = '1';
+                            revealed++;
+                        } else {
+                            // Break word into letters and reveal in random order
+                            const span = spans[indices[revealed]];
+                            const word = span.textContent;
+                            const letters = word.split('');
+
+                            span.textContent = '';
+                            const letterSpans = letters.map(letter => {
+                                const letterSpan = document.createElement('span');
+                                letterSpan.textContent = letter;
+                                letterSpan.style.opacity = '0';
+                                letterSpan.style.transition = 'opacity 0.1s ease-in';
+                                span.appendChild(letterSpan);
+                                return letterSpan;
+                            });
+
+                            span.style.opacity = '1';
+
+                            // Create random order for letters
+                            const letterIndices = letters.map((_, i) => i);
+                            for (let i = letterIndices.length - 1; i > 0; i--) {
+                                const j = Math.floor(Math.random() * (i + 1));
+                                [letterIndices[i], letterIndices[j]] = [letterIndices[j], letterIndices[i]];
+                            }
+
+                            // Reveal letters in random order
+                            letterIndices.forEach((letterIndex, i) => {
+                                setTimeout(() => {
+                                    letterSpans[letterIndex].style.opacity = '1';
+                                }, i * 40);
+                            });
+
+                            revealed++;
+                        }
+                    }
+                }, step * interval);
             }
         }
 
@@ -731,11 +915,34 @@
             if (sectionData.length > 0) {
                 const firstSection = document.createElement('div');
                 firstSection.className = 'fade-in-only';
-                firstSection.innerHTML = `
-                    <div style="font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #78716C; margin-bottom: 0.75rem;">${sectionData[0].title}</div>
-                    ${sectionData[0].content}
-                `;
+
+                // Create title
+                const titleDiv = document.createElement('div');
+                titleDiv.style.cssText = 'font-size: 0.8125rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #78716C; margin-bottom: 0.75rem;';
+                titleDiv.textContent = sectionData[0].title;
+                firstSection.appendChild(titleDiv);
+
+                // Create content container
+                const contentDiv = document.createElement('div');
+                contentDiv.innerHTML = sectionData[0].content;
+
+                // Hide all text content initially
+                const textElements = contentDiv.querySelectorAll('div');
+                textElements.forEach(el => {
+                    el.style.opacity = '0';
+                });
+
+                firstSection.appendChild(contentDiv);
+
                 entryResponseArea.appendChild(firstSection);
+
+                // Apply jigsaw animation to all text in content immediately
+                textElements.forEach(el => {
+                    if (el.textContent.trim()) {
+                        el.style.opacity = '1';
+                        animateTextReveal(el);
+                    }
+                });
             }
 
             // Create buttons for remaining sections
@@ -754,11 +961,24 @@
                         setTimeout(() => {
                             // Create content container
                             const contentDiv = document.createElement('div');
-                            contentDiv.className = 'fade-in-only';
                             contentDiv.innerHTML = section.content;
+
+                            // Hide all text content initially
+                            const textElements = contentDiv.querySelectorAll('div');
+                            textElements.forEach(el => {
+                                el.style.opacity = '0';
+                            });
 
                             // Insert content after button
                             button.after(contentDiv);
+
+                            // Apply jigsaw animation to all text in content immediately
+                            textElements.forEach(el => {
+                                if (el.textContent.trim()) {
+                                    el.style.opacity = '1';
+                                    animateTextReveal(el);
+                                }
+                            });
 
                             currentIndex++;
 
@@ -833,8 +1053,11 @@
         function renderComposerOutput(markdown) {
             composerOutput.innerHTML = '';
 
+            console.log('📄 Composer output markdown:', markdown);
+
             // Parse markdown sections
             const sections = parseMarkdown(markdown);
+            console.log('📋 Parsed sections:', sections);
 
             // Render based on available sections
             if (sections.orientation) {
@@ -931,9 +1154,17 @@
             const whyMatch = markdown.match(/\*\*Why This Matters\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (whyMatch) sections.why_this_matters = whyMatch[1].trim();
 
-            // Acknowledgment - capture from "I hear you" until completion prompt or transition
-            const ackMatch = markdown.match(/^(I hear you[\s\S]*?)(?=\n\*\*Completion Prompt\*\*|Ready to move|Shall we move|\n\*\*Theme)/im);
-            if (ackMatch) sections.acknowledgment = ackMatch[1].trim();
+            // Interpretation section (with invisible marker like <!-- INTERPRETATION -->)
+            const interpretationMatch = markdown.match(/<!--\s*INTERPRETATION\s*-->\s*\n([\s\S]*?)(?=\n(?:<!--|\*\*)|$)/i);
+            if (interpretationMatch) {
+                sections.acknowledgment = interpretationMatch[1].trim();
+            }
+
+            // Acknowledgment/Interpretation - fallback to capture from "I hear you" or "I see you" until completion prompt or transition
+            if (!sections.acknowledgment) {
+                const ackMatch = markdown.match(/^(I (?:hear|see) you[\s\S]*?)(?=\n\*\*Completion Prompt\*\*|Ready to move|Shall we move|\n\*\*Theme)/im);
+                if (ackMatch) sections.acknowledgment = ackMatch[1].trim();
+            }
 
             const promptMatch = markdown.match(/\*\*Completion Prompt\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (promptMatch) sections.completion_prompt = promptMatch[1].trim();
