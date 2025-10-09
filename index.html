@@ -573,7 +573,7 @@
                     ></textarea>
                     <div class="response-hint" id="response-hint"></div>
 
-                    <div class="walk-control">
+                    <div class="walk-control" id="walk-control">
                         <button class="walk-button" id="continue-button" disabled aria-label="Continue (Ctrl or Cmd + Enter)">Continue</button>
                     </div>
                 </div>
@@ -647,11 +647,17 @@
         responseInput.addEventListener('keydown', (e) => {
             const modifier = isMac ? e.metaKey : e.ctrlKey;
 
-            // Cmd/Ctrl + Enter: trigger Continue
+            // Cmd/Ctrl + Enter: trigger Continue or Ask Another Question
             if (modifier && e.key === 'Enter') {
                 e.preventDefault();
-                if (responseInput.value.trim() && !continueButton.disabled) {
-                    handleContinue();
+                if (responseInput.value.trim()) {
+                    // Check if we're in completion options mode
+                    const askAnotherBtn = document.getElementById('ask-another-button');
+                    if (askAnotherBtn && !askAnotherBtn.disabled) {
+                        askAnotherBtn.click();
+                    } else if (!continueButton.disabled) {
+                        handleContinue();
+                    }
                 }
             }
             // Shift + Enter: allow new line (default behavior)
@@ -698,6 +704,89 @@
                 beginButton.disabled = false;
             }
         });
+
+        // Show completion options (two buttons)
+        function showCompletionOptions() {
+            const walkControl = document.getElementById('walk-control');
+            
+            // Clear existing buttons
+            walkControl.innerHTML = '';
+            
+            // Create two buttons
+            const askAnotherBtn = document.createElement('button');
+            askAnotherBtn.className = 'walk-button';
+            askAnotherBtn.textContent = 'Ask Another Question';
+            askAnotherBtn.id = 'ask-another-button';
+            askAnotherBtn.style.marginRight = '1rem';
+            
+            const completeWalkBtn = document.createElement('button');
+            completeWalkBtn.className = 'walk-button';
+            completeWalkBtn.textContent = 'Complete Walk & View Summary';
+            completeWalkBtn.id = 'complete-walk-button';
+            
+            walkControl.appendChild(askAnotherBtn);
+            walkControl.appendChild(completeWalkBtn);
+            
+            // Handle ask another question
+            askAnotherBtn.addEventListener('click', async () => {
+                const userResponse = responseInput.value.trim();
+                if (!userResponse) return;
+                
+                askAnotherBtn.classList.add('clicked');
+                askAnotherBtn.disabled = true;
+                responseInput.blur();
+                
+                try {
+                    const response = await fetch(`${API_BASE}/api/walk/continue`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            user_response: userResponse
+                        })
+                    });
+
+                    const data = await response.json();
+                    protocolData = data;
+                    updateCostDisplay(0.02);
+                    responseInput.value = '';
+                    renderWalkState(data);
+                } catch (error) {
+                    showError('The field lost connection. Please try again.');
+                    askAnotherBtn.classList.remove('clicked');
+                    askAnotherBtn.disabled = false;
+                }
+            });
+            
+            // Handle complete walk
+            completeWalkBtn.addEventListener('click', async () => {
+                completeWalkBtn.classList.add('clicked');
+                completeWalkBtn.disabled = true;
+                
+                try {
+                    const response = await fetch(`${API_BASE}/api/walk/complete`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            generate_summary: true
+                        })
+                    });
+
+                    const data = await response.json();
+                    protocolData = data;
+                    
+                    // Update cost display for completion
+                    updateCostDisplay(0.02);
+                    
+                    renderWalkState(data);
+                } catch (error) {
+                    showError('The field lost connection. Please try again.');
+                    completeWalkBtn.classList.remove('clicked');
+                    completeWalkBtn.disabled = false;
+                }
+            });
+        }
 
         // Continue walk handler function
         async function handleContinue() {
@@ -809,7 +898,11 @@
 
             // Update page header
             headerState.textContent = data.mode;
-            themePosition.textContent = `Theme ${data.theme_number} of ${data.total_themes}`;
+            
+            // Handle undefined theme values gracefully
+            const themeNum = data.theme_number || 1;
+            const totalThemes = data.total_themes || 5;
+            themePosition.textContent = `Theme ${themeNum} of ${totalThemes}`;
 
             // Parse and render composer output (but keep hidden)
             renderComposerOutput(data.composer_output);
@@ -862,6 +955,12 @@
             setTimeout(() => {
                 responseInput.focus();
             }, 900);
+
+            // Handle completion options (two buttons when final theme is complete)
+            if (data.show_completion_options) {
+                console.log('🎯 COMPLETION OPTIONS DETECTED - Showing two buttons');
+                showCompletionOptions();
+            }
 
             // Handle completion
             if (data.mode === 'COMPLETE') {

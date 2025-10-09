@@ -332,14 +332,15 @@ export class FieldDiagnosticAgent {
     }
 
     // Check if should transition to CLOSE
-    // After Theme 6 completion, when user confirms to move forward
+    // After final theme completion, when user confirms to move forward
+    // For Field Diagnostic Protocol, this is Theme 5 (total themes = 5)
     if (
-      this.state.theme_index === 6 &&
+      this.state.theme_index === 5 &&
       this.state.last_response === 'interpretation_and_completion' &&
       (intent === 'memory' || continuity) &&
       this.state.active_protocol
     ) {
-      // console.log('🎯 AGENT: Transitioning to CLOSE mode after Theme 6 completion');
+      console.log('🎯 AGENT: Transitioning to CLOSE mode after Theme 5 completion');
       return 'CLOSE';
     }
 

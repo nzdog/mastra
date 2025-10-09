@@ -152,7 +152,7 @@ function formatResponse(
 ) {
   // Parse theme number from state
   const themeNumber = state.theme_index || 1;
-  const totalThemes = 6; // Field Diagnostic Protocol has 6 themes
+  const totalThemes = session.registry.getTotalThemes(); // Dynamically get total themes from protocol
 
   // Determine mode based on state
   let mode: 'ENTRY' | 'WALK' | 'CONTINUE' | 'COMPLETE';
@@ -169,6 +169,11 @@ function formatResponse(
   // Extract supports
   const supports = extractSupports(session.registry, session.parser, state);
 
+  // Check if user has completed all themes and is on final theme
+  const isFinalTheme = themeNumber === totalThemes;
+  const hasCompletedAllThemes = agentResponse.includes('You\'ve completed all') && 
+                                agentResponse.includes('themes of the Field Diagnostic Protocol');
+
   return {
     session_id: sessionId,
     protocol_name: 'Field Diagnostic Protocol',
@@ -184,6 +189,9 @@ function formatResponse(
       turn_count: state.turn_counter,
     },
     total_cost: session.total_cost,
+    // New fields for completion detection
+    is_final_theme: isFinalTheme,
+    show_completion_options: isFinalTheme && hasCompletedAllThemes,
   };
 }
 
@@ -363,22 +371,57 @@ app.post('/api/walk/complete', async (req: Request, res: Response) => {
 
     let summaryHtml = '';
 
-    // If generate_summary requested, trigger CLOSE mode
+    // If generate_summary requested, directly trigger CLOSE mode
     if (generate_summary) {
-      const agentResponse = await session.agent.processMessage('yes'); // Trigger field diagnosis
+      console.log('🎯 COMPLETION: Directly forcing CLOSE mode to generate field diagnosis');
+      
+      // Get current state and directly set it to CLOSE mode
+      const state = session.agent.getState();
+      state.mode = 'CLOSE';
+      
+      // Trigger field diagnosis by processing with CLOSE mode
+      // The agent's processMessage will see mode=CLOSE and generate the diagnosis
+      const agentResponse = await session.agent.processMessage('Generate field diagnosis');
       summaryHtml = agentResponse;
       
       // Update session cost
       session.total_cost = session.agent.getTotalCost();
+
+      // Get updated state for proper response formatting
+      const updatedState = session.agent.getState();
+      
+      // Return proper completion response with theme info
+      const response = {
+        session_id: session_id,
+        protocol_name: 'Field Diagnostic Protocol',
+        theme_number: updatedState.theme_index || 5,
+        total_themes: session.registry.getTotalThemes(),
+        mode: 'COMPLETE' as const,
+        composer_output: summaryHtml,
+        supports: [],
+        state: {
+          current_mode: 'CLOSE',
+          current_theme: updatedState.theme_index,
+          last_response_type: updatedState.last_response,
+          turn_count: updatedState.turn_counter,
+        },
+        total_cost: session.total_cost,
+        completed: true,
+      };
+
+      // Delete session after sending response
+      sessions.delete(session_id);
+      console.log(`✅ Completed and deleted session: ${session_id}`);
+
+      return res.json(response);
     }
 
-    // Delete session after completion
+    // If no summary requested, just complete without generating content
     sessions.delete(session_id);
     console.log(`✅ Completed and deleted session: ${session_id}`);
 
     res.json({
       completed: true,
-      summary_html: summaryHtml || undefined,
     });
   } catch (error) {
     console.error('Error in /api/walk/complete:', error);
