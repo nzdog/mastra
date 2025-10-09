@@ -26,6 +26,7 @@ interface Session {
   parser: ProtocolParser;
   created_at: string;
   last_accessed: string;
+  total_cost: number;
 }
 
 interface Support {
@@ -90,6 +91,7 @@ function createSession(): Session {
     parser,
     created_at: new Date().toISOString(),
     last_accessed: new Date().toISOString(),
+    total_cost: 0,
   };
 
   sessions.set(session.id, session);
@@ -181,6 +183,7 @@ function formatResponse(
       last_response_type: state.last_response,
       turn_count: state.turn_counter,
     },
+    total_cost: session.total_cost,
   };
 }
 

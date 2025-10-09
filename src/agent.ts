@@ -22,6 +22,7 @@ export class FieldDiagnosticAgent {
   private themeAnswers: Map<number, string> = new Map();
   private highestThemeReached: number = 0; // Track the furthest theme user has progressed to
   private closeModeTimes: number = 0; // Track how many times CLOSE mode has been entered
+  private totalCost: number = 0; // Track cumulative API cost for this session
 
   constructor(apiKey: string) {
     this.classifier = new IntentClassifier(apiKey);

@@ -143,6 +143,13 @@
             align-items: baseline;
             transition: opacity 0.8s ease-out;
         }
+        
+        .cost-display {
+            margin-left: auto;
+            font-size: 0.75rem;
+            color: #A8A29E;
+            font-variant-numeric: tabular-nums;
+        }
 
         .header-title {
             font-size: 0.875rem;
@@ -341,13 +348,12 @@
             font-size: 0.9375rem;
             font-weight: 400;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: border-color 1.2s ease-out, background 1.2s ease-out;
             font-family: inherit;
         }
 
         .walk-button:hover:not(:disabled) {
-            border-color: #78716C;
-            background: #FAFAF9;
+            /* No hover effect - border stays visible until clicked */
         }
 
         .walk-button:disabled {
@@ -357,6 +363,17 @@
 
         .walk-button.loading {
             opacity: 0.6;
+        }
+
+        .walk-button.clicked {
+            border-color: transparent;
+            background: transparent;
+            color: #57534E; /* Keep text color unchanged */
+        }
+        
+        .walk-button.clicked:disabled {
+            opacity: 1; /* Override disabled opacity */
+            color: #57534E; /* Keep text color unchanged */
         }
 
         /* Error Strip */
@@ -510,6 +527,7 @@
         <div class="header-title">Lichen Protocol</div>
         <div class="header-state" id="header-state">Entry</div>
         <div class="theme-position" id="theme-position"></div>
+        <div class="cost-display" id="cost-display">$0.00</div>
     </div>
 
     <!-- State Header (legacy - for walk mode) -->
@@ -596,6 +614,14 @@
         const errorStrip = document.getElementById('error-strip');
         const errorMessage = document.getElementById('error-message');
         const responseHint = document.getElementById('response-hint');
+        const costDisplay = document.getElementById('cost-display');
+
+        // Cost tracking (rough estimate)
+        let estimatedCost = 0;
+        function updateCostDisplay(increment = 0.01) {
+            estimatedCost += increment;
+            costDisplay.textContent = `$${estimatedCost.toFixed(3)}`;
+        }
 
         // Detect platform for keyboard shortcuts
         const isMac = navigator.platform.toUpperCase().includes('MAC');
@@ -625,11 +651,13 @@
 
         // Begin walk
         beginButton.addEventListener('click', async () => {
+            // Add clicked class to fade out border
+            beginButton.classList.add('clicked');
+            
             // Just fade out title
             const title = entryView.querySelectorAll('div')[0];
             const logo = document.getElementById('lichen-logo');
 
-            beginButton.textContent = '...';
             beginButton.disabled = true;
 
             // Start logo spinning
@@ -651,6 +679,9 @@
                 sessionId = data.session_id;
                 protocolData = data;
 
+                // Update cost display (ENTRY mode typically costs ~$0.01)
+                updateCostDisplay(0.01);
+
                 renderWalkState(data);
             } catch (error) {
                 showError('The field lost connection. Please try again.');
@@ -664,10 +695,12 @@
             const userResponse = responseInput.value.trim();
             if (!userResponse || !sessionId) return;
 
+            // Add clicked class to fade out border
+            continueButton.classList.add('clicked');
+
             // Blur input to stop cursor blinking
             responseInput.blur();
 
-            continueButton.textContent = '...';
             continueButton.disabled = true;
 
             try {
@@ -683,15 +716,19 @@
                 const data = await response.json();
                 protocolData = data;
 
+                // Update cost display (WALK responses typically cost ~$0.015-0.025)
+                updateCostDisplay(0.02);
+
                 responseInput.value = '';
                 renderWalkState(data);
 
-                continueButton.textContent = 'Continue';
+                continueButton.classList.remove('clicked');
+                continueButton.disabled = false;
 
                 // Focus will be set in renderWalkState after animation
             } catch (error) {
                 showError('The field lost connection. Please try again.');
-                continueButton.textContent = 'Continue';
+                continueButton.classList.remove('clicked');
                 continueButton.disabled = false;
             }
         }
@@ -1030,7 +1067,7 @@
                 continueBtn.className = 'walk-button fade-in-only';
                 continueBtn.textContent = 'Continue to Theme 1';
                 continueBtn.onclick = async () => {
-                    continueBtn.textContent = '...';
+                    continueBtn.classList.add('clicked');
                     continueBtn.disabled = true;
 
                     try {
@@ -1045,10 +1082,14 @@
 
                         const data = await response.json();
                         protocolData = data;
+                        
+                        // Update cost display (initial walk start typically costs ~$0.02)
+                        updateCostDisplay(0.02);
+                        
                         renderWalkState(data);
                     } catch (error) {
                         showError('The field lost connection. Please try again.');
-                        continueBtn.textContent = 'Continue to Theme 1';
+                        continueBtn.classList.remove('clicked');
                         continueBtn.disabled = false;
                     }
                 };
@@ -1303,6 +1344,10 @@
             console.log('🔍 Completion button found:', !!button);
             button.onclick = async () => {
                 console.log('🖱️ Completion button clicked');
+                
+                // Add clicked class to fade out border
+                button.classList.add('clicked');
+                
                 const overlay = document.getElementById('completion-overlay');
                 overlay.classList.add('active');
 
