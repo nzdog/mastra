@@ -197,9 +197,9 @@ const assetsPath = path.join(__dirname, '../assets');
 console.log(`📁 Assets path: ${assetsPath}`);
 
 // Middleware
-// CORS configuration for production
+// CORS configuration - allow all origins since we're serving frontend from same domain
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || '*', // In production, set FRONTEND_URL to your Netlify domain
+  origin: '*', // Allow all origins since frontend is served from same Railway domain
   credentials: true,
   optionsSuccessStatus: 200
 };
