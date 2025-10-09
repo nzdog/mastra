@@ -7,7 +7,7 @@
     "dev": "tsx src/index.ts",
     "server": "tsx src/server.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
+    "start": "npm run build && node dist/server.js",
     "test": "tsx test/scenarios.ts"
   },
   "keywords": [],
