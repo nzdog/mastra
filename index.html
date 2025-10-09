@@ -783,6 +783,11 @@
 
             // Handle completion
             if (data.mode === 'COMPLETE') {
+                console.log('🎯 COMPLETE MODE DETECTED - Starting completion handling');
+                console.log('📋 Data received:', data);
+                console.log('📄 Composer output length:', data.composer_output?.length);
+                console.log('📄 Composer output preview:', data.composer_output?.substring(0, 200));
+                
                 headerState.textContent = 'Complete';
                 handleCompletion(data);
             }
@@ -1182,6 +1187,14 @@
             const whyMatch = markdown.match(/\*\*Why This Matters\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (whyMatch) sections.why_this_matters = whyMatch[1].trim();
 
+            // CLOSE mode - field diagnosis content
+            // Check if this is completion content (contains "field I'd call" or "You've completed")
+            if (markdown.includes("field I'd call") || markdown.includes("You've completed")) {
+                // For CLOSE mode, treat the entire content as acknowledgment/diagnosis
+                sections.acknowledgment = markdown.trim();
+                return sections;
+            }
+
             // Interpretation section (with invisible marker like <!-- INTERPRETATION -->)
             const interpretationMatch = markdown.match(/<!--\s*INTERPRETATION\s*-->\s*\n([\s\S]*?)(?=\n(?:<!--|\*\*)|$)/i);
             if (interpretationMatch) {
@@ -1241,8 +1254,55 @@
 
         // Handle completion
         function handleCompletion(data) {
-            continueButton.textContent = 'Mark complete';
-            continueButton.onclick = async () => {
+            console.log('🔧 handleCompletion called');
+            console.log('📋 Data in handleCompletion:', data);
+            
+            // Render the completion content (field diagnosis and summary)
+            console.log('🎨 Rendering composer output...');
+            renderComposerOutput(data.composer_output);
+            console.log('✅ Composer output rendered');
+            
+            // Hide the entire response area (input + continue button)
+            const responseArea = document.querySelector('.response-area');
+            console.log('🔍 Response area found:', !!responseArea);
+            if (responseArea) {
+                console.log('👁️ Hiding response area');
+                responseArea.style.display = 'none';
+                console.log('✅ Response area hidden');
+            } else {
+                console.log('⚠️ Response area not found!');
+            }
+            
+            // Hide the existing continue button specifically
+            const continueButton = document.getElementById('continue-button');
+            console.log('🔍 Continue button found:', !!continueButton);
+            if (continueButton) {
+                console.log('👁️ Hiding continue button');
+                continueButton.style.display = 'none';
+                console.log('✅ Continue button hidden');
+            } else {
+                console.log('⚠️ Continue button not found!');
+            }
+            
+            // Add completion button container after composer output
+            console.log('🔨 Creating completion button...');
+            const completionContainer = document.createElement('div');
+            completionContainer.className = 'walk-control';
+            completionContainer.style.marginTop = '2rem';
+            completionContainer.innerHTML = `
+                <button class="walk-button" id="completion-button">Mark complete</button>
+            `;
+            
+            // Insert completion button after composer output
+            console.log('🔍 Composer output parent:', !!composerOutput.parentNode);
+            composerOutput.parentNode.insertBefore(completionContainer, composerOutput.nextSibling);
+            console.log('✅ Completion button added');
+            
+            // Handle completion button click
+            const button = completionContainer.querySelector('#completion-button');
+            console.log('🔍 Completion button found:', !!button);
+            button.onclick = async () => {
+                console.log('🖱️ Completion button clicked');
                 const overlay = document.getElementById('completion-overlay');
                 overlay.classList.add('active');
 
@@ -1263,6 +1323,8 @@
                     location.reload();
                 }, 4000);
             };
+            
+            console.log('🎉 handleCompletion completed');
         }
 
         // Show error

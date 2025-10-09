@@ -64,6 +64,8 @@ const scenarios: TestScenario[] = [
       'next',
       // Theme 6: Naming the Field
       'Based on everything, I am in a velocity-obsessed field',
+      // Trigger CLOSE mode transition
+      'yes',
     ],
     expectedBehavior:
       'Should walk through all 6 themes, then transition to CLOSE mode with field diagnosis',

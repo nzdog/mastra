@@ -1,6 +1,6 @@
 import { ClaudeClient } from './client';
 import { ENTRY_PROMPT, WALK_PROMPT, CLOSE_PROMPT } from './prompts';
-import { Mode, ConversationTurn, ProtocolChunk } from '../types';
+import { Mode, ConversationTurn, ProtocolChunk, UserIntent } from '../types';
 import { WalkResponseValidator } from '../validator';
 import * as path from 'path';
 
@@ -28,6 +28,7 @@ export class Composer {
       nextThemeTitle?: string;
       awaitingConfirmation?: boolean;
       intent?: string;
+      userIntent?: UserIntent;
     }
   ): Promise<string> {
     const systemPrompt = this.getSystemPrompt(mode);
@@ -95,33 +96,6 @@ export class Composer {
               userMessage
             )
           );
-        }
-      }
-
-      // If awaiting confirmation, inject next theme mention deterministically
-      if (context.awaitingConfirmation && this.validator) {
-        const nextThemeIndex = context.currentThemeIndex + 1;
-        const nextThemeChunk = this.validator.getRegistry().retrieve('WALK', nextThemeIndex);
-
-        if (nextThemeChunk) {
-          const nextThemeContent = this.validator.getParser().parseThemeContent(nextThemeChunk.content);
-
-          // Remove any existing theme mention from Claude (might be hallucinated)
-          // Pattern: "Shall we move into **Theme X – [anything]**?"
-          const themePattern = new RegExp(`Shall we move into \\*\\*Theme ${nextThemeIndex}[^?]+\\?`, 'g');
-          response = response.replace(themePattern, '').trim();
-
-          // Always inject the correct theme mention
-          // console.log(`✅ COMPOSER: Injecting next theme mention: Theme ${nextThemeIndex} – ${nextThemeContent.title}`);
-          response += `\n\nShall we move into **Theme ${nextThemeIndex} – ${nextThemeContent.title}**?`;
-        } else {
-          // Last theme - move to CLOSE
-          // Remove any hallucinated theme mention
-          const themePattern = /Shall we move into \*\*Theme \d+[^?]+\?/g;
-          response = response.replace(themePattern, '').trim();
-
-          // console.log('✅ COMPOSER: Injecting field diagnosis transition');
-          response += '\n\nReady to diagnose the field?';
         }
       }
     }
@@ -209,7 +183,7 @@ export class Composer {
       });
 
       currentMessage += `=== TASK ===\nSynthesize these answers and diagnose the field. Use the user's language to identify the underlying pattern.\n\n`;
-      currentMessage += `User says: ${userMessage}`;
+      // Don't include user message in CLOSE mode - the protocol is complete
     } else {
       currentMessage = userMessage;
     }

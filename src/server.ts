@@ -314,6 +314,9 @@ app.post('/api/walk/continue', async (req: Request, res: Response) => {
     // Format response
     const response = formatResponse(agentResponse, state, session_id, session);
 
+    // Debug: Log what we're sending to the frontend
+    console.log('\n🌐 SENDING TO FRONTEND (last 300 chars of composer_output):', response.composer_output.substring(response.composer_output.length - 300));
+
     res.json(response);
   } catch (error) {
     console.error('Error in /api/walk/continue:', error);

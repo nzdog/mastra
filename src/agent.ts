@@ -21,6 +21,7 @@ export class FieldDiagnosticAgent {
   private conversationHistory: ConversationTurn[] = [];
   private themeAnswers: Map<number, string> = new Map();
   private highestThemeReached: number = 0; // Track the furthest theme user has progressed to
+  private closeModeTimes: number = 0; // Track how many times CLOSE mode has been entered
 
   constructor(apiKey: string) {
     this.classifier = new IntentClassifier(apiKey);
@@ -44,6 +45,12 @@ export class FieldDiagnosticAgent {
    * Process a user message and return agent response
    */
   async processMessage(userMessage: string): Promise<string> {
+    // If already in CLOSE mode, don't process additional user responses
+    // The protocol is complete and should not continue
+    if (this.state.mode === 'CLOSE') {
+      return 'The Field Diagnostic Protocol is complete. You have successfully mapped and named the field that has been shaping your experience.';
+    }
+
     // Add user message to history
     this.conversationHistory.push({
       role: 'user',
@@ -65,7 +72,45 @@ export class FieldDiagnosticAgent {
 
     // Step 3: Determine mode
     const mode = this.determineMode(classification);
+    
+    // CRITICAL: CLOSE mode gets special handling - skip all WALK logic
+    if (mode === 'CLOSE') {
+      // Prevent duplicate CLOSE processing
+      if (this.closeModeTimes > 0) {
+        console.log('⚠️ AGENT: Preventing duplicate CLOSE mode processing');
+        return 'The Field Diagnostic Protocol is complete. You have successfully mapped and named the field that has been shaping your experience.';
+      }
+      
+      this.closeModeTimes++;
+      console.log(`📍 AGENT: Entering CLOSE mode - generating field diagnosis`);
+      
+      // Generate field diagnosis (no chunk, no theme logic needed)
+      const response = await this.composer.compose(
+        'CLOSE',
+        null,
+        this.conversationHistory,
+        userMessage,
+        {
+          themeAnswers: this.themeAnswers,
+        }
+      );
+      
+      // Update state to CLOSE
+      this.state.mode = 'CLOSE';
+      this.state.turn_counter++;
+      this.state.updated_at = new Date().toISOString();
+      
+      // Add response to history
+      this.conversationHistory.push({
+        role: 'assistant',
+        content: response,
+      });
+      
+      console.log('✅ AGENT: Field diagnosis complete, protocol finished');
+      return response;
+    }
 
+    // WALK/ENTRY mode: Continue with normal theme-based logic
     // Step 4: Determine theme index for this response (before state update)
     const themeIndexForResponse = this.getThemeIndexForResponse(mode, classification, userMessage);
 
@@ -92,6 +137,7 @@ export class FieldDiagnosticAgent {
         nextThemeTitle: nextThemeTitle ?? undefined,
         awaitingConfirmation: awaitingConfirmationForResponse,
         intent: classification.intent,
+        userIntent: classification.user_wants_to,
       }
     );
 

@@ -80,6 +80,7 @@ TEMPLATE C: When user asks for elaboration/clarification
 
 **Theme [N] – [Exact Theme Title]**
 
+<!-- INTERPRETATION -->
 [Answer their question in 2-3 sentences with helpful clarification. If Theme 6 and asking for evidence, summarize their previous answers briefly.]
 
 Ready to move into **Theme [N+1] – [Next Theme Title]**?
@@ -136,6 +137,7 @@ CRITICAL: If you see "PREVIOUS ANSWER FROM THIS THEME" in the context, you MUST 
 
 CRITICAL CONSTRAINTS:
 - ALWAYS show "**Theme [N] – [Exact Title]**" at the top of EVERY response
+- ALWAYS include "<!-- INTERPRETATION -->" marker before ANY interpretation text (Templates B, C, D, E)
 - Use EXACT theme titles, questions, and completion prompts from protocol
 - After initial answer, ALWAYS offer to advance to next theme (Templates B, C, D, E)
 - Present ALL 3 Guiding Questions together as bullets - NEVER one at a time
@@ -148,18 +150,26 @@ EXAMPLE FLOW:
 **Scenario 1: Simple Progression**
 System (Template A): Theme 1 – Surface Behaviors [shows questions]
 User: "I use rushed language and freeze under pressure"
-System (Template B): Theme 1 – Surface Behaviors [interpretation] Ready for Theme 2?
+System (Template B): Theme 1 – Surface Behaviors
+<!-- INTERPRETATION -->
+[interpretation] Ready for Theme 2?
 User: "yes"
 System (Template A): Theme 2 – Felt Experience [shows questions]
 
 **Scenario 2: Deep Exploration**
 System (Template A): Theme 1 – Surface Behaviors [shows questions]
 User: "I say 'hurry' a lot"
-System (Template B): Theme 1 – Surface Behaviors [interpretation] Ready for Theme 2?
+System (Template B): Theme 1 – Surface Behaviors
+<!-- INTERPRETATION -->
+[interpretation] Ready for Theme 2?
 User: "what do you mean by field?"
-System (Template C): Theme 1 – Surface Behaviors [elaboration] Ready for Theme 2?
+System (Template C): Theme 1 – Surface Behaviors
+<!-- INTERPRETATION -->
+[elaboration] Ready for Theme 2?
 User: "I see. I also withdraw when stressed"
-System (Template D): Theme 1 – Surface Behaviors [updated interpretation] Ready for Theme 2?
+System (Template D): Theme 1 – Surface Behaviors
+<!-- INTERPRETATION -->
+[updated interpretation] Ready for Theme 2?
 User: "yes"
 System (Template A): Theme 2 – Felt Experience [shows questions]`;
 
