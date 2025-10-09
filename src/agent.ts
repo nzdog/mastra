@@ -142,6 +142,7 @@ export class FieldDiagnosticAgent {
     if (skipAI) {
       console.log(`⚡ OPTIMIZATION: Skipping AI call for ${mode === 'ENTRY' ? 'ENTRY mode' : 'theme questions'} (using protocol content directly)`);
       response = this.buildStaticResponse(mode, chunk, themeIndexForResponse, nextThemeTitle);
+      console.log(`📤 STATIC RESPONSE (first 200 chars): ${response.substring(0, 200)}`);
       console.log(`💰 SAVED ~$0.0080 by skipping AI call | Total session cost: $${this.totalCost.toFixed(4)}`);
     } else {
       console.log(`🤖 AI CALL: Generating ${mode === 'WALK' ? 'interpretation' : 'content'}`);
@@ -496,7 +497,7 @@ Would you like me to now guide you into **Theme 1 – Surface Behaviors**?`;
       const lines = content.split('\n');
       
       // Extract theme title, purpose, why this matters, and guiding questions
-      let title = '';
+      let themeTitle = '';
       let purpose = '';
       let whyThisMatters = '';
       let questions: string[] = [];
@@ -505,7 +506,12 @@ Would you like me to now guide you into **Theme 1 – Surface Behaviors**?`;
       
       for (const line of lines) {
         if (line.startsWith('###')) {
-          title = line.replace(/###\s*/, '').trim();
+          // Parse: "### 1. Surface Behaviors *(Stone 4: Clarity Over Cleverness)*"
+          // Extract just "Surface Behaviors"
+          const titleMatch = line.match(/###\s*\d+\.\s*([^*]+)/);
+          if (titleMatch) {
+            themeTitle = titleMatch[1].trim();
+          }
         } else if (line.startsWith('**Purpose:**')) {
           purpose = line.replace('**Purpose:**', '').trim();
         } else if (line.startsWith('**Why this matters:**')) {
@@ -519,8 +525,8 @@ Would you like me to now guide you into **Theme 1 – Surface Behaviors**?`;
         }
       }
       
-      // Build response
-      let response = `**${title}**\n**Purpose:** ${purpose}\n`;
+      // Build response with proper formatting
+      let response = `**Theme ${themeIndex} – ${themeTitle}**\n**Purpose:** ${purpose}\n`;
       response += `**Why This Matters**\n${whyThisMatters}\n`;
       response += `**Guiding Questions:**\n${questions.join('\n')}\n`;
       response += `Take a moment with those, and when you're ready, share what comes up.`;
