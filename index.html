@@ -745,6 +745,42 @@
         // Continue walk
         continueButton.addEventListener('click', handleContinue);
 
+        // Handle generate report button (dynamically created after Theme 5)
+        // Use event delegation since button is created dynamically
+        document.addEventListener('click', async (e) => {
+            if (e.target && e.target.id === 'generate-report-button') {
+                const button = e.target;
+                
+                // Add clicked class to fade out border
+                button.classList.add('clicked');
+                button.disabled = true;
+
+                try {
+                    // Trigger CLOSE mode by sending "yes" to continue
+                    const response = await fetch(`${API_BASE}/api/walk/continue`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            session_id: sessionId,
+                            user_response: 'generate field diagnosis'
+                        })
+                    });
+
+                    const data = await response.json();
+                    protocolData = data;
+
+                    // Update cost display (CLOSE mode costs ~$0.015)
+                    updateCostDisplay(0.015);
+
+                    renderWalkState(data);
+                } catch (error) {
+                    showError('The field lost connection. Please try again.');
+                    button.classList.remove('clicked');
+                    button.disabled = false;
+                }
+            }
+        });
+
         // Render walk state
         async function renderWalkState(data) {
             console.log('🚀 renderWalkState called, mode:', data.mode);
@@ -1127,6 +1163,17 @@
             // Parse markdown sections
             const sections = parseMarkdown(markdown);
             console.log('📋 Parsed sections:', sections);
+            
+            // Check if we should hide response area (protocol complete)
+            const shouldHideResponseArea = sections.transition === 'PROTOCOL_COMPLETE';
+            if (shouldHideResponseArea) {
+                const responseArea = document.querySelector('.response-area');
+                if (responseArea) responseArea.style.display = 'none';
+                console.log('🎯 Hiding response area - protocol complete');
+            } else {
+                const responseArea = document.querySelector('.response-area');
+                if (responseArea) responseArea.style.display = 'block';
+            }
 
             // Render theme title if available
             if (sections.theme_name) {
@@ -1190,11 +1237,23 @@
             }
 
             if (sections.transition) {
-                composerOutput.innerHTML += `
-                    <div class="output-section">
-                        <div class="section-content" style="color: #78716C; font-size: 1rem;">${sections.transition}</div>
-                    </div>
-                `;
+                if (sections.transition === 'PROTOCOL_COMPLETE') {
+                    // Special case: Show "Generate Report" button after Theme 5
+                    composerOutput.innerHTML += `
+                        <div class="output-section">
+                            <div class="section-content" style="color: #78716C; font-size: 1rem;">You've completed all 5 themes of the Field Diagnostic Protocol.</div>
+                        </div>
+                        <div class="output-section" style="margin-top: 2rem;">
+                            <button id="generate-report-button" class="walk-button">Field Diagnosis Complete, generate report</button>
+                        </div>
+                    `;
+                } else {
+                    composerOutput.innerHTML += `
+                        <div class="output-section">
+                            <div class="section-content" style="color: #78716C; font-size: 1rem;">${sections.transition}</div>
+                        </div>
+                    `;
+                }
             }
         }
 
@@ -1260,13 +1319,19 @@
             const promptMatch = markdown.match(/\*\*Completion Prompt\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (promptMatch) sections.completion_prompt = promptMatch[1].trim();
 
-            // Check for "Ready to move into Theme X" pattern
-            const readyMatch = markdown.match(/Ready to move into \*\*(Theme \d+[^*]*)\*\*\??/i);
-            if (readyMatch) sections.transition = `Ready to move into <strong>${readyMatch[1]}</strong>?`;
+            // Check for protocol completion (after Theme 5)
+            const completionMatch = markdown.match(/You've completed all 5 themes of the Field Diagnostic Protocol/i);
+            if (completionMatch) {
+                sections.transition = 'PROTOCOL_COMPLETE';
+            } else {
+                // Check for "Ready to move into Theme X" pattern
+                const readyMatch = markdown.match(/Ready to move into \*\*(Theme \d+[^*]*)\*\*\??/i);
+                if (readyMatch) sections.transition = `Ready to move into <strong>${readyMatch[1]}</strong>?`;
 
-            // Check for "Shall we move into Theme X" pattern (older)
-            const shallMatch = markdown.match(/Shall we move into \*\*(Theme \d+[^*]*)\*\*\??/i);
-            if (shallMatch) sections.transition = `Shall we move into <strong>${shallMatch[1]}</strong>?`;
+                // Check for "Shall we move into Theme X" pattern (older)
+                const shallMatch = markdown.match(/Shall we move into \*\*(Theme \d+[^*]*)\*\*\??/i);
+                if (shallMatch) sections.transition = `Shall we move into <strong>${shallMatch[1]}</strong>?`;
+            }
 
             // Also check for "Would you like me to" pattern (ENTRY mode)
             const wouldYouMatch = markdown.match(/(Would you like me to.*?\*\*Theme \d+[^*]*\*\*\??)/i);

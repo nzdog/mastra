@@ -18,8 +18,6 @@ themes:
     title: Source Stories
   - index: 5
     title: Pressure Points
-  - index: 6
-    title: Naming the Field
 stones:
   - Stone 4: Clarity Over Cleverness
   - Stone 5: Presence Is Productivity
@@ -146,22 +144,6 @@ I have named the stories this field tells, and I recognize they are not inevitab
 
 **Completion Prompt:**
 I have seen how this field behaves under stress, and I notice how I respond in parallel.
-
-### 6. Naming the Field *(Stone 2: The Speed of Trust)*
-**Purpose:** Gather evidence and explicitly name the field.
-**Why this matters:** Naming breaks spellwork; invisibility ends, choice returns.
-**Outcomes:**
-- Poor: Avoid naming → future of vague unease and repetition.
-- Expected: Name the field directly → future of orientation.
-- Excellent: See how the field shaped choices → future of active resistance.
-- Transcendent: Name with clarity → future where perception itself grows trust.
-**Guiding Questions:**
-- Based on all evidence, what field am I in?
-- Does this field align with coherence, or collapse?
-- What shifts if I trust this naming?
-
-**Completion Prompt:**
-I have named the field I am in and trust this perception, even if others cannot see it.
 
 ---
 

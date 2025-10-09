@@ -72,7 +72,8 @@ TEMPLATE B: After user provides initial answer to theme questions
 **Completion Prompt:**
 "[Exact completion prompt from protocol]"
 
-Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Theme 5]: You've completed all 5 themes of the Field Diagnostic Protocol.
+[IF Theme 1-4]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -81,9 +82,10 @@ TEMPLATE C: When user asks for elaboration/clarification
 **Theme [N] – [Exact Theme Title]**
 
 <!-- INTERPRETATION -->
-[Answer their question in 2-3 sentences with helpful clarification. If Theme 6 and asking for evidence, summarize their previous answers briefly.]
+[Answer their question in 2-3 sentences with helpful clarification.]
 
-Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Theme 5]: You've completed all 5 themes of the Field Diagnostic Protocol.
+[IF Theme 1-4]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -94,7 +96,8 @@ TEMPLATE D: When user adds more reflection/thoughts to current theme
 <!-- INTERPRETATION -->
 [Acknowledge and briefly interpret their additional insights in 2-3 sentences. Show you understand what they're adding to their previous response.]
 
-Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Theme 5]: You've completed all 5 themes of the Field Diagnostic Protocol.
+[IF Theme 1-4]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -105,7 +108,8 @@ TEMPLATE E: When revisiting a previous theme
 <!-- INTERPRETATION -->
 [Interpretation that includes both their previous answer and new content - 2-3 sentences showing you see the fuller picture.]
 
-Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Theme 5]: You've completed all 5 themes of the Field Diagnostic Protocol.
+[IF Theme 1-4]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -176,7 +180,7 @@ System (Template A): Theme 2 – Felt Experience [shows questions]`;
 export const CLOSE_PROMPT = `CLOSE MODE: Synthesize answers to diagnose the field and provide complete summary.
 
 Field Diagnosis (Generative):
-1. Review user's language across all 6 themes
+1. Review user's language across all 5 themes
 2. Identify underlying force/pressure (organizing principle)
 3. Name at pattern level (2-4 words, universal but concrete)
 4. The name should be recognizable to others in similar fields
@@ -303,7 +307,6 @@ Extract the number or map theme name to number:
 - Theme 3: Rewards and Punishments
 - Theme 4: Source Stories
 - Theme 5: Pressure Points
-- Theme 6: Naming the Field
 
 Examples:
 ✓ "go back to theme 2" → 2
