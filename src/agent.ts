@@ -65,6 +65,10 @@ export class FieldDiagnosticAgent {
       this.state
     );
 
+    // Track classifier cost
+    this.totalCost += 0.0082; // Rough estimate for classifier call
+    console.log(`💰 CLASSIFIER COST: ~$0.0082 | Total session cost: $${this.totalCost.toFixed(4)}`);
+
     // Step 2: Set is_revisiting flag BEFORE any calculations (if user requested a specific theme)
     if (classification.requested_theme !== undefined) {
       this.state.is_revisiting = true;
@@ -86,6 +90,7 @@ export class FieldDiagnosticAgent {
       console.log(`📍 AGENT: Entering CLOSE mode - generating field diagnosis`);
       
       // Generate field diagnosis (no chunk, no theme logic needed)
+      console.log(`🤖 AI CALL: Generating field diagnosis (personalized)`);
       const response = await this.composer.compose(
         'CLOSE',
         null,
@@ -95,6 +100,10 @@ export class FieldDiagnosticAgent {
           themeAnswers: this.themeAnswers,
         }
       );
+      
+      // Track composer cost
+      this.totalCost += 0.0080; // Rough estimate for composer call
+      console.log(`💰 COMPOSER COST: ~$0.0080 | Total session cost: $${this.totalCost.toFixed(4)}`);
       
       // Update state to CLOSE
       this.state.mode = 'CLOSE';
@@ -126,21 +135,35 @@ export class FieldDiagnosticAgent {
     const nextThemeTitle = themeIndexForResponse ? this.registry.getThemeTitle(themeIndexForResponse + 1) : null;
 
     // Step 5: Compose response
-    const response = await this.composer.compose(
-      mode,
-      chunk,
-      this.conversationHistory,
-      userMessage,
-      {
-        themeAnswers: this.themeAnswers,
-        currentThemeIndex: themeIndexForResponse ?? undefined,
-        currentThemeTitle: currentThemeTitle ?? undefined,
-        nextThemeTitle: nextThemeTitle ?? undefined,
-        awaitingConfirmation: awaitingConfirmationForResponse,
-        intent: classification.intent,
-        userIntent: classification.user_wants_to,
-      }
-    );
+    // OPTIMIZATION: Skip AI call for static content (ENTRY mode and theme questions)
+    let response: string;
+    const skipAI = mode === 'ENTRY' || (mode === 'WALK' && !awaitingConfirmationForResponse);
+    
+    if (skipAI) {
+      console.log(`⚡ OPTIMIZATION: Skipping AI call for ${mode === 'ENTRY' ? 'ENTRY mode' : 'theme questions'} (using protocol content directly)`);
+      response = this.buildStaticResponse(mode, chunk, themeIndexForResponse, nextThemeTitle);
+      console.log(`💰 SAVED ~$0.0080 by skipping AI call | Total session cost: $${this.totalCost.toFixed(4)}`);
+    } else {
+      console.log(`🤖 AI CALL: Generating ${mode === 'WALK' ? 'interpretation' : 'content'}`);
+      response = await this.composer.compose(
+        mode,
+        chunk,
+        this.conversationHistory,
+        userMessage,
+        {
+          themeAnswers: this.themeAnswers,
+          currentThemeIndex: themeIndexForResponse ?? undefined,
+          currentThemeTitle: currentThemeTitle ?? undefined,
+          nextThemeTitle: nextThemeTitle ?? undefined,
+          awaitingConfirmation: awaitingConfirmationForResponse,
+          intent: classification.intent,
+          userIntent: classification.user_wants_to,
+        }
+      );
+      // Track composer cost
+      this.totalCost += 0.0080; // Rough estimate for composer call
+      console.log(`💰 COMPOSER COST: ~$0.0080 | Total session cost: $${this.totalCost.toFixed(4)}`);
+    }
 
     // Step 6: Store user's answer BEFORE updating last_response
     // (need to check the PREVIOUS state to know if they just answered questions)
@@ -424,6 +447,98 @@ export class FieldDiagnosticAgent {
   }
 
   /**
+   * Build static response from protocol content (skips AI call)
+   */
+  private buildStaticResponse(mode: Mode, chunk: any, themeIndex: number | null, nextThemeTitle: string | null): string {
+    if (mode === 'ENTRY') {
+      // Return ENTRY mode protocol introduction
+      return `**Field Diagnostic Protocol**
+
+**Purpose**
+
+To surface the invisible field currently shaping the user's behavior, decisions, and emotional stance. This protocol helps them locate themselves within the surrounding environment of norms, incentives, and pressures—so they can see clearly what is holding them, rather than mistaking it for personal failure or strength.
+
+**What Is a Field?**
+
+A field is the invisible architecture of forces that shapes what feels normal, possible, or rewarded in a given context. Fields act like gravity—they train your behavior, pace, and decisions, often without you noticing.
+
+Fields aren't personal. They're systemic. You might think you're failing when really, you're just inside a field that makes certain things feel impossible.
+
+**Examples of Common Fields**
+- **The Hustle Field**: Late nights are normal, speed trumps depth, rest feels like failure
+- **The Urgency Field**: Everything must happen now, quick answers over clarity, shortcuts compound
+- **The Burnout Field**: Always behind, firefighting rewarded, heroic saves expected
+- **The Proving Field**: Daily validation required, worth tied to output, never enough
+- **The Coherence Field**: Rhythm balances intensity and rest, trust compounds, clarity valued
+
+**Why This Matters**
+
+Fields are powerful—they act like gravity. They set what feels possible, what is rewarded, and what is ignored. Without diagnosis, users may misinterpret systemic pressure as a personal flaw, or mistake collapse for clarity.
+
+**The key insight: It's not you, it's the field.**
+
+You might think "I'm not disciplined enough" when actually you're in a field where rest is punished. Or think "I can't keep up" when you're in a field organized around unsustainable pace.
+
+By naming the field, they reclaim the ability to choose how to respond and whether to remain inside it. You can't exit what you can't see.
+
+**Outcomes**
+- **Poor:** Continue without awareness, leading to a future of repeating patterns unconsciously.
+- **Expected:** Identify the field they are currently in, building a future of clearer self-understanding and reduced self-blame.
+- **Excellent:** See how the field trains behaviors, opening a future of anticipation and resistance.
+- **Transcendent:** Embody field awareness so fully that they can shift fields at will, shaping a future where coherence is the natural habitat.
+
+This is the overall frame for surfacing the invisible fields that shape your reality.
+
+Would you like me to now guide you into **Theme 1 – Surface Behaviors**?`;
+    } else if (mode === 'WALK' && themeIndex && chunk) {
+      // Return theme questions from protocol content
+      const content = chunk.content;
+      const lines = content.split('\n');
+      
+      // Extract theme title, purpose, why this matters, and guiding questions
+      let title = '';
+      let purpose = '';
+      let whyThisMatters = '';
+      let questions: string[] = [];
+      
+      let inQuestions = false;
+      
+      for (const line of lines) {
+        if (line.startsWith('###')) {
+          title = line.replace(/###\s*/, '').trim();
+        } else if (line.startsWith('**Purpose:**')) {
+          purpose = line.replace('**Purpose:**', '').trim();
+        } else if (line.startsWith('**Why this matters:**')) {
+          whyThisMatters = line.replace('**Why this matters:**', '').trim();
+        } else if (line.startsWith('**Guiding Questions:**')) {
+          inQuestions = true;
+        } else if (inQuestions && line.startsWith('- ')) {
+          questions.push('• ' + line.substring(2));
+        } else if (inQuestions && line.startsWith('**')) {
+          inQuestions = false;
+        }
+      }
+      
+      // Build response
+      let response = `**${title}**\n**Purpose:** ${purpose}\n`;
+      response += `**Why This Matters**\n${whyThisMatters}\n`;
+      response += `**Guiding Questions:**\n${questions.join('\n')}\n`;
+      response += `Take a moment with those, and when you're ready, share what comes up.`;
+      
+      return response;
+    }
+    
+    return ''; // Fallback (should never reach here)
+  }
+
+  /**
+   * Get total cost for this session
+   */
+  getTotalCost(): number {
+    return this.totalCost;
+  }
+
+  /**
    * Reset the agent state
    */
   reset(): void {
@@ -431,6 +546,7 @@ export class FieldDiagnosticAgent {
     this.conversationHistory = [];
     this.themeAnswers.clear();
     this.highestThemeReached = 0;
+    this.totalCost = 0;
   }
 
   /**

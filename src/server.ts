@@ -284,6 +284,9 @@ app.post('/api/walk/start', async (req: Request, res: Response) => {
     const agentResponse = await session.agent.processMessage(user_input);
     const state = session.agent.getState();
 
+    // Update session cost
+    session.total_cost = session.agent.getTotalCost();
+
     // Format response
     const response = formatResponse(agentResponse, state, session.id, session);
 
@@ -319,6 +322,9 @@ app.post('/api/walk/continue', async (req: Request, res: Response) => {
     // Process message
     const agentResponse = await session.agent.processMessage(user_response);
     const state = session.agent.getState();
+
+    // Update session cost
+    session.total_cost = session.agent.getTotalCost();
 
     // Format response
     const response = formatResponse(agentResponse, state, session_id, session);
@@ -361,6 +367,9 @@ app.post('/api/walk/complete', async (req: Request, res: Response) => {
     if (generate_summary) {
       const agentResponse = await session.agent.processMessage('yes'); // Trigger field diagnosis
       summaryHtml = agentResponse;
+      
+      // Update session cost
+      session.total_cost = session.agent.getTotalCost();
     }
 
     // Delete session after completion
