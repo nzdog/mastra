@@ -80,7 +80,7 @@
             animation: fadeOut 1.2s ease-out forwards;
         }
 
-        /* Spin animation */
+        /* Spin animation for logo */
         @keyframes spin {
             from {
                 transform: rotate(0deg);
@@ -93,6 +93,7 @@
         .logo-spin {
             animation: spin 20s linear infinite;
         }
+
 
         /* Section reveal button */
         .section-reveal-btn {
@@ -350,6 +351,9 @@
             cursor: pointer;
             transition: border-color 1.2s ease-out, background 1.2s ease-out;
             font-family: inherit;
+            position: relative; /* Always relative to prevent layout shift */
+            display: inline-block;
+            white-space: nowrap;
         }
 
         .walk-button:hover:not(:disabled) {
@@ -372,9 +376,11 @@
         }
         
         .walk-button.clicked:disabled {
-            opacity: 1; /* Override disabled opacity */
+            border-color: transparent;
+            background: transparent;
             color: #57534E; /* Keep text color unchanged */
         }
+
 
         /* Error Strip */
         .error-strip {
