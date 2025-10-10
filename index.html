@@ -225,6 +225,96 @@
             max-width: 900px;
         }
 
+        /* Protocol Selection */
+        .protocol-selection-view {
+            display: flex;
+            flex-direction: column;
+            padding-top: 4rem;
+        }
+
+        .protocol-selection-view.hidden {
+            display: none;
+        }
+
+        .protocol-selection-header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .protocol-selection-title {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #1C1917;
+            margin-bottom: 0.75rem;
+        }
+
+        .protocol-selection-subtitle {
+            font-size: 1rem;
+            color: #78716C;
+            line-height: 1.6;
+        }
+
+        .protocol-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .protocol-card {
+            border: 1px solid #E7E5E4;
+            background: #FFFFFF;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .protocol-card:hover {
+            border-color: #78716C;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .protocol-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            gap: 1rem;
+        }
+
+        .protocol-card-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #1C1917;
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .protocol-card-badge {
+            font-size: 0.6875rem;
+            color: #78716C;
+            background: #F5F5F4;
+            padding: 0.25rem 0.5rem;
+            border-radius: 3px;
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .protocol-card-purpose {
+            font-size: 0.9375rem;
+            color: #57534E;
+            line-height: 1.6;
+        }
+
+        .protocol-card-meta {
+            font-size: 0.8125rem;
+            color: #A8A29E;
+            display: flex;
+            gap: 1rem;
+        }
+
         /* Entry State */
         .entry-view {
             display: flex;
@@ -232,6 +322,10 @@
             justify-content: center;
             align-items: center;
             min-height: 60vh;
+        }
+
+        .entry-view.hidden {
+            display: none;
         }
 
         .field-title {
@@ -638,10 +732,22 @@
     <!-- Main Content -->
     <div class="content-area">
         <div class="field-container" id="main-content">
+            <!-- Protocol Selection View -->
+            <div class="protocol-selection-view" id="protocol-selection-view">
+                <div class="protocol-selection-header">
+                    <img src="/lichen-logo.png" alt="Lichen" style="height: 80px; width: auto; margin-bottom: 2rem;">
+                    <div class="protocol-selection-title">Choose Your Protocol</div>
+                    <div class="protocol-selection-subtitle">Select a protocol to begin your walk</div>
+                </div>
+                <div class="protocol-grid" id="protocol-grid">
+                    <!-- Protocol cards will be populated by JavaScript -->
+                </div>
+            </div>
+
             <!-- Entry View -->
-            <div class="entry-view" id="entry-view">
+            <div class="entry-view hidden" id="entry-view">
                 <img src="/lichen-logo.png" alt="Lichen" id="lichen-logo" style="height: 80px; width: auto; margin-bottom: 2rem;">
-                <div style="font-size: 1.5rem; font-weight: 500; color: #1C1917; margin-bottom: 3rem; text-align: center;">Field Diagnostic Protocol</div>
+                <div id="protocol-title" style="font-size: 1.5rem; font-weight: 500; color: #78716C; margin-bottom: 3rem; text-align: center; line-height: 1.4;">Field Diagnostic Protocol</div>
                 <button class="walk-button" id="begin-button">Begin walk</button>
             </div>
 
@@ -695,8 +801,12 @@
         let sessionId = null;
         let currentMode = 'ENTRY';
         let protocolData = null;
+        let selectedProtocol = null; // Store selected protocol
 
         // DOM Elements
+        const protocolSelectionView = document.getElementById('protocol-selection-view');
+        const protocolGrid = document.getElementById('protocol-grid');
+        const protocolTitle = document.getElementById('protocol-title');
         const entryView = document.getElementById('entry-view');
         const walkView = document.getElementById('walk-view');
         const entryInput = document.getElementById('entry-input');
@@ -724,8 +834,84 @@
             costDisplay.textContent = `$${estimatedCost.toFixed(3)}`;
         }
 
+        // Fetch and display available protocols
+        async function loadProtocols() {
+            try {
+                const response = await fetch(`${API_BASE}/api/protocols`);
+                const data = await response.json();
+
+                if (data.protocols && data.protocols.length > 0) {
+                    renderProtocolCards(data.protocols);
+                } else {
+                    showError('No protocols available');
+                }
+            } catch (error) {
+                console.error('Error loading protocols:', error);
+                showError('Failed to load protocols. Please refresh the page.');
+            }
+        }
+
+        // Render protocol cards
+        function renderProtocolCards(protocols) {
+            protocolGrid.innerHTML = '';
+
+            // Sort protocols: Field Diagnostic first, then alphabetically by title
+            const sortedProtocols = [...protocols].sort((a, b) => {
+                if (a.slug === 'field_diagnostic') return -1;
+                if (b.slug === 'field_diagnostic') return 1;
+                return a.title.localeCompare(b.title);
+            });
+
+            sortedProtocols.forEach(protocol => {
+                const card = document.createElement('div');
+                card.className = 'protocol-card';
+
+                // Truncate purpose if too long
+                const purpose = protocol.purpose || 'No description available';
+                const truncatedPurpose = purpose.length > 200
+                    ? purpose.substring(0, 200) + '...'
+                    : purpose;
+
+                card.innerHTML = `
+                    <div class="protocol-card-header">
+                        <div class="protocol-card-title">${protocol.title}</div>
+                        <div class="protocol-card-badge">${protocol.theme_count} themes</div>
+                    </div>
+                    <div class="protocol-card-purpose">${truncatedPurpose}</div>
+                `;
+
+                card.addEventListener('click', () => selectProtocol(protocol));
+                protocolGrid.appendChild(card);
+            });
+        }
+
+        // Handle protocol selection
+        function selectProtocol(protocol) {
+            selectedProtocol = protocol;
+
+            // Update protocol title in entry view with stacked format
+            // Split title at em dash (—) or long dash if present
+            const title = protocol.title;
+            if (title.includes('—')) {
+                const parts = title.split('—');
+                protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
+            } else if (title.includes(' — ')) {
+                const parts = title.split(' — ');
+                protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
+            } else {
+                protocolTitle.textContent = title;
+            }
+
+            // Hide protocol selection, show entry view
+            protocolSelectionView.classList.add('hidden');
+            entryView.classList.remove('hidden');
+        }
+
         // Detect platform for keyboard shortcuts
         const isMac = navigator.platform.toUpperCase().includes('MAC');
+
+        // Load protocols on page load
+        loadProtocols();
 
         // Set helper text based on platform
         responseHint.textContent = isMac ? 'Press ⌘ + Enter to continue' : 'Press Ctrl + Enter to continue';
@@ -779,7 +965,10 @@
                 const response = await fetch(`${API_BASE}/api/walk/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ user_input: 'begin' })
+                    body: JSON.stringify({
+                        user_input: 'begin',
+                        protocol_slug: selectedProtocol?.slug
+                    })
                 });
 
                 const data = await response.json();

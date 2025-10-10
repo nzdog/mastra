@@ -26,7 +26,11 @@
       "Bash(node:*)",
       "Bash(lsof:*)",
       "Bash(base64:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(git merge-base:*)",
+      "Bash(for branch in speeding-up tweaks-and-polish wired-and-ready)",
+      "Bash(do echo \"=== $branch ===\")",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

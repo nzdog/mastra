@@ -23,17 +23,23 @@ export class FieldDiagnosticAgent {
   private highestThemeReached: number = 0; // Track the furthest theme user has progressed to
   private closeModeTimes: number = 0; // Track how many times CLOSE mode has been entered
   private totalCost: number = 0; // Track cumulative API cost for this session
+  private protocolPath: string;
 
-  constructor(apiKey: string) {
+  constructor(apiKey: string, registry?: ProtocolRegistry, protocolPath?: string) {
     this.classifier = new IntentClassifier(apiKey);
 
-    // Load protocol
-    const protocol = loadProtocol();
-    this.registry = new ProtocolRegistry(protocol);
+    // Use provided registry or load default field diagnostic protocol
+    if (registry && protocolPath) {
+      this.registry = registry;
+      this.protocolPath = protocolPath;
+    } else {
+      const protocol = loadProtocol();
+      this.registry = new ProtocolRegistry(protocol);
+      this.protocolPath = path.join(__dirname, '../protocols/field_diagnostic.md');
+    }
 
     // Create validator
-    const protocolPath = path.join(__dirname, '../protocols/field_diagnostic.md');
-    this.validator = new WalkResponseValidator(this.registry, protocolPath);
+    this.validator = new WalkResponseValidator(this.registry, this.protocolPath);
 
     // Create composer with validator
     this.composer = new Composer(apiKey, this.validator);
@@ -49,7 +55,8 @@ export class FieldDiagnosticAgent {
     // If already in CLOSE mode, don't process additional user responses
     // The protocol is complete and should not continue
     if (this.state.mode === 'CLOSE') {
-      return 'The Field Diagnostic Protocol is complete. You have successfully mapped and named the field that has been shaping your experience.';
+      const protocolMetadata = this.registry.getMetadata();
+      return `The ${protocolMetadata.title} is complete. You have successfully completed all themes.`;
     }
 
     // Add user message to history
@@ -83,7 +90,8 @@ export class FieldDiagnosticAgent {
       // Prevent duplicate CLOSE processing
       if (this.closeModeTimes > 0) {
         console.log('⚠️ AGENT: Preventing duplicate CLOSE mode processing');
-        return 'The Field Diagnostic Protocol is complete. You have successfully mapped and named the field that has been shaping your experience.';
+        const protocolMetadata = this.registry.getMetadata();
+        return `The ${protocolMetadata.title} is complete. You have successfully completed all themes.`;
       }
       
       this.closeModeTimes++;
@@ -333,14 +341,14 @@ export class FieldDiagnosticAgent {
 
     // Check if should transition to CLOSE
     // After final theme completion, when user confirms to move forward
-    // For Field Diagnostic Protocol, this is Theme 5 (total themes = 5)
+    const totalThemes = this.registry.getTotalThemes();
     if (
-      this.state.theme_index === 5 &&
+      this.state.theme_index === totalThemes &&
       this.state.last_response === 'interpretation_and_completion' &&
       (intent === 'memory' || continuity) &&
       this.state.active_protocol
     ) {
-      console.log('🎯 AGENT: Transitioning to CLOSE mode after Theme 5 completion');
+      console.log(`🎯 AGENT: Transitioning to CLOSE mode after Theme ${totalThemes} completion`);
       return 'CLOSE';
     }
 
@@ -454,44 +462,18 @@ export class FieldDiagnosticAgent {
   private buildStaticResponse(mode: Mode, chunk: any, themeIndex: number | null, nextThemeTitle: string | null): string {
     if (mode === 'ENTRY') {
       // Return ENTRY mode protocol introduction
-      return `**Field Diagnostic Protocol**
+      // Extract the ENTRY chunk content dynamically
+      const entryChunk = this.registry.retrieve('ENTRY', null);
+      if (entryChunk) {
+        const protocolMetadata = this.registry.getMetadata();
+        const firstThemeTitle = this.registry.getThemeTitle(1);
 
-**Purpose**
+        // Return the entry content followed by transition to Theme 1
+        return `${entryChunk.content}\n\nWould you like me to now guide you into **Theme 1 – ${firstThemeTitle}**?`;
+      }
 
-To surface the invisible field currently shaping the user's behavior, decisions, and emotional stance. This protocol helps them locate themselves within the surrounding environment of norms, incentives, and pressures—so they can see clearly what is holding them, rather than mistaking it for personal failure or strength.
-
-**What Is a Field?**
-
-A field is the invisible architecture of forces that shapes what feels normal, possible, or rewarded in a given context. Fields act like gravity—they train your behavior, pace, and decisions, often without you noticing.
-
-Fields aren't personal. They're systemic. You might think you're failing when really, you're just inside a field that makes certain things feel impossible.
-
-**Examples of Common Fields**
-- **The Hustle Field**: Late nights are normal, speed trumps depth, rest feels like failure
-- **The Urgency Field**: Everything must happen now, quick answers over clarity, shortcuts compound
-- **The Burnout Field**: Always behind, firefighting rewarded, heroic saves expected
-- **The Proving Field**: Daily validation required, worth tied to output, never enough
-- **The Coherence Field**: Rhythm balances intensity and rest, trust compounds, clarity valued
-
-**Why This Matters**
-
-Fields are powerful—they act like gravity. They set what feels possible, what is rewarded, and what is ignored. Without diagnosis, users may misinterpret systemic pressure as a personal flaw, or mistake collapse for clarity.
-
-**The key insight: It's not you, it's the field.**
-
-You might think "I'm not disciplined enough" when actually you're in a field where rest is punished. Or think "I can't keep up" when you're in a field organized around unsustainable pace.
-
-By naming the field, they reclaim the ability to choose how to respond and whether to remain inside it. You can't exit what you can't see.
-
-**Outcomes**
-- **Poor:** Continue without awareness, leading to a future of repeating patterns unconsciously.
-- **Expected:** Identify the field they are currently in, building a future of clearer self-understanding and reduced self-blame.
-- **Excellent:** See how the field trains behaviors, opening a future of anticipation and resistance.
-- **Transcendent:** Embody field awareness so fully that they can shift fields at will, shaping a future where coherence is the natural habitat.
-
-This is the overall frame for surfacing the invisible fields that shape your reality.
-
-Would you like me to now guide you into **Theme 1 – Surface Behaviors**?`;
+      // Fallback (should never reach here if protocol is properly formatted)
+      return 'Error: Unable to load protocol introduction.';
     } else if (mode === 'WALK' && themeIndex && chunk) {
       // Return theme questions from protocol content
       const content = chunk.content;

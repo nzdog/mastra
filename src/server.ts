@@ -5,6 +5,7 @@ import { randomUUID } from 'crypto';
 import { FieldDiagnosticAgent } from './agent';
 import { ProtocolRegistry } from './tools/registry';
 import { ProtocolParser } from './protocol/parser';
+import { ProtocolLoader } from './protocol/loader';
 import { SessionState } from './types';
 import * as path from 'path';
 
@@ -37,6 +38,7 @@ interface Support {
 
 interface StartRequest {
   user_input: string;
+  protocol_slug?: string;
 }
 
 interface ContinueRequest {
@@ -78,15 +80,28 @@ function getSession(sessionId: string): Session | null {
 }
 
 // Helper: Create new session
-function createSession(): Session {
-  const protocolPath = path.join(__dirname, '../protocols/field_diagnostic.md');
+function createSession(protocolSlug?: string): Session {
+  const loader = new ProtocolLoader();
+
+  // Get protocol path from slug, or default to field_diagnostic
+  let protocolPath: string;
+  if (protocolSlug) {
+    const path = loader.getProtocolPath(protocolSlug);
+    if (!path) {
+      throw new Error(`Protocol not found: ${protocolSlug}`);
+    }
+    protocolPath = path;
+  } else {
+    protocolPath = path.join(__dirname, '../protocols/field_diagnostic.md');
+  }
+
   const parser = new ProtocolParser(protocolPath);
   const protocol = parser.parse();
   const registry = new ProtocolRegistry(protocol);
 
   const session: Session = {
     id: randomUUID(),
-    agent: new FieldDiagnosticAgent(API_KEY!),
+    agent: new FieldDiagnosticAgent(API_KEY!, registry, protocolPath),
     registry,
     parser,
     created_at: new Date().toISOString(),
@@ -95,7 +110,7 @@ function createSession(): Session {
   };
 
   sessions.set(session.id, session);
-  console.log(`✨ Created new session: ${session.id}`);
+  console.log(`✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`);
   return session;
 }
 
@@ -153,6 +168,8 @@ function formatResponse(
   // Parse theme number from state
   const themeNumber = state.theme_index || 1;
   const totalThemes = session.registry.getTotalThemes(); // Dynamically get total themes from protocol
+  const protocolMetadata = session.registry.getMetadata();
+  const protocolName = protocolMetadata.title;
 
   // Determine mode based on state
   let mode: 'ENTRY' | 'WALK' | 'CONTINUE' | 'COMPLETE';
@@ -171,12 +188,12 @@ function formatResponse(
 
   // Check if user has completed all themes and is on final theme
   const isFinalTheme = themeNumber === totalThemes;
-  const hasCompletedAllThemes = agentResponse.includes('You\'ve completed all') && 
-                                agentResponse.includes('themes of the Field Diagnostic Protocol');
+  const hasCompletedAllThemes = agentResponse.includes('You\'ve completed all') &&
+                                agentResponse.includes(`themes of the ${protocolName}`);
 
   return {
     session_id: sessionId,
-    protocol_name: 'Field Diagnostic Protocol',
+    protocol_name: protocolName,
     theme_number: themeNumber,
     total_themes: totalThemes,
     mode,
@@ -274,10 +291,37 @@ app.get('/health', (_req: Request, res: Response) => {
   });
 });
 
+// List available protocols
+app.get('/api/protocols', (_req: Request, res: Response) => {
+  try {
+    const loader = new ProtocolLoader();
+    const protocols = loader.listProtocols();
+
+    res.json({
+      protocols: protocols.map(p => ({
+        id: p.id,
+        slug: p.slug,
+        title: p.title,
+        version: p.version,
+        purpose: p.purpose,
+        why: p.why,
+        use_when: p.use_when,
+        theme_count: p.theme_count,
+      }))
+    });
+  } catch (error) {
+    console.error('Error listing protocols:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
 // Start protocol walk
 app.post('/api/walk/start', async (req: Request, res: Response) => {
   try {
-    const { user_input } = req.body as StartRequest;
+    const { user_input, protocol_slug } = req.body as StartRequest;
 
     if (!user_input || typeof user_input !== 'string') {
       return res.status(400).json({
@@ -285,8 +329,8 @@ app.post('/api/walk/start', async (req: Request, res: Response) => {
       });
     }
 
-    // Create new session
-    const session = createSession();
+    // Create new session with specified protocol
+    const session = createSession(protocol_slug);
 
     // Process initial message
     const agentResponse = await session.agent.processMessage(user_input);
@@ -465,6 +509,7 @@ app.listen(PORT, () => {
 🚀 Server running on http://localhost:${PORT}
 
 Endpoints:
+  GET    /api/protocols       - List available protocols
   POST   /api/walk/start      - Start new protocol walk
   POST   /api/walk/continue   - Continue protocol walk
   POST   /api/walk/complete   - Complete protocol
