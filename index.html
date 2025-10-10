@@ -269,6 +269,41 @@
             flex-direction: column;
             gap: 1.5rem;
         }
+        
+        /* Summary/Completion specific styling */
+        .composer-output.completion-summary {
+            background: #FFFFFF;
+            border: 1px solid #E7E5E4;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+        
+        .composer-output.completion-summary .theme-title {
+            font-size: 2rem;
+            font-weight: 600;
+            border-bottom: 2px solid #57534E;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .composer-output.completion-summary strong {
+            color: #57534E;
+            font-weight: 600;
+        }
+        
+        .composer-output.completion-summary p {
+            margin-bottom: 1.25rem;
+        }
+        
+        .composer-output.completion-summary ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1.25rem;
+        }
+        
+        .composer-output.completion-summary li {
+            margin-bottom: 0.5rem;
+        }
 
         .theme-title {
             font-size: 1.75rem;
@@ -1474,7 +1509,10 @@
             // Render the completion content (field diagnosis and summary)
             console.log('🎨 Rendering composer output...');
             renderComposerOutput(data.composer_output);
-            console.log('✅ Composer output rendered');
+            
+            // Add completion-summary class for enhanced styling
+            composerOutput.classList.add('completion-summary');
+            console.log('✅ Composer output rendered with completion styling');
             
             // Hide the entire response area (input + continue button)
             const responseArea = document.querySelector('.response-area');
@@ -1503,14 +1541,26 @@
             const completionContainer = document.createElement('div');
             completionContainer.className = 'walk-control';
             completionContainer.style.marginTop = '2rem';
+            completionContainer.style.display = 'flex';
+            completionContainer.style.gap = '1rem';
+            completionContainer.style.flexWrap = 'wrap';
             completionContainer.innerHTML = `
-                <button class="walk-button" id="completion-button">Mark complete</button>
+                <button class="walk-button" id="download-button" style="flex: 1; min-width: 200px;">Download Summary</button>
+                <button class="walk-button" id="completion-button" style="flex: 1; min-width: 200px;">Mark Complete</button>
             `;
             
             // Insert completion button after composer output
             console.log('🔍 Composer output parent:', !!composerOutput.parentNode);
             composerOutput.parentNode.insertBefore(completionContainer, composerOutput.nextSibling);
             console.log('✅ Completion button added');
+            
+            // Handle download button click
+            const downloadButton = completionContainer.querySelector('#download-button');
+            console.log('🔍 Download button found:', !!downloadButton);
+            downloadButton.onclick = () => {
+                console.log('⬇️ Download button clicked');
+                downloadSummary(data);
+            };
             
             // Handle completion button click
             const button = completionContainer.querySelector('#completion-button');
@@ -1543,6 +1593,90 @@
             };
             
             console.log('🎉 handleCompletion completed');
+        }
+        
+        // Download summary as formatted text file
+        function downloadSummary(data) {
+            // Convert HTML to plain text with nice formatting
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = data.composer_output;
+            
+            // Build formatted text
+            let formattedText = '═══════════════════════════════════════════════════════\n';
+            formattedText += '           FIELD DIAGNOSTIC PROTOCOL SUMMARY\n';
+            formattedText += '═══════════════════════════════════════════════════════\n\n';
+            
+            // Add date
+            const now = new Date();
+            formattedText += `Date: ${now.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+            })}\n`;
+            formattedText += `Time: ${now.toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit'
+            })}\n\n`;
+            
+            formattedText += '───────────────────────────────────────────────────────\n\n';
+            
+            // Process the content
+            const content = tempDiv.textContent || tempDiv.innerText;
+            
+            // Clean up and format the content
+            const lines = content.split('\n').map(line => line.trim()).filter(line => line);
+            
+            lines.forEach(line => {
+                // Handle headings (lines that end with : or are in caps)
+                if (line.endsWith(':') || (line === line.toUpperCase() && line.length < 50)) {
+                    formattedText += '\n' + line + '\n';
+                    if (line.includes('FIELD DIAGNOSIS') || line.includes('EVIDENCE') || line.includes('IMPLICATIONS')) {
+                        formattedText += '─'.repeat(line.length) + '\n';
+                    }
+                } else {
+                    // Regular content with wrapping
+                    const wrapped = wrapText(line, 72);
+                    formattedText += wrapped + '\n';
+                }
+            });
+            
+            formattedText += '\n\n═══════════════════════════════════════════════════════\n';
+            formattedText += '              End of Field Diagnostic Summary\n';
+            formattedText += '═══════════════════════════════════════════════════════\n';
+            
+            // Create and download the file
+            const blob = new Blob([formattedText], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `field-diagnostic-${now.toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            console.log('✅ Summary downloaded');
+        }
+        
+        // Helper function to wrap text at specified width
+        function wrapText(text, maxWidth) {
+            if (text.length <= maxWidth) return text;
+            
+            const words = text.split(' ');
+            const lines = [];
+            let currentLine = '';
+            
+            words.forEach(word => {
+                if ((currentLine + word).length <= maxWidth) {
+                    currentLine += (currentLine ? ' ' : '') + word;
+                } else {
+                    if (currentLine) lines.push(currentLine);
+                    currentLine = word;
+                }
+            });
+            
+            if (currentLine) lines.push(currentLine);
+            return lines.join('\n');
         }
 
         // Show error
