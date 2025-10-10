@@ -287,7 +287,9 @@
             margin-bottom: 1.5rem;
         }
         
-        .composer-output.summary-mode h2 {
+        /* Target h2 tags anywhere in summary mode */
+        .composer-output.summary-mode h2,
+        .composer-output.summary-mode .section-content h2 {
             font-size: 1.5rem;
             color: #57534E;
             margin-top: 2rem;
@@ -295,7 +297,14 @@
             font-weight: 600;
         }
         
-        .composer-output.summary-mode h3 {
+        /* First h2 shouldn't have top margin */
+        .composer-output.summary-mode h2:first-child,
+        .composer-output.summary-mode .section-content h2:first-child {
+            margin-top: 0;
+        }
+        
+        .composer-output.summary-mode h3,
+        .composer-output.summary-mode .section-content h3 {
             font-size: 1.25rem;
             color: #78716C;
             margin-top: 1.5rem;
@@ -303,24 +312,29 @@
             font-weight: 600;
         }
         
-        .composer-output.summary-mode p {
+        .composer-output.summary-mode p,
+        .composer-output.summary-mode .section-content p {
             line-height: 1.7;
             color: #44403C;
             margin-bottom: 1rem;
         }
         
-        .composer-output.summary-mode strong {
+        .composer-output.summary-mode strong,
+        .composer-output.summary-mode .section-content strong {
             color: #292524;
             font-weight: 600;
         }
         
         .composer-output.summary-mode ul,
-        .composer-output.summary-mode ol {
+        .composer-output.summary-mode ol,
+        .composer-output.summary-mode .section-content ul,
+        .composer-output.summary-mode .section-content ol {
             margin-left: 1.5rem;
             margin-bottom: 1rem;
         }
         
-        .composer-output.summary-mode li {
+        .composer-output.summary-mode li,
+        .composer-output.summary-mode .section-content li {
             line-height: 1.7;
             color: #44403C;
             margin-bottom: 0.5rem;
