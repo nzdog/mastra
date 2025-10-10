@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lichen Field</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
             margin: 0;
@@ -219,6 +220,11 @@
             gap: 3rem;
         }
 
+        /* Wider container for summary mode */
+        .field-container.summary-container {
+            max-width: 900px;
+        }
+
         /* Entry State */
         .entry-view {
             display: flex;
@@ -272,78 +278,88 @@
         
         /* Enhanced styling for completion summary */
         .composer-output.summary-mode {
-            background: #FAFAF9;
+            background: #FFFFFF;
             border: 1px solid #E7E5E4;
-            border-radius: 12px;
-            padding: 2.5rem;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            padding: 3rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+            max-width: 800px;
+            margin: 0 auto;
         }
-        
+
         .composer-output.summary-mode .theme-title {
-            font-size: 2rem;
-            color: #57534E;
-            border-bottom: 2px solid #D6D3D1;
-            padding-bottom: 0.75rem;
-            margin-bottom: 1.5rem;
+            font-size: 2.25rem;
+            color: #1C1917;
+            border-bottom: 3px solid #D6D3D1;
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
         }
-        
+
         /* Target h2 tags anywhere in summary mode */
         .composer-output.summary-mode h2,
         .composer-output.summary-mode .section-content h2 {
             display: block !important;
-            font-size: 1.875rem;
-            color: #292524;
+            font-size: 1.5rem;
+            color: #1C1917;
             margin-top: 2.5rem;
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
             font-weight: 700;
-            letter-spacing: -0.025em;
-            border-bottom: 2px solid #E7E5E4;
-            padding-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+            padding-top: 1rem;
+            border-top: 2px solid #F5F5F4;
         }
-        
-        /* First h2 shouldn't have top margin */
+
+        /* First h2 shouldn't have top margin or border */
         .composer-output.summary-mode h2:first-child,
         .composer-output.summary-mode .section-content h2:first-child {
             margin-top: 0;
+            padding-top: 0;
+            border-top: none;
         }
-        
+
         .composer-output.summary-mode h3,
         .composer-output.summary-mode .section-content h3 {
-            font-size: 1.25rem;
-            color: #78716C;
-            margin-top: 1.5rem;
+            font-size: 1.125rem;
+            color: #57534E;
+            margin-top: 2rem;
             margin-bottom: 0.75rem;
             font-weight: 600;
+            letter-spacing: -0.01em;
         }
-        
+
         .composer-output.summary-mode p,
         .composer-output.summary-mode .section-content p {
             display: block !important;
-            font-size: 0.9375rem;
-            line-height: 1.75;
-            color: #44403C;
-            margin-bottom: 1rem;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #292524;
+            margin-bottom: 1.25rem;
+            text-align: left;
         }
-        
+
         .composer-output.summary-mode strong,
         .composer-output.summary-mode .section-content strong {
-            color: #292524;
+            color: #1C1917;
             font-weight: 600;
         }
-        
+
         .composer-output.summary-mode ul,
         .composer-output.summary-mode ol,
         .composer-output.summary-mode .section-content ul,
         .composer-output.summary-mode .section-content ol {
-            margin-left: 1.5rem;
-            margin-bottom: 1rem;
+            margin-left: 1.75rem;
+            margin-bottom: 1.5rem;
+            padding-left: 0;
         }
-        
+
         .composer-output.summary-mode li,
         .composer-output.summary-mode .section-content li {
-            line-height: 1.7;
-            color: #44403C;
-            margin-bottom: 0.5rem;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #292524;
+            margin-bottom: 0.75rem;
         }
 
         .theme-title {
@@ -1017,15 +1033,17 @@
                 child.classList.add('fade-in-section');
             });
 
-            // Apply jigsaw animation after fade-in is complete
-            setTimeout(() => {
-                const contentElements = composerOutput.querySelectorAll('.theme-title, .section-content');
-                contentElements.forEach(el => {
-                    if (el.textContent.trim()) {
-                        animateTextReveal(el);
-                    }
-                });
-            }, 100);
+            // Apply jigsaw animation after fade-in is complete (skip for COMPLETE mode)
+            if (data.mode !== 'COMPLETE') {
+                setTimeout(() => {
+                    const contentElements = composerOutput.querySelectorAll('.theme-title, .section-content');
+                    contentElements.forEach(el => {
+                        if (el.textContent.trim()) {
+                            animateTextReveal(el);
+                        }
+                    });
+                }, 100);
+            }
 
             // Focus the response input after content is visible
             setTimeout(() => {
@@ -1330,70 +1348,58 @@
         }
 
         // Render composer output
-        // Convert markdown to HTML
+        // Convert markdown to HTML with improved parsing
         function convertMarkdownToHTML(markdown) {
             if (!markdown) return '';
-            
-            console.log('🔧 MARKDOWN INPUT (first 300 chars):', markdown.substring(0, 300));
-            
+
+            console.log('🔧 MARKDOWN INPUT (first 500 chars):', markdown.substring(0, 500));
+
             let html = markdown;
-            
+
             // First, convert headers (before any other processing)
+            // Support both ## and # formats
             html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
             html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
             html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
-            
-            console.log('🔧 AFTER HEADERS (first 300 chars):', html.substring(0, 300));
-            
-            // Convert **bold** to <strong>
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            
+
+            // Convert **bold text:** or **bold** to <strong>
+            // Use a more robust pattern that handles multi-line
+            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+
             // Convert bullet points
             html = html.replace(/^\• (.+)$/gm, '<li>$1</li>');
             html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
-            
+
             // Wrap consecutive <li> tags in <ul>
             html = html.replace(/(<li>.*?<\/li>\n?)+/gs, (match) => {
                 return '<ul>' + match + '</ul>';
             });
-            
-            // Split into lines and process paragraphs
-            const lines = html.split('\n');
-            console.log('🔧 SPLIT INTO LINES:', lines.length, 'lines');
-            console.log('🔧 FIRST 5 LINES:', lines.slice(0, 5));
-            
+
+            // Split into paragraphs based on double newlines first
+            const paragraphs = html.split(/\n\n+/);
             const processed = [];
-            let currentParagraph = [];
-            
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-                
-                // If it's a header, ul, or empty line, flush current paragraph
-                if (!line || line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('<ol')) {
-                    if (currentParagraph.length > 0) {
-                        processed.push('<p>' + currentParagraph.join(' ') + '</p>');
-                        currentParagraph = [];
-                    }
-                    if (line) {
-                        processed.push(line);
-                    }
+
+            for (let para of paragraphs) {
+                const trimmed = para.trim();
+                if (!trimmed) continue;
+
+                // Check if it's already an HTML element
+                if (trimmed.startsWith('<h2>') || trimmed.startsWith('<h3>') ||
+                    trimmed.startsWith('<ul>') || trimmed.startsWith('<ol>') ||
+                    trimmed.startsWith('<li>')) {
+                    processed.push(trimmed);
                 } else {
-                    // Accumulate text for paragraph
-                    currentParagraph.push(line);
+                    // Wrap plain text in paragraph tags
+                    // Replace single newlines with spaces within paragraphs
+                    const cleanText = trimmed.replace(/\n/g, ' ').replace(/\s+/g, ' ');
+                    processed.push('<p>' + cleanText + '</p>');
                 }
             }
-            
-            // Flush any remaining paragraph
-            if (currentParagraph.length > 0) {
-                processed.push('<p>' + currentParagraph.join(' ') + '</p>');
-            }
-            
-            console.log('🔧 PROCESSED ELEMENTS:', processed.length);
-            console.log('🔧 FIRST 3 PROCESSED:', processed.slice(0, 3));
-            
-            const result = processed.join('\n');
-            console.log('🔧 FINAL HTML (first 300 chars):', result.substring(0, 300));
-            
+
+            const result = processed.join('\n\n');
+            console.log('🔧 FINAL HTML (first 500 chars):', result.substring(0, 500));
+            console.log('🔧 Total processed elements:', processed.length);
+
             return result;
         }
 
@@ -1619,19 +1625,25 @@
         function handleCompletion(data) {
             console.log('🔧 handleCompletion called');
             console.log('📋 Data in handleCompletion:', data);
-            
+
+            // Add wider container class for summary mode
+            const fieldContainer = document.getElementById('main-content');
+            if (fieldContainer) {
+                fieldContainer.classList.add('summary-container');
+            }
+
             // Render the completion content (field diagnosis and summary)
             console.log('🎨 Rendering composer output...');
             renderComposerOutput(data.composer_output);
-            
+
             // Add summary-mode class for enhanced styling
             console.log('🔧 Before adding summary-mode, classes:', composerOutput.className);
             composerOutput.classList.add('summary-mode');
             console.log('🔧 After adding summary-mode, classes:', composerOutput.className);
-            
+
             // Log the actual HTML structure
             console.log('🔧 Composer output HTML (first 500 chars):', composerOutput.innerHTML.substring(0, 500));
-            
+
             // Check if h2 tags exist
             const h2Tags = composerOutput.querySelectorAll('h2');
             console.log('🔧 Number of h2 tags found:', h2Tags.length);
@@ -1640,7 +1652,7 @@
                 console.log('🔧 First h2 computed style font-size:', window.getComputedStyle(h2Tags[0]).fontSize);
                 console.log('🔧 First h2 computed style color:', window.getComputedStyle(h2Tags[0]).color);
             }
-            
+
             console.log('✅ Composer output rendered with summary styling');
             
             // Hide the entire response area (input + continue button)
@@ -1669,12 +1681,15 @@
             console.log('🔨 Creating completion buttons...');
             const completionContainer = document.createElement('div');
             completionContainer.className = 'walk-control';
-            completionContainer.style.marginTop = '2rem';
+            completionContainer.style.marginTop = '3rem';
             completionContainer.style.display = 'flex';
             completionContainer.style.gap = '1rem';
+            completionContainer.style.justifyContent = 'center';
+            completionContainer.style.paddingTop = '2rem';
+            completionContainer.style.borderTop = '1px solid #E7E5E4';
             completionContainer.innerHTML = `
-                <button class="walk-button" id="download-button">Download Summary</button>
-                <button class="walk-button" id="completion-button">Mark complete</button>
+                <button class="walk-button" id="download-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Download Summary</button>
+                <button class="walk-button" id="completion-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Mark complete</button>
             `;
             
             // Insert completion button after composer output
@@ -1687,38 +1702,91 @@
             console.log('🔍 Download button found:', !!downloadButton);
             downloadButton.onclick = () => {
                 console.log('🖱️ Download button clicked');
-                
-                // Get the composer output text
-                const summaryText = composerOutput.innerText || composerOutput.textContent;
-                
-                // Create a formatted text file
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
                 const timestamp = new Date().toLocaleString();
-                const formattedContent = `
-================================================================================
-FIELD DIAGNOSTIC PROTOCOL - SUMMARY
-================================================================================
+                const pageWidth = doc.internal.pageSize.getWidth();
+                const pageHeight = doc.internal.pageSize.getHeight();
+                const margin = 20;
+                const maxWidth = pageWidth - (margin * 2);
+                let yPosition = margin;
 
-Generated: ${timestamp}
+                // Helper function to add text with word wrapping
+                const addText = (text, fontSize, isBold = false, isItalic = false) => {
+                    if (yPosition > pageHeight - margin) {
+                        doc.addPage();
+                        yPosition = margin;
+                    }
 
-${summaryText}
+                    doc.setFontSize(fontSize);
+                    if (isBold && isItalic) {
+                        doc.setFont('helvetica', 'bolditalic');
+                    } else if (isBold) {
+                        doc.setFont('helvetica', 'bold');
+                    } else if (isItalic) {
+                        doc.setFont('helvetica', 'italic');
+                    } else {
+                        doc.setFont('helvetica', 'normal');
+                    }
 
-================================================================================
-End of Field Diagnostic Summary
-================================================================================
-`.trim();
-                
-                // Create blob and download
-                const blob = new Blob([formattedContent], { type: 'text/plain' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `field-diagnostic-${new Date().toISOString().split('T')[0]}.txt`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-                console.log('✅ Summary downloaded');
+                    const lines = doc.splitTextToSize(text, maxWidth);
+                    lines.forEach(line => {
+                        if (yPosition > pageHeight - margin) {
+                            doc.addPage();
+                            yPosition = margin;
+                        }
+                        doc.text(line, margin, yPosition);
+                        yPosition += fontSize * 0.5;
+                    });
+                };
+
+                // Title
+                addText('FIELD DIAGNOSTIC PROTOCOL', 18, true);
+                yPosition += 5;
+                addText('Summary Report', 14, false, true);
+                yPosition += 3;
+                addText(`Generated: ${timestamp}`, 9, false, true);
+                yPosition += 10;
+
+                // Draw a line
+                doc.setDrawColor(200);
+                doc.line(margin, yPosition, pageWidth - margin, yPosition);
+                yPosition += 10;
+
+                // Get the text content and parse it
+                const summaryText = composerOutput.innerText || composerOutput.textContent;
+                const lines = summaryText.split('\n');
+
+                for (let line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) {
+                        yPosition += 3;
+                        continue;
+                    }
+
+                    // Check if it's a header (all caps or starts with specific patterns)
+                    if (trimmed.match(/^[A-Z\s]{5,}$/) || trimmed.match(/^(FIELD DIAGNOSIS|SUMMARY|THE FIELD)/)) {
+                        yPosition += 5;
+                        addText(trimmed, 14, true);
+                        yPosition += 5;
+                    } else if (trimmed.includes('**') || trimmed.match(/^[A-Z][A-Z\s]+:/)) {
+                        // Bold text or section headers
+                        const cleanText = trimmed.replace(/\*\*/g, '');
+                        addText(cleanText, 11, true);
+                        yPosition += 2;
+                    } else {
+                        // Regular paragraph text
+                        addText(trimmed, 10);
+                        yPosition += 2;
+                    }
+                }
+
+                // Save the PDF
+                doc.save(`field-diagnostic-${new Date().toISOString().split('T')[0]}.pdf`);
+
+                console.log('✅ Summary downloaded as PDF');
             };
             
             // Handle completion button click
