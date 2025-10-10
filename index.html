@@ -1314,12 +1314,16 @@
         function convertMarkdownToHTML(markdown) {
             if (!markdown) return '';
             
+            console.log('🔧 MARKDOWN INPUT (first 300 chars):', markdown.substring(0, 300));
+            
             let html = markdown;
             
             // First, convert headers (before any other processing)
             html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
             html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
             html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+            
+            console.log('🔧 AFTER HEADERS (first 300 chars):', html.substring(0, 300));
             
             // Convert **bold** to <strong>
             html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
@@ -1335,6 +1339,9 @@
             
             // Split into lines and process paragraphs
             const lines = html.split('\n');
+            console.log('🔧 SPLIT INTO LINES:', lines.length, 'lines');
+            console.log('🔧 FIRST 5 LINES:', lines.slice(0, 5));
+            
             const processed = [];
             let currentParagraph = [];
             
@@ -1361,7 +1368,13 @@
                 processed.push('<p>' + currentParagraph.join(' ') + '</p>');
             }
             
-            return processed.join('\n');
+            console.log('🔧 PROCESSED ELEMENTS:', processed.length);
+            console.log('🔧 FIRST 3 PROCESSED:', processed.slice(0, 3));
+            
+            const result = processed.join('\n');
+            console.log('🔧 FINAL HTML (first 300 chars):', result.substring(0, 300));
+            
+            return result;
         }
 
         function renderComposerOutput(markdown) {
