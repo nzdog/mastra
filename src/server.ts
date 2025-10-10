@@ -307,9 +307,11 @@ app.post('/api/walk/start', async (req: Request, res: Response) => {
       // Note: We can't directly access themeAnswers (it's private) but that's okay
       // The agent will work without previous answers for testing purposes
       
-      // Get the theme questions for the target theme
-      const themeContent = session.registry.getThemeContent(skip_to_theme);
-      agentResponse = themeContent || `**Theme ${skip_to_theme}**\n\nReady to begin.`;
+      // Get the theme questions for the target theme using retrieve()
+      const chunk = session.registry.retrieve('WALK', skip_to_theme);
+      agentResponse = chunk?.content || `**Theme ${skip_to_theme}**\n\nReady to begin.`;
+      
+      console.log(`🎯 DEBUG MODE: Retrieved theme ${skip_to_theme} content (${agentResponse.length} chars)`);
     }
 
     // Update session cost
