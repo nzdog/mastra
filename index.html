@@ -1499,18 +1499,60 @@
             }
             
             // Add completion button container after composer output
-            console.log('🔨 Creating completion button...');
+            console.log('🔨 Creating completion buttons...');
             const completionContainer = document.createElement('div');
             completionContainer.className = 'walk-control';
             completionContainer.style.marginTop = '2rem';
+            completionContainer.style.display = 'flex';
+            completionContainer.style.gap = '1rem';
             completionContainer.innerHTML = `
+                <button class="walk-button" id="download-button">Download Summary</button>
                 <button class="walk-button" id="completion-button">Mark complete</button>
             `;
             
             // Insert completion button after composer output
             console.log('🔍 Composer output parent:', !!composerOutput.parentNode);
             composerOutput.parentNode.insertBefore(completionContainer, composerOutput.nextSibling);
-            console.log('✅ Completion button added');
+            console.log('✅ Completion buttons added');
+            
+            // Handle download button click
+            const downloadButton = completionContainer.querySelector('#download-button');
+            console.log('🔍 Download button found:', !!downloadButton);
+            downloadButton.onclick = () => {
+                console.log('🖱️ Download button clicked');
+                
+                // Get the composer output text
+                const summaryText = composerOutput.innerText || composerOutput.textContent;
+                
+                // Create a formatted text file
+                const timestamp = new Date().toLocaleString();
+                const formattedContent = `
+================================================================================
+FIELD DIAGNOSTIC PROTOCOL - SUMMARY
+================================================================================
+
+Generated: ${timestamp}
+
+${summaryText}
+
+================================================================================
+End of Field Diagnostic Summary
+================================================================================
+`.trim();
+                
+                // Create blob and download
+                const blob = new Blob([formattedContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `field-diagnostic-${new Date().toISOString().split('T')[0]}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                console.log('✅ Summary downloaded');
+            };
             
             // Handle completion button click
             const button = completionContainer.querySelector('#completion-button');
