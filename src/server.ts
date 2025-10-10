@@ -296,16 +296,16 @@ app.post('/api/walk/start', async (req: Request, res: Response) => {
     // If skip_to_theme is provided, artificially advance the agent state AFTER processing
     if (skip_to_theme && skip_to_theme >= 1 && skip_to_theme <= 5) {
       console.log(`🎯 DEBUG MODE: Skipping to theme ${skip_to_theme}`);
+      state.theme_index = skip_to_theme;
+      state.mode = 'WALK';
+      state.active_protocol = 'field_diagnostic';
+      state.highestThemeReached = skip_to_theme - 1;
+      state.last_response = 'theme_questions';
       
-      // Manually modify the internal agent state
-      const agentState = session.agent.getState();
-      agentState.theme_index = skip_to_theme;
-      agentState.mode = 'WALK';
-      agentState.active_protocol = 'field_diagnostic';
-      agentState.last_response = 'theme_questions';
-      
-      // Note: We can't directly access themeAnswers (it's private) but that's okay
-      // The agent will work without previous answers for testing purposes
+      // Generate dummy responses for previous themes
+      for (let i = 1; i < skip_to_theme; i++) {
+        state.user_answers.set(i, `[DEBUG: Skipped to theme ${skip_to_theme}]`);
+      }
       
       // Get the theme questions for the target theme
       const themeContent = session.registry.getThemeContent(skip_to_theme);
