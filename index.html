@@ -1316,13 +1316,13 @@
             
             let html = markdown;
             
-            // Convert **bold** to <strong>
-            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-            
-            // Convert headers (must be at start of line or after newline)
+            // First, convert headers (before any other processing)
             html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
             html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
             html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+            
+            // Convert **bold** to <strong>
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
             
             // Convert bullet points
             html = html.replace(/^\• (.+)$/gm, '<li>$1</li>');
@@ -1333,18 +1333,35 @@
                 return '<ul>' + match + '</ul>';
             });
             
-            // Convert paragraphs (text blocks separated by double newlines)
-            html = html.split('\n\n').map(para => {
-                para = para.trim();
-                if (!para) return '';
-                // Don't wrap if already has HTML tags
-                if (para.startsWith('<h') || para.startsWith('<ul') || para.startsWith('<ol')) {
-                    return para;
-                }
-                return '<p>' + para.replace(/\n/g, '<br>') + '</p>';
-            }).join('\n');
+            // Split into lines and process paragraphs
+            const lines = html.split('\n');
+            const processed = [];
+            let currentParagraph = [];
             
-            return html;
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                
+                // If it's a header, ul, or empty line, flush current paragraph
+                if (!line || line.startsWith('<h') || line.startsWith('<ul') || line.startsWith('<ol')) {
+                    if (currentParagraph.length > 0) {
+                        processed.push('<p>' + currentParagraph.join(' ') + '</p>');
+                        currentParagraph = [];
+                    }
+                    if (line) {
+                        processed.push(line);
+                    }
+                } else {
+                    // Accumulate text for paragraph
+                    currentParagraph.push(line);
+                }
+            }
+            
+            // Flush any remaining paragraph
+            if (currentParagraph.length > 0) {
+                processed.push('<p>' + currentParagraph.join(' ') + '</p>');
+            }
+            
+            return processed.join('\n');
         }
 
         function renderComposerOutput(markdown) {
