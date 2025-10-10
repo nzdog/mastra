@@ -269,6 +269,62 @@
             flex-direction: column;
             gap: 1.5rem;
         }
+        
+        /* Enhanced styling for completion summary */
+        .composer-output.summary-mode {
+            background: #FAFAF9;
+            border: 1px solid #E7E5E4;
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        
+        .composer-output.summary-mode .theme-title {
+            font-size: 2rem;
+            color: #57534E;
+            border-bottom: 2px solid #D6D3D1;
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .composer-output.summary-mode h2 {
+            font-size: 1.5rem;
+            color: #57534E;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        
+        .composer-output.summary-mode h3 {
+            font-size: 1.25rem;
+            color: #78716C;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .composer-output.summary-mode p {
+            line-height: 1.7;
+            color: #44403C;
+            margin-bottom: 1rem;
+        }
+        
+        .composer-output.summary-mode strong {
+            color: #292524;
+            font-weight: 600;
+        }
+        
+        .composer-output.summary-mode ul,
+        .composer-output.summary-mode ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .composer-output.summary-mode li {
+            line-height: 1.7;
+            color: #44403C;
+            margin-bottom: 0.5rem;
+        }
 
         .theme-title {
             font-size: 1.75rem;
@@ -1474,7 +1530,10 @@
             // Render the completion content (field diagnosis and summary)
             console.log('🎨 Rendering composer output...');
             renderComposerOutput(data.composer_output);
-            console.log('✅ Composer output rendered');
+            
+            // Add summary-mode class for enhanced styling
+            composerOutput.classList.add('summary-mode');
+            console.log('✅ Composer output rendered with summary styling');
             
             // Hide the entire response area (input + continue button)
             const responseArea = document.querySelector('.response-area');
