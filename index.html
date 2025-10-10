@@ -718,9 +718,6 @@
         // Usage: http://localhost:3000?theme=5
         const urlParams = new URLSearchParams(window.location.search);
         const skipToTheme = urlParams.get('theme');
-        if (skipToTheme) {
-            console.log(`🎯 DEBUG: URL parameter detected - will skip to theme ${skipToTheme}`);
-        }
 
         // Enable continue button when response has content
         responseInput.addEventListener('input', () => {
@@ -768,16 +765,13 @@
             await new Promise(resolve => setTimeout(resolve, 1200));
 
             try {
-                const requestBody = { 
-                    user_input: 'begin',
-                    skip_to_theme: skipToTheme ? parseInt(skipToTheme) : undefined
-                };
-                console.log('🎯 DEBUG: Sending request body:', requestBody);
-                
                 const response = await fetch(`${API_BASE}/api/walk/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(requestBody)
+                    body: JSON.stringify({ 
+                        user_input: 'begin',
+                        skip_to_theme: skipToTheme ? parseInt(skipToTheme) : undefined
+                    })
                 });
 
                 const data = await response.json();

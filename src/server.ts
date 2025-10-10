@@ -289,28 +289,24 @@ app.post('/api/walk/start', async (req: Request, res: Response) => {
     // Create new session
     const session = createSession();
 
-    // Process initial message first
-    let agentResponse = await session.agent.processMessage(user_input);
-    const state = session.agent.getState();
-
-    // If skip_to_theme is provided, artificially advance the agent state AFTER processing
+    // If skip_to_theme is provided, artificially advance the agent state
     if (skip_to_theme && skip_to_theme >= 1 && skip_to_theme <= 5) {
       console.log(`🎯 DEBUG MODE: Skipping to theme ${skip_to_theme}`);
+      const state = session.agent.getState();
       state.theme_index = skip_to_theme;
       state.mode = 'WALK';
       state.active_protocol = 'field_diagnostic';
       state.highestThemeReached = skip_to_theme - 1;
-      state.last_response = 'theme_questions';
       
       // Generate dummy responses for previous themes
       for (let i = 1; i < skip_to_theme; i++) {
         state.user_answers.set(i, `[DEBUG: Skipped to theme ${skip_to_theme}]`);
       }
-      
-      // Get the theme questions for the target theme
-      const themeContent = session.registry.getThemeContent(skip_to_theme);
-      agentResponse = themeContent || `**Theme ${skip_to_theme}**\n\nReady to begin.`;
     }
+
+    // Process initial message
+    const agentResponse = await session.agent.processMessage(user_input);
+    const state = session.agent.getState();
 
     // Update session cost
     session.total_cost = session.agent.getTotalCost();
