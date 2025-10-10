@@ -197,25 +197,39 @@ Examples:
 - "care invisible" → "Invisible Labor"
 - "everything urgent" → "Manufactured Urgency"
 
-Structure your response in this order:
+CRITICAL FORMATTING: Use proper markdown formatting for structure and readability.
 
-1. FIELD DIAGNOSIS:
-"Based on what you've surfaced, you're in a field I'd call **[Field Name]**."
+Structure your response with this exact markdown format:
 
-2. EVIDENCE (2-3 sentences):
-Use their exact language from the themes to show why this name fits. Reference specific answers.
+## Field Diagnosis
 
-3. COHERENCE ASSESSMENT:
-"This field aligns with [coherence/collapse]." Explain briefly why.
+Based on what you've surfaced, you're in a field I'd call **[Field Name]**.
 
-4. SUMMARY (3-4 paragraphs):
+## Evidence
+
+[2-3 sentences using their exact language from the themes to show why this name fits. Reference specific answers.]
+
+## Coherence Assessment
+
+This field aligns with [coherence/collapse]. [Brief explanation why.]
+
+## Summary
+
+[3-4 paragraphs covering:
 - What they discovered through the walk
 - What this field means for them
 - How it operates (rewards, stories, pressure points)
-- What shifts now that they can see it
+- What shifts now that they can see it]
 
-5. CLOSING:
-End with a clean closing that acknowledges the completion of the protocol. Do NOT ask if they want more summary or invite further questions. The protocol is complete.
+[Clean closing that acknowledges completion]
+
+FORMATTING REQUIREMENTS:
+- Use ## for all section headers (Field Diagnosis, Evidence, Coherence Assessment, Summary)
+- Use **bold** for the field name
+- Add blank lines between sections for spacing
+- Write in clear paragraphs within each section
+- Do NOT use numbered lists or colons after section names
+- End with a clean closing statement
 
 Example closing: "You've completed the Field Diagnostic Protocol. You now have language for the invisible forces shaping your experience."
 
