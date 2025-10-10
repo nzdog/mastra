@@ -1310,6 +1310,43 @@
         }
 
         // Render composer output
+        // Convert markdown to HTML
+        function convertMarkdownToHTML(markdown) {
+            if (!markdown) return '';
+            
+            let html = markdown;
+            
+            // Convert **bold** to <strong>
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+            
+            // Convert headers (must be at start of line or after newline)
+            html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+            html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+            html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
+            
+            // Convert bullet points
+            html = html.replace(/^\• (.+)$/gm, '<li>$1</li>');
+            html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+            
+            // Wrap consecutive <li> tags in <ul>
+            html = html.replace(/(<li>.*?<\/li>\n?)+/gs, (match) => {
+                return '<ul>' + match + '</ul>';
+            });
+            
+            // Convert paragraphs (text blocks separated by double newlines)
+            html = html.split('\n\n').map(para => {
+                para = para.trim();
+                if (!para) return '';
+                // Don't wrap if already has HTML tags
+                if (para.startsWith('<h') || para.startsWith('<ul') || para.startsWith('<ol')) {
+                    return para;
+                }
+                return '<p>' + para.replace(/\n/g, '<br>') + '</p>';
+            }).join('\n');
+            
+            return html;
+        }
+
         function renderComposerOutput(markdown) {
             composerOutput.innerHTML = '';
 
@@ -1375,9 +1412,11 @@
             }
 
             if (sections.acknowledgment) {
+                // Convert markdown to HTML for better formatting
+                const htmlContent = convertMarkdownToHTML(sections.acknowledgment);
                 composerOutput.innerHTML += `
                     <div class="output-section">
-                        <div class="section-content">${sections.acknowledgment}</div>
+                        <div class="section-content">${htmlContent}</div>
                     </div>
                 `;
             }
