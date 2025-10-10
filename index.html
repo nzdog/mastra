@@ -714,11 +714,6 @@
         // Set helper text based on platform
         responseHint.textContent = isMac ? 'Press ⌘ + Enter to continue' : 'Press Ctrl + Enter to continue';
 
-        // Check for theme URL parameter (for testing/debugging)
-        // Usage: http://localhost:3000?theme=5
-        const urlParams = new URLSearchParams(window.location.search);
-        const skipToTheme = urlParams.get('theme');
-
         // Enable continue button when response has content
         responseInput.addEventListener('input', () => {
             continueButton.disabled = !responseInput.value.trim();
@@ -768,10 +763,7 @@
                 const response = await fetch(`${API_BASE}/api/walk/start`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ 
-                        user_input: 'begin',
-                        skip_to_theme: skipToTheme ? parseInt(skipToTheme) : undefined
-                    })
+                    body: JSON.stringify({ user_input: 'begin' })
                 });
 
                 const data = await response.json();

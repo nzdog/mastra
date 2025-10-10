@@ -37,7 +37,6 @@ interface Support {
 
 interface StartRequest {
   user_input: string;
-  skip_to_theme?: number;
 }
 
 interface ContinueRequest {
@@ -278,7 +277,7 @@ app.get('/health', (_req: Request, res: Response) => {
 // Start protocol walk
 app.post('/api/walk/start', async (req: Request, res: Response) => {
   try {
-    const { user_input, skip_to_theme } = req.body as StartRequest;
+    const { user_input } = req.body as StartRequest;
 
     if (!user_input || typeof user_input !== 'string') {
       return res.status(400).json({
@@ -288,21 +287,6 @@ app.post('/api/walk/start', async (req: Request, res: Response) => {
 
     // Create new session
     const session = createSession();
-
-    // If skip_to_theme is provided, artificially advance the agent state
-    if (skip_to_theme && skip_to_theme >= 1 && skip_to_theme <= 5) {
-      console.log(`🎯 DEBUG MODE: Skipping to theme ${skip_to_theme}`);
-      const state = session.agent.getState();
-      state.theme_index = skip_to_theme;
-      state.mode = 'WALK';
-      state.active_protocol = 'field_diagnostic';
-      state.highestThemeReached = skip_to_theme - 1;
-      
-      // Generate dummy responses for previous themes
-      for (let i = 1; i < skip_to_theme; i++) {
-        state.user_answers.set(i, `[DEBUG: Skipped to theme ${skip_to_theme}]`);
-      }
-    }
 
     // Process initial message
     const agentResponse = await session.agent.processMessage(user_input);
