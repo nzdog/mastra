@@ -1458,11 +1458,15 @@
             if (sections.acknowledgment) {
                 // Convert markdown to HTML for better formatting
                 const htmlContent = convertMarkdownToHTML(sections.acknowledgment);
+                console.log('📝 SETTING innerHTML with htmlContent');
+                console.log('📝 htmlContent length:', htmlContent.length);
                 composerOutput.innerHTML += `
                     <div class="output-section">
                         <div class="section-content">${htmlContent}</div>
                     </div>
                 `;
+                console.log('📝 composerOutput.innerHTML length after:', composerOutput.innerHTML.length);
+                console.log('📝 composerOutput classes:', composerOutput.className);
             }
 
             if (sections.completion_prompt) {
@@ -1615,7 +1619,22 @@
             renderComposerOutput(data.composer_output);
             
             // Add summary-mode class for enhanced styling
+            console.log('🔧 Before adding summary-mode, classes:', composerOutput.className);
             composerOutput.classList.add('summary-mode');
+            console.log('🔧 After adding summary-mode, classes:', composerOutput.className);
+            
+            // Log the actual HTML structure
+            console.log('🔧 Composer output HTML (first 500 chars):', composerOutput.innerHTML.substring(0, 500));
+            
+            // Check if h2 tags exist
+            const h2Tags = composerOutput.querySelectorAll('h2');
+            console.log('🔧 Number of h2 tags found:', h2Tags.length);
+            if (h2Tags.length > 0) {
+                console.log('🔧 First h2 text:', h2Tags[0].textContent);
+                console.log('🔧 First h2 computed style font-size:', window.getComputedStyle(h2Tags[0]).fontSize);
+                console.log('🔧 First h2 computed style color:', window.getComputedStyle(h2Tags[0]).color);
+            }
+            
             console.log('✅ Composer output rendered with summary styling');
             
             // Hide the entire response area (input + continue button)
