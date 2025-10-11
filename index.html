@@ -173,6 +173,17 @@
             display: none;
         }
 
+        /* Show header logo when protocol list is active */
+        .page-header.intro-mode.protocol-list-active .header-center-logo {
+            display: block !important;
+            opacity: 0.85;
+        }
+
+        /* Spinning animation for header logo */
+        .header-center-logo.spinning {
+            animation: spinSlow 20s linear infinite;
+        }
+
         .header-center-logo {
             position: absolute;
             left: 50%;
@@ -680,19 +691,14 @@
             font-style: italic;
         }
 
-        /* Supports Strip */
+        /* Supports Strip - DISABLED */
         .supports-strip {
-            border-top: 1px solid #F5F5F4;
-            background: #FCFCFB;
-            padding: 1rem 2rem;
-            overflow-x: auto;
-            display: none; /* Hidden by default and during intro flow */
-            transition: opacity 0.8s ease-out;
+            display: none !important; /* Commented out - not working */
         }
 
-        .supports-strip.active {
+        /* .supports-strip.active {
             display: block;
-        }
+        } */
 
         .supports-container {
             display: flex;
@@ -857,7 +863,7 @@
             font-size: 0.9375rem;
             color: #78716C;
             text-align: center;
-            opacity: 1;
+            opacity: 0;
             z-index: 200;
             display: inline-block;
         }
@@ -1181,26 +1187,23 @@
             }
 
             .intro-logo-container {
-                top: calc(28vh - 70px);
+                top: calc(40vh - 40px);
             }
 
-            /* Typography scaling */
-            .intro-quote {
+            /* Typography scaling - mobile version only */
+            .intro-quote.mobile-only {
+                position: relative !important;
                 font-size: 1.0625rem;
                 white-space: normal !important;
-                left: 7.5% !important;
-                right: 7.5% !important;
+                left: auto !important;
+                right: auto !important;
+                margin-left: 7.5% !important;
+                margin-right: 7.5% !important;
                 transform: none !important;
                 display: block !important;
                 width: auto !important;
                 line-height: 1.5 !important;
-            }
-
-            .intro-quote-attribution {
-                font-size: 0.875rem;
-                position: static !important;
-                transform: none !important;
-                display: inline !important;
+                top: auto !important;
             }
 
             .intro-text-line {
@@ -1208,11 +1211,10 @@
                 white-space: normal !important;
                 left: 7.5% !important;
                 right: 7.5% !important;
-                transform: none !important;
+                transform: translateX(0) !important;
                 display: block !important;
                 width: auto !important;
                 line-height: 1.5 !important;
-                margin-bottom: 20px !important;
             }
 
             .intro-orientation {
@@ -1242,7 +1244,7 @@
             }
 
             .intro-protocol-list-page {
-                padding-top: calc(28vh - 70px + 60px);
+                padding-top: 0px;
             }
 
             /* Protocol cards */
@@ -1271,7 +1273,7 @@
 
             /* Adjust vertical spacing */
             .intro-continue-container {
-                top: calc(28vh + 180px);
+                top: calc(28vh + 160px);
             }
 
             /* === PROTOCOL WALK INTERFACE === */
@@ -1287,6 +1289,14 @@
 
             .theme-position {
                 font-size: 0.75rem;
+            }
+
+            /* Truncate header title to prevent overlap with center logo */
+            .header-title {
+                max-width: 40%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
 
             /* Content area */
@@ -1384,28 +1394,25 @@
             }
 
             .intro-logo-container {
-                top: calc(25vh - 60px);
+                top: calc(40vh - 32px);
             }
 
-            /* Typography - even smaller */
-            .intro-quote {
+            /* Typography - even smaller - mobile version only */
+            .intro-quote.mobile-only {
+                position: relative !important;
                 font-size: 1rem;
                 line-height: 1.4 !important;
-                left: 5% !important;
-                right: 5% !important;
+                left: auto !important;
+                right: auto !important;
+                margin-left: 5% !important;
+                margin-right: 5% !important;
                 transform: none !important;
                 padding: 0 0.5rem;
                 box-sizing: border-box;
                 display: block !important;
                 white-space: normal !important;
                 width: auto !important;
-            }
-
-            .intro-quote-attribution {
-                font-size: 0.8125rem;
-                position: static !important;
-                transform: none !important;
-                display: inline !important;
+                top: auto !important;
             }
 
             .intro-text-line {
@@ -1413,13 +1420,12 @@
                 line-height: 1.4 !important;
                 left: 5% !important;
                 right: 5% !important;
-                transform: none !important;
+                transform: translateX(0) !important;
                 padding: 0 0.5rem;
                 box-sizing: border-box;
                 display: block !important;
                 white-space: normal !important;
                 width: auto !important;
-                margin-bottom: 25px !important;
             }
 
             .intro-orientation {
@@ -1451,7 +1457,7 @@
             }
 
             .intro-protocol-list-page {
-                padding-top: calc(25vh - 60px + 50px);
+                padding-top: 0px;
             }
 
             /* Cards - full width with minimal padding */
@@ -1488,7 +1494,7 @@
 
             /* Continue button position */
             .intro-continue-container {
-                top: calc(25vh + 160px);
+                top: calc(25vh + 140px);
             }
 
             .intro-continue-hint {
@@ -1519,6 +1525,10 @@
 
             .header-title {
                 font-size: 0.8125rem;
+                max-width: 35%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
             }
 
             .header-state {
@@ -1820,10 +1830,10 @@
         </div>
     </div>
 
-    <!-- Supports Strip -->
-    <div class="supports-strip" id="supports-strip">
+    <!-- Supports Strip - DISABLED -->
+    <!-- <div class="supports-strip" id="supports-strip">
         <div class="supports-container" id="supports-container"></div>
-    </div>
+    </div> -->
 
     <!-- Completion Overlay -->
     <div class="completion-overlay" id="completion-overlay">
@@ -1879,8 +1889,8 @@
         const protocolName = document.getElementById('protocol-name');
         const themePosition = document.getElementById('theme-position');
         const composerOutput = document.getElementById('composer-output');
-        const supportsStrip = document.getElementById('supports-strip');
-        const supportsContainer = document.getElementById('supports-container');
+        // const supportsStrip = document.getElementById('supports-strip');
+        // const supportsContainer = document.getElementById('supports-container');
         const errorStrip = document.getElementById('error-strip');
         const errorMessage = document.getElementById('error-message');
         const responseHint = document.getElementById('response-hint');
@@ -2029,7 +2039,9 @@
                 const line = document.createElement('div');
                 line.className = 'intro-text-line';
                 line.textContent = lineText;
-                line.style.top = `calc(33% - 70px + ${60 + (i * 40)}px)`; // Start 60px below Einstein quote, moved up 70px for header
+                // Move first two lines up by 20px
+                const offset = (i < 2) ? -20 : 0;
+                line.style.top = `calc(33% - 70px + ${60 + (i * 40) + offset}px)`; // Start 60px below Einstein quote, moved up 70px for header
                 introEmbodimentLines.appendChild(line);
                 
                 // Grey out the previous line BEFORE showing the next one
@@ -2073,9 +2085,18 @@
             
             // Hide intro content
             introContent.style.display = 'none';
-            
+
+            // Hide the big intro logo
+            const introLogoContainer = document.querySelector('.intro-logo-container');
+            if (introLogoContainer) {
+                introLogoContainer.style.display = 'none';
+            }
+
             // Show protocol list page
             introProtocolListPage.classList.add('visible');
+
+            // Show header logo on protocol list page
+            pageHeader.classList.add('protocol-list-active');
             
             // Skip sequence list - don't show it
             // await fadeIn(introSequenceContainer, 1000);
@@ -2729,10 +2750,10 @@
             // Parse and render composer output (but keep hidden)
             renderComposerOutput(data.composer_output);
 
-            // Render supports
-            renderSupports(data);
+            // Render supports - DISABLED
+            // renderSupports(data);
 
-            supportsStrip.classList.add('active');
+            // supportsStrip.classList.add('active');
 
             // Hide entry view and show walk view
             entryView.style.display = 'none';
@@ -2744,7 +2765,7 @@
 
             // Fade in everything
             walkView.style.opacity = '1';
-            supportsStrip.style.opacity = '1';
+            // supportsStrip.style.opacity = '1';
 
             // Add fade-in class to walk view children
             const walkChildren = walkView.querySelectorAll('.output-container, .response-area');
@@ -3336,8 +3357,8 @@
             return sections;
         }
 
-        // Render supports
-        function renderSupports(data) {
+        // Render supports - DISABLED
+        /* function renderSupports(data) {
             supportsContainer.innerHTML = `<div class="supports-label">Supports (1)</div>`;
 
             const card = document.createElement('div');
@@ -3357,7 +3378,7 @@
             });
 
             supportsContainer.appendChild(card);
-        }
+        } */
 
         // Handle completion
         function handleCompletion(data) {
