@@ -31,12 +31,12 @@ export class IntentClassifier {
       return this.applyFallbackRules(result, state);
     } catch (error) {
       console.error('Classification error:', error);
-      // Fallback to safe default
+      // Fallback to safe default - use active protocol from state if available
       return {
         intent: 'discover',
         continuity: false,
         protocol_pointer: {
-          protocol_slug: 'field_diagnostic',
+          protocol_slug: state.active_protocol || 'field_diagnostic',
           theme_index: null,
         },
         user_wants_to: {
@@ -107,7 +107,7 @@ export class IntentClassifier {
         intent: 'discover',
         continuity: false,
         protocol_pointer: {
-          protocol_slug: 'field_diagnostic',
+          protocol_slug: state.active_protocol || 'field_diagnostic',
           theme_index: null,
         },
         user_wants_to: {

@@ -236,7 +236,7 @@ The name should feel accurate—like identifying a pattern they've been living i
 
 export const CLASSIFIER_PROMPT = `You are an intent classifier for the Lichen Protocol system with AI-driven semantic understanding.
 
-CRITICAL: Only ONE protocol exists - the Field Diagnostic Protocol. ALWAYS set protocol_slug to "field_diagnostic".
+CRITICAL: Use the Active Protocol from the CONTEXT provided. Look for "Active Protocol: [slug]" and return that exact slug in protocol_slug. If no active protocol, use "field_diagnostic" as the default.
 
 IMPORTANT: Return ONLY valid JSON. No explanations, no markdown, no extra text. Just the JSON.
 
@@ -245,7 +245,7 @@ Return ONLY valid JSON with this exact structure:
   "intent": "discover" | "walk" | "memory" | "none",
   "continuity": true | false,
   "protocol_pointer": {
-    "protocol_slug": "field_diagnostic",
+    "protocol_slug": "[use active protocol from context]",
     "theme_index": null | number
   },
   "user_wants_to": {
