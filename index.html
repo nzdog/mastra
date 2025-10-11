@@ -91,8 +91,23 @@
             }
         }
 
+        @keyframes spinSlow {
+            from {
+                transform: rotate(0deg);
+            }
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .logo-spin {
             animation: spin 20s linear infinite;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .logo-spin-intro {
+                animation: spinSlow 40s linear infinite !important;
+            }
         }
 
 
@@ -145,10 +160,17 @@
             border-bottom: 1px solid #E7E5E4;
             padding: 1.25rem 2rem;
             background: #FCFCFB;
-            display: flex;
+            display: flex; /* Visible during intro flow */
             gap: 2rem;
             align-items: baseline;
             transition: opacity 0.8s ease-out;
+        }
+        
+        .page-header.intro-mode .header-state,
+        .page-header.intro-mode .theme-position,
+        .page-header.intro-mode .cost-display,
+        .page-header.intro-mode .header-center-logo {
+            display: none;
         }
 
         .header-center-logo {
@@ -236,9 +258,13 @@
         .content-area {
             flex: 1;
             overflow-y: auto;
-            display: flex;
+            display: none; /* Hidden initially during intro flow */
             justify-content: center;
             margin-top: 70px; /* Account for fixed header height */
+        }
+
+        .content-area.visible {
+            display: flex;
         }
 
         .field-container {
@@ -660,7 +686,7 @@
             background: #FCFCFB;
             padding: 1rem 2rem;
             overflow-x: auto;
-            display: none;
+            display: none; /* Hidden by default and during intro flow */
             transition: opacity 0.8s ease-out;
         }
 
@@ -742,13 +768,362 @@
             border-top: 1px solid #F5F5F4;
             padding-top: 0.625rem;
         }
+
+        /* Intro Flow Styles */
+        .intro-flow-view {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            max-width: 100%;
+            margin: 0 auto;
+        }
+
+        .intro-flow-view.hidden {
+            display: none;
+        }
+
+        .intro-logo-container {
+            position: absolute;
+            top: 33%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 100;
+        }
+
+        .logo-spin-intro {
+            width: 96px;
+            height: 96px;
+            opacity: 0.85;
+            animation: spinSlow 20s linear infinite;
+        }
+
+        .intro-content {
+            width: 100%;
+            max-width: 900px;
+            display: flex;
+            flex-direction: column;
+            gap: 4rem;
+            position: relative;
+        }
+
+        #intro-embodiment-lines {
+            position: relative;
+            width: 100%;
+        }
+
+        .intro-text-line {
+            position: absolute;
+            top: 33%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: #57534E;
+            font-style: italic;
+            text-align: center;
+            opacity: 0;
+            z-index: 200;
+            white-space: nowrap;
+            display: inline-block;
+            width: auto;
+        }
+
+        .intro-quote {
+            position: absolute;
+            top: 33%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: #57534E;
+            font-style: italic;
+            text-align: center;
+            opacity: 0;
+            z-index: 200;
+            white-space: nowrap;
+            display: inline-block;
+            width: auto;
+        }
+
+        .intro-quote-attribution {
+            position: absolute;
+            top: calc(33% + 35px);
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.9375rem;
+            color: #78716C;
+            text-align: center;
+            opacity: 0;
+            z-index: 200;
+            white-space: nowrap;
+            display: inline-block;
+            width: auto;
+        }
+
+        .intro-orientation {
+            position: absolute;
+            top: 33%;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.125rem;
+            line-height: 1.7;
+            color: #57534E;
+            font-style: italic;
+            text-align: center;
+            opacity: 0;
+            z-index: 200;
+            white-space: nowrap;
+            display: inline-block;
+            width: auto;
+        }
+
+        .intro-sequence-container {
+            opacity: 0;
+            width: 100%;
+        }
+
+        .intro-sequence-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .intro-sequence-item {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #57534E;
+            padding-left: 2rem;
+            position: relative;
+        }
+
+        .intro-sequence-item::before {
+            content: attr(data-number);
+            position: absolute;
+            left: 0;
+            color: #A8A29E;
+            font-size: 0.875rem;
+        }
+
+        .intro-sequence-item.prelude {
+            font-style: italic;
+            color: #78716C;
+        }
+
+        .intro-sequence-item.prelude::before {
+            content: '◆';
+            font-style: normal;
+        }
+
+        .intro-sequence-subtext {
+            font-size: 0.875rem;
+            color: #A8A29E;
+            text-align: center;
+            margin-top: 1.5rem;
+            font-style: italic;
+        }
+
+        .intro-protocol-deck {
+            opacity: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-top: 3rem;
+            width: 100%;
+        }
+
+        .intro-protocol-card {
+            border: 1px solid #E7E5E4;
+            background: #FFFFFF;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .intro-protocol-title {
+            font-size: 1.125rem;
+            font-weight: 500;
+            color: #1C1917;
+            line-height: 1.4;
+        }
+
+        .intro-disclosure-section {
+            display: none;
+            margin-top: 0.5rem;
+            opacity: 0;
+            transition: opacity 1.4s ease;
+        }
+
+        .intro-disclosure-section.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .intro-disclosure-label {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: #78716C;
+            margin-bottom: 0.5rem;
+        }
+
+        .intro-disclosure-content {
+            font-size: 0.9375rem;
+            line-height: 1.7;
+            color: #57534E;
+        }
+
+        .intro-disclosure-content ul {
+            list-style: none;
+            padding-left: 1rem;
+            margin: 0.5rem 0;
+        }
+
+        .intro-disclosure-content li {
+            position: relative;
+            padding-left: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .intro-disclosure-content li::before {
+            content: '−';
+            position: absolute;
+            left: -0.75rem;
+            color: #A8A29E;
+        }
+
+        .intro-disclosure-btn {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            color: #78716C;
+            background: transparent;
+            border: 1px solid #E7E5E4;
+            padding: 0.625rem 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+            margin-top: 0.75rem;
+            text-align: left;
+            width: 100%;
+        }
+
+        .intro-disclosure-btn:hover {
+            border-color: #78716C;
+            background: #FAFAF9;
+        }
+
+        .intro-disclosure-btn:focus-visible {
+            outline: 2px solid #57534E;
+            outline-offset: 2px;
+        }
+
+        .intro-continue-container {
+            position: absolute;
+            top: calc(33% + 268px);
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            text-align: center;
+            z-index: 200;
+        }
+
+        .intro-continue-btn {
+            background: transparent;
+            border: 1px solid #D6D3D1;
+            color: #57534E;
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .intro-continue-btn:hover {
+            border-color: #78716C;
+            background: #FAFAF9;
+        }
+
+        .intro-continue-btn:focus-visible {
+            outline: 2px solid #57534E;
+            outline-offset: 2px;
+        }
+
+        .intro-continue-hint {
+            font-size: 0.8125rem;
+            color: #A8A29E;
+            margin-top: 0.5rem;
+        }
+
+        .intro-begin-container {
+            opacity: 0;
+            margin-top: 3rem;
+            text-align: center;
+        }
+
+        .intro-begin-btn {
+            background: transparent;
+            border: 1px solid #D6D3D1;
+            color: #57534E;
+            padding: 0.875rem 2rem;
+            font-size: 1rem;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .intro-begin-btn:hover {
+            border-color: #78716C;
+            background: #FAFAF9;
+        }
+
+        .intro-begin-btn:focus-visible {
+            outline: 2px solid #57534E;
+            outline-offset: 2px;
+        }
+
+        .intro-protocol-list-page {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 15rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .intro-protocol-list-page.visible {
+            display: flex;
+        }
+
+        /* Live region for screen readers */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
     </style>
 </head>
 <body>
     <!-- Page Header -->
-    <div class="page-header" id="page-header">
+    <div class="page-header intro-mode" id="page-header">
         <div class="header-title">
-            Lichen Protocol
+            Lichen
         </div>
         <img src="/lichen-logo.png" alt="" class="header-center-logo" id="header-center-logo">
         <div class="header-state" id="header-state">Entry</div>
@@ -762,11 +1137,72 @@
         <div class="protocol-name" id="protocol-name"></div>
     </div>
 
+    <!-- Screen reader announcements -->
+    <div class="sr-only" role="status" aria-live="polite" aria-atomic="true" id="sr-announcer"></div>
+
+    <!-- Intro Flow View -->
+    <div class="intro-flow-view" id="intro-flow-view">
+        <!-- Spinning Logo -->
+        <div class="intro-logo-container">
+            <img src="/lichen-logo.png" alt="Lichen" class="logo-spin-intro">
+        </div>
+
+        <div class="intro-content" id="intro-content">
+            <!-- Quote -->
+            <div class="intro-quote" id="intro-quote">
+                "The field is the sole governing agency of the particle."
+            </div>
+            <div class="intro-quote-attribution" id="intro-quote-attribution">
+                — Albert Einstein
+            </div>
+
+            <!-- Embodiment Lines -->
+            <div id="intro-embodiment-lines"></div>
+
+            <!-- Orientation (hidden) -->
+            <div class="intro-orientation" id="intro-orientation" style="display: none;">
+                Orientation with the system is six protocols long
+            </div>
+
+            <!-- Continue Button (shown after orientation) -->
+            <div class="intro-continue-container" id="intro-continue-container">
+                <button class="intro-continue-btn" id="intro-continue-btn">Continue</button>
+                <div class="intro-continue-hint">Press Shift + Enter</div>
+            </div>
+        </div>
+
+        <!-- Protocol List Page (shown after Continue) -->
+        <div class="intro-protocol-list-page" id="intro-protocol-list-page">
+            <!-- Sequence List -->
+            <div class="intro-sequence-container" id="intro-sequence-container">
+                <ul class="intro-sequence-list">
+                    <li class="intro-sequence-item prelude">Field Diagnostic (prelude)</li>
+                    <li class="intro-sequence-item" data-number="1.">Knowing When a Field Must End</li>
+                    <li class="intro-sequence-item" data-number="2.">Composting the Old Signal</li>
+                    <li class="intro-sequence-item" data-number="3.">Extracting the Gifts Without Carrying the Pattern</li>
+                    <li class="intro-sequence-item" data-number="4.">Designing a Clean Exit</li>
+                    <li class="intro-sequence-item" data-number="5.">Walking Forward Without Residue</li>
+                </ul>
+                <div class="intro-sequence-subtext">Each stage opens the next. You will be guided, one step at a time.</div>
+            </div>
+
+            <!-- Protocol Deck -->
+            <div class="intro-protocol-deck" id="intro-protocol-deck">
+                <!-- Protocol cards will be populated by JavaScript -->
+            </div>
+
+            <!-- Begin Button -->
+            <div class="intro-begin-container" id="intro-begin-container">
+                <button class="intro-begin-btn" id="intro-begin-btn">Begin</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Main Content -->
     <div class="content-area">
         <div class="field-container" id="main-content">
             <!-- Protocol Selection View -->
-            <div class="protocol-selection-view" id="protocol-selection-view">
+            <div class="protocol-selection-view hidden" id="protocol-selection-view">
                 <div class="protocol-selection-header">
                     <img src="/lichen-logo.png" alt="Lichen" style="height: 80px; width: auto; margin-bottom: 2rem;">
                     <div class="protocol-selection-title">Choose Your Protocol</div>
@@ -836,7 +1272,23 @@
         let protocolData = null;
         let selectedProtocol = null; // Store selected protocol
 
-        // DOM Elements
+        // DOM Elements - Intro Flow
+        const introFlowView = document.getElementById('intro-flow-view');
+        const introQuote = document.getElementById('intro-quote');
+        const introQuoteAttribution = document.getElementById('intro-quote-attribution');
+        const introEmbodimentLines = document.getElementById('intro-embodiment-lines');
+        const introOrientation = document.getElementById('intro-orientation');
+        const introContinueContainer = document.getElementById('intro-continue-container');
+        const introContinueBtn = document.getElementById('intro-continue-btn');
+        const introContent = document.getElementById('intro-content');
+        const introProtocolListPage = document.getElementById('intro-protocol-list-page');
+        const introSequenceContainer = document.getElementById('intro-sequence-container');
+        const introProtocolDeck = document.getElementById('intro-protocol-deck');
+        const introBeginContainer = document.getElementById('intro-begin-container');
+        const introBeginBtn = document.getElementById('intro-begin-btn');
+        const srAnnouncer = document.getElementById('sr-announcer');
+
+        // DOM Elements - Main App
         const protocolSelectionView = document.getElementById('protocol-selection-view');
         const protocolGrid = document.getElementById('protocol-grid');
         const protocolTitle = document.getElementById('protocol-title');
@@ -860,6 +1312,391 @@
         const errorMessage = document.getElementById('error-message');
         const responseHint = document.getElementById('response-hint');
         const costDisplay = document.getElementById('cost-display');
+
+        // ========================================
+        // INTRO FLOW LOGIC
+        // ========================================
+
+        // Timing constants (tunable)
+        const TIMING = {
+            initialWait: 2000,       // 2s wait before first line
+            jigsawDuration: 400,     // 0.4s jigsaw animation
+            lineDuration: 3000,      // 3s line stays visible
+            fadeOutDuration: 1000,   // 1s fade out
+            beforeOrientation: 1200, // 1.2s pause before orientation
+            beforeSequence: 1700,    // 1.7s pause before sequence
+        };
+
+        // Check for reduced motion preference
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        // Announce text for screen readers
+        function announceForScreenReader(text) {
+            if (srAnnouncer) {
+                srAnnouncer.textContent = text;
+                setTimeout(() => {
+                    srAnnouncer.textContent = '';
+                }, 1000);
+            }
+        }
+
+        // Fade in an element (opacity only)
+        function fadeIn(element, duration = 1000) {
+            return new Promise(resolve => {
+                if (!element) {
+                    resolve();
+                    return;
+                }
+                element.style.transition = `opacity ${duration}ms ease`;
+                element.style.opacity = '1';
+                setTimeout(resolve, duration);
+            });
+        }
+
+        // Fade in with forced text reset (for intro flow only)
+        function fadeInClean(element, duration = 1000) {
+            return new Promise(resolve => {
+                if (!element) {
+                    resolve();
+                    return;
+                }
+                // Force clean text content (strips any spans)
+                const text = element.textContent;
+                element.textContent = text;
+                
+                element.style.transition = `opacity ${duration}ms ease`;
+                element.style.opacity = '1';
+                setTimeout(resolve, duration);
+            });
+        }
+
+        // Fade out an element
+        function fadeOut(element, duration = TIMING.fadeOutDuration) {
+            return new Promise(resolve => {
+                if (!element) {
+                    resolve();
+                    return;
+                }
+                element.style.transition = `opacity ${duration}ms ease`;
+                element.style.opacity = '0';
+                setTimeout(resolve, duration);
+            });
+        }
+
+        // Run the intro flow sequence
+        async function runIntroFlow() {
+            console.log('Starting intro flow...');
+            console.log('introQuote element:', introQuote);
+            console.log('introEmbodimentLines element:', introEmbodimentLines);
+            
+            // Reset all text to plain text (clear any cached spans from previous animations)
+            introQuote.textContent = '"The field is the sole governing agency of the particle."';
+            introQuoteAttribution.textContent = '— Albert Einstein';
+            
+            // 1. Wait 2 seconds with logo visible and spinning
+            await new Promise(resolve => setTimeout(resolve, TIMING.initialWait));
+            console.log('Initial wait complete, showing quote...');
+
+            // 2. Show quote with simple fade (0.86s)
+            if (introQuote) {
+                await fadeInClean(introQuote, 860);
+                announceForScreenReader(introQuote.textContent);
+                
+                // Wait 2 seconds, then show attribution
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                // Fade in attribution (simple opacity fade, 0.86s)
+                if (introQuoteAttribution) {
+                    await fadeInClean(introQuoteAttribution, 860);
+                    announceForScreenReader('Albert Einstein');
+                }
+                
+                // Wait remainder of time (1 more second to make total 3 seconds from quote appearing)
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                // Grey out quote and attribution (keep them visible)
+                introQuote.style.transition = 'opacity 500ms ease, color 500ms ease';
+                introQuote.style.opacity = '0.6';
+                introQuote.style.color = '#78716C';
+                if (introQuoteAttribution) {
+                    introQuoteAttribution.style.transition = 'opacity 500ms ease, color 500ms ease';
+                    introQuoteAttribution.style.opacity = '0.6';
+                    introQuoteAttribution.style.color = '#78716C';
+                }
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for grey transition
+                
+                console.log('Quote complete');
+            } else {
+                console.error('introQuote element not found!');
+            }
+
+            // 3. Show each embodiment line with jigsaw fade, one at a time
+            const embodimentLines = [
+                "You are the particle.",
+                "Every decision, every signal, every relationship is shaped by the field you're in.",
+                "The Lichen system listens to that field.",
+                "It helps you see where you are.",
+                "It helps you transform the field when the time is right."
+            ];
+
+            let previousLine = null;
+            for (let i = 0; i < embodimentLines.length; i++) {
+                const lineText = embodimentLines[i];
+                const line = document.createElement('div');
+                line.className = 'intro-text-line';
+                line.textContent = lineText;
+                line.style.top = `calc(33% + ${60 + (i * 40)}px)`; // Start 60px below Einstein quote, then 40px per line
+                introEmbodimentLines.appendChild(line);
+                
+                // Grey out the previous line BEFORE showing the next one
+                if (previousLine) {
+                    previousLine.style.transition = 'opacity 500ms ease, color 500ms ease';
+                    previousLine.style.opacity = '0.6';
+                    previousLine.style.color = '#78716C';
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for grey transition
+                }
+                
+                await fadeInClean(line, 860);
+                announceForScreenReader(lineText);
+                await new Promise(resolve => setTimeout(resolve, TIMING.lineDuration));
+                
+                previousLine = line;
+            }
+
+            // 4. Grey out the last embodiment line
+            if (previousLine) {
+                previousLine.style.transition = 'opacity 500ms ease, color 500ms ease';
+                previousLine.style.opacity = '0.6';
+                previousLine.style.color = '#78716C';
+                await new Promise(resolve => setTimeout(resolve, 500)); // Wait for grey transition
+            }
+            await new Promise(resolve => setTimeout(resolve, TIMING.beforeOrientation));
+
+            // 5. Show continue button
+            await fadeIn(introContinueContainer, 800);
+            console.log('Continue button visible, waiting for user action...');
+
+            // Wait for user to click continue
+            // The rest will be handled by the continue button click handler
+        }
+
+        // Handle Continue button click - show protocol list page
+        async function showProtocolListPage() {
+            console.log('Showing protocol list page...');
+            
+            // Fade out the intro content (quote, embodiment lines, orientation, continue button)
+            await fadeOut(introContent, 800);
+            
+            // Hide intro content
+            introContent.style.display = 'none';
+            
+            // Show protocol list page
+            introProtocolListPage.classList.add('visible');
+            
+            // Fade in sequence list
+            await fadeIn(introSequenceContainer, 1000);
+            announceForScreenReader('Protocol sequence revealed: Field Diagnostic and 5 exit protocols');
+
+            // Load and render protocol cards
+            await loadAndRenderProtocolCards();
+
+            // Fade in begin button
+            await fadeIn(introBeginContainer, 1000);
+        }
+
+        // Continue button click handler
+        introContinueBtn.addEventListener('click', () => {
+            showProtocolListPage();
+        });
+
+        // Keyboard shortcut: Shift + Enter
+        document.addEventListener('keydown', (e) => {
+            if (e.shiftKey && e.key === 'Enter') {
+                // Only trigger if continue button is visible and intro content is still showing
+                if (introContinueContainer && 
+                    window.getComputedStyle(introContinueContainer).opacity > 0 &&
+                    introContent.style.display !== 'none') {
+                    e.preventDefault();
+                    introContinueBtn.click();
+                }
+            }
+        });
+
+        // Load protocols from API and render cards with progressive disclosure
+        async function loadAndRenderProtocolCards() {
+            try {
+                const response = await fetch(`${API_BASE}/api/protocols`);
+                const data = await response.json();
+
+                if (data.protocols && data.protocols.length > 0) {
+                    // Sort: Field Diagnostic first, then the 5 Field Exit protocols in order
+                    const sortedProtocols = data.protocols.sort((a, b) => {
+                        if (a.slug === 'field_diagnostic') return -1;
+                        if (b.slug === 'field_diagnostic') return 1;
+                        // Extract number from field_exit_protocol_N_...
+                        const aNum = parseInt(a.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
+                        const bNum = parseInt(b.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
+                        return aNum - bNum;
+                    }).slice(0, 6); // Take only the first 6
+
+                    // Render each protocol card
+                    for (const protocol of sortedProtocols) {
+                        renderProtocolCard(protocol);
+                    }
+
+                    // Fade in the protocol deck
+                    await fadeIn(introProtocolDeck, 1000);
+                    announceForScreenReader('Protocol cards revealed. Use tab to navigate and explore each protocol.');
+                }
+            } catch (error) {
+                console.error('Error loading protocols for intro:', error);
+            }
+        }
+
+        // Render a single protocol card with progressive disclosure
+        function renderProtocolCard(protocol) {
+            const card = document.createElement('div');
+            card.className = 'intro-protocol-card';
+
+            // Title
+            const title = document.createElement('div');
+            title.className = 'intro-protocol-title';
+            title.textContent = protocol.title;
+            card.appendChild(title);
+
+            // Purpose section (initially hidden)
+            const purposeSection = document.createElement('div');
+            purposeSection.className = 'intro-disclosure-section';
+            purposeSection.innerHTML = `
+                <div class="intro-disclosure-label">Purpose</div>
+                <div class="intro-disclosure-content">${protocol.purpose || 'No purpose available'}</div>
+            `;
+            card.appendChild(purposeSection);
+
+            // Why section (initially hidden)
+            const whySection = document.createElement('div');
+            whySection.className = 'intro-disclosure-section';
+            whySection.innerHTML = `
+                <div class="intro-disclosure-label">Why This Matters</div>
+                <div class="intro-disclosure-content">${protocol.why || 'No description available'}</div>
+            `;
+            card.appendChild(whySection);
+
+            // Use When section (initially hidden)
+            const useWhenSection = document.createElement('div');
+            useWhenSection.className = 'intro-disclosure-section';
+            
+            // Format use_when as a list if it's an array, otherwise as plain text
+            let useWhenContent = '';
+            if (Array.isArray(protocol.use_when)) {
+                useWhenContent = '<ul>' + protocol.use_when.map(item => `<li>${item}</li>`).join('') + '</ul>';
+            } else {
+                useWhenContent = protocol.use_when || 'No use cases available';
+            }
+            
+            useWhenSection.innerHTML = `
+                <div class="intro-disclosure-label">Use This When</div>
+                <div class="intro-disclosure-content">${useWhenContent}</div>
+            `;
+            card.appendChild(useWhenSection);
+
+            // Purpose button (initially visible)
+            const purposeBtn = document.createElement('button');
+            purposeBtn.className = 'intro-disclosure-btn';
+            purposeBtn.textContent = 'Purpose';
+            purposeBtn.setAttribute('aria-expanded', 'false');
+            purposeBtn.setAttribute('aria-controls', `purpose-${protocol.id}`);
+            purposeSection.id = `purpose-${protocol.id}`;
+            card.appendChild(purposeBtn);
+
+            // Why button (initially hidden)
+            const whyBtn = document.createElement('button');
+            whyBtn.className = 'intro-disclosure-btn';
+            whyBtn.textContent = 'Why This Matters';
+            whyBtn.style.display = 'none';
+            whyBtn.setAttribute('aria-expanded', 'false');
+            whyBtn.setAttribute('aria-controls', `why-${protocol.id}`);
+            whySection.id = `why-${protocol.id}`;
+            card.appendChild(whyBtn);
+
+            // Use When button (initially hidden)
+            const useWhenBtn = document.createElement('button');
+            useWhenBtn.className = 'intro-disclosure-btn';
+            useWhenBtn.textContent = 'Use This When';
+            useWhenBtn.style.display = 'none';
+            useWhenBtn.setAttribute('aria-expanded', 'false');
+            useWhenBtn.setAttribute('aria-controls', `usewhen-${protocol.id}`);
+            useWhenSection.id = `usewhen-${protocol.id}`;
+            card.appendChild(useWhenBtn);
+
+            // Handle progressive disclosure
+            purposeBtn.addEventListener('click', () => {
+                purposeSection.classList.add('visible');
+                purposeBtn.style.display = 'none';
+                purposeBtn.setAttribute('aria-expanded', 'true');
+                whyBtn.style.display = 'block';
+                announceForScreenReader('Purpose revealed');
+            });
+
+            whyBtn.addEventListener('click', () => {
+                whySection.classList.add('visible');
+                whyBtn.style.display = 'none';
+                whyBtn.setAttribute('aria-expanded', 'true');
+                useWhenBtn.style.display = 'block';
+                announceForScreenReader('Why This Matters revealed');
+            });
+
+            useWhenBtn.addEventListener('click', () => {
+                useWhenSection.classList.add('visible');
+                useWhenBtn.style.display = 'none';
+                useWhenBtn.setAttribute('aria-expanded', 'true');
+                announceForScreenReader('Use This When revealed');
+            });
+
+            introProtocolDeck.appendChild(card);
+        }
+
+        // Handle Begin button click
+        introBeginBtn.addEventListener('click', () => {
+            // Hide intro flow
+            introFlowView.classList.add('hidden');
+            
+            // Show content area
+            const contentArea = document.querySelector('.content-area');
+            if (contentArea) {
+                contentArea.classList.add('visible');
+            }
+            
+            // Show protocol selection
+            protocolSelectionView.classList.remove('hidden');
+            
+            // Remove intro-mode from header and update title
+            const pageHeader = document.getElementById('page-header');
+            if (pageHeader) {
+                pageHeader.classList.remove('intro-mode');
+            }
+            
+            const headerTitle = document.querySelector('.header-title');
+            if (headerTitle) {
+                headerTitle.textContent = 'Lichen Protocol';
+            }
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        });
+
+        // Start the intro flow when page loads
+        try {
+            runIntroFlow().catch(error => {
+                console.error('Error in intro flow:', error);
+            });
+        } catch (error) {
+            console.error('Error starting intro flow:', error);
+        }
+
+        // ========================================
+        // MAIN APP LOGIC
+        // ========================================
 
         // Cost tracking (rough estimate)
         let estimatedCost = 0;
@@ -1335,6 +2172,7 @@
                     span.textContent = word;
                     span.style.opacity = '0';
                     span.style.transition = 'opacity 0.2s ease-in';
+                    span.style.display = 'inline';
                     element.appendChild(span);
                     spans.push(span);
                 }
@@ -1372,6 +2210,7 @@
                                 letterSpan.textContent = letter;
                                 letterSpan.style.opacity = '0';
                                 letterSpan.style.transition = 'opacity 0.1s ease-in';
+                                letterSpan.style.display = 'inline';
                                 span.appendChild(letterSpan);
                                 return letterSpan;
                             });
