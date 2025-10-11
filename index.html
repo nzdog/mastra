@@ -84,10 +84,10 @@
         /* Spin animation for logo */
         @keyframes spin {
             from {
-                transform: rotate(0deg);
+                transform: translate(-50%, -50%) rotate(0deg);
             }
             to {
-                transform: rotate(360deg);
+                transform: translate(-50%, -50%) rotate(360deg);
             }
         }
 
@@ -137,6 +137,11 @@
 
         /* Header */
         .page-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
             border-bottom: 1px solid #E7E5E4;
             padding: 1.25rem 2rem;
             background: #FCFCFB;
@@ -144,6 +149,30 @@
             gap: 2rem;
             align-items: baseline;
             transition: opacity 0.8s ease-out;
+        }
+
+        .header-center-logo {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            height: 48px;
+            width: auto;
+            opacity: 0;
+            will-change: transform;
+            backface-visibility: hidden;
+            -webkit-font-smoothing: antialiased;
+            animation: spin 20s linear infinite;
+            animation-play-state: paused;
+            transition: opacity 1.2s ease-out;
+        }
+
+        .header-center-logo.visible {
+            opacity: 0.85;
+        }
+
+        .header-center-logo.spinning {
+            animation-play-state: running;
         }
         
         .cost-display {
@@ -209,6 +238,7 @@
             overflow-y: auto;
             display: flex;
             justify-content: center;
+            margin-top: 70px; /* Account for fixed header height */
         }
 
         .field-container {
@@ -717,7 +747,10 @@
 <body>
     <!-- Page Header -->
     <div class="page-header" id="page-header">
-        <div class="header-title">Lichen Protocol</div>
+        <div class="header-title">
+            Lichen Protocol
+        </div>
+        <img src="/lichen-logo.png" alt="" class="header-center-logo" id="header-center-logo">
         <div class="header-state" id="header-state">Entry</div>
         <div class="theme-position" id="theme-position"></div>
         <div class="cost-display" id="cost-display">$0.00</div>
@@ -815,6 +848,7 @@
         const continueButton = document.getElementById('continue-button');
         const pageHeader = document.getElementById('page-header');
         const headerState = document.getElementById('header-state');
+        const headerCenterLogo = document.getElementById('header-center-logo');
         const stateHeader = document.getElementById('state-header');
         const modeIndicator = document.getElementById('mode-indicator');
         const protocolName = document.getElementById('protocol-name');
@@ -832,6 +866,19 @@
         function updateCostDisplay(increment = 0.01) {
             estimatedCost += increment;
             costDisplay.textContent = `$${estimatedCost.toFixed(3)}`;
+        }
+
+        // Loading indicator helpers
+        function showLoadingIndicator() {
+            if (headerCenterLogo) {
+                headerCenterLogo.classList.add('spinning');
+            }
+        }
+
+        function hideLoadingIndicator() {
+            if (headerCenterLogo) {
+                headerCenterLogo.classList.remove('spinning');
+            }
         }
 
         // Fetch and display available protocols
@@ -946,19 +993,21 @@
         beginButton.addEventListener('click', async () => {
             // Add clicked class to fade out border
             beginButton.classList.add('clicked');
-            
-            // Just fade out title
+
+            // Show loading indicator
+            showLoadingIndicator();
+
+            // Fade out main entry logo and title
             const title = entryView.querySelectorAll('div')[0];
             const logo = document.getElementById('lichen-logo');
 
             beginButton.disabled = true;
 
-            // Start logo spinning
-            if (logo) logo.classList.add('logo-spin');
-
+            // Fade out main logo and title
+            if (logo) logo.classList.add('fade-out');
             if (title) title.classList.add('fade-out');
 
-            // Wait for title fade-out to complete
+            // Wait for fade animations to complete
             await new Promise(resolve => setTimeout(resolve, 1200));
 
             try {
@@ -979,10 +1028,14 @@
                 updateCostDisplay(0.01);
 
                 renderWalkState(data);
+
+                // Hide loading indicator
+                hideLoadingIndicator();
             } catch (error) {
                 showError('The field lost connection. Please try again.');
                 beginButton.textContent = 'Begin walk';
                 beginButton.disabled = false;
+                hideLoadingIndicator();
             }
         });
 
@@ -1012,11 +1065,14 @@
             askAnotherBtn.addEventListener('click', async () => {
                 const userResponse = responseInput.value.trim();
                 if (!userResponse) return;
-                
+
                 askAnotherBtn.classList.add('clicked');
                 askAnotherBtn.disabled = true;
                 responseInput.blur();
-                
+
+                // Show loading indicator
+                showLoadingIndicator();
+
                 try {
                     const response = await fetch(`${API_BASE}/api/walk/continue`, {
                         method: 'POST',
@@ -1032,10 +1088,14 @@
                     updateCostDisplay(0.02);
                     responseInput.value = '';
                     renderWalkState(data);
+
+                    // Hide loading indicator
+                    hideLoadingIndicator();
                 } catch (error) {
                     showError('The field lost connection. Please try again.');
                     askAnotherBtn.classList.remove('clicked');
                     askAnotherBtn.disabled = false;
+                    hideLoadingIndicator();
                 }
             });
             
@@ -1043,7 +1103,10 @@
             completeWalkBtn.addEventListener('click', async () => {
                 completeWalkBtn.classList.add('clicked');
                 completeWalkBtn.disabled = true;
-                
+
+                // Show loading indicator
+                showLoadingIndicator();
+
                 try {
                     const response = await fetch(`${API_BASE}/api/walk/complete`, {
                         method: 'POST',
@@ -1056,15 +1119,19 @@
 
                     const data = await response.json();
                     protocolData = data;
-                    
+
                     // Update cost display for completion
                     updateCostDisplay(0.02);
-                    
+
                     renderWalkState(data);
+
+                    // Hide loading indicator
+                    hideLoadingIndicator();
                 } catch (error) {
                     showError('The field lost connection. Please try again.');
                     completeWalkBtn.classList.remove('clicked');
                     completeWalkBtn.disabled = false;
+                    hideLoadingIndicator();
                 }
             });
         }
@@ -1081,6 +1148,9 @@
             responseInput.blur();
 
             continueButton.disabled = true;
+
+            // Show loading indicator
+            showLoadingIndicator();
 
             try {
                 const response = await fetch(`${API_BASE}/api/walk/continue`, {
@@ -1104,11 +1174,15 @@
                 continueButton.classList.remove('clicked');
                 continueButton.disabled = false;
 
+                // Hide loading indicator
+                hideLoadingIndicator();
+
                 // Focus will be set in renderWalkState after animation
             } catch (error) {
                 showError('The field lost connection. Please try again.');
                 continueButton.classList.remove('clicked');
                 continueButton.disabled = false;
+                hideLoadingIndicator();
             }
         }
 
@@ -1120,10 +1194,13 @@
         document.addEventListener('click', async (e) => {
             if (e.target && e.target.id === 'generate-report-button') {
                 const button = e.target;
-                
+
                 // Add clicked class to fade out border
                 button.classList.add('clicked');
                 button.disabled = true;
+
+                // Show loading indicator
+                showLoadingIndicator();
 
                 try {
                     // Trigger CLOSE mode by sending "yes" to continue
@@ -1143,10 +1220,14 @@
                     updateCostDisplay(0.015);
 
                     renderWalkState(data);
+
+                    // Hide loading indicator
+                    hideLoadingIndicator();
                 } catch (error) {
                     showError('The field lost connection. Please try again.');
                     button.classList.remove('clicked');
                     button.disabled = false;
+                    hideLoadingIndicator();
                 }
             }
         });
@@ -1158,17 +1239,6 @@
             // In ENTRY mode, stay in entry view but show protocol introduction
             if (data.mode === 'ENTRY') {
                 console.log('📝 ENTRY mode - showing protocol introduction');
-
-                // Hide everything for blank screen
-                console.log('🔲 Hiding all elements for blank screen (ENTRY mode)');
-                entryView.style.display = 'none';
-
-                console.log('⏳ Waiting 1 second...');
-                // Wait 1 second before showing content
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                console.log('✨ Showing ENTRY content now');
-                entryView.style.display = 'flex';
 
                 headerState.textContent = 'Protocol Introduction';
                 renderEntryResponse(data);
@@ -1193,28 +1263,17 @@
 
             supportsStrip.classList.add('active');
 
-            // Hide everything for blank screen
-            console.log('🔲 Hiding all elements for blank screen');
+            // Hide entry view and show walk view
             entryView.style.display = 'none';
-            walkView.style.display = 'none';
-            supportsStrip.style.opacity = '0';
-
-            console.log('⏳ Waiting 1 second...');
-            // Wait 1 second before showing content
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            console.log('✨ Showing content now');
-            // Show and fade in everything
             walkView.style.opacity = '0';
             walkView.style.display = 'block';
 
             // Force reflow to ensure transition works
             walkView.offsetHeight;
 
-            console.log('🎨 Fading in elements');
+            // Fade in everything
             walkView.style.opacity = '1';
             supportsStrip.style.opacity = '1';
-            console.log('✅ Fade in complete');
 
             // Add fade-in class to walk view children
             const walkChildren = walkView.querySelectorAll('.output-container, .response-area');
@@ -1251,8 +1310,8 @@
                 console.log('📋 Data received:', data);
                 console.log('📄 Composer output length:', data.composer_output?.length);
                 console.log('📄 Composer output preview:', data.composer_output?.substring(0, 200));
-                
-                headerState.textContent = 'Complete';
+
+                headerState.textContent = `${data.protocol_name} Summary`;
                 handleCompletion(data);
             }
         }
@@ -1345,12 +1404,14 @@
             // Hide begin button
             beginButton.style.display = 'none';
 
-            // Remove fade-out and add fade-in to logo and title
+            // Fade in header logo when protocol introduction loads
+            if (headerCenterLogo) headerCenterLogo.classList.add('visible');
+
+            // Hide the large logo completely, keep only header logo
             const logo = entryView.querySelector('img');
             const title = entryView.querySelector('div');
             if (logo) {
-                logo.classList.remove('fade-out');
-                logo.classList.add('fade-in-only');
+                logo.style.display = 'none';
             }
             if (title) {
                 title.classList.remove('fade-out');
@@ -1365,33 +1426,34 @@
                 entryResponseArea.style.cssText = 'margin-top: 1rem; line-height: 1.7;';
             }
 
-            // Parse and group sections with their titles
-            const lines = data.composer_output.split('\n');
-            const sectionData = [];
-            let currentSectionTitle = '';
-            let currentSectionContent = '';
-
-            for (let line of lines) {
-                if (line.startsWith('**') && line.endsWith('**')) {
-                    // Save previous section
-                    if (currentSectionTitle && currentSectionContent.trim()) {
-                        sectionData.push({ title: currentSectionTitle, content: currentSectionContent });
-                        currentSectionContent = '';
-                    }
-                    const headerText = line.replace(/\*\*/g, '').trim();
-                    if (headerText !== 'Field Diagnostic Protocol') {
-                        currentSectionTitle = headerText;
-                    }
-                } else if (line.trim().startsWith('•') || line.trim().startsWith('-')) {
-                    currentSectionContent += `<div style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: #292524;">${line.trim()}</div>`;
-                } else if (line.trim()) {
-                    currentSectionContent += `<div style="margin-bottom: 1rem; color: #292524; font-size: 1.0625rem;">${line}</div>`;
-                }
+            // Parse JSON response from agent
+            let entryData;
+            try {
+                entryData = JSON.parse(data.composer_output);
+            } catch (e) {
+                console.error('Failed to parse ENTRY response JSON:', e);
+                showError('Failed to load protocol content');
+                return;
             }
 
-            // Add last section
-            if (currentSectionTitle && currentSectionContent.trim()) {
-                sectionData.push({ title: currentSectionTitle, content: currentSectionContent });
+            const sectionData = entryData.sections;
+            const firstThemeTitle = entryData.firstThemeTitle;
+
+            // Helper function to format section content
+            function formatSectionContent(content) {
+                const lines = content.split('\n');
+                let html = '';
+                for (let line of lines) {
+                    const trimmed = line.trim();
+                    if (!trimmed) continue;
+
+                    if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
+                        html += `<div style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: #292524;">${trimmed}</div>`;
+                    } else {
+                        html += `<div style="margin-bottom: 1rem; color: #292524; font-size: 1.0625rem;">${trimmed}</div>`;
+                    }
+                }
+                return html;
             }
 
             // Show first section immediately
@@ -1407,7 +1469,7 @@
 
                 // Create content container
                 const contentDiv = document.createElement('div');
-                contentDiv.innerHTML = sectionData[0].content;
+                contentDiv.innerHTML = formatSectionContent(sectionData[0].content);
 
                 // Hide all text content initially
                 const textElements = contentDiv.querySelectorAll('div');
@@ -1416,7 +1478,6 @@
                 });
 
                 firstSection.appendChild(contentDiv);
-
                 entryResponseArea.appendChild(firstSection);
 
                 // Apply jigsaw animation to all text in content immediately
@@ -1444,7 +1505,7 @@
                         setTimeout(() => {
                             // Create content container
                             const contentDiv = document.createElement('div');
-                            contentDiv.innerHTML = section.content;
+                            contentDiv.innerHTML = formatSectionContent(section.content);
 
                             // Hide all text content initially
                             const textElements = contentDiv.querySelectorAll('div');
@@ -1492,10 +1553,13 @@
 
                 const continueBtn = document.createElement('button');
                 continueBtn.className = 'walk-button fade-in-only';
-                continueBtn.textContent = 'Continue to Theme 1';
+                continueBtn.textContent = `Continue to Theme 1 – ${firstThemeTitle}`;
                 continueBtn.onclick = async () => {
                     continueBtn.classList.add('clicked');
                     continueBtn.disabled = true;
+
+                    // Show loading indicator
+                    showLoadingIndicator();
 
                     try {
                         const response = await fetch(`${API_BASE}/api/walk/continue`, {
@@ -1509,15 +1573,19 @@
 
                         const data = await response.json();
                         protocolData = data;
-                        
+
                         // Update cost display (initial walk start typically costs ~$0.02)
                         updateCostDisplay(0.02);
-                        
+
                         renderWalkState(data);
+
+                        // Hide loading indicator
+                        hideLoadingIndicator();
                     } catch (error) {
                         showError('The field lost connection. Please try again.');
                         continueBtn.classList.remove('clicked');
                         continueBtn.disabled = false;
+                        hideLoadingIndicator();
                     }
                 };
 
@@ -1681,10 +1749,11 @@
 
             if (sections.transition) {
                 if (sections.transition === 'PROTOCOL_COMPLETE') {
-                    // Special case: Show "Generate Report" button after Theme 5
+                    // Special case: Show "Generate Report" button after completing all themes
+                    const completionText = sections.completionText || 'You have completed all themes of this protocol.';
                     composerOutput.innerHTML += `
                         <div class="output-section">
-                            <div class="section-content" style="color: #78716C; font-size: 1rem;">You've completed all 5 themes of the Field Diagnostic Protocol.</div>
+                            <div class="section-content" style="color: #78716C; font-size: 1rem;">${completionText}</div>
                         </div>
                         <div class="output-section" style="margin-top: 2rem;">
                             <button id="generate-report-button" class="walk-button">Field Diagnosis Complete, generate report</button>
@@ -1740,8 +1809,14 @@
             if (whyMatch) sections.why_this_matters = whyMatch[1].trim();
 
             // CLOSE mode - field diagnosis content
-            // Check if this is completion content (contains "field I'd call" or "You've completed")
-            if (markdown.includes("field I'd call") || markdown.includes("You've completed")) {
+            // Check if this is completion content by looking for common CLOSE mode patterns
+            // Updated to handle both Field Diagnostic and Field Exit protocols
+            if (markdown.includes("field I'd call") ||
+                markdown.includes("You've completed") ||
+                markdown.includes("**FIELD DIAGNOSIS**") ||
+                markdown.includes("**Pattern Identified:**") ||
+                markdown.includes("**Type:**") ||
+                (markdown.includes("**") && markdown.length > 200 && !markdown.includes("Purpose:"))) {
                 // For CLOSE mode, treat the entire content as acknowledgment/diagnosis
                 sections.acknowledgment = markdown.trim();
                 return sections;
@@ -1762,10 +1837,11 @@
             const promptMatch = markdown.match(/\*\*Completion Prompt\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
             if (promptMatch) sections.completion_prompt = promptMatch[1].trim();
 
-            // Check for protocol completion (after Theme 5)
-            const completionMatch = markdown.match(/You've completed all 5 themes of the Field Diagnostic Protocol/i);
+            // Check for protocol completion (any protocol, any number of themes)
+            const completionMatch = markdown.match(/You've completed all \d+ themes of the .+/i);
             if (completionMatch) {
                 sections.transition = 'PROTOCOL_COMPLETE';
+                sections.completionText = completionMatch[0]; // Store the actual completion text
             } else {
                 // Check for "Ready to move into Theme X" pattern
                 const readyMatch = markdown.match(/Ready to move into \*\*(Theme \d+[^*]*)\*\*\??/i);
@@ -1889,7 +1965,7 @@
             // Handle download button click
             const downloadButton = completionContainer.querySelector('#download-button');
             console.log('🔍 Download button found:', !!downloadButton);
-            downloadButton.onclick = () => {
+            downloadButton.onclick = async () => {
                 console.log('🖱️ Download button clicked');
 
                 const { jsPDF } = window.jspdf;
@@ -1902,10 +1978,46 @@
                 const maxWidth = pageWidth - (margin * 2);
                 let yPosition = margin;
 
+                // Load and add logo
+                const logoImg = document.querySelector('img[src="/lichen-logo.png"]');
+                if (logoImg) {
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    canvas.width = logoImg.width;
+                    canvas.height = logoImg.height;
+                    ctx.drawImage(logoImg, 0, 0);
+                    const logoData = canvas.toDataURL('image/png');
+
+                    // Add logo at top center (20mm wide, proportional height)
+                    const logoWidth = 20;
+                    const logoHeight = (logoImg.height / logoImg.width) * logoWidth;
+                    const logoX = (pageWidth - logoWidth) / 2;
+                    doc.addImage(logoData, 'PNG', logoX, yPosition, logoWidth, logoHeight);
+                    yPosition += logoHeight + 10;
+                }
+
+                // Helper function to add footer to each page
+                const addFooter = () => {
+                    const currentDate = new Date().toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    doc.setFontSize(8);
+                    doc.setFont('helvetica', 'normal');
+                    doc.setTextColor(160, 160, 160); // Subtle gray
+                    doc.text(currentDate, margin, pageHeight - 10);
+                    doc.setTextColor(0, 0, 0); // Reset to black
+                };
+
+                // Add footer to first page
+                addFooter();
+
                 // Helper function to add text with word wrapping
                 const addText = (text, fontSize, isBold = false, isItalic = false) => {
-                    if (yPosition > pageHeight - margin) {
+                    if (yPosition > pageHeight - 25) {
                         doc.addPage();
+                        addFooter(); // Add footer to new page
                         yPosition = margin;
                     }
 
@@ -1922,8 +2034,9 @@
 
                     const lines = doc.splitTextToSize(text, maxWidth);
                     lines.forEach(line => {
-                        if (yPosition > pageHeight - margin) {
+                        if (yPosition > pageHeight - 25) {
                             doc.addPage();
+                            addFooter(); // Add footer to new page
                             yPosition = margin;
                         }
                         doc.text(line, margin, yPosition);
@@ -1932,11 +2045,9 @@
                 };
 
                 // Title
-                addText('FIELD DIAGNOSTIC PROTOCOL', 18, true);
+                addText(data.protocol_name.toUpperCase(), 18, true);
                 yPosition += 5;
                 addText('Summary Report', 14, false, true);
-                yPosition += 3;
-                addText(`Generated: ${timestamp}`, 9, false, true);
                 yPosition += 10;
 
                 // Draw a line
@@ -1973,7 +2084,9 @@
                 }
 
                 // Save the PDF
-                doc.save(`field-diagnostic-${new Date().toISOString().split('T')[0]}.pdf`);
+                const protocolSlug = data.protocol_name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+                const date = new Date().toISOString().split('T')[0];
+                doc.save(`${protocolSlug}-${date}.pdf`);
 
                 console.log('✅ Summary downloaded as PDF');
             };
