@@ -1151,6 +1151,184 @@
             white-space: nowrap;
             border-width: 0;
         }
+
+        /* ========================================
+           MOBILE RESPONSIVE STYLES
+           ======================================== */
+
+        /* Tablets and small screens */
+        @media (max-width: 768px) {
+            /* Logo adjustments */
+            .logo-spin-intro {
+                width: 80px;
+                height: 80px;
+            }
+
+            .intro-logo-container {
+                top: calc(28vh - 70px);
+            }
+
+            /* Typography scaling */
+            .intro-quote {
+                font-size: 1.0625rem;
+                white-space: normal;
+                max-width: 90%;
+            }
+
+            .intro-quote-attribution {
+                font-size: 0.875rem;
+                white-space: normal;
+            }
+
+            .intro-text-line {
+                font-size: 1.0625rem;
+                white-space: normal;
+                max-width: 90%;
+            }
+
+            .intro-orientation {
+                font-size: 1.0625rem;
+                white-space: normal;
+                max-width: 90%;
+            }
+
+            /* Adjust spacing for smaller screens */
+            .intro-flow-view {
+                padding: 1.5rem;
+            }
+
+            .intro-protocol-list-page {
+                padding-top: calc(28vh - 70px + 60px);
+            }
+
+            /* Protocol cards */
+            .intro-protocol-card {
+                max-width: 100%;
+                padding: 1.25rem;
+            }
+
+            .intro-protocol-deck {
+                gap: 1.5rem;
+                margin-top: 2rem;
+            }
+
+            /* Buttons - ensure touch targets */
+            .intro-disclosure-btn,
+            .intro-walk-btn {
+                padding: 0.75rem 1rem;
+                min-height: 44px;
+            }
+
+            .intro-continue-btn,
+            .intro-begin-btn {
+                padding: 1rem 2rem;
+                min-height: 44px;
+            }
+
+            /* Adjust vertical spacing */
+            .intro-continue-container {
+                top: calc(28vh + 180px);
+            }
+        }
+
+        /* Mobile phones */
+        @media (max-width: 480px) {
+            /* Further logo reduction */
+            .logo-spin-intro {
+                width: 64px;
+                height: 64px;
+            }
+
+            .intro-logo-container {
+                top: calc(25vh - 60px);
+            }
+
+            /* Typography - even smaller */
+            .intro-quote {
+                font-size: 1rem;
+                line-height: 1.6;
+                max-width: 95%;
+                padding: 0 1rem;
+            }
+
+            .intro-quote-attribution {
+                font-size: 0.8125rem;
+            }
+
+            .intro-text-line {
+                font-size: 1rem;
+                line-height: 1.6;
+                max-width: 95%;
+                padding: 0 1rem;
+            }
+
+            .intro-orientation {
+                font-size: 1rem;
+                line-height: 1.6;
+                max-width: 95%;
+                padding: 0 1rem;
+            }
+
+            /* Tighter spacing */
+            .intro-flow-view {
+                padding: 1rem;
+            }
+
+            .intro-protocol-list-page {
+                padding-top: calc(25vh - 60px + 50px);
+            }
+
+            /* Cards - full width with minimal padding */
+            .intro-protocol-card {
+                padding: 1rem;
+                font-size: 0.9375rem;
+            }
+
+            .intro-protocol-title {
+                font-size: 1rem;
+            }
+
+            .intro-protocol-deck {
+                gap: 1.25rem;
+                margin-top: 1.5rem;
+            }
+
+            .intro-disclosure-content {
+                font-size: 0.875rem;
+            }
+
+            /* Adjust button text size */
+            .intro-disclosure-btn,
+            .intro-walk-btn {
+                font-size: 0.75rem;
+                padding: 0.875rem 1rem;
+            }
+
+            .intro-continue-btn,
+            .intro-begin-btn {
+                font-size: 0.9375rem;
+                padding: 0.875rem 1.5rem;
+            }
+
+            /* Continue button position */
+            .intro-continue-container {
+                top: calc(25vh + 160px);
+            }
+
+            .intro-continue-hint {
+                font-size: 0.75rem;
+            }
+
+            /* Header adjustments */
+            .page-header {
+                padding: 1rem 1.25rem;
+            }
+
+            /* Reduce line spacing on mobile */
+            .intro-content {
+                gap: 3rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1701,6 +1879,9 @@
                 
                 // Wait for border to dissolve (1.5s) then navigate
                 setTimeout(() => {
+                    // Set the selected protocol (needed for begin walk)
+                    selectProtocol(protocol);
+                    
                     // Hide intro flow
                     introFlowView.classList.add('hidden');
                     
@@ -1719,10 +1900,6 @@
                     // Show entry view for this protocol
                     protocolSelectionView.classList.add('hidden');
                     entryView.classList.remove('hidden');
-                    protocolTitle.textContent = protocol.title;
-                    
-                    // Store selected protocol ID
-                    window.selectedProtocolId = protocol.id;
                     
                     // Update header
                     const headerTitle = document.querySelector('.header-title');
