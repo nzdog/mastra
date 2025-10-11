@@ -29,9 +29,32 @@ export class Composer {
       awaitingConfirmation?: boolean;
       intent?: string;
       userIntent?: UserIntent;
+      totalThemes?: number;
+      protocolTitle?: string;
+      isOnFinalTheme?: boolean;
+      summaryInstructions?: string;
     }
   ): Promise<string> {
-    const systemPrompt = this.getSystemPrompt(mode);
+    let systemPrompt = this.getSystemPrompt(mode);
+
+    // For CLOSE mode, use protocol-specific summary instructions if available
+    if (mode === 'CLOSE' && context?.summaryInstructions) {
+      systemPrompt = context.summaryInstructions;
+    }
+
+    // Inject protocol metadata into WALK_PROMPT
+    if (mode === 'WALK' && context?.totalThemes && context?.protocolTitle) {
+      systemPrompt = systemPrompt
+        .replace(/{TOTAL_THEMES}/g, context.totalThemes.toString())
+        .replace(/{PROTOCOL_TITLE}/g, context.protocolTitle);
+    }
+
+    // If on final theme and showing interpretation, suppress the transition message
+    if (mode === 'WALK' && context?.isOnFinalTheme && context?.awaitingConfirmation) {
+      // Remove the "Ready to move into..." line from all templates
+      systemPrompt = systemPrompt.replace(/Ready to move into \*\*Theme \[N\+1\] – \[Next Theme Title\]\*\*\?/g, '');
+    }
+
     const messages = this.buildMessages(mode, chunk, conversationHistory, userMessage, context);
 
     console.log(`\n📝 COMPOSER: Mode = ${mode}, Theme = ${context?.currentThemeIndex || 'N/A'}, Awaiting = ${context?.awaitingConfirmation || false}`);
@@ -133,6 +156,10 @@ export class Composer {
       currentThemeTitle?: string;
       nextThemeTitle?: string;
       awaitingConfirmation?: boolean;
+      totalThemes?: number;
+      protocolTitle?: string;
+      isOnFinalTheme?: boolean;
+      summaryInstructions?: string;
     }
   ): Array<{ role: 'user' | 'assistant'; content: string }> {
     const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
@@ -154,7 +181,7 @@ export class Composer {
       currentMessage += `Current Theme Title: ${context?.currentThemeTitle || 'Unknown'}\n`;
       currentMessage += `Next Theme Title: ${context?.nextThemeTitle || 'None (final theme)'}\n`;
       currentMessage += `Awaiting Confirmation: ${context?.awaitingConfirmation ? 'YES - user returned to a theme they already answered' : 'NO - present theme with Purpose + Why this matters + Outcomes + all 3 Guiding Questions together'}\n`;
-      currentMessage += `Total Themes: 6\n\n`;
+      currentMessage += `Total Themes: ${context?.totalThemes || 5}\n\n`;
 
       // If returning to a theme they already answered, show their previous answer
       if (context?.awaitingConfirmation && context?.currentThemeIndex && context?.themeAnswers) {

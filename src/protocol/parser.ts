@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import matter from 'gray-matter';
-import { ParsedProtocol, ProtocolMetadata, ThemeContent } from './types';
+import { ParsedProtocol, ProtocolMetadata, ThemeContent, EntrySection } from './types';
 
 export class ProtocolParser {
   private protocolPath: string;
@@ -22,6 +22,7 @@ export class ProtocolParser {
       title: frontmatter.title,
       version: frontmatter.version,
       entry_keys: frontmatter.entry_keys || [],
+      entry_sections: frontmatter.entry_sections || undefined,
       themes: frontmatter.themes || [],
       stones: frontmatter.stones || [],
     };
@@ -30,37 +31,43 @@ export class ProtocolParser {
     // console.log(`   Protocol ID: ${metadata.id}`);
     // console.log(`   Expected themes: ${metadata.themes.length}`);
 
-    // Extract ENTRY chunk
-    const entry_chunk = this.extractEntryChunk(content, metadata);
-    // console.log(`   ✅ Entry chunk extracted (${entry_chunk.length} chars)`);
+    // Extract ENTRY sections
+    const entry_sections = this.extractEntrySections(content, metadata);
+    // console.log(`   ✅ Entry sections extracted: ${entry_sections.length}`);
 
     // Extract WALK chunks (per theme)
     const theme_chunks = this.extractThemeChunks(content, metadata);
     // console.log(`   ✅ Theme chunks extracted: ${theme_chunks.size} themes`);
     // console.log(`   Theme indices:`, Array.from(theme_chunks.keys()));
 
+    // Extract summary instructions (CLOSE mode)
+    const summary_instructions = this.extractSummaryInstructions(content);
+    // console.log(`   ✅ Summary instructions extracted: ${summary_instructions ? 'yes' : 'no'}`);
+
     return {
       metadata,
-      entry_chunk,
+      entry_sections,
       theme_chunks,
+      summary_instructions,
     };
   }
 
   /**
-   * Extract the ENTRY chunk (Purpose, Why This Matters, Use This When, Outcomes)
+   * Extract ENTRY sections based on frontmatter configuration or default sections
    */
-  private extractEntryChunk(content: string, metadata: ProtocolMetadata): string {
+  private extractEntrySections(content: string, metadata: ProtocolMetadata): EntrySection[] {
     const lines = content.split('\n');
-    const sections: Record<string, string> = {};
+    const allSections: Record<string, string> = {};
 
     let currentSection = '';
     let sectionContent: string[] = [];
 
+    // Parse all sections from the markdown content
     for (const line of lines) {
       // Top-level heading (##)
       if (line.startsWith('## ')) {
         if (currentSection && sectionContent.length > 0) {
-          sections[currentSection] = sectionContent.join('\n').trim();
+          allSections[currentSection] = sectionContent.join('\n').trim();
         }
         currentSection = line.replace('## ', '').trim();
         sectionContent = [];
@@ -68,7 +75,7 @@ export class ProtocolParser {
       // Stop at Themes section
       else if (line.startsWith('## Themes')) {
         if (currentSection && sectionContent.length > 0) {
-          sections[currentSection] = sectionContent.join('\n').trim();
+          allSections[currentSection] = sectionContent.join('\n').trim();
         }
         break;
       }
@@ -78,26 +85,34 @@ export class ProtocolParser {
       }
     }
 
-    // Build entry chunk
-    let entryChunk = `# ${metadata.title}\n\n`;
+    // Build entry sections array based on frontmatter config or defaults
+    const entrySections: EntrySection[] = [];
 
-    if (sections['Purpose']) {
-      entryChunk += `## Purpose\n${sections['Purpose']}\n\n`;
+    if (metadata.entry_sections && metadata.entry_sections.length > 0) {
+      // Use configured sections from frontmatter
+      for (const config of metadata.entry_sections) {
+        const sectionKey = config.marker.replace('## ', '').trim();
+        if (allSections[sectionKey]) {
+          entrySections.push({
+            title: config.title,
+            content: allSections[sectionKey],
+          });
+        }
+      }
+    } else {
+      // Fall back to default sections
+      const defaultSections = ['Purpose', 'Why This Matters', 'Use This When', 'Outcomes'];
+      for (const sectionKey of defaultSections) {
+        if (allSections[sectionKey]) {
+          entrySections.push({
+            title: sectionKey,
+            content: allSections[sectionKey],
+          });
+        }
+      }
     }
 
-    if (sections['Why This Matters']) {
-      entryChunk += `## Why This Matters\n${sections['Why This Matters']}\n\n`;
-    }
-
-    if (sections['Use This When']) {
-      entryChunk += `## Use This When\n${sections['Use This When']}\n\n`;
-    }
-
-    if (sections['Outcomes']) {
-      entryChunk += `## Outcomes\n${sections['Outcomes']}\n\n`;
-    }
-
-    return entryChunk.trim();
+    return entrySections;
   }
 
   /**
@@ -229,6 +244,35 @@ export class ProtocolParser {
       questions,
       completion_prompt,
     };
+  }
+
+  /**
+   * Extract summary instructions section (for CLOSE mode)
+   */
+  private extractSummaryInstructions(content: string): string | undefined {
+    const lines = content.split('\n');
+    let inSummarySection = false;
+    const summaryLines: string[] = [];
+
+    for (const line of lines) {
+      // Start collecting when we hit ## Summary Instructions
+      if (line.startsWith('## Summary Instructions')) {
+        inSummarySection = true;
+        continue;
+      }
+
+      // Collect everything after ## Summary Instructions until end of file
+      if (inSummarySection) {
+        summaryLines.push(line);
+      }
+    }
+
+    // Return undefined if no summary instructions found
+    if (summaryLines.length === 0) {
+      return undefined;
+    }
+
+    return summaryLines.join('\n').trim();
   }
 }
 

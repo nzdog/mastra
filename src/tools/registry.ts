@@ -14,10 +14,11 @@ export class ProtocolRegistry {
    */
   retrieve(mode: Mode, themeIndex: number | null): ProtocolChunk | null {
     if (mode === 'ENTRY') {
+      // Return entry sections as JSON string
       return {
         id: `${this.protocol.metadata.id}:entry`,
         type: 'ENTRY',
-        content: this.protocol.entry_chunk,
+        content: JSON.stringify(this.protocol.entry_sections),
       };
     }
 
@@ -73,5 +74,12 @@ export class ProtocolRegistry {
    */
   getMetadata() {
     return this.protocol.metadata;
+  }
+
+  /**
+   * Get protocol-specific summary instructions for CLOSE mode
+   */
+  getSummaryInstructions(): string | undefined {
+    return this.protocol.summary_instructions;
   }
 }

@@ -7,6 +7,15 @@ entry_keys:
   - why
   - use_when
   - outcomes_overall
+entry_sections:
+  - title: Purpose
+    marker: "## Purpose"
+  - title: "Why This Matters"
+    marker: "## Why This Matters"
+  - title: "Use This When"
+    marker: "## Use This When"
+  - title: Outcomes
+    marker: "## Outcomes"
 themes:
   - index: 1
     title: Distinguishing Treasure from Residue
@@ -158,3 +167,16 @@ I've checked for any signs of drift and confirmed that I'm carrying only the cle
 - I trust my ability to discern what strengthens me from what weakens me.
 - I honor the learning without perpetuating the distortion.
 - I carry forward only what serves coherence, leaving the rest behind with clarity.
+
+---
+
+## Summary Instructions
+
+**Type:** Field Exit
+
+**Instruction:**
+Do not name the old field.
+Identify the gifts clearly extracted.
+Describe how the pattern was left behind and what remains available.
+
+**Tone:** precise, appreciative, forward-facing.

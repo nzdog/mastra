@@ -7,6 +7,15 @@ entry_keys:
   - why
   - use_when
   - outcomes_overall
+entry_sections:
+  - title: Purpose
+    marker: "## Purpose"
+  - title: "Why This Matters"
+    marker: "## Why This Matters"
+  - title: "Use This When"
+    marker: "## Use This When"
+  - title: Outcomes
+    marker: "## Outcomes"
 themes:
   - index: 1
     title: Clearing Lingering Attachments
@@ -158,3 +167,16 @@ I'm fully present in this new field, with energy and attention moving forward.
 - I trust that letting go creates space for new possibilities.
 - I honor the past by moving forward without carrying its weight.
 - I carry forward only presence, clarity, and readiness for what comes next.
+
+---
+
+## Summary Instructions
+
+**Type:** Field Exit
+
+**Instruction:**
+Do not name the old field.
+Summarise what presence and focus have returned.
+Describe the forward direction now available.
+
+**Tone:** grounded, spacious, present.

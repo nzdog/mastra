@@ -7,6 +7,19 @@ entry_keys:
   - why
   - use_when
   - outcomes_overall
+entry_sections:
+  - title: Purpose
+    marker: "## Purpose"
+  - title: "What Is a Field?"
+    marker: "## What Is a Field?"
+  - title: "Examples of Common Fields"
+    marker: "## Examples of Common Fields"
+  - title: "Why This Matters"
+    marker: "## Why This Matters"
+  - title: "Use This When"
+    marker: "## Use This When"
+  - title: Outcomes
+    marker: "## Outcomes"
 themes:
   - index: 1
     title: Surface Behaviors
@@ -153,3 +166,18 @@ I have seen how this field behaves under stress, and I notice how I respond in p
 - I trust my perception of the field, even if others cannot see it.
 - I honor the stories, pressures, and rewards of this field without letting them define me.
 - I carry forward clarity about where I stand, so my next step can be chosen in coherence.
+
+---
+
+## Summary Instructions
+
+**Type:** Field Diagnostic
+
+**Instruction:**
+Name the active field clearly and describe its defining pattern, energy, or behaviour.
+Use present-tense language only.
+Avoid speculation about what comes next.
+Do not recommend actions or solutions.
+Focus on precision, neutrality, and grounded observation.
+
+**Tone:** clear, factual, nonjudgmental.

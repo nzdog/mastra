@@ -7,6 +7,15 @@ entry_keys:
   - why
   - use_when
   - outcomes_overall
+entry_sections:
+  - title: Purpose
+    marker: "## Purpose"
+  - title: "Why This Matters"
+    marker: "## Why This Matters"
+  - title: "Use This When"
+    marker: "## Use This When"
+  - title: Outcomes
+    marker: "## Outcomes"
 themes:
   - index: 1
     title: Tying Loose Threads
@@ -158,3 +167,16 @@ I've reflected on the full arc of this field and released it completely.
 - I trust that clean closure preserves integrity and creates space for new beginnings.
 - I honor all who remain in this field by leaving it better than I found it.
 - I carry forward the clarity of a clean exit into everything I begin next.
+
+---
+
+## Summary Instructions
+
+**Type:** Field Exit
+
+**Instruction:**
+Do not name the old field.
+Summarise what has been closed cleanly.
+Describe the completeness of the exit and the clarity left behind.
+
+**Tone:** clear, complete, respectful.

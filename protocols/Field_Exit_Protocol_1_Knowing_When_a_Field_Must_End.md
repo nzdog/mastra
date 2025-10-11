@@ -7,6 +7,15 @@ entry_keys:
   - why
   - use_when
   - outcomes_overall
+entry_sections:
+  - title: Purpose
+    marker: "## Purpose"
+  - title: "Why This Matters"
+    marker: "## Why This Matters"
+  - title: "Use This When"
+    marker: "## Use This When"
+  - title: Outcomes
+    marker: "## Outcomes"
 themes:
   - index: 1
     title: Facing Signs of Decline
@@ -158,3 +167,16 @@ I have opened space for the next field and trust what is forming to arrive in it
 - I trust my perception of completion, even if others cannot see it.
 - I honor the stories, pressures, and gifts of this field without letting them define me.
 - I carry forward clarity about what has ended, so my next step can be chosen in coherence.
+
+---
+
+## Summary Instructions
+
+**Type:** Field Exit
+
+**Instruction:**
+Do not name or reference the old field.
+Summarise what coherence or new direction is beginning to form.
+Focus on clarity, relief, and readiness for what's next.
+
+**Tone:** calm, assured, forward-facing.

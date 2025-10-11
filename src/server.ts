@@ -187,9 +187,10 @@ function formatResponse(
   const supports = extractSupports(session.registry, session.parser, state);
 
   // Check if user has completed all themes and is on final theme
+  // Show completion options when on final theme AND showing interpretation (not questions)
   const isFinalTheme = themeNumber === totalThemes;
-  const hasCompletedAllThemes = agentResponse.includes('You\'ve completed all') &&
-                                agentResponse.includes(`themes of the ${protocolName}`);
+  const showingInterpretation = state.last_response === 'interpretation_and_completion';
+  const showCompletionOptions = isFinalTheme && showingInterpretation;
 
   return {
     session_id: sessionId,
@@ -208,7 +209,7 @@ function formatResponse(
     total_cost: session.total_cost,
     // New fields for completion detection
     is_final_theme: isFinalTheme,
-    show_completion_options: isFinalTheme && hasCompletedAllThemes,
+    show_completion_options: showCompletionOptions,
   };
 }
 
@@ -435,9 +436,10 @@ app.post('/api/walk/complete', async (req: Request, res: Response) => {
       const updatedState = session.agent.getState();
       
       // Return proper completion response with theme info
+      const protocolMetadata = session.registry.getMetadata();
       const response = {
         session_id: session_id,
-        protocol_name: 'Field Diagnostic Protocol',
+        protocol_name: protocolMetadata.title,
         theme_number: updatedState.theme_index || 5,
         total_themes: session.registry.getTotalThemes(),
         mode: 'COMPLETE' as const,

@@ -7,6 +7,15 @@ entry_keys:
   - why
   - use_when
   - outcomes_overall
+entry_sections:
+  - title: Purpose
+    marker: "## Purpose"
+  - title: "Why This Matters"
+    marker: "## Why This Matters"
+  - title: "Use This When"
+    marker: "## Use This When"
+  - title: Outcomes
+    marker: "## Outcomes"
 themes:
   - index: 1
     title: Naming What Must Break Down
@@ -158,3 +167,16 @@ I've created the conditions for the next phase and can start fresh without carry
 - I trust that time and space will complete what conscious effort cannot force.
 - I honor the lessons without carrying the weight of the past.
 - I carry forward only what serves the new field, leaving the rest to compost naturally.
+
+---
+
+## Summary Instructions
+
+**Type:** Field Exit
+
+**Instruction:**
+Do not name the old field.
+Summarise what has been processed or released.
+Describe what energy or capacity is now restored.
+
+**Tone:** steady, integrative, clean.

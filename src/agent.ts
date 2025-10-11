@@ -99,6 +99,7 @@ export class FieldDiagnosticAgent {
       
       // Generate field diagnosis (no chunk, no theme logic needed)
       console.log(`🤖 AI CALL: Generating field diagnosis (personalized)`);
+      const summaryInstructions = this.registry.getSummaryInstructions();
       const response = await this.composer.compose(
         'CLOSE',
         null,
@@ -106,6 +107,7 @@ export class FieldDiagnosticAgent {
         userMessage,
         {
           themeAnswers: this.themeAnswers,
+          summaryInstructions: summaryInstructions,
         }
       );
       
@@ -154,6 +156,10 @@ export class FieldDiagnosticAgent {
       console.log(`💰 SAVED ~$0.0080 by skipping AI call | Total session cost: $${this.totalCost.toFixed(4)}`);
     } else {
       console.log(`🤖 AI CALL: Generating ${mode === 'WALK' ? 'interpretation' : 'content'}`);
+      const protocolMetadata = this.registry.getMetadata();
+      const totalThemes = this.registry.getTotalThemes();
+      const isOnFinalTheme = themeIndexForResponse === totalThemes;
+
       response = await this.composer.compose(
         mode,
         chunk,
@@ -167,6 +173,9 @@ export class FieldDiagnosticAgent {
           awaitingConfirmation: awaitingConfirmationForResponse,
           intent: classification.intent,
           userIntent: classification.user_wants_to,
+          totalThemes: totalThemes,
+          protocolTitle: protocolMetadata.title,
+          isOnFinalTheme: isOnFinalTheme,
         }
       );
       // Track composer cost
@@ -461,15 +470,19 @@ export class FieldDiagnosticAgent {
    */
   private buildStaticResponse(mode: Mode, chunk: any, themeIndex: number | null, nextThemeTitle: string | null): string {
     if (mode === 'ENTRY') {
-      // Return ENTRY mode protocol introduction
-      // Extract the ENTRY chunk content dynamically
+      // Return ENTRY mode protocol introduction as JSON for frontend
       const entryChunk = this.registry.retrieve('ENTRY', null);
       if (entryChunk) {
-        const protocolMetadata = this.registry.getMetadata();
+        // Parse the JSON sections
+        const sections = JSON.parse(entryChunk.content);
         const firstThemeTitle = this.registry.getThemeTitle(1);
 
-        // Return the entry content followed by transition to Theme 1
-        return `${entryChunk.content}\n\nWould you like me to now guide you into **Theme 1 – ${firstThemeTitle}**?`;
+        // Return structured JSON for frontend to parse
+        return JSON.stringify({
+          type: 'ENTRY',
+          sections: sections,
+          firstThemeTitle: firstThemeTitle,
+        });
       }
 
       // Fallback (should never reach here if protocol is properly formatted)

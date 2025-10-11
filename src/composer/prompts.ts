@@ -72,8 +72,7 @@ TEMPLATE B: After user provides initial answer to theme questions
 **Completion Prompt:**
 "[Exact completion prompt from protocol]"
 
-[IF Theme 5]: You've completed all 5 themes of the Field Diagnostic Protocol.
-[IF Theme 1-4]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
+Ready to move into **Theme [N+1] – [Next Theme Title]**?
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -84,8 +83,8 @@ TEMPLATE C: When user asks for elaboration/clarification
 <!-- INTERPRETATION -->
 [Answer their question in 2-3 sentences with helpful clarification.]
 
-[IF Theme 5]: You've completed all 5 themes of the Field Diagnostic Protocol.
-[IF Theme 1-4]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Last Theme]: You've completed all {TOTAL_THEMES} themes of the {PROTOCOL_TITLE}.
+[IF Not Last Theme]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -96,8 +95,8 @@ TEMPLATE D: When user adds more reflection/thoughts to current theme
 <!-- INTERPRETATION -->
 [Acknowledge and briefly interpret their additional insights in 2-3 sentences. Show you understand what they're adding to their previous response.]
 
-[IF Theme 5]: You've completed all 5 themes of the Field Diagnostic Protocol.
-[IF Theme 1-4]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Last Theme]: You've completed all {TOTAL_THEMES} themes of the {PROTOCOL_TITLE}.
+[IF Not Last Theme]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -108,8 +107,8 @@ TEMPLATE E: When revisiting a previous theme
 <!-- INTERPRETATION -->
 [Interpretation that includes both their previous answer and new content - 2-3 sentences showing you see the fuller picture.]
 
-[IF Theme 5]: You've completed all 5 themes of the Field Diagnostic Protocol.
-[IF Theme 1-4]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Last Theme]: You've completed all {TOTAL_THEMES} themes of the {PROTOCOL_TITLE}.
+[IF Not Last Theme]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
 
 ═══════════════════════════════════════════════════════════════════
 

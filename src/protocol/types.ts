@@ -1,10 +1,21 @@
 // Protocol-specific types
 
+export interface EntrySectionConfig {
+  title: string;
+  marker: string;
+}
+
+export interface EntrySection {
+  title: string;
+  content: string;
+}
+
 export interface ProtocolMetadata {
   id: string;
   title: string;
   version: string;
   entry_keys: string[];
+  entry_sections?: EntrySectionConfig[];
   themes: ThemeMetadata[];
   stones: string[];
 }
@@ -16,8 +27,9 @@ export interface ThemeMetadata {
 
 export interface ParsedProtocol {
   metadata: ProtocolMetadata;
-  entry_chunk: string;
+  entry_sections: EntrySection[];
   theme_chunks: Map<number, string>;
+  summary_instructions?: string;
 }
 
 export interface ThemeContent {
