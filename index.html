@@ -1729,9 +1729,6 @@
             <div class="intro-quote desktop-only" id="intro-quote-desktop">
                 "The field is the sole governing agency of the particle."
             </div>
-            <div class="intro-quote-attribution desktop-only" id="intro-quote-attribution-desktop">
-                — Albert Einstein
-            </div>
 
             <!-- Quote - Mobile Version (Inline Attribution) -->
             <div class="intro-quote mobile-only" id="intro-quote-mobile">
@@ -1857,7 +1854,6 @@
         // DOM Elements - Intro Flow
         const introFlowView = document.getElementById('intro-flow-view');
         const introQuoteDesktop = document.getElementById('intro-quote-desktop');
-        const introQuoteAttributionDesktop = document.getElementById('intro-quote-attribution-desktop');
         const introQuoteMobile = document.getElementById('intro-quote-mobile');
         const introEmbodimentLines = document.getElementById('intro-embodiment-lines');
         const introOrientation = document.getElementById('intro-orientation');
@@ -1975,10 +1971,7 @@
             
             // Reset all text to plain text for both desktop and mobile versions
             if (introQuoteDesktop) {
-                introQuoteDesktop.textContent = '"The field is the sole governing agency of the particle."';
-            }
-            if (introQuoteAttributionDesktop) {
-                introQuoteAttributionDesktop.textContent = '— Albert Einstein';
+                introQuoteDesktop.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
             }
             if (introQuoteMobile) {
                 introQuoteMobile.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
@@ -1994,7 +1987,6 @@
                 // Fade in both versions (CSS controls which one is visible)
                 await Promise.all([
                     fadeInClean(introQuoteDesktop, 860),
-                    fadeInClean(introQuoteAttributionDesktop, 860),
                     fadeInClean(introQuoteMobile, 860)
                 ]);
 
@@ -2008,10 +2000,6 @@
                 introQuoteDesktop.style.transition = 'opacity 500ms ease, color 500ms ease';
                 introQuoteDesktop.style.opacity = '0.6';
                 introQuoteDesktop.style.color = '#78716C';
-
-                introQuoteAttributionDesktop.style.transition = 'opacity 500ms ease, color 500ms ease';
-                introQuoteAttributionDesktop.style.opacity = '0.6';
-                introQuoteAttributionDesktop.style.color = '#78716C';
 
                 introQuoteMobile.style.transition = 'opacity 500ms ease, color 500ms ease';
                 introQuoteMobile.style.opacity = '0.6';
@@ -2039,8 +2027,9 @@
                 const line = document.createElement('div');
                 line.className = 'intro-text-line';
                 line.textContent = lineText;
-                // Move first two lines up by 20px
-                const offset = (i < 2) ? -20 : 0;
+                // Move first two lines: up 3px on desktop, up 20px on mobile
+                const isMobile = window.innerWidth <= 768;
+                const offset = (i < 2) ? (isMobile ? -20 : -3) : 0;
                 line.style.top = `calc(33% - 70px + ${60 + (i * 40) + offset}px)`; // Start 60px below Einstein quote, moved up 70px for header
                 introEmbodimentLines.appendChild(line);
                 
@@ -2079,7 +2068,10 @@
         // Handle Continue button click - show protocol list page
         async function showProtocolListPage() {
             console.log('Showing protocol list page...');
-            
+
+            // Scroll to top
+            window.scrollTo(0, 0);
+
             // Fade out the intro content (quote, embodiment lines, orientation, continue button)
             await fadeOut(introContent, 800);
             
@@ -2169,28 +2161,10 @@
             title.textContent = protocol.title;
             card.appendChild(title);
 
-            // Purpose section (initially hidden)
-            const purposeSection = document.createElement('div');
-            purposeSection.className = 'intro-disclosure-section';
-            purposeSection.innerHTML = `
-                <div class="intro-disclosure-label">Purpose</div>
-                <div class="intro-disclosure-content">${protocol.purpose || 'No purpose available'}</div>
-            `;
-            card.appendChild(purposeSection);
-
-            // Why section (initially hidden)
-            const whySection = document.createElement('div');
-            whySection.className = 'intro-disclosure-section';
-            whySection.innerHTML = `
-                <div class="intro-disclosure-label">Why This Matters</div>
-                <div class="intro-disclosure-content">${protocol.why || 'No description available'}</div>
-            `;
-            card.appendChild(whySection);
-
             // Use When section (initially hidden)
             const useWhenSection = document.createElement('div');
             useWhenSection.className = 'intro-disclosure-section';
-            
+
             // Format use_when as a list if it's an array, otherwise as plain text
             let useWhenContent = '';
             if (Array.isArray(protocol.use_when)) {
@@ -2198,65 +2172,29 @@
             } else {
                 useWhenContent = protocol.use_when || 'No use cases available';
             }
-            
+
             useWhenSection.innerHTML = `
                 <div class="intro-disclosure-label">Use This When</div>
                 <div class="intro-disclosure-content">${useWhenContent}</div>
             `;
             card.appendChild(useWhenSection);
 
-            // Purpose button (initially visible)
-            const purposeBtn = document.createElement('button');
-            purposeBtn.className = 'intro-disclosure-btn';
-            purposeBtn.textContent = 'Purpose';
-            purposeBtn.setAttribute('aria-expanded', 'false');
-            purposeBtn.setAttribute('aria-controls', `purpose-${protocol.id}`);
-            purposeSection.id = `purpose-${protocol.id}`;
-            card.appendChild(purposeBtn);
-
-            // Why button (initially hidden)
-            const whyBtn = document.createElement('button');
-            whyBtn.className = 'intro-disclosure-btn';
-            whyBtn.textContent = 'Why This Matters';
-            whyBtn.style.display = 'none';
-            whyBtn.setAttribute('aria-expanded', 'false');
-            whyBtn.setAttribute('aria-controls', `why-${protocol.id}`);
-            whySection.id = `why-${protocol.id}`;
-            card.appendChild(whyBtn);
-
-            // Use When button (initially hidden)
+            // Use When button (initially visible)
             const useWhenBtn = document.createElement('button');
             useWhenBtn.className = 'intro-disclosure-btn';
             useWhenBtn.textContent = 'Use This When';
-            useWhenBtn.style.display = 'none';
             useWhenBtn.setAttribute('aria-expanded', 'false');
             useWhenBtn.setAttribute('aria-controls', `usewhen-${protocol.id}`);
             useWhenSection.id = `usewhen-${protocol.id}`;
             card.appendChild(useWhenBtn);
 
-            // Walk this Protocol button (initially hidden, shown after all sections expanded)
+            // Walk this Protocol button (initially hidden, shown after Use This When is clicked)
             const walkBtn = document.createElement('button');
             walkBtn.className = 'intro-walk-btn';
             walkBtn.textContent = 'Walk this Protocol';
             card.appendChild(walkBtn);
 
-            // Handle progressive disclosure
-            purposeBtn.addEventListener('click', () => {
-                purposeSection.classList.add('visible');
-                purposeBtn.style.display = 'none';
-                purposeBtn.setAttribute('aria-expanded', 'true');
-                whyBtn.style.display = 'block';
-                announceForScreenReader('Purpose revealed');
-            });
-
-            whyBtn.addEventListener('click', () => {
-                whySection.classList.add('visible');
-                whyBtn.style.display = 'none';
-                whyBtn.setAttribute('aria-expanded', 'true');
-                useWhenBtn.style.display = 'block';
-                announceForScreenReader('Why This Matters revealed');
-            });
-
+            // Handle Use This When button click
             useWhenBtn.addEventListener('click', () => {
                 useWhenSection.classList.add('visible');
                 useWhenBtn.style.display = 'none';
@@ -2269,12 +2207,15 @@
             walkBtn.addEventListener('click', () => {
                 // Add dissolving class to trigger border fade
                 walkBtn.classList.add('dissolving');
-                
+
                 // Wait for border to dissolve (1.5s) then navigate
                 setTimeout(() => {
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+
                     // Set the selected protocol (needed for begin walk)
                     selectProtocol(protocol);
-                    
+
                     // Hide intro flow
                     introFlowView.classList.add('hidden');
                     
@@ -2427,6 +2368,9 @@
         // Handle protocol selection
         function selectProtocol(protocol) {
             selectedProtocol = protocol;
+
+            // Scroll to top
+            window.scrollTo(0, 0);
 
             // Update protocol title in entry view with stacked format
             // Split title at em dash (—) or long dash if present
@@ -2727,6 +2671,9 @@
         // Render walk state
         async function renderWalkState(data) {
             console.log('🚀 renderWalkState called, mode:', data.mode);
+
+            // Scroll to top whenever rendering walk state
+            window.scrollTo(0, 0);
 
             // In ENTRY mode, stay in entry view but show protocol introduction
             if (data.mode === 'ENTRY') {
