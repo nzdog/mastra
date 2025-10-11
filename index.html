@@ -851,17 +851,24 @@
 
         .intro-quote-attribution {
             position: absolute;
-            top: calc(33% - 35px);
+            top: calc(33% + 45px);
             left: 50%;
             transform: translateX(-50%);
             font-size: 0.9375rem;
             color: #78716C;
             text-align: center;
-            opacity: 0;
+            opacity: 1;
             z-index: 200;
-            white-space: nowrap;
             display: inline-block;
-            width: auto;
+        }
+
+        /* Desktop/Mobile visibility classes */
+        .desktop-only {
+            display: block;
+        }
+
+        .mobile-only {
+            display: none;
         }
 
         .intro-orientation {
@@ -1158,6 +1165,15 @@
 
         /* Tablets and small screens */
         @media (max-width: 768px) {
+            /* Show mobile version, hide desktop version */
+            .desktop-only {
+                display: none !important;
+            }
+
+            .mobile-only {
+                display: block !important;
+            }
+
             /* Logo adjustments */
             .logo-spin-intro {
                 width: 80px;
@@ -1177,16 +1193,14 @@
                 transform: none !important;
                 display: block !important;
                 width: auto !important;
+                line-height: 1.5 !important;
             }
 
             .intro-quote-attribution {
                 font-size: 0.875rem;
-                white-space: normal !important;
-                left: 7.5% !important;
-                right: 7.5% !important;
+                position: static !important;
                 transform: none !important;
-                display: block !important;
-                width: auto !important;
+                display: inline !important;
             }
 
             .intro-text-line {
@@ -1197,6 +1211,8 @@
                 transform: none !important;
                 display: block !important;
                 width: auto !important;
+                line-height: 1.5 !important;
+                margin-bottom: 20px !important;
             }
 
             .intro-orientation {
@@ -1207,6 +1223,7 @@
                 transform: none !important;
                 display: block !important;
                 width: auto !important;
+                line-height: 1.5 !important;
             }
 
             /* Adjust spacing for smaller screens */
@@ -1351,6 +1368,15 @@
 
         /* Mobile phones */
         @media (max-width: 480px) {
+            /* Show mobile version, hide desktop version */
+            .desktop-only {
+                display: none !important;
+            }
+
+            .mobile-only {
+                display: block !important;
+            }
+
             /* Further logo reduction */
             .logo-spin-intro {
                 width: 64px;
@@ -1364,7 +1390,7 @@
             /* Typography - even smaller */
             .intro-quote {
                 font-size: 1rem;
-                line-height: 1.6;
+                line-height: 1.4 !important;
                 left: 5% !important;
                 right: 5% !important;
                 transform: none !important;
@@ -1377,17 +1403,14 @@
 
             .intro-quote-attribution {
                 font-size: 0.8125rem;
-                left: 5% !important;
-                right: 5% !important;
+                position: static !important;
                 transform: none !important;
-                display: block !important;
-                white-space: normal !important;
-                width: auto !important;
+                display: inline !important;
             }
 
             .intro-text-line {
                 font-size: 1rem;
-                line-height: 1.6;
+                line-height: 1.4 !important;
                 left: 5% !important;
                 right: 5% !important;
                 transform: none !important;
@@ -1396,11 +1419,12 @@
                 display: block !important;
                 white-space: normal !important;
                 width: auto !important;
+                margin-bottom: 25px !important;
             }
 
             .intro-orientation {
                 font-size: 1rem;
-                line-height: 1.6;
+                line-height: 1.4 !important;
                 left: 5% !important;
                 right: 5% !important;
                 transform: none !important;
@@ -1691,12 +1715,17 @@
         </div>
 
         <div class="intro-content" id="intro-content">
-            <!-- Quote -->
-            <div class="intro-quote" id="intro-quote">
+            <!-- Quote - Desktop Version -->
+            <div class="intro-quote desktop-only" id="intro-quote-desktop">
                 "The field is the sole governing agency of the particle."
             </div>
-            <div class="intro-quote-attribution" id="intro-quote-attribution">
+            <div class="intro-quote-attribution desktop-only" id="intro-quote-attribution-desktop">
                 — Albert Einstein
+            </div>
+
+            <!-- Quote - Mobile Version (Inline Attribution) -->
+            <div class="intro-quote mobile-only" id="intro-quote-mobile">
+                "The field is the sole governing agency of the particle." — Albert Einstein
             </div>
 
             <!-- Embodiment Lines -->
@@ -1817,8 +1846,9 @@
 
         // DOM Elements - Intro Flow
         const introFlowView = document.getElementById('intro-flow-view');
-        const introQuote = document.getElementById('intro-quote');
-        const introQuoteAttribution = document.getElementById('intro-quote-attribution');
+        const introQuoteDesktop = document.getElementById('intro-quote-desktop');
+        const introQuoteAttributionDesktop = document.getElementById('intro-quote-attribution-desktop');
+        const introQuoteMobile = document.getElementById('intro-quote-mobile');
         const introEmbodimentLines = document.getElementById('intro-embodiment-lines');
         const introOrientation = document.getElementById('intro-orientation');
         const introContinueContainer = document.getElementById('intro-continue-container');
@@ -1929,48 +1959,59 @@
         // Run the intro flow sequence
         async function runIntroFlow() {
             console.log('Starting intro flow...');
-            console.log('introQuote element:', introQuote);
+            console.log('introQuoteDesktop element:', introQuoteDesktop);
+            console.log('introQuoteMobile element:', introQuoteMobile);
             console.log('introEmbodimentLines element:', introEmbodimentLines);
             
-            // Reset all text to plain text (clear any cached spans from previous animations)
-            introQuote.textContent = '"The field is the sole governing agency of the particle."';
-            introQuoteAttribution.textContent = '— Albert Einstein';
-            
+            // Reset all text to plain text for both desktop and mobile versions
+            if (introQuoteDesktop) {
+                introQuoteDesktop.textContent = '"The field is the sole governing agency of the particle."';
+            }
+            if (introQuoteAttributionDesktop) {
+                introQuoteAttributionDesktop.textContent = '— Albert Einstein';
+            }
+            if (introQuoteMobile) {
+                introQuoteMobile.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
+            }
+
             // 1. Wait 2 seconds with logo visible and spinning
             await new Promise(resolve => setTimeout(resolve, TIMING.initialWait));
             console.log('Initial wait complete, showing quote...');
 
-            // 2. Show quote with simple fade (0.86s)
-            if (introQuote) {
-                await fadeInClean(introQuote, 860);
-                announceForScreenReader(introQuote.textContent);
-                
-                // Wait 2 seconds, then show attribution
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Fade in attribution (simple opacity fade, 0.86s)
-                if (introQuoteAttribution) {
-                    await fadeInClean(introQuoteAttribution, 860);
-                    announceForScreenReader('Albert Einstein');
-                }
-                
-                // Wait remainder of time (1 more second to make total 3 seconds from quote appearing)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Grey out quote and attribution (keep them visible)
-                introQuote.style.transition = 'opacity 500ms ease, color 500ms ease';
-                introQuote.style.opacity = '0.6';
-                introQuote.style.color = '#78716C';
-                if (introQuoteAttribution) {
-                    introQuoteAttribution.style.transition = 'opacity 500ms ease, color 500ms ease';
-                    introQuoteAttribution.style.opacity = '0.6';
-                    introQuoteAttribution.style.color = '#78716C';
-                }
+            // 2. Show quote with simple fade (0.86s) - both desktop and mobile versions
+            // The CSS will handle showing only the appropriate version
+            if (introQuoteDesktop && introQuoteMobile) {
+                // Fade in both versions (CSS controls which one is visible)
+                await Promise.all([
+                    fadeInClean(introQuoteDesktop, 860),
+                    fadeInClean(introQuoteAttributionDesktop, 860),
+                    fadeInClean(introQuoteMobile, 860)
+                ]);
+
+                // Announce for screen readers (use desktop version text)
+                announceForScreenReader('"The field is the sole governing agency of the particle." — Albert Einstein');
+
+                // Wait 3 seconds total before greying out
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Grey out both versions
+                introQuoteDesktop.style.transition = 'opacity 500ms ease, color 500ms ease';
+                introQuoteDesktop.style.opacity = '0.6';
+                introQuoteDesktop.style.color = '#78716C';
+
+                introQuoteAttributionDesktop.style.transition = 'opacity 500ms ease, color 500ms ease';
+                introQuoteAttributionDesktop.style.opacity = '0.6';
+                introQuoteAttributionDesktop.style.color = '#78716C';
+
+                introQuoteMobile.style.transition = 'opacity 500ms ease, color 500ms ease';
+                introQuoteMobile.style.opacity = '0.6';
+                introQuoteMobile.style.color = '#78716C';
+
                 await new Promise(resolve => setTimeout(resolve, 500)); // Wait for grey transition
-                
+
                 console.log('Quote complete');
             } else {
-                console.error('introQuote element not found!');
+                console.error('Quote elements not found!');
             }
 
             // 3. Show each embodiment line with jigsaw fade, one at a time
