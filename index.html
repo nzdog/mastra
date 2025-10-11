@@ -788,7 +788,7 @@
 
         .intro-logo-container {
             position: absolute;
-            top: 33%;
+            top: calc(33vh - 70px);
             left: 50%;
             transform: translate(-50%, -50%);
             z-index: 100;
@@ -817,7 +817,7 @@
 
         .intro-text-line {
             position: absolute;
-            top: 33%;
+            top: calc(33% - 70px);
             left: 50%;
             transform: translateX(-50%);
             font-size: 1.125rem;
@@ -834,7 +834,7 @@
 
         .intro-quote {
             position: absolute;
-            top: 33%;
+            top: calc(33% - 70px);
             left: 50%;
             transform: translateX(-50%);
             font-size: 1.125rem;
@@ -851,7 +851,7 @@
 
         .intro-quote-attribution {
             position: absolute;
-            top: calc(33% + 35px);
+            top: calc(33% - 35px);
             left: 50%;
             transform: translateX(-50%);
             font-size: 0.9375rem;
@@ -866,7 +866,7 @@
 
         .intro-orientation {
             position: absolute;
-            top: 33%;
+            top: calc(33% - 70px);
             left: 50%;
             transform: translateX(-50%);
             font-size: 1.125rem;
@@ -884,6 +884,7 @@
         .intro-sequence-container {
             opacity: 0;
             width: 100%;
+            display: none; /* Hide sequence list */
         }
 
         .intro-sequence-list {
@@ -945,6 +946,8 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
+            max-width: 600px;
+            width: 100%;
         }
 
         .intro-protocol-title {
@@ -955,14 +958,15 @@
         }
 
         .intro-disclosure-section {
-            display: none;
+            max-height: 0;
             margin-top: 0.5rem;
             opacity: 0;
-            transition: opacity 1.4s ease;
+            overflow: hidden;
+            transition: max-height 3s ease, opacity 3s ease;
         }
 
         .intro-disclosure-section.visible {
-            display: block;
+            max-height: 1000px;
             opacity: 1;
         }
 
@@ -1026,9 +1030,39 @@
             outline-offset: 2px;
         }
 
+        .intro-walk-btn {
+            font-size: 0.8125rem;
+            font-weight: 500;
+            letter-spacing: 0.03em;
+            color: #78716C;
+            background: transparent;
+            border: 1px solid #E7E5E4;
+            padding: 0.625rem 1rem;
+            cursor: pointer;
+            transition: border-color 1.5s ease, color 0.3s ease, background 0.3s ease;
+            font-family: inherit;
+            text-align: center;
+            display: none;
+            margin-top: 0.5rem;
+        }
+
+        .intro-walk-btn:hover {
+            border-color: #78716C;
+            background: #FAFAF9;
+        }
+
+        .intro-walk-btn:focus-visible {
+            outline: 2px solid #57534E;
+            outline-offset: 2px;
+        }
+
+        .intro-walk-btn.dissolving {
+            border-color: transparent;
+        }
+
         .intro-continue-container {
             position: absolute;
-            top: calc(33% + 268px);
+            top: calc(33% + 198px);
             left: 50%;
             transform: translateX(-50%);
             opacity: 0;
@@ -1096,7 +1130,7 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            padding-top: 15rem;
+            padding-top: calc(33% - 70px + 60px);
             max-width: 900px;
             margin: 0 auto;
         }
@@ -1434,7 +1468,7 @@
             const embodimentLines = [
                 "You are the particle.",
                 "Every decision, every signal, every relationship is shaped by the field you're in.",
-                "The Lichen system listens to that field.",
+                "The Lichen System listens to that field.",
                 "It helps you see where you are.",
                 "It helps you transform the field when the time is right."
             ];
@@ -1445,7 +1479,7 @@
                 const line = document.createElement('div');
                 line.className = 'intro-text-line';
                 line.textContent = lineText;
-                line.style.top = `calc(33% + ${60 + (i * 40)}px)`; // Start 60px below Einstein quote, then 40px per line
+                line.style.top = `calc(33% - 70px + ${60 + (i * 40)}px)`; // Start 60px below Einstein quote, moved up 70px for header
                 introEmbodimentLines.appendChild(line);
                 
                 // Grey out the previous line BEFORE showing the next one
@@ -1493,9 +1527,9 @@
             // Show protocol list page
             introProtocolListPage.classList.add('visible');
             
-            // Fade in sequence list
-            await fadeIn(introSequenceContainer, 1000);
-            announceForScreenReader('Protocol sequence revealed: Field Diagnostic and 5 exit protocols');
+            // Skip sequence list - don't show it
+            // await fadeIn(introSequenceContainer, 1000);
+            // announceForScreenReader('Protocol sequence revealed: Field Diagnostic and 5 exit protocols');
 
             // Load and render protocol cards
             await loadAndRenderProtocolCards();
@@ -1514,10 +1548,10 @@
             if (e.shiftKey && e.key === 'Enter') {
                 // Only trigger if continue button is visible and intro content is still showing
                 if (introContinueContainer && 
-                    window.getComputedStyle(introContinueContainer).opacity > 0 &&
-                    introContent.style.display !== 'none') {
+                    parseFloat(window.getComputedStyle(introContinueContainer).opacity) > 0.5 &&
+                    window.getComputedStyle(introContent).display !== 'none') {
                     e.preventDefault();
-                    introContinueBtn.click();
+                    showProtocolListPage();
                 }
             }
         });
@@ -1629,6 +1663,12 @@
             useWhenSection.id = `usewhen-${protocol.id}`;
             card.appendChild(useWhenBtn);
 
+            // Walk this Protocol button (initially hidden, shown after all sections expanded)
+            const walkBtn = document.createElement('button');
+            walkBtn.className = 'intro-walk-btn';
+            walkBtn.textContent = 'Walk this Protocol';
+            card.appendChild(walkBtn);
+
             // Handle progressive disclosure
             purposeBtn.addEventListener('click', () => {
                 purposeSection.classList.add('visible');
@@ -1650,7 +1690,52 @@
                 useWhenSection.classList.add('visible');
                 useWhenBtn.style.display = 'none';
                 useWhenBtn.setAttribute('aria-expanded', 'true');
+                walkBtn.style.display = 'block';
                 announceForScreenReader('Use This When revealed');
+            });
+
+            // Walk button handler - go to protocol entry view
+            walkBtn.addEventListener('click', () => {
+                // Add dissolving class to trigger border fade
+                walkBtn.classList.add('dissolving');
+                
+                // Wait for border to dissolve (1.5s) then navigate
+                setTimeout(() => {
+                    // Hide intro flow
+                    introFlowView.classList.add('hidden');
+                    
+                    // Show content area
+                    const contentArea = document.querySelector('.content-area');
+                    if (contentArea) {
+                        contentArea.classList.add('visible');
+                    }
+                    
+                    // Remove intro-mode from header
+                    const pageHeader = document.getElementById('page-header');
+                    if (pageHeader) {
+                        pageHeader.classList.remove('intro-mode');
+                    }
+                    
+                    // Show entry view for this protocol
+                    protocolSelectionView.classList.add('hidden');
+                    entryView.classList.remove('hidden');
+                    protocolTitle.textContent = protocol.title;
+                    
+                    // Store selected protocol ID
+                    window.selectedProtocolId = protocol.id;
+                    
+                    // Update header
+                    const headerTitle = document.querySelector('.header-title');
+                    if (headerTitle) {
+                        headerTitle.textContent = protocol.title;
+                    }
+                    
+                    // Focus the entry input
+                    entryInput.focus();
+                    
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                }, 1500);
             });
 
             introProtocolDeck.appendChild(card);
