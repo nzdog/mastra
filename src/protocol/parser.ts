@@ -5,6 +5,9 @@ import { ParsedProtocol, ProtocolMetadata, ThemeContent, EntrySection } from './
 
 export class ProtocolParser {
   private protocolPath: string;
+  private static parsedProtocolCache: Map<string, ParsedProtocol> = new Map();
+  private static cacheTimestamps: Map<string, number> = new Map();
+  private static CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor(protocolPath: string) {
     this.protocolPath = protocolPath;
@@ -12,8 +15,23 @@ export class ProtocolParser {
 
   /**
    * Parse the markdown protocol file into structured chunks
+   * Uses in-memory cache to avoid repeated file I/O and parsing
    */
   parse(): ParsedProtocol {
+    const now = Date.now();
+    const cacheKey = this.protocolPath;
+
+    // Check if cache is valid
+    const cachedTime = ProtocolParser.cacheTimestamps.get(cacheKey);
+    if (cachedTime && (now - cachedTime) < ProtocolParser.CACHE_TTL_MS) {
+      const cached = ProtocolParser.parsedProtocolCache.get(cacheKey);
+      if (cached) {
+        console.log(`📦 CACHE HIT: Protocol "${path.basename(cacheKey)}" loaded from cache`);
+        return cached;
+      }
+    }
+
+    console.log(`💾 CACHE MISS: Parsing protocol "${path.basename(cacheKey)}" from disk`);
     const fileContent = fs.readFileSync(this.protocolPath, 'utf-8');
     const { data: frontmatter, content } = matter(fileContent);
 
@@ -44,12 +62,18 @@ export class ProtocolParser {
     const summary_instructions = this.extractSummaryInstructions(content);
     // console.log(`   ✅ Summary instructions extracted: ${summary_instructions ? 'yes' : 'no'}`);
 
-    return {
+    const parsed: ParsedProtocol = {
       metadata,
       entry_sections,
       theme_chunks,
       summary_instructions,
     };
+
+    // Update cache
+    ProtocolParser.parsedProtocolCache.set(cacheKey, parsed);
+    ProtocolParser.cacheTimestamps.set(cacheKey, now);
+
+    return parsed;
   }
 
   /**

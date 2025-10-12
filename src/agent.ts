@@ -25,6 +25,11 @@ export class FieldDiagnosticAgent {
   private totalCost: number = 0; // Track cumulative API cost for this session
   private protocolPath: string;
 
+  // Static cache for ENTRY mode responses (identical for all users)
+  private static entryResponseCache: Map<string, string> = new Map();
+  private static cacheTimestamps: Map<string, number> = new Map();
+  private static CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
+
   constructor(apiKey: string, registry?: ProtocolRegistry, protocolPath?: string) {
     this.classifier = new IntentClassifier(apiKey);
 
@@ -64,6 +69,11 @@ export class FieldDiagnosticAgent {
       role: 'user',
       content: userMessage,
     });
+
+    // Compress conversation history if too long (keep last 12 turns = 6 exchanges)
+    if (this.conversationHistory.length > 12) {
+      this.conversationHistory = this.compressConversationHistory(this.conversationHistory);
+    }
 
     // Step 1: Classify intent
     const classification = await this.classifier.classify(
@@ -470,6 +480,21 @@ export class FieldDiagnosticAgent {
    */
   private buildStaticResponse(mode: Mode, chunk: any, themeIndex: number | null, nextThemeTitle: string | null): string {
     if (mode === 'ENTRY') {
+      // Check cache first
+      const cacheKey = `ENTRY:${this.state.active_protocol || 'field_diagnostic'}`;
+      const now = Date.now();
+      const cachedTime = FieldDiagnosticAgent.cacheTimestamps.get(cacheKey);
+
+      if (cachedTime && (now - cachedTime) < FieldDiagnosticAgent.CACHE_TTL_MS) {
+        const cached = FieldDiagnosticAgent.entryResponseCache.get(cacheKey);
+        if (cached) {
+          console.log('📦 CACHE HIT: ENTRY response loaded from cache');
+          return cached;
+        }
+      }
+
+      console.log('💾 CACHE MISS: Building ENTRY response');
+
       // Return ENTRY mode protocol introduction as JSON for frontend
       const entryChunk = this.registry.retrieve('ENTRY', null);
       if (entryChunk) {
@@ -478,11 +503,17 @@ export class FieldDiagnosticAgent {
         const firstThemeTitle = this.registry.getThemeTitle(1);
 
         // Return structured JSON for frontend to parse
-        return JSON.stringify({
+        const response = JSON.stringify({
           type: 'ENTRY',
           sections: sections,
           firstThemeTitle: firstThemeTitle,
         });
+
+        // Cache the response
+        FieldDiagnosticAgent.entryResponseCache.set(cacheKey, response);
+        FieldDiagnosticAgent.cacheTimestamps.set(cacheKey, now);
+
+        return response;
       }
 
       // Fallback (should never reach here if protocol is properly formatted)
@@ -531,6 +562,64 @@ export class FieldDiagnosticAgent {
     }
     
     return ''; // Fallback (should never reach here)
+  }
+
+  /**
+   * Compress conversation history to reduce token usage
+   * Keeps last 12 turns (6 exchanges) and summarizes older content
+   */
+  private compressConversationHistory(history: ConversationTurn[]): ConversationTurn[] {
+    if (history.length <= 12) {
+      return history;
+    }
+
+    console.log(`🗜️  COMPRESSION: Compressing ${history.length} turns down to summary + last 12`);
+
+    // Keep last 12 turns
+    const recentTurns = history.slice(-12);
+
+    // Summarize older turns
+    const olderTurns = history.slice(0, -12);
+    const themeProgressSummary = this.summarizeOlderTurns(olderTurns);
+
+    // Create compressed history
+    const compressed: ConversationTurn[] = [
+      {
+        role: 'assistant',
+        content: `[Previous conversation summary: ${themeProgressSummary}]`
+      },
+      ...recentTurns
+    ];
+
+    const savedTurns = history.length - compressed.length;
+    console.log(`🗜️  COMPRESSION: Saved ${savedTurns} turns (estimated ~${savedTurns * 100} tokens)`);
+
+    return compressed;
+  }
+
+  /**
+   * Summarize older conversation turns into a brief summary
+   */
+  private summarizeOlderTurns(turns: ConversationTurn[]): string {
+    // Extract key information: which themes were discussed, any answers given
+    const themeMentions: Set<number> = new Set();
+    let answerCount = 0;
+
+    for (const turn of turns) {
+      // Look for theme mentions
+      const themeMatch = turn.content.match(/Theme (\d+)/i);
+      if (themeMatch) {
+        themeMentions.add(parseInt(themeMatch[1]));
+      }
+
+      // Count answers stored
+      if (turn.role === 'user' && turn.content.length > 50) {
+        answerCount++;
+      }
+    }
+
+    const themesDiscussed = Array.from(themeMentions).sort().join(', ');
+    return `User progressed through themes ${themesDiscussed}, providing ${answerCount} detailed responses. ${this.themeAnswers.size} theme answers stored.`;
   }
 
   /**

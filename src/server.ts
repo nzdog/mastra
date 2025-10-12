@@ -7,6 +7,8 @@ import { ProtocolRegistry } from './tools/registry';
 import { ProtocolParser } from './protocol/parser';
 import { ProtocolLoader } from './protocol/loader';
 import { SessionState } from './types';
+import { Session, SessionStore, createSessionStore } from './session-store';
+import { performanceMonitor, CacheStats } from './performance';
 import * as path from 'path';
 
 // Load environment variables
@@ -19,17 +21,35 @@ if (!API_KEY) {
   process.exit(1);
 }
 
-// Types for API
-interface Session {
-  id: string;
-  agent: FieldDiagnosticAgent;
-  registry: ProtocolRegistry;
-  parser: ProtocolParser;
-  created_at: string;
-  last_accessed: string;
-  total_cost: number;
+// Initialize session store (Redis if REDIS_URL provided, otherwise in-memory)
+let sessionStore: SessionStore;
+if (process.env.REDIS_URL) {
+  try {
+    // Dynamic import for Redis (optional dependency)
+    const Redis = require('ioredis');
+    const redis = new Redis(process.env.REDIS_URL);
+
+    redis.on('connect', () => {
+      console.log('✅ Connected to Redis');
+    });
+
+    redis.on('error', (err: Error) => {
+      console.error('❌ Redis connection error:', err);
+      console.log('⚠️  Falling back to in-memory session store');
+      sessionStore = createSessionStore({ type: 'memory', apiKey: API_KEY! });
+    });
+
+    sessionStore = createSessionStore({ type: 'redis', redis, apiKey: API_KEY! });
+  } catch (error) {
+    console.warn('⚠️  Redis module not installed. Using in-memory session store.');
+    console.log('   To enable Redis: npm install ioredis');
+    sessionStore = createSessionStore({ type: 'memory', apiKey: API_KEY! });
+  }
+} else {
+  sessionStore = createSessionStore({ type: 'memory', apiKey: API_KEY! });
 }
 
+// Types for API
 interface Support {
   source: string;
   theme: string;
@@ -51,36 +71,18 @@ interface CompleteRequest {
   generate_summary?: boolean;
 }
 
-// In-memory session storage (ephemeral, perfect for protocol walks)
-const sessions = new Map<string, Session>();
-const SESSION_TTL_MS = 60 * 60 * 1000; // 1 hour
-
-// Cleanup expired sessions every 10 minutes
-setInterval(() => {
-  const now = Date.now();
-  for (const [sessionId, session] of sessions.entries()) {
-    const lastAccessed = new Date(session.last_accessed).getTime();
-    if (now - lastAccessed > SESSION_TTL_MS) {
-      sessions.delete(sessionId);
-      console.log(`🗑️  Cleaned up expired session: ${sessionId}`);
-    }
-  }
+// Cleanup expired sessions every 10 minutes (for in-memory store)
+setInterval(async () => {
+  await sessionStore.cleanup();
 }, 10 * 60 * 1000);
 
-// Helper: Get or create session
-function getSession(sessionId: string): Session | null {
-  const session = sessions.get(sessionId);
-  if (!session) {
-    return null;
-  }
-
-  // Update last accessed
-  session.last_accessed = new Date().toISOString();
-  return session;
+// Helper: Get session (async wrapper for SessionStore)
+async function getSession(sessionId: string): Promise<Session | null> {
+  return await sessionStore.get(sessionId);
 }
 
-// Helper: Create new session
-function createSession(protocolSlug?: string): Session {
+// Helper: Create new session (async)
+async function createSession(protocolSlug?: string): Promise<Session> {
   const loader = new ProtocolLoader();
 
   // Get protocol path from slug, or default to field_diagnostic
@@ -109,7 +111,7 @@ function createSession(protocolSlug?: string): Session {
     total_cost: 0,
   };
 
-  sessions.set(session.id, session);
+  await sessionStore.set(session.id, session);
   console.log(`✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`);
   return session;
 }
@@ -284,10 +286,42 @@ app.get('/test', (_req: Request, res: Response) => {
 });
 
 // Health check
-app.get('/health', (_req: Request, res: Response) => {
+app.get('/health', async (_req: Request, res: Response) => {
+  const sessionCount = await sessionStore.size();
+  const memory = performanceMonitor.getMemoryUsage();
+
   res.json({
     status: 'ok',
-    active_sessions: sessions.size,
+    active_sessions: sessionCount,
+    session_store: process.env.REDIS_URL ? 'redis' : 'memory',
+    memory_usage: {
+      heap_used_mb: Math.round(memory.heap_used_mb * 100) / 100,
+      heap_total_mb: Math.round(memory.heap_total_mb * 100) / 100,
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Performance metrics endpoint
+app.get('/api/metrics', (_req: Request, res: Response) => {
+  const summary = performanceMonitor.getSummary();
+  const cacheStats = CacheStats.getStats();
+  const memory = performanceMonitor.getMemoryUsage();
+
+  res.json({
+    performance: {
+      ...summary,
+      avg_duration_ms: Math.round(summary.avg_duration_ms * 100) / 100,
+      p50_duration_ms: Math.round(summary.p50_duration_ms * 100) / 100,
+      p95_duration_ms: Math.round(summary.p95_duration_ms * 100) / 100,
+      p99_duration_ms: Math.round(summary.p99_duration_ms * 100) / 100,
+      cache_hit_rate: Math.round(summary.cache_hit_rate * 10000) / 100 + '%',
+    },
+    cache: {
+      ...cacheStats,
+      hit_rate: Math.round(cacheStats.hit_rate * 10000) / 100 + '%',
+    },
+    memory,
     timestamp: new Date().toISOString(),
   });
 });
@@ -331,7 +365,7 @@ app.post('/api/walk/start', async (req: Request, res: Response) => {
     }
 
     // Create new session with specified protocol
-    const session = createSession(protocol_slug);
+    const session = await createSession(protocol_slug);
 
     // Process initial message
     const agentResponse = await session.agent.processMessage(user_input);
@@ -365,7 +399,7 @@ app.post('/api/walk/continue', async (req: Request, res: Response) => {
     }
 
     // Get session
-    const session = getSession(session_id);
+    const session = await getSession(session_id);
     if (!session) {
       return res.status(404).json({
         error: 'Session not found or expired',
@@ -407,7 +441,7 @@ app.post('/api/walk/complete', async (req: Request, res: Response) => {
     }
 
     // Get session
-    const session = getSession(session_id);
+    const session = await getSession(session_id);
     if (!session) {
       return res.status(404).json({
         error: 'Session not found or expired',
@@ -456,14 +490,14 @@ app.post('/api/walk/complete', async (req: Request, res: Response) => {
       };
 
       // Delete session after sending response
-      sessions.delete(session_id);
+      await sessionStore.delete(session_id);
       console.log(`✅ Completed and deleted session: ${session_id}`);
 
       return res.json(response);
     }
 
     // If no summary requested, just complete without generating content
-    sessions.delete(session_id);
+    await sessionStore.delete(session_id);
     console.log(`✅ Completed and deleted session: ${session_id}`);
 
     res.json({
@@ -479,9 +513,9 @@ app.post('/api/walk/complete', async (req: Request, res: Response) => {
 });
 
 // Get session state (debugging)
-app.get('/api/session/:id', (req: Request, res: Response) => {
+app.get('/api/session/:id', async (req: Request, res: Response) => {
   const sessionId = req.params.id;
-  const session = getSession(sessionId);
+  const session = await getSession(sessionId);
 
   if (!session) {
     return res.status(404).json({

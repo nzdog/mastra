@@ -16,6 +16,9 @@ export interface ProtocolMetadata {
 
 export class ProtocolLoader {
     private protocolsDir: string;
+    private static metadataCache: Map<string, ProtocolMetadata[]> | null = null;
+    private static metadataCacheTime: number = 0;
+    private static CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
     constructor(protocolsDir?: string) {
         this.protocolsDir = protocolsDir || path.join(__dirname, '../../protocols');
@@ -23,8 +26,24 @@ export class ProtocolLoader {
 
     /**
      * Scan the protocols directory and return metadata for all protocols
+     * Uses in-memory cache to avoid repeated file I/O operations
      */
     public listProtocols(): ProtocolMetadata[] {
+        const now = Date.now();
+        const cacheKey = this.protocolsDir;
+
+        // Check if cache is valid
+        if (ProtocolLoader.metadataCache &&
+            ProtocolLoader.metadataCacheTime > 0 &&
+            (now - ProtocolLoader.metadataCacheTime) < ProtocolLoader.CACHE_TTL_MS) {
+            const cached = ProtocolLoader.metadataCache.get(cacheKey);
+            if (cached) {
+                console.log('📦 CACHE HIT: Protocol metadata loaded from cache');
+                return cached;
+            }
+        }
+
+        console.log('💾 CACHE MISS: Loading protocol metadata from disk');
         const protocols: ProtocolMetadata[] = [];
 
         try {
@@ -45,6 +64,14 @@ export class ProtocolLoader {
                     protocols.push(metadata);
                 }
             }
+
+            // Update cache
+            if (!ProtocolLoader.metadataCache) {
+                ProtocolLoader.metadataCache = new Map();
+            }
+            ProtocolLoader.metadataCache.set(cacheKey, protocols);
+            ProtocolLoader.metadataCacheTime = now;
+
         } catch (error) {
             console.error('Error loading protocols:', error);
         }

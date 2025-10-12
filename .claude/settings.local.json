@@ -1,5 +1,6 @@
 {
   "permissions": {
+    "defaultMode": "bypassPermissions",
     "allow": [
       "Bash(npm init:*)",
       "Bash(npm install:*)",
@@ -31,7 +32,12 @@
       "Bash(for branch in speeding-up tweaks-and-polish wired-and-ready)",
       "Bash(do echo \"=== $branch ===\")",
       "Bash(done)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Read(//Users/Nigel/Downloads/**)",
+      "Bash(find:*)",
+      "Bash(head:*)",
+      "Bash(du:*)",
+      "Bash(while:*)"
     ],
     "deny": [],
     "ask": []

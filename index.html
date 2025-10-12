@@ -221,6 +221,7 @@
             font-weight: 600;
             letter-spacing: 0.05em;
             color: #1C1917;
+            cursor: default;
         }
 
         .header-state {
@@ -263,6 +264,7 @@
             font-size: 0.8125rem;
             color: #78716C;
             font-weight: 500;
+            cursor: default;
         }
 
         /* Content Area */
@@ -638,16 +640,30 @@
 
         /* Error Strip */
         .error-strip {
-            background: #FAFAF9;
-            border: 1px solid #E7E5E4;
-            border-left: 2px solid #DC2626;
-            padding: 0.875rem 1rem;
+            background: #FEF2F2;
+            border: 1px solid #FCA5A5;
+            border-left: 3px solid #DC2626;
+            padding: 1rem 1.25rem;
             margin-bottom: 1.5rem;
             display: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
         }
 
         .error-strip.active {
             display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .error-message {
@@ -1018,24 +1034,26 @@
         }
 
         .intro-disclosure-btn {
-            font-size: 0.8125rem;
-            font-weight: 500;
-            letter-spacing: 0.03em;
-            color: #78716C;
-            background: transparent;
-            border: 1px solid #E7E5E4;
-            padding: 0.625rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: #57534E;
+            background: #FAFAF9;
+            border: 1px solid #D6D3D1;
+            padding: 0.75rem 1.5rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             font-family: inherit;
             margin-top: 0.75rem;
-            text-align: left;
+            text-align: center;
+            text-transform: uppercase;
             width: 100%;
         }
 
         .intro-disclosure-btn:hover {
             border-color: #78716C;
-            background: #FAFAF9;
+            background: #F5F5F4;
+            transform: translateY(-1px);
         }
 
         .intro-disclosure-btn:focus-visible {
@@ -1109,34 +1127,6 @@
             font-size: 0.8125rem;
             color: #A8A29E;
             margin-top: 0.5rem;
-        }
-
-        .intro-begin-container {
-            opacity: 0;
-            margin-top: 3rem;
-            text-align: center;
-        }
-
-        .intro-begin-btn {
-            background: transparent;
-            border: 1px solid #D6D3D1;
-            color: #57534E;
-            padding: 0.875rem 2rem;
-            font-size: 1rem;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .intro-begin-btn:hover {
-            border-color: #78716C;
-            background: #FAFAF9;
-        }
-
-        .intro-begin-btn:focus-visible {
-            outline: 2px solid #57534E;
-            outline-offset: 2px;
         }
 
         .intro-protocol-list-page {
@@ -1265,8 +1255,7 @@
                 min-height: 44px;
             }
 
-            .intro-continue-btn,
-            .intro-begin-btn {
+            .intro-continue-btn {
                 padding: 1rem 2rem;
                 min-height: 44px;
             }
@@ -1486,8 +1475,7 @@
                 padding: 0.875rem 1rem;
             }
 
-            .intro-continue-btn,
-            .intro-begin-btn {
+            .intro-continue-btn {
                 font-size: 0.9375rem;
                 padding: 0.875rem 1.5rem;
             }
@@ -1746,7 +1734,7 @@
             <!-- Continue Button (shown after orientation) -->
             <div class="intro-continue-container" id="intro-continue-container">
                 <button class="intro-continue-btn" id="intro-continue-btn">Continue</button>
-                <div class="intro-continue-hint">Press Shift + Enter</div>
+                <div class="intro-continue-hint">Press Shift + Enter or ⌘/Ctrl + Enter</div>
             </div>
         </div>
 
@@ -1768,11 +1756,6 @@
             <!-- Protocol Deck -->
             <div class="intro-protocol-deck" id="intro-protocol-deck">
                 <!-- Protocol cards will be populated by JavaScript -->
-            </div>
-
-            <!-- Begin Button -->
-            <div class="intro-begin-container" id="intro-begin-container">
-                <button class="intro-begin-btn" id="intro-begin-btn">Begin</button>
             </div>
         </div>
     </div>
@@ -1863,8 +1846,6 @@
         const introProtocolListPage = document.getElementById('intro-protocol-list-page');
         const introSequenceContainer = document.getElementById('intro-sequence-container');
         const introProtocolDeck = document.getElementById('intro-protocol-deck');
-        const introBeginContainer = document.getElementById('intro-begin-container');
-        const introBeginBtn = document.getElementById('intro-begin-btn');
         const srAnnouncer = document.getElementById('sr-announcer');
 
         // DOM Elements - Main App
@@ -1891,6 +1872,15 @@
         const errorMessage = document.getElementById('error-message');
         const responseHint = document.getElementById('response-hint');
         const costDisplay = document.getElementById('cost-display');
+
+        // Detect platform for keyboard shortcuts
+        const isMac = navigator.platform.toUpperCase().includes('MAC');
+
+        // Set platform-specific keyboard shortcut hints
+        const introContinueHint = document.querySelector('.intro-continue-hint');
+        if (introContinueHint) {
+            introContinueHint.textContent = isMac ? 'Press ⌘ + Enter' : 'Press Ctrl + Enter';
+        }
 
         // ========================================
         // INTRO FLOW LOGIC
@@ -2096,9 +2086,6 @@
 
             // Load and render protocol cards
             await loadAndRenderProtocolCards();
-
-            // Fade in begin button
-            await fadeIn(introBeginContainer, 1000);
         }
 
         // Continue button click handler
@@ -2106,11 +2093,14 @@
             showProtocolListPage();
         });
 
-        // Keyboard shortcut: Shift + Enter
+        // Keyboard shortcut: Cmd/Ctrl + Enter to skip intro
         document.addEventListener('keydown', (e) => {
-            if (e.shiftKey && e.key === 'Enter') {
+            const modifier = isMac ? e.metaKey : e.ctrlKey;
+            const isShortcut = modifier && e.key === 'Enter';
+
+            if (isShortcut) {
                 // Only trigger if continue button is visible and intro content is still showing
-                if (introContinueContainer && 
+                if (introContinueContainer &&
                     parseFloat(window.getComputedStyle(introContinueContainer).opacity) > 0.5 &&
                     window.getComputedStyle(introContent).display !== 'none') {
                     e.preventDefault();
@@ -2252,35 +2242,6 @@
             introProtocolDeck.appendChild(card);
         }
 
-        // Handle Begin button click
-        introBeginBtn.addEventListener('click', () => {
-            // Hide intro flow
-            introFlowView.classList.add('hidden');
-            
-            // Show content area
-            const contentArea = document.querySelector('.content-area');
-            if (contentArea) {
-                contentArea.classList.add('visible');
-            }
-            
-            // Show protocol selection
-            protocolSelectionView.classList.remove('hidden');
-            
-            // Remove intro-mode from header and update title
-            const pageHeader = document.getElementById('page-header');
-            if (pageHeader) {
-                pageHeader.classList.remove('intro-mode');
-            }
-            
-            const headerTitle = document.querySelector('.header-title');
-            if (headerTitle) {
-                headerTitle.textContent = 'Lichen Protocol';
-            }
-            
-            // Scroll to top
-            window.scrollTo(0, 0);
-        });
-
         // Start the intro flow when page loads
         try {
             runIntroFlow().catch(error => {
@@ -2390,14 +2351,16 @@
             entryView.classList.remove('hidden');
         }
 
-        // Detect platform for keyboard shortcuts
-        const isMac = navigator.platform.toUpperCase().includes('MAC');
-
         // Load protocols on page load
         loadProtocols();
 
         // Set helper text based on platform
         responseHint.textContent = isMac ? 'Press ⌘ + Enter to continue' : 'Press Ctrl + Enter to continue';
+
+        // Update button aria-label for accessibility
+        if (continueButton) {
+            continueButton.setAttribute('aria-label', isMac ? 'Continue (Cmd + Enter)' : 'Continue (Ctrl + Enter)');
+        }
 
         // Enable continue button when response has content
         responseInput.addEventListener('input', () => {
@@ -2423,6 +2386,31 @@
             }
             // Shift + Enter: allow new line (default behavior)
             // Enter alone: allow new line (default behavior)
+        });
+
+        // Escape key: Exit walk and return to protocol selection
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // Check if we're in a walk (walk-view is visible or entry-view is visible)
+                const isInWalk = (walkView && walkView.style.display !== 'none') ||
+                                 (entryView && !entryView.classList.contains('hidden'));
+
+                if (isInWalk && confirm('Exit this protocol and return to protocol selection?')) {
+                    // Reset views
+                    if (walkView) walkView.style.display = 'none';
+                    if (entryView) entryView.classList.add('hidden');
+
+                    // Show protocol selection
+                    protocolSelectionView.classList.remove('hidden');
+
+                    // Reset inputs
+                    if (responseInput) responseInput.value = '';
+                    if (continueButton) continueButton.disabled = true;
+
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                }
+            }
         });
 
         // Begin walk
@@ -3030,7 +3018,22 @@
                     }
                 };
 
+                // Add "Return to Protocol Selection" button
+                const backBtn = document.createElement('button');
+                backBtn.className = 'walk-button fade-in-only';
+                backBtn.style.cssText = 'background: transparent; border: 1px solid #D6D3D1; color: #78716C; margin-left: 1rem;';
+                backBtn.textContent = 'Return to Protocol Selection';
+                backBtn.onclick = () => {
+                    // Hide entry view
+                    entryView.classList.add('hidden');
+                    // Show protocol selection
+                    protocolSelectionView.classList.remove('hidden');
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                };
+
                 continueControl.appendChild(continueBtn);
+                continueControl.appendChild(backBtn);
                 entryResponseArea.appendChild(continueControl);
             }
 
@@ -3054,6 +3057,9 @@
 
             let html = markdown;
 
+            // Filter out horizontal rules (---) - they're structural markers, not content
+            html = html.replace(/^---+\s*$/gm, '');
+
             // First, convert headers (before any other processing)
             // Support both ## and # formats
             html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
@@ -3061,8 +3067,8 @@
             html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
 
             // Convert **bold text:** or **bold** to <strong>
-            // Use a more robust pattern that handles multi-line
-            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            // Use a more robust pattern that handles multi-line and inline bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
             // Convert bullet points
             html = html.replace(/^\• (.+)$/gm, '<li>$1</li>');
@@ -3141,7 +3147,7 @@
             if (sections.why_this_matters) {
                 composerOutput.innerHTML += `
                     <div class="output-section">
-                        <div class="section-label">Why This Matters</div>
+                        <div class="section-label">Why This Theme Matters</div>
                         <div class="section-content">${sections.why_this_matters}</div>
                     </div>
                 `;
@@ -3149,9 +3155,11 @@
 
             if (sections.guiding_question) {
                 const label = sections.guiding_question.includes('•') ? 'Guiding Questions' : 'Guiding Question';
+                const helperText = 'Reflect on these questions as they relate to your current situation. Share what comes up for you—there are no right or wrong answers.';
                 composerOutput.innerHTML += `
                     <div class="output-section">
                         <div class="section-label">${label}</div>
+                        <div class="section-content" style="font-size: 0.875rem; color: #78716C; margin-bottom: 0.75rem; font-style: italic;">${helperText}</div>
                         <div class="section-content" style="white-space: pre-line;">${sections.guiding_question}</div>
                     </div>
                 `;
@@ -3180,10 +3188,12 @@
             }
 
             if (sections.completion_prompt) {
+                const helperText = 'When this statement feels true for you, you\'re ready to continue:';
                 composerOutput.innerHTML += `
                     <div class="output-section">
-                        <div class="section-label">Completion Prompt</div>
-                        <div class="section-content" style="font-style: italic;">${sections.completion_prompt}</div>
+                        <div class="section-label">Theme Completion</div>
+                        <div class="section-content" style="font-size: 0.875rem; color: #78716C; margin-bottom: 0.5rem;">${helperText}</div>
+                        <div class="section-content" style="font-style: italic; font-weight: 500; color: #57534E;">${sections.completion_prompt}</div>
                     </div>
                 `;
             }
