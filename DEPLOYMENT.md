@@ -1,10 +1,12 @@
 # Deployment Guide
 
 This app uses a split deployment architecture:
+
 - **Frontend (Netlify)**: Static HTML served from CDN
 - **Backend (Railway)**: Node.js API server with Claude integration
 
 ## Prerequisites
+
 - GitHub repository (push your code)
 - Railway account (https://railway.app)
 - Netlify account (https://netlify.com)
@@ -13,6 +15,7 @@ This app uses a split deployment architecture:
 ## Step 1: Deploy Backend to Railway
 
 1. **Push code to GitHub** (if not already done):
+
    ```bash
    git push origin main
    ```
@@ -71,6 +74,7 @@ This app uses a split deployment architecture:
 Visit your Netlify URL and test the full protocol walk!
 
 ## Important Files
+
 - `netlify.toml`: Netlify configuration
 - `Procfile`: Railway start command
 - `.env.example`: Template for environment variables
@@ -78,7 +82,9 @@ Visit your Netlify URL and test the full protocol walk!
 - `src/server.ts`: Backend (deployed to Railway)
 
 ## Local Development
+
 Still works the same:
+
 ```bash
 npm run build
 npm run server
@@ -86,5 +92,5 @@ npm run server
 ```
 
 ## Cost Monitoring
-The cost display in the header shows estimated Claude API costs per session.
 
+The cost display in the header shows estimated Claude API costs per session.

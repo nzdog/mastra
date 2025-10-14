@@ -1,8 +1,7 @@
-import { ClaudeClient } from './client';
-import { ENTRY_PROMPT, WALK_PROMPT, CLOSE_PROMPT } from './prompts';
 import { Mode, ConversationTurn, ProtocolChunk, UserIntent } from '../types';
 import { WalkResponseValidator } from '../validator';
-import * as path from 'path';
+import { ClaudeClient } from './client';
+import { ENTRY_PROMPT, WALK_PROMPT, CLOSE_PROMPT } from './prompts';
 
 export class Composer {
   private client: ClaudeClient;
@@ -52,18 +51,25 @@ export class Composer {
     // If on final theme and showing interpretation, suppress the transition message
     if (mode === 'WALK' && context?.isOnFinalTheme && context?.awaitingConfirmation) {
       // Remove the "Ready to move into..." line from all templates
-      systemPrompt = systemPrompt.replace(/Ready to move into \*\*Theme \[N\+1\] – \[Next Theme Title\]\*\*\?/g, '');
+      systemPrompt = systemPrompt.replace(
+        /Ready to move into \*\*Theme \[N\+1\] – \[Next Theme Title\]\*\*\?/g,
+        ''
+      );
     }
 
     const messages = this.buildMessages(mode, chunk, conversationHistory, userMessage, context);
 
-    console.log(`\n📝 COMPOSER: Mode = ${mode}, Theme = ${context?.currentThemeIndex || 'N/A'}, Awaiting = ${context?.awaitingConfirmation || false}`);
+    console.log(
+      `\n📝 COMPOSER: Mode = ${mode}, Theme = ${context?.currentThemeIndex || 'N/A'}, Awaiting = ${context?.awaitingConfirmation || false}`
+    );
 
     let response = await this.client.sendMessage(systemPrompt, messages);
 
     if (response.length > 500) {
       console.log(`\n📤 COMPOSER RESPONSE (first 200 chars):\n${response.substring(0, 200)}...`);
-      console.log(`\n📤 COMPOSER RESPONSE (last 200 chars):\n...${response.substring(response.length - 200)}`);
+      console.log(
+        `\n📤 COMPOSER RESPONSE (last 200 chars):\n...${response.substring(response.length - 200)}`
+      );
     } else {
       console.log(`\n📤 COMPOSER FULL RESPONSE:\n${response}`);
     }
@@ -73,8 +79,12 @@ export class Composer {
     const isClarification = context?.intent === 'discover';
 
     console.log(`\n🔍 VALIDATOR CHECK:`);
-    console.log(`   mode=${mode}, hasValidator=${!!this.validator}, themeIndex=${context?.currentThemeIndex}, isClarification=${isClarification}`);
-    console.log(`   awaitingConfirmation=${context?.awaitingConfirmation}, intent=${context?.intent}`);
+    console.log(
+      `   mode=${mode}, hasValidator=${!!this.validator}, themeIndex=${context?.currentThemeIndex}, isClarification=${isClarification}`
+    );
+    console.log(
+      `   awaitingConfirmation=${context?.awaitingConfirmation}, intent=${context?.intent}`
+    );
 
     // TEMPORARILY DISABLED: Validator is too strict for new template system
     // TODO: Update validator to work with new flexible templates
@@ -82,7 +92,14 @@ export class Composer {
 
     // Only validate when showing interpretation (awaitingConfirmation = true)
     // Skip validation when showing new theme questions (awaitingConfirmation = false)
-    if (mode === 'WALK' && this.validator && context?.currentThemeIndex && context?.awaitingConfirmation && !isClarification && !VALIDATION_DISABLED) {
+    if (
+      mode === 'WALK' &&
+      this.validator &&
+      context?.currentThemeIndex &&
+      context?.awaitingConfirmation &&
+      !isClarification &&
+      !VALIDATION_DISABLED
+    ) {
       console.log('🔍 VALIDATOR: Running validation...');
       const validation = this.validator.validateThemeResponse(
         response,
@@ -92,12 +109,14 @@ export class Composer {
 
       if (!validation.valid) {
         console.log('\n⚠️  VALIDATOR FAILED. Issues detected:');
-        validation.issues.forEach(issue => console.log(`   - ${issue}`));
+        validation.issues.forEach((issue) => console.log(`   - ${issue}`));
 
         // Try once more with stronger guardrails
         // console.log('🔄 Retrying with stronger constraints...\n');
 
-        const strengthenedPrompt = systemPrompt + '\n\nWARNING: Your previous response did not follow the protocol exactly. You MUST copy the theme title and guiding questions WORD FOR WORD from the theme content. DO NOT improvise.';
+        const strengthenedPrompt =
+          systemPrompt +
+          '\n\nWARNING: Your previous response did not follow the protocol exactly. You MUST copy the theme title and guiding questions WORD FOR WORD from the theme content. DO NOT improvise.';
         response = await this.client.sendMessage(strengthenedPrompt, messages);
 
         // Validate again
@@ -111,14 +130,13 @@ export class Composer {
           console.log('⚠️  VALIDATOR: Second validation failed. Using deterministic fallback.\n');
 
           // Use deterministic fallback
-          response = (
+          response =
             '⚠️  Hang on, I was hallucinating. Let me try again.\n\n' +
             this.validator.generateDeterministicThemeResponse(
               context.currentThemeIndex,
               context.awaitingConfirmation || false,
               userMessage
-            )
-          );
+            );
         }
       }
     }
@@ -193,7 +211,11 @@ export class Composer {
       }
 
       // If user is asking for evidence (Theme 6), include their previous answers
-      if (context?.currentThemeIndex === 6 && context?.themeAnswers && context.themeAnswers.size > 0) {
+      if (
+        context?.currentThemeIndex === 6 &&
+        context?.themeAnswers &&
+        context.themeAnswers.size > 0
+      ) {
         currentMessage += `=== EVIDENCE FROM PREVIOUS THEMES ===\n`;
         context.themeAnswers.forEach((answer, themeIndex) => {
           currentMessage += `Theme ${themeIndex}: ${answer}\n`;

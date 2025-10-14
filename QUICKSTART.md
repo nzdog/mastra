@@ -3,12 +3,14 @@
 ## Setup (5 minutes)
 
 1. **Set your API key**:
+
    ```bash
    cp .env.example .env
    # Edit .env and add your Anthropic API key
    ```
 
 2. **Install dependencies** (if not already done):
+
    ```bash
    npm install
    ```
@@ -72,6 +74,7 @@ This will run 5 test scenarios to verify all modes work correctly.
 ## Troubleshooting
 
 **API Key Error**: Make sure `.env` exists and contains:
+
 ```
 ANTHROPIC_API_KEY=sk-ant-...
 ```

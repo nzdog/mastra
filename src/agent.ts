@@ -1,16 +1,10 @@
+import * as path from 'path';
 import { IntentClassifier } from './classifier';
 import { Composer } from './composer';
-import { ProtocolRegistry } from './tools/registry';
 import { loadProtocol } from './protocol/parser';
+import { ProtocolRegistry } from './tools/registry';
+import { SessionState, ConversationTurn, Mode, ClassificationResult } from './types';
 import { WalkResponseValidator } from './validator';
-import * as path from 'path';
-import {
-  SessionState,
-  ConversationTurn,
-  Mode,
-  ClassificationResult,
-  Intent,
-} from './types';
 
 export class FieldDiagnosticAgent {
   private classifier: IntentClassifier;
@@ -24,6 +18,11 @@ export class FieldDiagnosticAgent {
   private closeModeTimes: number = 0; // Track how many times CLOSE mode has been entered
   private totalCost: number = 0; // Track cumulative API cost for this session
   private protocolPath: string;
+
+  // Static cache for ENTRY mode responses (identical for all users)
+  private static entryResponseCache: Map<string, string> = new Map();
+  private static cacheTimestamps: Map<string, number> = new Map();
+  private static CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
   constructor(apiKey: string, registry?: ProtocolRegistry, protocolPath?: string) {
     this.classifier = new IntentClassifier(apiKey);
@@ -65,6 +64,11 @@ export class FieldDiagnosticAgent {
       content: userMessage,
     });
 
+    // Compress conversation history if too long (keep last 12 turns = 6 exchanges)
+    if (this.conversationHistory.length > 12) {
+      this.conversationHistory = this.compressConversationHistory(this.conversationHistory);
+    }
+
     // Step 1: Classify intent
     const classification = await this.classifier.classify(
       userMessage,
@@ -79,12 +83,14 @@ export class FieldDiagnosticAgent {
     // Step 2: Set is_revisiting flag BEFORE any calculations (if user requested a specific theme)
     if (classification.requested_theme !== undefined) {
       this.state.is_revisiting = true;
-      console.log(`🔄 AGENT: Set is_revisiting = true (user requested theme ${classification.requested_theme})`);
+      console.log(
+        `🔄 AGENT: Set is_revisiting = true (user requested theme ${classification.requested_theme})`
+      );
     }
 
     // Step 3: Determine mode
     const mode = this.determineMode(classification);
-    
+
     // CRITICAL: CLOSE mode gets special handling - skip all WALK logic
     if (mode === 'CLOSE') {
       // Prevent duplicate CLOSE processing
@@ -93,10 +99,10 @@ export class FieldDiagnosticAgent {
         const protocolMetadata = this.registry.getMetadata();
         return `The ${protocolMetadata.title} is complete. You have successfully completed all themes.`;
       }
-      
+
       this.closeModeTimes++;
       console.log(`📍 AGENT: Entering CLOSE mode - generating field diagnosis`);
-      
+
       // Generate field diagnosis (no chunk, no theme logic needed)
       console.log(`🤖 AI CALL: Generating field diagnosis (personalized)`);
       const summaryInstructions = this.registry.getSummaryInstructions();
@@ -110,22 +116,22 @@ export class FieldDiagnosticAgent {
           summaryInstructions: summaryInstructions,
         }
       );
-      
+
       // Track composer cost
-      this.totalCost += 0.0080; // Rough estimate for composer call
+      this.totalCost += 0.008; // Rough estimate for composer call
       console.log(`💰 COMPOSER COST: ~$0.0080 | Total session cost: $${this.totalCost.toFixed(4)}`);
-      
+
       // Update state to CLOSE
       this.state.mode = 'CLOSE';
       this.state.turn_counter++;
       this.state.updated_at = new Date().toISOString();
-      
+
       // Add response to history
       this.conversationHistory.push({
         role: 'assistant',
         content: response,
       });
-      
+
       console.log('✅ AGENT: Field diagnosis complete, protocol finished');
       return response;
     }
@@ -135,62 +141,69 @@ export class FieldDiagnosticAgent {
     const themeIndexForResponse = this.getThemeIndexForResponse(mode, classification, userMessage);
 
     // Step 3b: Determine awaiting confirmation state for this response
-    const awaitingConfirmationForResponse = this.getAwaitingConfirmationForResponse(mode, classification, themeIndexForResponse);
+    const awaitingConfirmationForResponse = this.getAwaitingConfirmationForResponse(
+      mode,
+      classification,
+      themeIndexForResponse
+    );
 
     // Step 4: Retrieve appropriate chunk
     const chunk = this.registry.retrieve(mode, themeIndexForResponse);
 
     // Step 4b: Get theme titles for context
-    const currentThemeTitle = themeIndexForResponse ? this.registry.getThemeTitle(themeIndexForResponse) : null;
-    const nextThemeTitle = themeIndexForResponse ? this.registry.getThemeTitle(themeIndexForResponse + 1) : null;
+    const currentThemeTitle = themeIndexForResponse
+      ? this.registry.getThemeTitle(themeIndexForResponse)
+      : null;
+    const nextThemeTitle = themeIndexForResponse
+      ? this.registry.getThemeTitle(themeIndexForResponse + 1)
+      : null;
 
     // Step 5: Compose response
     // OPTIMIZATION: Skip AI call for static content (ENTRY mode and theme questions)
     let response: string;
     const skipAI = mode === 'ENTRY' || (mode === 'WALK' && !awaitingConfirmationForResponse);
-    
+
     if (skipAI) {
-      console.log(`⚡ OPTIMIZATION: Skipping AI call for ${mode === 'ENTRY' ? 'ENTRY mode' : 'theme questions'} (using protocol content directly)`);
+      console.log(
+        `⚡ OPTIMIZATION: Skipping AI call for ${mode === 'ENTRY' ? 'ENTRY mode' : 'theme questions'} (using protocol content directly)`
+      );
       response = this.buildStaticResponse(mode, chunk, themeIndexForResponse, nextThemeTitle);
       console.log(`📤 STATIC RESPONSE (first 200 chars): ${response.substring(0, 200)}`);
-      console.log(`💰 SAVED ~$0.0080 by skipping AI call | Total session cost: $${this.totalCost.toFixed(4)}`);
+      console.log(
+        `💰 SAVED ~$0.0080 by skipping AI call | Total session cost: $${this.totalCost.toFixed(4)}`
+      );
     } else {
       console.log(`🤖 AI CALL: Generating ${mode === 'WALK' ? 'interpretation' : 'content'}`);
       const protocolMetadata = this.registry.getMetadata();
       const totalThemes = this.registry.getTotalThemes();
       const isOnFinalTheme = themeIndexForResponse === totalThemes;
 
-      response = await this.composer.compose(
-        mode,
-        chunk,
-        this.conversationHistory,
-        userMessage,
-        {
-          themeAnswers: this.themeAnswers,
-          currentThemeIndex: themeIndexForResponse ?? undefined,
-          currentThemeTitle: currentThemeTitle ?? undefined,
-          nextThemeTitle: nextThemeTitle ?? undefined,
-          awaitingConfirmation: awaitingConfirmationForResponse,
-          intent: classification.intent,
-          userIntent: classification.user_wants_to,
-          totalThemes: totalThemes,
-          protocolTitle: protocolMetadata.title,
-          isOnFinalTheme: isOnFinalTheme,
-        }
-      );
+      response = await this.composer.compose(mode, chunk, this.conversationHistory, userMessage, {
+        themeAnswers: this.themeAnswers,
+        currentThemeIndex: themeIndexForResponse ?? undefined,
+        currentThemeTitle: currentThemeTitle ?? undefined,
+        nextThemeTitle: nextThemeTitle ?? undefined,
+        awaitingConfirmation: awaitingConfirmationForResponse,
+        intent: classification.intent,
+        userIntent: classification.user_wants_to,
+        totalThemes: totalThemes,
+        protocolTitle: protocolMetadata.title,
+        isOnFinalTheme: isOnFinalTheme,
+      });
       // Track composer cost
-      this.totalCost += 0.0080; // Rough estimate for composer call
+      this.totalCost += 0.008; // Rough estimate for composer call
       console.log(`💰 COMPOSER COST: ~$0.0080 | Total session cost: $${this.totalCost.toFixed(4)}`);
     }
 
     // Step 6: Store user's answer BEFORE updating last_response
     // (need to check the PREVIOUS state to know if they just answered questions)
     // BUT: Don't store if they're asking for clarification (discover intent)
-    if (mode === 'WALK' &&
-        (classification.continuity || classification.intent === 'memory') &&
-        classification.intent !== 'discover' &&
-        themeIndexForResponse !== null) {
-
+    if (
+      mode === 'WALK' &&
+      (classification.continuity || classification.intent === 'memory') &&
+      classification.intent !== 'discover' &&
+      themeIndexForResponse !== null
+    ) {
       // Store answer if they just answered theme questions
       if (this.state.last_response === 'theme_questions') {
         this.themeAnswers.set(themeIndexForResponse, userMessage);
@@ -199,11 +212,16 @@ export class FieldDiagnosticAgent {
         // Update highest theme reached ONLY when answering a theme for the first time
         if (themeIndexForResponse > this.highestThemeReached) {
           this.highestThemeReached = themeIndexForResponse;
-          console.log(`📊 AGENT: Updated highestThemeReached to ${this.highestThemeReached} (first time answering)`);
+          console.log(
+            `📊 AGENT: Updated highestThemeReached to ${this.highestThemeReached} (first time answering)`
+          );
         }
       }
       // Update answer if they're adding to a revisited theme
-      else if (this.state.last_response === 'interpretation_and_completion' && this.state.is_revisiting) {
+      else if (
+        this.state.last_response === 'interpretation_and_completion' &&
+        this.state.is_revisiting
+      ) {
         const previousAnswer = this.themeAnswers.get(themeIndexForResponse);
         const updatedAnswer = `${previousAnswer}\n\n[Added]: ${userMessage}`;
         this.themeAnswers.set(themeIndexForResponse, updatedAnswer);
@@ -238,8 +256,14 @@ export class FieldDiagnosticAgent {
    * Determine what theme index will be used for this response
    * Uses AI-driven semantic intent from classification
    */
-  private getThemeIndexForResponse(mode: Mode, classification: ClassificationResult, userMessage: string): number | null {
-    console.log(`\n🔍 AGENT: getThemeIndexForResponse - mode=${mode}, intent=${classification.intent}, current_theme=${this.state.theme_index}`);
+  private getThemeIndexForResponse(
+    mode: Mode,
+    classification: ClassificationResult,
+    _userMessage: string
+  ): number | null {
+    console.log(
+      `\n🔍 AGENT: getThemeIndexForResponse - mode=${mode}, intent=${classification.intent}, current_theme=${this.state.theme_index}`
+    );
     console.log(`   last_response=${this.state.last_response}`);
     console.log(`   user_wants_to:`, classification.user_wants_to);
 
@@ -250,12 +274,17 @@ export class FieldDiagnosticAgent {
 
     // User explicitly navigating to a specific theme
     if (classification.user_wants_to.navigate_to_theme !== null) {
-      console.log(`   → User navigating to theme ${classification.user_wants_to.navigate_to_theme}`);
+      console.log(
+        `   → User navigating to theme ${classification.user_wants_to.navigate_to_theme}`
+      );
       return classification.user_wants_to.navigate_to_theme;
     }
 
     // Starting the walk - handles both 'walk' intent and 'memory' when theme is null
-    if (this.state.theme_index === null && (classification.intent === 'walk' || classification.intent === 'memory')) {
+    if (
+      this.state.theme_index === null &&
+      (classification.intent === 'walk' || classification.intent === 'memory')
+    ) {
       console.log('   → Starting walk, returning 1');
       return 1;
     }
@@ -271,8 +300,13 @@ export class FieldDiagnosticAgent {
     }
 
     // User wants elaboration or adding reflection - stay on current theme
-    if (classification.user_wants_to.request_elaboration || classification.user_wants_to.add_more_reflection) {
-      console.log(`   → User wants elaboration/more reflection, staying on theme: ${this.state.theme_index}`);
+    if (
+      classification.user_wants_to.request_elaboration ||
+      classification.user_wants_to.add_more_reflection
+    ) {
+      console.log(
+        `   → User wants elaboration/more reflection, staying on theme: ${this.state.theme_index}`
+      );
       return this.state.theme_index;
     }
 
@@ -287,11 +321,19 @@ export class FieldDiagnosticAgent {
    * Returns true if we should show interpretation + completion prompt
    * Returns false if we should show theme questions
    */
-  private getAwaitingConfirmationForResponse(mode: Mode, classification: ClassificationResult, themeIndexForResponse: number | null): boolean {
-    console.log(`\n🔍 AGENT: getAwaitingConfirmationForResponse - mode=${mode}, intent=${classification.intent}`);
+  private getAwaitingConfirmationForResponse(
+    mode: Mode,
+    classification: ClassificationResult,
+    themeIndexForResponse: number | null
+  ): boolean {
+    console.log(
+      `\n🔍 AGENT: getAwaitingConfirmationForResponse - mode=${mode}, intent=${classification.intent}`
+    );
     console.log(`   last_response=${this.state.last_response}`);
     console.log(`   user_wants_to:`, classification.user_wants_to);
-    console.log(`   themeIndexForResponse=${themeIndexForResponse}, current_theme=${this.state.theme_index}`);
+    console.log(
+      `   themeIndexForResponse=${themeIndexForResponse}, current_theme=${this.state.theme_index}`
+    );
 
     if (mode !== 'WALK') {
       console.log('   → Returning false (not WALK mode)');
@@ -301,7 +343,9 @@ export class FieldDiagnosticAgent {
     // If user explicitly navigating to a theme, check if already answered
     if (classification.user_wants_to.navigate_to_theme !== null) {
       const hasAnswer = this.themeAnswers.has(classification.user_wants_to.navigate_to_theme);
-      console.log(`   → User navigating to theme ${classification.user_wants_to.navigate_to_theme}, has answer: ${hasAnswer}`);
+      console.log(
+        `   → User navigating to theme ${classification.user_wants_to.navigate_to_theme}, has answer: ${hasAnswer}`
+      );
       // If answered, show interpretation + advance option; otherwise show questions
       return hasAnswer;
     }
@@ -313,15 +357,24 @@ export class FieldDiagnosticAgent {
     }
 
     // If user wants elaboration or adding more reflection, stay in interpretation mode
-    if (classification.user_wants_to.request_elaboration || classification.user_wants_to.add_more_reflection) {
-      console.log('   → User wants elaboration/more reflection, returning true (show interpretation + advance option)');
+    if (
+      classification.user_wants_to.request_elaboration ||
+      classification.user_wants_to.add_more_reflection
+    ) {
+      console.log(
+        '   → User wants elaboration/more reflection, returning true (show interpretation + advance option)'
+      );
       return true;
     }
 
     // If we just showed theme questions and user provided substantive answer
-    if (this.state.last_response === 'theme_questions' &&
-        (classification.continuity || classification.intent === 'memory')) {
-      console.log('   → User answered questions, returning true (show interpretation + completion)');
+    if (
+      this.state.last_response === 'theme_questions' &&
+      (classification.continuity || classification.intent === 'memory')
+    ) {
+      console.log(
+        '   → User answered questions, returning true (show interpretation + completion)'
+      );
       return true;
     }
 
@@ -421,15 +474,18 @@ export class FieldDiagnosticAgent {
       }
 
       // Track if theme is changing
-      const themeChanging = themeIndexForResponse !== null &&
-                           this.state.theme_index !== null &&
-                           themeIndexForResponse !== this.state.theme_index;
+      const themeChanging =
+        themeIndexForResponse !== null &&
+        this.state.theme_index !== null &&
+        themeIndexForResponse !== this.state.theme_index;
 
       // Reset conversation_depth when changing themes
       if (themeChanging) {
         this.state.conversation_depth = 0;
         this.state.has_answered_theme = false;
-        console.log(`🔄 AGENT: Reset conversation_depth (theme changing from ${this.state.theme_index} to ${themeIndexForResponse})`);
+        console.log(
+          `🔄 AGENT: Reset conversation_depth (theme changing from ${this.state.theme_index} to ${themeIndexForResponse})`
+        );
       } else if (mode === 'WALK') {
         // Increment conversation depth if staying on same theme
         this.state.conversation_depth++;
@@ -438,12 +494,16 @@ export class FieldDiagnosticAgent {
 
       // Clear is_revisiting when advancing AWAY from a revisited theme
       // Only clear if we're moving to a HIGHER theme number (advancing forward)
-      if (this.state.is_revisiting &&
-          themeIndexForResponse !== null &&
-          this.state.theme_index !== null &&
-          themeIndexForResponse > this.state.theme_index) {
+      if (
+        this.state.is_revisiting &&
+        themeIndexForResponse !== null &&
+        this.state.theme_index !== null &&
+        themeIndexForResponse > this.state.theme_index
+      ) {
         this.state.is_revisiting = false;
-        console.log(`✅ AGENT: Cleared is_revisiting (advancing from ${this.state.theme_index} to ${themeIndexForResponse})`);
+        console.log(
+          `✅ AGENT: Cleared is_revisiting (advancing from ${this.state.theme_index} to ${themeIndexForResponse})`
+        );
       }
 
       // Update theme index based on what we just showed
@@ -453,9 +513,7 @@ export class FieldDiagnosticAgent {
 
       // Store last chunk reference
       if (this.state.theme_index !== null) {
-        this.state.last_chunk_refs = [
-          `field_diagnostic:theme:${this.state.theme_index}`,
-        ];
+        this.state.last_chunk_refs = [`field_diagnostic:theme:${this.state.theme_index}`];
       }
     }
 
@@ -468,8 +526,28 @@ export class FieldDiagnosticAgent {
   /**
    * Build static response from protocol content (skips AI call)
    */
-  private buildStaticResponse(mode: Mode, chunk: any, themeIndex: number | null, nextThemeTitle: string | null): string {
+  private buildStaticResponse(
+    mode: Mode,
+    chunk: any,
+    themeIndex: number | null,
+    _nextThemeTitle: string | null
+  ): string {
     if (mode === 'ENTRY') {
+      // Check cache first
+      const cacheKey = `ENTRY:${this.state.active_protocol || 'field_diagnostic'}`;
+      const now = Date.now();
+      const cachedTime = FieldDiagnosticAgent.cacheTimestamps.get(cacheKey);
+
+      if (cachedTime && now - cachedTime < FieldDiagnosticAgent.CACHE_TTL_MS) {
+        const cached = FieldDiagnosticAgent.entryResponseCache.get(cacheKey);
+        if (cached) {
+          console.log('📦 CACHE HIT: ENTRY response loaded from cache');
+          return cached;
+        }
+      }
+
+      console.log('💾 CACHE MISS: Building ENTRY response');
+
       // Return ENTRY mode protocol introduction as JSON for frontend
       const entryChunk = this.registry.retrieve('ENTRY', null);
       if (entryChunk) {
@@ -478,11 +556,17 @@ export class FieldDiagnosticAgent {
         const firstThemeTitle = this.registry.getThemeTitle(1);
 
         // Return structured JSON for frontend to parse
-        return JSON.stringify({
+        const response = JSON.stringify({
           type: 'ENTRY',
           sections: sections,
           firstThemeTitle: firstThemeTitle,
         });
+
+        // Cache the response
+        FieldDiagnosticAgent.entryResponseCache.set(cacheKey, response);
+        FieldDiagnosticAgent.cacheTimestamps.set(cacheKey, now);
+
+        return response;
       }
 
       // Fallback (should never reach here if protocol is properly formatted)
@@ -491,15 +575,15 @@ export class FieldDiagnosticAgent {
       // Return theme questions from protocol content
       const content = chunk.content;
       const lines = content.split('\n');
-      
+
       // Extract theme title, purpose, why this matters, and guiding questions
       let themeTitle = '';
       let purpose = '';
       let whyThisMatters = '';
-      let questions: string[] = [];
-      
+      const questions: string[] = [];
+
       let inQuestions = false;
-      
+
       for (const line of lines) {
         if (line.startsWith('###')) {
           // Parse: "### 1. Surface Behaviors *(Stone 4: Clarity Over Cleverness)*"
@@ -520,17 +604,77 @@ export class FieldDiagnosticAgent {
           inQuestions = false;
         }
       }
-      
+
       // Build response with proper formatting
       let response = `**Theme ${themeIndex} – ${themeTitle}**\n**Purpose:** ${purpose}\n`;
       response += `**Why This Matters**\n${whyThisMatters}\n`;
       response += `**Guiding Questions:**\n${questions.join('\n')}\n`;
       response += `Take a moment with those, and when you're ready, share what comes up.`;
-      
+
       return response;
     }
-    
+
     return ''; // Fallback (should never reach here)
+  }
+
+  /**
+   * Compress conversation history to reduce token usage
+   * Keeps last 12 turns (6 exchanges) and summarizes older content
+   */
+  private compressConversationHistory(history: ConversationTurn[]): ConversationTurn[] {
+    if (history.length <= 12) {
+      return history;
+    }
+
+    console.log(`🗜️  COMPRESSION: Compressing ${history.length} turns down to summary + last 12`);
+
+    // Keep last 12 turns
+    const recentTurns = history.slice(-12);
+
+    // Summarize older turns
+    const olderTurns = history.slice(0, -12);
+    const themeProgressSummary = this.summarizeOlderTurns(olderTurns);
+
+    // Create compressed history
+    const compressed: ConversationTurn[] = [
+      {
+        role: 'assistant',
+        content: `[Previous conversation summary: ${themeProgressSummary}]`,
+      },
+      ...recentTurns,
+    ];
+
+    const savedTurns = history.length - compressed.length;
+    console.log(
+      `🗜️  COMPRESSION: Saved ${savedTurns} turns (estimated ~${savedTurns * 100} tokens)`
+    );
+
+    return compressed;
+  }
+
+  /**
+   * Summarize older conversation turns into a brief summary
+   */
+  private summarizeOlderTurns(turns: ConversationTurn[]): string {
+    // Extract key information: which themes were discussed, any answers given
+    const themeMentions: Set<number> = new Set();
+    let answerCount = 0;
+
+    for (const turn of turns) {
+      // Look for theme mentions
+      const themeMatch = turn.content.match(/Theme (\d+)/i);
+      if (themeMatch) {
+        themeMentions.add(parseInt(themeMatch[1]));
+      }
+
+      // Count answers stored
+      if (turn.role === 'user' && turn.content.length > 50) {
+        answerCount++;
+      }
+    }
+
+    const themesDiscussed = Array.from(themeMentions).sort().join(', ');
+    return `User progressed through themes ${themesDiscussed}, providing ${answerCount} detailed responses. ${this.themeAnswers.size} theme answers stored.`;
   }
 
   /**

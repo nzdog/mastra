@@ -173,6 +173,17 @@
             display: none;
         }
 
+        /* Show header logo when protocol list is active */
+        .page-header.intro-mode.protocol-list-active .header-center-logo {
+            display: block !important;
+            opacity: 0.85;
+        }
+
+        /* Spinning animation for header logo */
+        .header-center-logo.spinning {
+            animation: spinSlow 20s linear infinite;
+        }
+
         .header-center-logo {
             position: absolute;
             left: 50%;
@@ -210,6 +221,7 @@
             font-weight: 600;
             letter-spacing: 0.05em;
             color: #1C1917;
+            cursor: default;
         }
 
         .header-state {
@@ -252,6 +264,7 @@
             font-size: 0.8125rem;
             color: #78716C;
             font-weight: 500;
+            cursor: default;
         }
 
         /* Content Area */
@@ -627,16 +640,30 @@
 
         /* Error Strip */
         .error-strip {
-            background: #FAFAF9;
-            border: 1px solid #E7E5E4;
-            border-left: 2px solid #DC2626;
-            padding: 0.875rem 1rem;
+            background: #FEF2F2;
+            border: 1px solid #FCA5A5;
+            border-left: 3px solid #DC2626;
+            padding: 1rem 1.25rem;
             margin-bottom: 1.5rem;
             display: none;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
         }
 
         .error-strip.active {
             display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .error-message {
@@ -680,19 +707,14 @@
             font-style: italic;
         }
 
-        /* Supports Strip */
+        /* Supports Strip - DISABLED */
         .supports-strip {
-            border-top: 1px solid #F5F5F4;
-            background: #FCFCFB;
-            padding: 1rem 2rem;
-            overflow-x: auto;
-            display: none; /* Hidden by default and during intro flow */
-            transition: opacity 0.8s ease-out;
+            display: none !important; /* Commented out - not working */
         }
 
-        .supports-strip.active {
+        /* .supports-strip.active {
             display: block;
-        }
+        } */
 
         .supports-container {
             display: flex;
@@ -857,7 +879,7 @@
 
         .intro-quote-attribution {
             position: absolute;
-            top: calc(33% - 35px);
+            top: calc(33% + 45px);
             left: 50%;
             transform: translateX(-50%);
             font-size: 0.9375rem;
@@ -865,9 +887,16 @@
             text-align: center;
             opacity: 0;
             z-index: 200;
-            white-space: nowrap;
             display: inline-block;
-            width: auto;
+        }
+
+        /* Desktop/Mobile visibility classes */
+        .desktop-only {
+            display: block;
+        }
+
+        .mobile-only {
+            display: none;
         }
 
         .intro-orientation {
@@ -1045,24 +1074,26 @@
         }
 
         .intro-disclosure-btn {
-            font-size: 0.8125rem;
-            font-weight: 500;
-            letter-spacing: 0.03em;
-            color: #78716C;
-            background: transparent;
-            border: 1px solid #E7E5E4;
-            padding: 0.625rem 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            color: #57534E;
+            background: #FAFAF9;
+            border: 1px solid #D6D3D1;
+            padding: 0.75rem 1.5rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             font-family: inherit;
             margin-top: 0.75rem;
-            text-align: left;
+            text-align: center;
+            text-transform: uppercase;
             width: 100%;
         }
 
         .intro-disclosure-btn:hover {
             border-color: #78716C;
-            background: #FAFAF9;
+            background: #F5F5F4;
+            transform: translateY(-1px);
         }
 
         .intro-disclosure-btn:focus-visible {
@@ -1138,34 +1169,6 @@
             margin-top: 0.5rem;
         }
 
-        .intro-begin-container {
-            opacity: 0;
-            margin-top: 3rem;
-            text-align: center;
-        }
-
-        .intro-begin-btn {
-            background: transparent;
-            border: 1px solid #D6D3D1;
-            color: #57534E;
-            padding: 0.875rem 2rem;
-            font-size: 1rem;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            font-family: inherit;
-        }
-
-        .intro-begin-btn:hover {
-            border-color: #78716C;
-            background: #FAFAF9;
-        }
-
-        .intro-begin-btn:focus-visible {
-            outline: 2px solid #57534E;
-            outline-offset: 2px;
-        }
-
         .intro-protocol-list-page {
             display: none;
             flex-direction: column;
@@ -1199,6 +1202,15 @@
 
         /* Tablets and small screens */
         @media (max-width: 768px) {
+            /* Show mobile version, hide desktop version */
+            .desktop-only {
+                display: none !important;
+            }
+
+            .mobile-only {
+                display: block !important;
+            }
+
             /* Logo adjustments */
             .logo-spin-intro {
                 width: 80px;
@@ -1206,36 +1218,60 @@
             }
 
             .intro-logo-container {
-                top: calc(28vh - 70px);
+                top: calc(40vh - 40px);
             }
 
-            /* Typography scaling */
-            .intro-quote {
+            /* Typography scaling - mobile version only */
+            .intro-quote.mobile-only {
+                position: relative !important;
                 font-size: 1.0625rem;
-                white-space: normal;
-                max-width: 90%;
-            }
-
-            .intro-quote-attribution {
-                font-size: 0.875rem;
-                white-space: normal;
+                white-space: normal !important;
+                left: auto !important;
+                right: auto !important;
+                margin-left: 7.5% !important;
+                margin-right: 7.5% !important;
+                transform: none !important;
+                display: block !important;
+                width: auto !important;
+                line-height: 1.5 !important;
+                top: auto !important;
             }
 
             .intro-text-line {
                 font-size: 1.0625rem;
-                white-space: normal;
-                max-width: 90%;
+                white-space: normal !important;
+                left: 7.5% !important;
+                right: 7.5% !important;
+                transform: translateX(0) !important;
+                display: block !important;
+                width: auto !important;
+                line-height: 1.5 !important;
             }
 
             .intro-orientation {
                 font-size: 1.0625rem;
-                white-space: normal;
-                max-width: 90%;
+                white-space: normal !important;
+                left: 7.5% !important;
+                right: 7.5% !important;
+                transform: none !important;
+                display: block !important;
+                width: auto !important;
+                line-height: 1.5 !important;
             }
 
             /* Adjust spacing for smaller screens */
             .intro-flow-view {
                 padding: 1.5rem;
+            }
+
+            /* Safari fix: Force explicit width calculation for absolutely positioned children */
+            .intro-content {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                left: 0 !important;
+                right: 0 !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
             }
 
             .intro-protocol-list-page {
@@ -1260,15 +1296,113 @@
                 min-height: 44px;
             }
 
-            .intro-continue-btn,
-            .intro-begin-btn {
+            .intro-continue-btn {
                 padding: 1rem 2rem;
                 min-height: 44px;
             }
 
             /* Adjust vertical spacing */
             .intro-continue-container {
-                top: calc(28vh + 180px);
+                top: calc(28vh + 160px);
+            }
+
+            /* === PROTOCOL WALK INTERFACE === */
+
+            /* Header adjustments for walk mode */
+            .header-center-logo {
+                height: 36px;
+            }
+
+            .page-header {
+                gap: 1rem;
+            }
+
+            .theme-position {
+                font-size: 0.75rem;
+            }
+
+            /* Truncate header title to prevent overlap with center logo */
+            .header-title {
+                max-width: 40%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            /* Content area */
+            .content-area {
+                margin-top: 60px;
+            }
+
+            .field-container {
+                padding: 1.5rem 1.5rem 3rem 1.5rem;
+                gap: 2.5rem;
+            }
+
+            /* Protocol selection page */
+            .protocol-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1.25rem;
+            }
+
+            .protocol-card {
+                padding: 1.25rem;
+            }
+
+            .protocol-selection-title {
+                font-size: 1.375rem;
+            }
+
+            /* Entry view */
+            .entry-input {
+                font-size: 1.25rem;
+                padding: 1.25rem 0;
+            }
+
+            /* Walk interface */
+            .response-input {
+                font-size: 1rem;
+                padding: 1rem 0;
+                min-height: 70px;
+            }
+
+            .theme-title {
+                font-size: 1.5rem;
+            }
+
+            .section-content {
+                font-size: 1rem;
+            }
+
+            /* Buttons */
+            .walk-button {
+                padding: 0.875rem 1.5rem;
+                min-height: 44px;
+                font-size: 0.875rem;
+            }
+
+            /* Summary mode */
+            .composer-output.summary-mode {
+                padding: 2rem;
+            }
+
+            .composer-output.summary-mode .theme-title {
+                font-size: 2rem;
+            }
+
+            .composer-output.summary-mode h2,
+            .composer-output.summary-mode .section-content h2 {
+                font-size: 1.25rem;
+            }
+
+            .composer-output.summary-mode h3,
+            .composer-output.summary-mode .section-content h3 {
+                font-size: 1rem;
+            }
+
+            .composer-output.summary-mode p,
+            .composer-output.summary-mode .section-content p {
+                font-size: 0.9375rem;
             }
 
             /* Protocol guidance */
@@ -1281,6 +1415,15 @@
 
         /* Mobile phones */
         @media (max-width: 480px) {
+            /* Show mobile version, hide desktop version */
+            .desktop-only {
+                display: none !important;
+            }
+
+            .mobile-only {
+                display: block !important;
+            }
+
             /* Further logo reduction */
             .logo-spin-intro {
                 width: 64px;
@@ -1288,38 +1431,66 @@
             }
 
             .intro-logo-container {
-                top: calc(25vh - 60px);
+                top: calc(40vh - 32px);
             }
 
-            /* Typography - even smaller */
-            .intro-quote {
+            /* Typography - even smaller - mobile version only */
+            .intro-quote.mobile-only {
+                position: relative !important;
                 font-size: 1rem;
-                line-height: 1.6;
-                max-width: 95%;
-                padding: 0 1rem;
-            }
-
-            .intro-quote-attribution {
-                font-size: 0.8125rem;
+                line-height: 1.4 !important;
+                left: auto !important;
+                right: auto !important;
+                margin-left: 5% !important;
+                margin-right: 5% !important;
+                transform: none !important;
+                padding: 0 0.5rem;
+                box-sizing: border-box;
+                display: block !important;
+                white-space: normal !important;
+                width: auto !important;
+                top: auto !important;
             }
 
             .intro-text-line {
                 font-size: 1rem;
-                line-height: 1.6;
-                max-width: 95%;
-                padding: 0 1rem;
+                line-height: 1.4 !important;
+                left: 5% !important;
+                right: 5% !important;
+                transform: translateX(0) !important;
+                padding: 0 0.5rem;
+                box-sizing: border-box;
+                display: block !important;
+                white-space: normal !important;
+                width: auto !important;
             }
 
             .intro-orientation {
                 font-size: 1rem;
-                line-height: 1.6;
-                max-width: 95%;
-                padding: 0 1rem;
+                line-height: 1.4 !important;
+                left: 5% !important;
+                right: 5% !important;
+                transform: none !important;
+                padding: 0 0.5rem;
+                box-sizing: border-box;
+                display: block !important;
+                white-space: normal !important;
+                width: auto !important;
             }
 
             /* Tighter spacing */
             .intro-flow-view {
                 padding: 1rem;
+            }
+
+            /* Safari fix: Force explicit width calculation for absolutely positioned children */
+            .intro-content {
+                width: 100vw !important;
+                max-width: 100vw !important;
+                left: 0 !important;
+                right: 0 !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
             }
 
             .intro-protocol-list-page {
@@ -1352,15 +1523,14 @@
                 padding: 0.875rem 1rem;
             }
 
-            .intro-continue-btn,
-            .intro-begin-btn {
+            .intro-continue-btn {
                 font-size: 0.9375rem;
                 padding: 0.875rem 1.5rem;
             }
 
             /* Continue button position */
             .intro-continue-container {
-                top: calc(25vh + 160px);
+                top: calc(25vh + 140px);
             }
 
             .intro-continue-hint {
@@ -1382,6 +1552,189 @@
             /* Reduce line spacing on mobile */
             .intro-content {
                 gap: 3rem;
+            }
+
+            /* === PROTOCOL WALK INTERFACE - SMALL MOBILE === */
+
+            /* Header - tighter for small screens */
+            .header-center-logo {
+                height: 28px;
+            }
+
+            .page-header {
+                padding: 0.75rem 1rem;
+                gap: 0.75rem;
+            }
+
+            .header-title {
+                font-size: 0.8125rem;
+                max-width: 35%;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .header-state {
+                font-size: 0.75rem;
+            }
+
+            /* Hide theme position on very small screens */
+            .theme-position {
+                display: none;
+            }
+
+            /* Content area */
+            .content-area {
+                margin-top: 55px;
+            }
+
+            .field-container {
+                padding: 1rem 1rem 2.5rem 1rem;
+                gap: 2rem;
+            }
+
+            .field-container.summary-container {
+                max-width: 100%;
+            }
+
+            /* Protocol selection */
+            .protocol-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .protocol-card {
+                padding: 1rem;
+            }
+
+            .protocol-card-title {
+                font-size: 1rem;
+            }
+
+            .protocol-card-purpose {
+                font-size: 0.875rem;
+            }
+
+            .protocol-selection-title {
+                font-size: 1.25rem;
+            }
+
+            .protocol-selection-subtitle {
+                font-size: 0.9375rem;
+            }
+
+            /* Entry view */
+            .entry-view {
+                min-height: 50vh;
+            }
+
+            .entry-input {
+                font-size: 1.125rem;
+                padding: 1rem 0;
+            }
+
+            #protocol-title {
+                font-size: 1.25rem !important;
+            }
+
+            /* Walk interface */
+            .response-input {
+                font-size: 0.9375rem;
+                padding: 0.875rem 0;
+                min-height: 60px;
+            }
+
+            .response-hint {
+                font-size: 0.75rem;
+            }
+
+            .theme-title {
+                font-size: 1.25rem;
+                margin-bottom: 0.875rem;
+            }
+
+            .section-label {
+                font-size: 0.75rem;
+            }
+
+            .section-content {
+                font-size: 0.9375rem;
+            }
+
+            .output-section {
+                gap: 1rem;
+            }
+
+            /* Buttons */
+            .walk-button {
+                padding: 1rem 1.25rem;
+                font-size: 0.8125rem;
+                width: 100%;
+            }
+
+            .walk-control {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+
+            /* Summary mode - compact for mobile */
+            .composer-output.summary-mode {
+                padding: 1.25rem;
+                border-radius: 0;
+            }
+
+            .composer-output.summary-mode .theme-title {
+                font-size: 1.5rem;
+                margin-bottom: 1.5rem;
+                padding-bottom: 0.75rem;
+            }
+
+            .composer-output.summary-mode h2,
+            .composer-output.summary-mode .section-content h2 {
+                font-size: 1.125rem;
+                margin-top: 2rem;
+                margin-bottom: 0.75rem;
+            }
+
+            .composer-output.summary-mode h3,
+            .composer-output.summary-mode .section-content h3 {
+                font-size: 0.9375rem;
+                margin-top: 1.5rem;
+            }
+
+            .composer-output.summary-mode p,
+            .composer-output.summary-mode .section-content p {
+                font-size: 0.875rem;
+                line-height: 1.7;
+                margin-bottom: 1rem;
+            }
+
+            .composer-output.summary-mode li,
+            .composer-output.summary-mode .section-content li {
+                font-size: 0.875rem;
+            }
+
+            /* Completion buttons - stack on mobile */
+            #walk-control .walk-button,
+            .completion-container .walk-button {
+                width: 100%;
+            }
+
+            /* Entry logo size */
+            #lichen-logo {
+                height: 60px !important;
+            }
+
+            /* Section reveal buttons */
+            .section-reveal-btn {
+                font-size: 0.75rem;
+                padding: 0.75rem 0.875rem;
+            }
+
+            /* Response area */
+            .response-area {
+                margin-top: 1.5rem;
+                padding-top: 1.5rem;
             }
         }
     </style>
@@ -1415,12 +1768,14 @@
         </div>
 
         <div class="intro-content" id="intro-content">
-            <!-- Quote -->
-            <div class="intro-quote" id="intro-quote">
+            <!-- Quote - Desktop Version -->
+            <div class="intro-quote desktop-only" id="intro-quote-desktop">
                 "The field is the sole governing agency of the particle."
             </div>
-            <div class="intro-quote-attribution" id="intro-quote-attribution">
-                — Albert Einstein
+
+            <!-- Quote - Mobile Version (Inline Attribution) -->
+            <div class="intro-quote mobile-only" id="intro-quote-mobile">
+                "The field is the sole governing agency of the particle." — Albert Einstein
             </div>
 
             <!-- Embodiment Lines -->
@@ -1434,7 +1789,7 @@
             <!-- Continue Button (shown after orientation) -->
             <div class="intro-continue-container" id="intro-continue-container">
                 <button class="intro-continue-btn" id="intro-continue-btn">Continue</button>
-                <div class="intro-continue-hint">Press Shift + Enter</div>
+                <div class="intro-continue-hint">Press Shift + Enter or ⌘/Ctrl + Enter</div>
             </div>
         </div>
 
@@ -1462,11 +1817,6 @@
             <!-- Protocol Deck -->
             <div class="intro-protocol-deck" id="intro-protocol-deck">
                 <!-- Protocol cards will be populated by JavaScript -->
-            </div>
-
-            <!-- Begin Button -->
-            <div class="intro-begin-container" id="intro-begin-container">
-                <button class="intro-begin-btn" id="intro-begin-btn">Begin</button>
             </div>
         </div>
     </div>
@@ -1521,10 +1871,10 @@
         </div>
     </div>
 
-    <!-- Supports Strip -->
-    <div class="supports-strip" id="supports-strip">
+    <!-- Supports Strip - DISABLED -->
+    <!-- <div class="supports-strip" id="supports-strip">
         <div class="supports-container" id="supports-container"></div>
-    </div>
+    </div> -->
 
     <!-- Completion Overlay -->
     <div class="completion-overlay" id="completion-overlay">
@@ -1548,8 +1898,8 @@
         // DOM Elements - Intro Flow
         const introFlowView = document.getElementById('intro-flow-view');
         const introLogo = document.getElementById('intro-logo');
-        const introQuote = document.getElementById('intro-quote');
-        const introQuoteAttribution = document.getElementById('intro-quote-attribution');
+        const introQuoteDesktop = document.getElementById('intro-quote-desktop');
+        const introQuoteMobile = document.getElementById('intro-quote-mobile');
         const introEmbodimentLines = document.getElementById('intro-embodiment-lines');
         const introOrientation = document.getElementById('intro-orientation');
         const introContinueContainer = document.getElementById('intro-continue-container');
@@ -1584,12 +1934,21 @@
         const protocolName = document.getElementById('protocol-name');
         const themePosition = document.getElementById('theme-position');
         const composerOutput = document.getElementById('composer-output');
-        const supportsStrip = document.getElementById('supports-strip');
-        const supportsContainer = document.getElementById('supports-container');
+        // const supportsStrip = document.getElementById('supports-strip');
+        // const supportsContainer = document.getElementById('supports-container');
         const errorStrip = document.getElementById('error-strip');
         const errorMessage = document.getElementById('error-message');
         const responseHint = document.getElementById('response-hint');
         const costDisplay = document.getElementById('cost-display');
+
+        // Detect platform for keyboard shortcuts
+        const isMac = navigator.platform.toUpperCase().includes('MAC');
+
+        // Set platform-specific keyboard shortcut hints
+        const introContinueHint = document.querySelector('.intro-continue-hint');
+        if (introContinueHint) {
+            introContinueHint.textContent = isMac ? 'Press ⌘ + Enter' : 'Press Ctrl + Enter';
+        }
 
         // ========================================
         // INTRO FLOW LOGIC
@@ -1665,20 +2024,21 @@
         async function revealAllIntroText() {
             skipIntroAnimations = true;
 
-            // Reset text content
-            introQuote.textContent = '"The field is the sole governing agency of the particle."';
-            introQuoteAttribution.textContent = '— Albert Einstein';
+            // Reset text content for both desktop and mobile quotes (with inline attribution)
+            introQuoteDesktop.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
+            introQuoteMobile.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
 
-            // Show quote with quick fade
-            introQuote.style.transition = 'opacity 300ms ease';
-            introQuote.style.opacity = '1';
-            introQuote.style.color = '';
+            // Show quotes with quick fade
+            introQuoteDesktop.style.transition = 'opacity 300ms ease';
+            introQuoteDesktop.style.opacity = '1';
+            introQuoteDesktop.style.color = '';
 
-            // After a brief moment, show attribution
+            introQuoteMobile.style.transition = 'opacity 300ms ease';
+            introQuoteMobile.style.opacity = '1';
+            introQuoteMobile.style.color = '';
+
+            // Wait a moment before showing embodiment lines
             await new Promise(resolve => setTimeout(resolve, 150));
-            introQuoteAttribution.style.transition = 'opacity 300ms ease';
-            introQuoteAttribution.style.opacity = '1';
-            introQuoteAttribution.style.color = '';
 
             // Create and show all embodiment lines with staggered quick fades
             const embodimentLines = [
@@ -1717,12 +2077,17 @@
         // Run the intro flow sequence
         async function runIntroFlow() {
             console.log('Starting intro flow...');
-            console.log('introQuote element:', introQuote);
+            console.log('introQuoteDesktop element:', introQuoteDesktop);
+            console.log('introQuoteMobile element:', introQuoteMobile);
             console.log('introEmbodimentLines element:', introEmbodimentLines);
 
-            // Reset all text to plain text (clear any cached spans from previous animations)
-            introQuote.textContent = '"The field is the sole governing agency of the particle."';
-            introQuoteAttribution.textContent = '— Albert Einstein';
+            // Reset all text to plain text for both desktop and mobile versions
+            if (introQuoteDesktop) {
+                introQuoteDesktop.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
+            }
+            if (introQuoteMobile) {
+                introQuoteMobile.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
+            }
 
             // Check if animations should be skipped
             if (skipIntroAnimations) {
@@ -1733,37 +2098,35 @@
             await new Promise(resolve => setTimeout(resolve, TIMING.initialWait));
             console.log('Initial wait complete, showing quote...');
 
-            // 2. Show quote with simple fade (0.86s)
-            if (introQuote) {
-                await fadeInClean(introQuote, 860);
-                announceForScreenReader(introQuote.textContent);
-                
-                // Wait 2 seconds, then show attribution
-                await new Promise(resolve => setTimeout(resolve, 2000));
-                
-                // Fade in attribution (simple opacity fade, 0.86s)
-                if (introQuoteAttribution) {
-                    await fadeInClean(introQuoteAttribution, 860);
-                    announceForScreenReader('Albert Einstein');
-                }
-                
-                // Wait remainder of time (1 more second to make total 3 seconds from quote appearing)
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                
-                // Grey out quote and attribution (keep them visible)
-                introQuote.style.transition = 'opacity 500ms ease, color 500ms ease';
-                introQuote.style.opacity = '0.6';
-                introQuote.style.color = '#78716C';
-                if (introQuoteAttribution) {
-                    introQuoteAttribution.style.transition = 'opacity 500ms ease, color 500ms ease';
-                    introQuoteAttribution.style.opacity = '0.6';
-                    introQuoteAttribution.style.color = '#78716C';
-                }
+            // 2. Show quote with simple fade (0.86s) - both desktop and mobile versions
+            // The CSS will handle showing only the appropriate version
+            if (introQuoteDesktop && introQuoteMobile) {
+                // Fade in both versions (CSS controls which one is visible)
+                await Promise.all([
+                    fadeInClean(introQuoteDesktop, 860),
+                    fadeInClean(introQuoteMobile, 860)
+                ]);
+
+                // Announce for screen readers (use desktop version text)
+                announceForScreenReader('"The field is the sole governing agency of the particle." — Albert Einstein');
+
+                // Wait 3 seconds total before greying out
+                await new Promise(resolve => setTimeout(resolve, 3000));
+
+                // Grey out both versions
+                introQuoteDesktop.style.transition = 'opacity 500ms ease, color 500ms ease';
+                introQuoteDesktop.style.opacity = '0.6';
+                introQuoteDesktop.style.color = '#78716C';
+
+                introQuoteMobile.style.transition = 'opacity 500ms ease, color 500ms ease';
+                introQuoteMobile.style.opacity = '0.6';
+                introQuoteMobile.style.color = '#78716C';
+
                 await new Promise(resolve => setTimeout(resolve, 500)); // Wait for grey transition
-                
+
                 console.log('Quote complete');
             } else {
-                console.error('introQuote element not found!');
+                console.error('Quote elements not found!');
             }
 
             // 3. Show each embodiment line with jigsaw fade, one at a time
@@ -1781,7 +2144,10 @@
                 const line = document.createElement('div');
                 line.className = 'intro-text-line';
                 line.textContent = lineText;
-                line.style.top = `calc(33% - 70px + ${60 + (i * 40)}px)`; // Start 60px below Einstein quote, moved up 70px for header
+                // Move first two lines: up 3px on desktop, up 20px on mobile
+                const isMobile = window.innerWidth <= 768;
+                const offset = (i < 2) ? (isMobile ? -20 : -3) : 0;
+                line.style.top = `calc(33% - 70px + ${60 + (i * 40) + offset}px)`; // Start 60px below Einstein quote, moved up 70px for header
                 introEmbodimentLines.appendChild(line);
                 
                 // Grey out the previous line BEFORE showing the next one
@@ -1820,14 +2186,26 @@
         async function showProtocolListPage() {
             console.log('Showing protocol list page...');
 
+            // Scroll to top
+            window.scrollTo(0, 0);
+
             // Fade out the intro content (quote, embodiment lines, orientation, continue button)
             await fadeOut(introContent, 800);
 
             // Hide intro content
             introContent.style.display = 'none';
 
+            // Hide the big intro logo
+            const introLogoContainer = document.querySelector('.intro-logo-container');
+            if (introLogoContainer) {
+                introLogoContainer.style.display = 'none';
+            }
+
             // Show protocol list page
             introProtocolListPage.classList.add('visible');
+
+            // Show header logo on protocol list page
+            pageHeader.classList.add('protocol-list-active');
 
             // Skip sequence list - don't show it
             // await fadeIn(introSequenceContainer, 1000);
@@ -1845,9 +2223,6 @@
 
             // Load and render protocol cards (happens during guidance fade)
             await loadAndRenderProtocolCards();
-
-            // Fade in begin button
-            await fadeIn(introBeginContainer, 1000);
         }
 
         // Continue button click handler
@@ -1855,9 +2230,12 @@
             showProtocolListPage();
         });
 
-        // Keyboard shortcut: Shift + Enter
+        // Keyboard shortcut: Cmd/Ctrl + Enter to skip intro
         document.addEventListener('keydown', (e) => {
-            if (e.shiftKey && e.key === 'Enter') {
+            const modifier = isMac ? e.metaKey : e.ctrlKey;
+            const isShortcut = modifier && e.key === 'Enter';
+
+            if (isShortcut) {
                 // Only trigger if continue button is visible and intro content is still showing
                 if (introContinueContainer &&
                     parseFloat(window.getComputedStyle(introContinueContainer).opacity) > 0.5 &&
@@ -1926,28 +2304,10 @@
             title.textContent = protocol.title;
             card.appendChild(title);
 
-            // Purpose section (initially hidden)
-            const purposeSection = document.createElement('div');
-            purposeSection.className = 'intro-disclosure-section';
-            purposeSection.innerHTML = `
-                <div class="intro-disclosure-label">Purpose</div>
-                <div class="intro-disclosure-content">${protocol.purpose || 'No purpose available'}</div>
-            `;
-            card.appendChild(purposeSection);
-
-            // Why section (initially hidden)
-            const whySection = document.createElement('div');
-            whySection.className = 'intro-disclosure-section';
-            whySection.innerHTML = `
-                <div class="intro-disclosure-label">Why This Matters</div>
-                <div class="intro-disclosure-content">${protocol.why || 'No description available'}</div>
-            `;
-            card.appendChild(whySection);
-
             // Use When section (initially hidden)
             const useWhenSection = document.createElement('div');
             useWhenSection.className = 'intro-disclosure-section';
-            
+
             // Format use_when as a list if it's an array, otherwise as plain text
             let useWhenContent = '';
             if (Array.isArray(protocol.use_when)) {
@@ -1955,65 +2315,29 @@
             } else {
                 useWhenContent = protocol.use_when || 'No use cases available';
             }
-            
+
             useWhenSection.innerHTML = `
                 <div class="intro-disclosure-label">Use This When</div>
                 <div class="intro-disclosure-content">${useWhenContent}</div>
             `;
             card.appendChild(useWhenSection);
 
-            // Purpose button (initially visible)
-            const purposeBtn = document.createElement('button');
-            purposeBtn.className = 'intro-disclosure-btn';
-            purposeBtn.textContent = 'Purpose';
-            purposeBtn.setAttribute('aria-expanded', 'false');
-            purposeBtn.setAttribute('aria-controls', `purpose-${protocol.id}`);
-            purposeSection.id = `purpose-${protocol.id}`;
-            card.appendChild(purposeBtn);
-
-            // Why button (initially hidden)
-            const whyBtn = document.createElement('button');
-            whyBtn.className = 'intro-disclosure-btn';
-            whyBtn.textContent = 'Why This Matters';
-            whyBtn.style.display = 'none';
-            whyBtn.setAttribute('aria-expanded', 'false');
-            whyBtn.setAttribute('aria-controls', `why-${protocol.id}`);
-            whySection.id = `why-${protocol.id}`;
-            card.appendChild(whyBtn);
-
-            // Use When button (initially hidden)
+            // Use When button (initially visible)
             const useWhenBtn = document.createElement('button');
             useWhenBtn.className = 'intro-disclosure-btn';
             useWhenBtn.textContent = 'Use This When';
-            useWhenBtn.style.display = 'none';
             useWhenBtn.setAttribute('aria-expanded', 'false');
             useWhenBtn.setAttribute('aria-controls', `usewhen-${protocol.id}`);
             useWhenSection.id = `usewhen-${protocol.id}`;
             card.appendChild(useWhenBtn);
 
-            // Walk this Protocol button (initially hidden, shown after all sections expanded)
+            // Walk this Protocol button (initially hidden, shown after Use This When is clicked)
             const walkBtn = document.createElement('button');
             walkBtn.className = 'intro-walk-btn';
             walkBtn.textContent = 'Walk this Protocol';
             card.appendChild(walkBtn);
 
-            // Handle progressive disclosure
-            purposeBtn.addEventListener('click', () => {
-                purposeSection.classList.add('visible');
-                purposeBtn.style.display = 'none';
-                purposeBtn.setAttribute('aria-expanded', 'true');
-                whyBtn.style.display = 'block';
-                announceForScreenReader('Purpose revealed');
-            });
-
-            whyBtn.addEventListener('click', () => {
-                whySection.classList.add('visible');
-                whyBtn.style.display = 'none';
-                whyBtn.setAttribute('aria-expanded', 'true');
-                useWhenBtn.style.display = 'block';
-                announceForScreenReader('Why This Matters revealed');
-            });
-
+            // Handle Use This When button click
             useWhenBtn.addEventListener('click', () => {
                 useWhenSection.classList.add('visible');
                 useWhenBtn.style.display = 'none';
@@ -2026,12 +2350,15 @@
             walkBtn.addEventListener('click', () => {
                 // Add dissolving class to trigger border fade
                 walkBtn.classList.add('dissolving');
-                
+
                 // Wait for border to dissolve (1.5s) then navigate
                 setTimeout(() => {
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+
                     // Set the selected protocol (needed for begin walk)
                     selectProtocol(protocol);
-                    
+
                     // Hide intro flow
                     introFlowView.classList.add('hidden');
                     
@@ -2067,35 +2394,6 @@
 
             introProtocolDeck.appendChild(card);
         }
-
-        // Handle Begin button click
-        introBeginBtn.addEventListener('click', () => {
-            // Hide intro flow
-            introFlowView.classList.add('hidden');
-            
-            // Show content area
-            const contentArea = document.querySelector('.content-area');
-            if (contentArea) {
-                contentArea.classList.add('visible');
-            }
-            
-            // Show protocol selection
-            protocolSelectionView.classList.remove('hidden');
-            
-            // Remove intro-mode from header and update title
-            const pageHeader = document.getElementById('page-header');
-            if (pageHeader) {
-                pageHeader.classList.remove('intro-mode');
-            }
-            
-            const headerTitle = document.querySelector('.header-title');
-            if (headerTitle) {
-                headerTitle.textContent = 'Lichen Protocol';
-            }
-            
-            // Scroll to top
-            window.scrollTo(0, 0);
-        });
 
         // Start the intro flow when page loads
         try {
@@ -2185,6 +2483,9 @@
         function selectProtocol(protocol) {
             selectedProtocol = protocol;
 
+            // Scroll to top
+            window.scrollTo(0, 0);
+
             // Update protocol title in entry view with stacked format
             // Split title at em dash (—) or long dash if present
             const title = protocol.title;
@@ -2203,14 +2504,16 @@
             entryView.classList.remove('hidden');
         }
 
-        // Detect platform for keyboard shortcuts
-        const isMac = navigator.platform.toUpperCase().includes('MAC');
-
         // Load protocols on page load
         loadProtocols();
 
         // Set helper text based on platform
         responseHint.textContent = isMac ? 'Press ⌘ + Enter to continue' : 'Press Ctrl + Enter to continue';
+
+        // Update button aria-label for accessibility
+        if (continueButton) {
+            continueButton.setAttribute('aria-label', isMac ? 'Continue (Cmd + Enter)' : 'Continue (Ctrl + Enter)');
+        }
 
         // Enable continue button when response has content
         responseInput.addEventListener('input', () => {
@@ -2236,6 +2539,31 @@
             }
             // Shift + Enter: allow new line (default behavior)
             // Enter alone: allow new line (default behavior)
+        });
+
+        // Escape key: Exit walk and return to protocol selection
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // Check if we're in a walk (walk-view is visible or entry-view is visible)
+                const isInWalk = (walkView && walkView.style.display !== 'none') ||
+                                 (entryView && !entryView.classList.contains('hidden'));
+
+                if (isInWalk && confirm('Exit this protocol and return to protocol selection?')) {
+                    // Reset views
+                    if (walkView) walkView.style.display = 'none';
+                    if (entryView) entryView.classList.add('hidden');
+
+                    // Show protocol selection
+                    protocolSelectionView.classList.remove('hidden');
+
+                    // Reset inputs
+                    if (responseInput) responseInput.value = '';
+                    if (continueButton) continueButton.disabled = true;
+
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                }
+            }
         });
 
         // Begin walk
@@ -2485,6 +2813,9 @@
         async function renderWalkState(data) {
             console.log('🚀 renderWalkState called, mode:', data.mode);
 
+            // Scroll to top whenever rendering walk state
+            window.scrollTo(0, 0);
+
             // In ENTRY mode, stay in entry view but show protocol introduction
             if (data.mode === 'ENTRY') {
                 console.log('📝 ENTRY mode - showing protocol introduction');
@@ -2507,10 +2838,10 @@
             // Parse and render composer output (but keep hidden)
             renderComposerOutput(data.composer_output);
 
-            // Render supports
-            renderSupports(data);
+            // Render supports - DISABLED
+            // renderSupports(data);
 
-            supportsStrip.classList.add('active');
+            // supportsStrip.classList.add('active');
 
             // Hide entry view and show walk view
             entryView.style.display = 'none';
@@ -2522,7 +2853,7 @@
 
             // Fade in everything
             walkView.style.opacity = '1';
-            supportsStrip.style.opacity = '1';
+            // supportsStrip.style.opacity = '1';
 
             // Add fade-in class to walk view children
             const walkChildren = walkView.querySelectorAll('.output-container, .response-area');
@@ -2840,7 +3171,22 @@
                     }
                 };
 
+                // Add "Return to Protocol Selection" button
+                const backBtn = document.createElement('button');
+                backBtn.className = 'walk-button fade-in-only';
+                backBtn.style.cssText = 'background: transparent; border: 1px solid #D6D3D1; color: #78716C; margin-left: 1rem;';
+                backBtn.textContent = 'Return to Protocol Selection';
+                backBtn.onclick = () => {
+                    // Hide entry view
+                    entryView.classList.add('hidden');
+                    // Show protocol selection
+                    protocolSelectionView.classList.remove('hidden');
+                    // Scroll to top
+                    window.scrollTo(0, 0);
+                };
+
                 continueControl.appendChild(continueBtn);
+                continueControl.appendChild(backBtn);
                 entryResponseArea.appendChild(continueControl);
             }
 
@@ -2864,6 +3210,9 @@
 
             let html = markdown;
 
+            // Filter out horizontal rules (---) - they're structural markers, not content
+            html = html.replace(/^---+\s*$/gm, '');
+
             // First, convert headers (before any other processing)
             // Support both ## and # formats
             html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
@@ -2871,8 +3220,8 @@
             html = html.replace(/^# (.+)$/gm, '<h2>$1</h2>');
 
             // Convert **bold text:** or **bold** to <strong>
-            // Use a more robust pattern that handles multi-line
-            html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+            // Use a more robust pattern that handles multi-line and inline bold
+            html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
 
             // Convert bullet points
             html = html.replace(/^\• (.+)$/gm, '<li>$1</li>');
@@ -2951,7 +3300,7 @@
             if (sections.why_this_matters) {
                 composerOutput.innerHTML += `
                     <div class="output-section">
-                        <div class="section-label">Why This Matters</div>
+                        <div class="section-label">Why This Theme Matters</div>
                         <div class="section-content">${sections.why_this_matters}</div>
                     </div>
                 `;
@@ -2959,9 +3308,11 @@
 
             if (sections.guiding_question) {
                 const label = sections.guiding_question.includes('•') ? 'Guiding Questions' : 'Guiding Question';
+                const helperText = 'Reflect on these questions as they relate to your current situation. Share what comes up for you—there are no right or wrong answers.';
                 composerOutput.innerHTML += `
                     <div class="output-section">
                         <div class="section-label">${label}</div>
+                        <div class="section-content" style="font-size: 0.875rem; color: #78716C; margin-bottom: 0.75rem; font-style: italic;">${helperText}</div>
                         <div class="section-content" style="white-space: pre-line;">${sections.guiding_question}</div>
                     </div>
                 `;
@@ -2990,10 +3341,12 @@
             }
 
             if (sections.completion_prompt) {
+                const helperText = 'When this statement feels true for you, you\'re ready to continue:';
                 composerOutput.innerHTML += `
                     <div class="output-section">
-                        <div class="section-label">Completion Prompt</div>
-                        <div class="section-content" style="font-style: italic;">${sections.completion_prompt}</div>
+                        <div class="section-label">Theme Completion</div>
+                        <div class="section-content" style="font-size: 0.875rem; color: #78716C; margin-bottom: 0.5rem;">${helperText}</div>
+                        <div class="section-content" style="font-style: italic; font-weight: 500; color: #57534E;">${sections.completion_prompt}</div>
                     </div>
                 `;
             }
@@ -3114,8 +3467,8 @@
             return sections;
         }
 
-        // Render supports
-        function renderSupports(data) {
+        // Render supports - DISABLED
+        /* function renderSupports(data) {
             supportsContainer.innerHTML = `<div class="supports-label">Supports (1)</div>`;
 
             const card = document.createElement('div');
@@ -3135,7 +3488,7 @@
             });
 
             supportsContainer.appendChild(card);
-        }
+        } */
 
         // Handle completion
         function handleCompletion(data) {

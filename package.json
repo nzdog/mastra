@@ -8,7 +8,13 @@
     "server": "tsx src/server.ts",
     "build": "tsc",
     "start": "npm run build && node dist/server.js",
-    "test": "tsx test/scenarios.ts"
+    "test": "tsx test/scenarios.ts",
+    "lint": "eslint src/ test/",
+    "lint:fix": "eslint src/ test/ --fix",
+    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"*.md\"",
+    "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"*.md\"",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -22,12 +28,26 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
+    "express-rate-limit": "^8.1.0",
     "glob": "^11.0.3",
-    "gray-matter": "^4.0.3"
+    "gray-matter": "^4.0.3",
+    "helmet": "^8.1.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
     "@types/node": "^24.6.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "eslint": "^9.37.0",
+    "eslint-plugin-import": "^2.32.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.2.4",
+    "prettier": "^3.6.2",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3"
+  },
+  "optionalDependencies": {
+    "ioredis": "^5.3.2"
   }
 }

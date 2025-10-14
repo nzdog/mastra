@@ -5,6 +5,9 @@ import { ParsedProtocol, ProtocolMetadata, ThemeContent, EntrySection } from './
 
 export class ProtocolParser {
   private protocolPath: string;
+  private static parsedProtocolCache: Map<string, ParsedProtocol> = new Map();
+  private static cacheTimestamps: Map<string, number> = new Map();
+  private static CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
   constructor(protocolPath: string) {
     this.protocolPath = protocolPath;
@@ -12,8 +15,23 @@ export class ProtocolParser {
 
   /**
    * Parse the markdown protocol file into structured chunks
+   * Uses in-memory cache to avoid repeated file I/O and parsing
    */
   parse(): ParsedProtocol {
+    const now = Date.now();
+    const cacheKey = this.protocolPath;
+
+    // Check if cache is valid
+    const cachedTime = ProtocolParser.cacheTimestamps.get(cacheKey);
+    if (cachedTime && now - cachedTime < ProtocolParser.CACHE_TTL_MS) {
+      const cached = ProtocolParser.parsedProtocolCache.get(cacheKey);
+      if (cached) {
+        console.log(`📦 CACHE HIT: Protocol "${path.basename(cacheKey)}" loaded from cache`);
+        return cached;
+      }
+    }
+
+    console.log(`💾 CACHE MISS: Parsing protocol "${path.basename(cacheKey)}" from disk`);
     const fileContent = fs.readFileSync(this.protocolPath, 'utf-8');
     const { data: frontmatter, content } = matter(fileContent);
 
@@ -44,12 +62,18 @@ export class ProtocolParser {
     const summary_instructions = this.extractSummaryInstructions(content);
     // console.log(`   ✅ Summary instructions extracted: ${summary_instructions ? 'yes' : 'no'}`);
 
-    return {
+    const parsed: ParsedProtocol = {
       metadata,
       entry_sections,
       theme_chunks,
       summary_instructions,
     };
+
+    // Update cache
+    ProtocolParser.parsedProtocolCache.set(cacheKey, parsed);
+    ProtocolParser.cacheTimestamps.set(cacheKey, now);
+
+    return parsed;
   }
 
   /**
@@ -118,7 +142,7 @@ export class ProtocolParser {
   /**
    * Extract WALK chunks (one per theme)
    */
-  private extractThemeChunks(content: string, metadata: ProtocolMetadata): Map<number, string> {
+  private extractThemeChunks(content: string, _metadata: ProtocolMetadata): Map<number, string> {
     const theme_chunks = new Map<number, string>();
     const lines = content.split('\n');
 
@@ -140,7 +164,10 @@ export class ProtocolParser {
       }
 
       // Stop at Completion Prompts or second horizontal rule
-      if (inThemesSection && (line.startsWith('## Completion Prompts') || (line.startsWith('---') && i > 20))) {
+      if (
+        inThemesSection &&
+        (line.startsWith('## Completion Prompts') || (line.startsWith('---') && i > 20))
+      ) {
         // console.log(`   ⏹️  Stopping at line ${i + 1}: "${line.substring(0, 50)}"`);
         if (currentThemeIndex !== null && themeContent.length > 0) {
           theme_chunks.set(currentThemeIndex, this.buildThemeChunk(themeContent));
