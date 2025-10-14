@@ -1,15 +1,17 @@
-import express, { Request, Response } from 'express';
+import { randomUUID } from 'crypto';
+import * as path from 'path';
 import cors from 'cors';
 import * as dotenv from 'dotenv';
-import { randomUUID } from 'crypto';
+import express, { Request, Response } from 'express';
+import rateLimit from 'express-rate-limit';
+import helmet from 'helmet';
 import { FieldDiagnosticAgent } from './agent';
-import { ProtocolRegistry } from './tools/registry';
-import { ProtocolParser } from './protocol/parser';
-import { ProtocolLoader } from './protocol/loader';
-import { SessionState } from './types';
-import { Session, SessionStore, createSessionStore } from './session-store';
 import { performanceMonitor, CacheStats } from './performance';
-import * as path from 'path';
+import { ProtocolLoader } from './protocol/loader';
+import { ProtocolParser } from './protocol/parser';
+import { Session, SessionStore, createSessionStore } from './session-store';
+import { ProtocolRegistry } from './tools/registry';
+import { SessionState } from './types';
 
 // Load environment variables
 dotenv.config();
@@ -40,7 +42,7 @@ if (process.env.REDIS_URL) {
     });
 
     sessionStore = createSessionStore({ type: 'redis', redis, apiKey: API_KEY! });
-  } catch (error) {
+  } catch {
     console.warn('⚠️  Redis module not installed. Using in-memory session store.');
     console.log('   To enable Redis: npm install ioredis');
     sessionStore = createSessionStore({ type: 'memory', apiKey: API_KEY! });
@@ -71,10 +73,129 @@ interface CompleteRequest {
   generate_summary?: boolean;
 }
 
+// Input Validation & Sanitization
+const INPUT_CONSTRAINTS = {
+  MAX_USER_INPUT_LENGTH: 5000, // 5000 chars max for user input
+  MAX_SESSION_ID_LENGTH: 100, // UUID should be ~36 chars
+  MAX_PROTOCOL_SLUG_LENGTH: 200,
+  MIN_USER_INPUT_LENGTH: 1,
+};
+
+/**
+ * Validate and sanitize user input to prevent prompt injection and excessive token usage
+ */
+function validateUserInput(
+  input: string,
+  fieldName: string = 'input'
+): { valid: boolean; error?: string; sanitized?: string } {
+  // Check type
+  if (typeof input !== 'string') {
+    return { valid: false, error: `${fieldName} must be a string` };
+  }
+
+  // Trim whitespace
+  const trimmed = input.trim();
+
+  // Check minimum length
+  if (trimmed.length < INPUT_CONSTRAINTS.MIN_USER_INPUT_LENGTH) {
+    return { valid: false, error: `${fieldName} cannot be empty` };
+  }
+
+  // Check maximum length (prevents excessive token usage)
+  if (trimmed.length > INPUT_CONSTRAINTS.MAX_USER_INPUT_LENGTH) {
+    return {
+      valid: false,
+      error: `${fieldName} too long. Maximum ${INPUT_CONSTRAINTS.MAX_USER_INPUT_LENGTH} characters allowed (received ${trimmed.length})`,
+    };
+  }
+
+  // Check for suspicious patterns (basic prompt injection detection)
+  const suspiciousPatterns = [
+    /ignore\s+(all\s+)?(previous|above|prior)\s+instructions/i,
+    /disregard\s+(all\s+)?(previous|above|prior)\s+instructions/i,
+    /forget\s+(all\s+)?(previous|above|prior)\s+instructions/i,
+    /system\s*:\s*/i, // Trying to inject system messages
+    /assistant\s*:\s*/i, // Trying to inject assistant messages
+    /<\|im_start\|>/i, // ChatML injection
+    /<\|im_end\|>/i,
+  ];
+
+  for (const pattern of suspiciousPatterns) {
+    if (pattern.test(trimmed)) {
+      console.warn(`⚠️  Potential prompt injection detected: ${trimmed.substring(0, 100)}...`);
+      // Log but don't block - could be legitimate conversation about AI
+      // return { valid: false, error: 'Input contains suspicious patterns' };
+    }
+  }
+
+  // Check for excessive special characters (might indicate injection attempt)
+  const specialCharCount = (trimmed.match(/[<>{}[\]]/g) || []).length;
+  if (specialCharCount > 50) {
+    console.warn(`⚠️  Excessive special characters detected: ${specialCharCount}`);
+  }
+
+  return { valid: true, sanitized: trimmed };
+}
+
+/**
+ * Validate protocol slug to prevent path traversal
+ */
+function validateProtocolSlug(slug: string | undefined): { valid: boolean; error?: string } {
+  if (!slug) {
+    return { valid: true }; // Optional field
+  }
+
+  if (typeof slug !== 'string') {
+    return { valid: false, error: 'protocol_slug must be a string' };
+  }
+
+  if (slug.length > INPUT_CONSTRAINTS.MAX_PROTOCOL_SLUG_LENGTH) {
+    return { valid: false, error: 'protocol_slug too long' };
+  }
+
+  // Only allow alphanumeric, hyphens, and underscores (prevents path traversal)
+  if (!/^[a-z0-9_-]+$/i.test(slug)) {
+    return {
+      valid: false,
+      error: 'protocol_slug can only contain letters, numbers, hyphens, and underscores',
+    };
+  }
+
+  // Prevent path traversal attempts
+  if (slug.includes('..') || slug.includes('/') || slug.includes('\\')) {
+    return { valid: false, error: 'Invalid protocol_slug format' };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Validate session ID format
+ */
+function validateSessionId(sessionId: string): { valid: boolean; error?: string } {
+  if (typeof sessionId !== 'string') {
+    return { valid: false, error: 'session_id must be a string' };
+  }
+
+  if (sessionId.length > INPUT_CONSTRAINTS.MAX_SESSION_ID_LENGTH) {
+    return { valid: false, error: 'session_id too long' };
+  }
+
+  // UUIDs should be alphanumeric + hyphens
+  if (!/^[a-f0-9-]+$/i.test(sessionId)) {
+    return { valid: false, error: 'Invalid session_id format' };
+  }
+
+  return { valid: true };
+}
+
 // Cleanup expired sessions every 10 minutes (for in-memory store)
-setInterval(async () => {
-  await sessionStore.cleanup();
-}, 10 * 60 * 1000);
+setInterval(
+  async () => {
+    await sessionStore.cleanup();
+  },
+  10 * 60 * 1000
+);
 
 // Helper: Get session (async wrapper for SessionStore)
 async function getSession(sessionId: string): Promise<Session | null> {
@@ -112,7 +233,9 @@ async function createSession(protocolSlug?: string): Promise<Session> {
   };
 
   await sessionStore.set(session.id, session);
-  console.log(`✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`);
+  console.log(
+    `✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`
+  );
   return session;
 }
 
@@ -153,7 +276,8 @@ function extractSupports(
     supports.push({
       source: 'Field Diagnostic Protocol',
       theme: 'Overview',
-      excerpt: 'This protocol helps surface the invisible field shaping your behavior, decisions, and emotional stance.',
+      excerpt:
+        'This protocol helps surface the invisible field shaping your behavior, decisions, and emotional stance.',
     });
   }
 
@@ -224,15 +348,124 @@ const fs = require('fs');
 const assetsPath = path.join(__dirname, '../assets');
 console.log(`📁 Assets path: ${assetsPath}`);
 
+// Rate Limiting Configuration
+// General API rate limiter - more lenient for read operations
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per window
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+    retryAfter: '15 minutes',
+  },
+  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
+  legacyHeaders: false, // Disable `X-RateLimit-*` headers
+});
+
+// Strict rate limiter for AI endpoints (expensive operations)
+const aiEndpointLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 AI requests per window (protects API costs)
+  message: {
+    error: 'Too many AI requests from this IP. Please wait before continuing.',
+    retryAfter: '15 minutes',
+    note: 'AI operations are rate-limited to prevent API cost abuse.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Very strict limiter for session creation
+const sessionCreationLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // Limit each IP to 10 new sessions per hour
+  message: {
+    error: 'Too many sessions created from this IP. Please try again later.',
+    retryAfter: '1 hour',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Metrics endpoint rate limiter
+const metricsLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000, // 1 minute
+  max: 10, // Limit each IP to 10 requests per minute
+  message: {
+    error: 'Too many metrics requests. Please slow down.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Middleware
-// CORS configuration - allow all origins since we're serving frontend from same domain
+// Security Headers - Helmet configuration
+app.use(
+  helmet({
+    // Content Security Policy - prevents XSS attacks
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for frontend
+        styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for frontend
+        imgSrc: ["'self'", 'data:', 'https:'],
+        connectSrc: ["'self'"], // API calls only to same origin
+        fontSrc: ["'self'"],
+        objectSrc: ["'none'"],
+        mediaSrc: ["'self'"],
+        frameSrc: ["'none'"],
+      },
+    },
+    // Strict Transport Security - forces HTTPS (disabled in dev)
+    hsts:
+      process.env.NODE_ENV === 'production'
+        ? {
+            maxAge: 31536000, // 1 year
+            includeSubDomains: true,
+            preload: true,
+          }
+        : false,
+    // Hide X-Powered-By header
+    hidePoweredBy: true,
+    // Prevent clickjacking
+    frameguard: { action: 'deny' },
+    // Prevent MIME type sniffing
+    noSniff: true,
+    // XSS Protection (legacy but still useful)
+    xssFilter: true,
+  })
+);
+
+// CORS Configuration - Secure origin validation
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
+  : [
+      'http://localhost:3000',
+      'http://localhost:5173', // Vite dev server
+      'http://127.0.0.1:3000',
+      'http://127.0.0.1:5173',
+    ];
+
 const corsOptions = {
-  origin: '*', // Allow all origins since frontend is served from same Railway domain
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      console.warn(`🚫 CORS: Blocked request from unauthorized origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 };
 app.use(cors(corsOptions));
-app.use(express.json());
+app.use(express.json({ limit: '1mb' })); // Add request size limit for security
 
 // Test route
 app.get('/test-route', (_req: Request, res: Response) => {
@@ -268,7 +501,9 @@ app.get('/', (_req: Request, res: Response) => {
   if (fs.existsSync(indexPath)) {
     res.sendFile(indexPath);
   } else {
-    res.status(404).send('Frontend not found. Please ensure index.html exists in the project root.');
+    res
+      .status(404)
+      .send('Frontend not found. Please ensure index.html exists in the project root.');
   }
 });
 
@@ -281,7 +516,11 @@ app.get('/test', (_req: Request, res: Response) => {
   if (fs.existsSync(testFilePath)) {
     res.sendFile(testFilePath);
   } else {
-    res.status(404).send('Test interface not found. Please ensure test-frontend.html exists in the project root.');
+    res
+      .status(404)
+      .send(
+        'Test interface not found. Please ensure test-frontend.html exists in the project root.'
+      );
   }
 });
 
@@ -302,8 +541,8 @@ app.get('/health', async (_req: Request, res: Response) => {
   });
 });
 
-// Performance metrics endpoint
-app.get('/api/metrics', (_req: Request, res: Response) => {
+// Performance metrics endpoint (rate-limited)
+app.get('/api/metrics', metricsLimiter, (_req: Request, res: Response) => {
   const summary = performanceMonitor.getSummary();
   const cacheStats = CacheStats.getStats();
   const memory = performanceMonitor.getMemoryUsage();
@@ -326,14 +565,14 @@ app.get('/api/metrics', (_req: Request, res: Response) => {
   });
 });
 
-// List available protocols
-app.get('/api/protocols', (_req: Request, res: Response) => {
+// List available protocols (rate-limited)
+app.get('/api/protocols', apiLimiter, (_req: Request, res: Response) => {
   try {
     const loader = new ProtocolLoader();
     const protocols = loader.listProtocols();
 
     res.json({
-      protocols: protocols.map(p => ({
+      protocols: protocols.map((p) => ({
         id: p.id,
         slug: p.slug,
         title: p.title,
@@ -342,7 +581,7 @@ app.get('/api/protocols', (_req: Request, res: Response) => {
         why: p.why,
         use_when: p.use_when,
         theme_count: p.theme_count,
-      }))
+      })),
     });
   } catch (error) {
     console.error('Error listing protocols:', error);
@@ -353,48 +592,91 @@ app.get('/api/protocols', (_req: Request, res: Response) => {
   }
 });
 
-// Start protocol walk
-app.post('/api/walk/start', async (req: Request, res: Response) => {
-  try {
-    const { user_input, protocol_slug } = req.body as StartRequest;
+// Start protocol walk (strictly rate-limited - creates sessions and uses AI)
+app.post(
+  '/api/walk/start',
+  sessionCreationLimiter,
+  aiEndpointLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { user_input, protocol_slug } = req.body as StartRequest;
 
-    if (!user_input || typeof user_input !== 'string') {
-      return res.status(400).json({
-        error: 'Missing or invalid user_input field',
+      // Validate user_input
+      if (!user_input) {
+        return res.status(400).json({
+          error: 'Missing user_input field',
+        });
+      }
+
+      const inputValidation = validateUserInput(user_input, 'user_input');
+      if (!inputValidation.valid) {
+        return res.status(400).json({
+          error: inputValidation.error,
+        });
+      }
+
+      // Validate protocol_slug (optional field)
+      const slugValidation = validateProtocolSlug(protocol_slug);
+      if (!slugValidation.valid) {
+        return res.status(400).json({
+          error: slugValidation.error,
+        });
+      }
+
+      // Create new session with specified protocol
+      const session = await createSession(protocol_slug);
+
+      // Process initial message with sanitized input
+      const agentResponse = await session.agent.processMessage(inputValidation.sanitized!);
+      const state = session.agent.getState();
+
+      // Update session cost
+      session.total_cost = session.agent.getTotalCost();
+
+      // Format response
+      const response = formatResponse(agentResponse, state, session.id, session);
+
+      res.json(response);
+    } catch (error) {
+      console.error('Error in /api/walk/start:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : String(error),
       });
     }
-
-    // Create new session with specified protocol
-    const session = await createSession(protocol_slug);
-
-    // Process initial message
-    const agentResponse = await session.agent.processMessage(user_input);
-    const state = session.agent.getState();
-
-    // Update session cost
-    session.total_cost = session.agent.getTotalCost();
-
-    // Format response
-    const response = formatResponse(agentResponse, state, session.id, session);
-
-    res.json(response);
-  } catch (error) {
-    console.error('Error in /api/walk/start:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : String(error),
-    });
   }
-});
+);
 
-// Continue protocol walk
-app.post('/api/walk/continue', async (req: Request, res: Response) => {
+// Continue protocol walk (rate-limited AI endpoint)
+app.post('/api/walk/continue', aiEndpointLimiter, async (req: Request, res: Response) => {
   try {
     const { session_id, user_response } = req.body as ContinueRequest;
 
-    if (!session_id || !user_response) {
+    // Validate session_id
+    if (!session_id) {
       return res.status(400).json({
-        error: 'Missing session_id or user_response',
+        error: 'Missing session_id',
+      });
+    }
+
+    const sessionIdValidation = validateSessionId(session_id);
+    if (!sessionIdValidation.valid) {
+      return res.status(400).json({
+        error: sessionIdValidation.error,
+      });
+    }
+
+    // Validate user_response
+    if (!user_response) {
+      return res.status(400).json({
+        error: 'Missing user_response',
+      });
+    }
+
+    const responseValidation = validateUserInput(user_response, 'user_response');
+    if (!responseValidation.valid) {
+      return res.status(400).json({
+        error: responseValidation.error,
       });
     }
 
@@ -406,8 +688,8 @@ app.post('/api/walk/continue', async (req: Request, res: Response) => {
       });
     }
 
-    // Process message
-    const agentResponse = await session.agent.processMessage(user_response);
+    // Process message with sanitized input
+    const agentResponse = await session.agent.processMessage(responseValidation.sanitized!);
     const state = session.agent.getState();
 
     // Update session cost
@@ -417,7 +699,10 @@ app.post('/api/walk/continue', async (req: Request, res: Response) => {
     const response = formatResponse(agentResponse, state, session_id, session);
 
     // Debug: Log what we're sending to the frontend
-    console.log('\n🌐 SENDING TO FRONTEND (last 300 chars of composer_output):', response.composer_output.substring(response.composer_output.length - 300));
+    console.log(
+      '\n🌐 SENDING TO FRONTEND (last 300 chars of composer_output):',
+      response.composer_output.substring(response.composer_output.length - 300)
+    );
 
     res.json(response);
   } catch (error) {
@@ -429,14 +714,22 @@ app.post('/api/walk/continue', async (req: Request, res: Response) => {
   }
 });
 
-// Complete protocol
-app.post('/api/walk/complete', async (req: Request, res: Response) => {
+// Complete protocol (rate-limited AI endpoint)
+app.post('/api/walk/complete', aiEndpointLimiter, async (req: Request, res: Response) => {
   try {
     const { session_id, generate_summary } = req.body as CompleteRequest;
 
+    // Validate session_id
     if (!session_id) {
       return res.status(400).json({
         error: 'Missing session_id',
+      });
+    }
+
+    const sessionIdValidation = validateSessionId(session_id);
+    if (!sessionIdValidation.valid) {
+      return res.status(400).json({
+        error: sessionIdValidation.error,
       });
     }
 
@@ -453,22 +746,22 @@ app.post('/api/walk/complete', async (req: Request, res: Response) => {
     // If generate_summary requested, directly trigger CLOSE mode
     if (generate_summary) {
       console.log('🎯 COMPLETION: Directly forcing CLOSE mode to generate field diagnosis');
-      
+
       // Get current state and directly set it to CLOSE mode
       const state = session.agent.getState();
       state.mode = 'CLOSE';
-      
+
       // Trigger field diagnosis by processing with CLOSE mode
       // The agent's processMessage will see mode=CLOSE and generate the diagnosis
       const agentResponse = await session.agent.processMessage('Generate field diagnosis');
       summaryHtml = agentResponse;
-      
+
       // Update session cost
       session.total_cost = session.agent.getTotalCost();
 
       // Get updated state for proper response formatting
       const updatedState = session.agent.getState();
-      
+
       // Return proper completion response with theme info
       const protocolMetadata = session.registry.getMetadata();
       const response = {
@@ -512,9 +805,18 @@ app.post('/api/walk/complete', async (req: Request, res: Response) => {
   }
 });
 
-// Get session state (debugging)
-app.get('/api/session/:id', async (req: Request, res: Response) => {
+// Get session state (debugging, rate-limited)
+app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
   const sessionId = req.params.id;
+
+  // Validate session ID
+  const sessionIdValidation = validateSessionId(sessionId);
+  if (!sessionIdValidation.valid) {
+    return res.status(400).json({
+      error: sessionIdValidation.error,
+    });
+  }
+
   const session = await getSession(sessionId);
 
   if (!session) {

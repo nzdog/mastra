@@ -1,10 +1,14 @@
 # Field Diagnostic Agent
 
-A TypeScript-based conversational agent that walks users through the **Field Diagnostic Protocol** from the Lichen Protocol system.
+A TypeScript-based conversational agent that walks users through the **Field Diagnostic Protocol**
+from the Lichen Protocol system.
 
 ## Overview
 
-The Field Diagnostic Protocol helps surface the invisible field currently shaping your behavior, decisions, and emotional stance. This agent guides you through 6 themes to identify the systemic pressures and patterns you're living inside—so you can see clearly what is holding you, rather than mistaking it for personal failure or strength.
+The Field Diagnostic Protocol helps surface the invisible field currently shaping your behavior,
+decisions, and emotional stance. This agent guides you through 6 themes to identify the systemic
+pressures and patterns you're living inside—so you can see clearly what is holding you, rather than
+mistaking it for personal failure or strength.
 
 ## Architecture
 
@@ -28,10 +32,14 @@ The Field Diagnostic Protocol helps surface the invisible field currently shapin
 
 ### Core Components
 
-- **Intent Classifier** (`src/classifier.ts`): AI-powered intent detection that classifies user messages before retrieval
-- **Protocol Parser** (`src/protocol/parser.ts`): Parses markdown protocol files with YAML frontmatter into structured chunks
-- **Retrieval Registry** (`src/tools/registry.ts`): Retrieves appropriate chunks (ENTRY or WALK) based on mode
-- **Composer** (`src/composer/`): Generates responses using Claude API with mode-specific system prompts
+- **Intent Classifier** (`src/classifier.ts`): AI-powered intent detection that classifies user
+  messages before retrieval
+- **Protocol Parser** (`src/protocol/parser.ts`): Parses markdown protocol files with YAML
+  frontmatter into structured chunks
+- **Retrieval Registry** (`src/tools/registry.ts`): Retrieves appropriate chunks (ENTRY or WALK)
+  based on mode
+- **Composer** (`src/composer/`): Generates responses using Claude API with mode-specific system
+  prompts
 - **Agent Orchestrator** (`src/agent.ts`): Main state management and workflow coordination
 - **CLI Interface** (`src/index.ts`): Interactive readline-based command-line interface
 
@@ -109,6 +117,7 @@ npm run test
 ```
 
 The test suite includes:
+
 1. Greeting Test
 2. ENTRY Mode Test
 3. WALK Transition Test

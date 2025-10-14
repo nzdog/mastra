@@ -1,5 +1,5 @@
-import { ProtocolRegistry } from './tools/registry';
 import { ProtocolParser } from './protocol/parser';
+import { ProtocolRegistry } from './tools/registry';
 
 /**
  * Validates Claude's WALK mode output against the actual protocol content
@@ -38,7 +38,11 @@ export class WalkResponseValidator {
    * Check if Claude's response contains the correct theme content
    * Returns true if valid, false if hallucinating
    */
-  validateThemeResponse(response: string, themeIndex: number, awaitingConfirmation: boolean = false): { valid: boolean; issues: string[] } {
+  validateThemeResponse(
+    response: string,
+    themeIndex: number,
+    awaitingConfirmation: boolean = false
+  ): { valid: boolean; issues: string[] } {
     const issues: string[] = [];
 
     // console.log('\n🔍 VALIDATOR: Starting validation for Theme', themeIndex);
@@ -65,7 +69,10 @@ export class WalkResponseValidator {
     // So we should validate differently
     if (awaitingConfirmation) {
       // Check 1: Should contain the completion prompt
-      const completionPromptNormalized = themeContent.completion_prompt.toLowerCase().replace(/\s+/g, ' ').trim();
+      const completionPromptNormalized = themeContent.completion_prompt
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
       const responseNormalized = response.toLowerCase().replace(/\s+/g, ' ');
       const hasCompletionPrompt = responseNormalized.includes(completionPromptNormalized);
 
@@ -80,7 +87,9 @@ export class WalkResponseValidator {
       const hasGuidingQuestionsHeader = response.includes('**Guiding Questions:**');
       if (hasGuidingQuestionsHeader) {
         // console.log('❌ VALIDATOR: Should not re-present guiding questions when awaiting confirmation');
-        issues.push('Should provide interpretation + completion prompt, not re-present guiding questions');
+        issues.push(
+          'Should provide interpretation + completion prompt, not re-present guiding questions'
+        );
       }
 
       // Don't check for next theme mention - we'll inject it deterministically
@@ -91,7 +100,10 @@ export class WalkResponseValidator {
 
     // Normal validation (when NOT awaiting confirmation - presenting theme questions)
     // Check 1: Theme title should be present and exact
-    const themeTitlePattern = new RegExp(`Theme ${themeIndex}\\s*[–-]\\s*${this.escapeRegExp(themeContent.title)}`, 'i');
+    const themeTitlePattern = new RegExp(
+      `Theme ${themeIndex}\\s*[–-]\\s*${this.escapeRegExp(themeContent.title)}`,
+      'i'
+    );
     const titleMatch = themeTitlePattern.test(response);
     // console.log('🔍 VALIDATOR: Theme title match:', titleMatch);
 
@@ -100,7 +112,9 @@ export class WalkResponseValidator {
       const actualTitleMatch = response.match(/Theme \d+\s*[–-]\s*([^*\n]+)/);
       const actualTitle = actualTitleMatch ? actualTitleMatch[1].trim() : 'NOT FOUND';
       // console.log('❌ VALIDATOR: Actual title found:', actualTitle);
-      issues.push(`Missing or incorrect theme title. Expected: "Theme ${themeIndex} – ${themeContent.title}", Got: "${actualTitle}"`);
+      issues.push(
+        `Missing or incorrect theme title. Expected: "Theme ${themeIndex} – ${themeContent.title}", Got: "${actualTitle}"`
+      );
     }
 
     // Additional check: make sure it's not using a completely different theme title
@@ -121,13 +135,15 @@ export class WalkResponseValidator {
     for (const wrongTitle of wrongThemeTitles) {
       if (response.includes(wrongTitle)) {
         // console.log('❌ VALIDATOR: Hallucinated title detected:', wrongTitle);
-        issues.push(`Hallucinated theme title detected: "${wrongTitle}". Expected: "${themeContent.title}"`);
+        issues.push(
+          `Hallucinated theme title detected: "${wrongTitle}". Expected: "${themeContent.title}"`
+        );
       }
     }
 
     // Check 2: All three guiding questions should be present (EXACT matching)
     // console.log('\n🔍 VALIDATOR: Checking questions...');
-    const questionsPresent = themeContent.questions.map((question, idx) => {
+    const questionsPresent = themeContent.questions.map((question, _idx) => {
       // Normalize whitespace but require exact text match
       const questionNormalized = question.toLowerCase().replace(/\s+/g, ' ').trim();
       const responseNormalized = response.toLowerCase().replace(/\s+/g, ' ');
@@ -145,15 +161,22 @@ export class WalkResponseValidator {
     const missingQuestions = themeContent.questions.filter((_, i) => !questionsPresent[i]);
     if (missingQuestions.length > 0) {
       // console.log('❌ VALIDATOR:', missingQuestions.length, 'question(s) missing or altered');
-      issues.push(`Missing or altered ${missingQuestions.length} guiding question(s). Expected exact text: ${missingQuestions.join(' | ')}`);
+      issues.push(
+        `Missing or altered ${missingQuestions.length} guiding question(s). Expected exact text: ${missingQuestions.join(' | ')}`
+      );
     }
 
     // Check 3: If awaiting confirmation, completion prompt should be present
     if (response.includes('Completion Prompt:')) {
-      const completionPromptNormalized = themeContent.completion_prompt.toLowerCase().replace(/\s+/g, ' ').trim();
+      const completionPromptNormalized = themeContent.completion_prompt
+        .toLowerCase()
+        .replace(/\s+/g, ' ')
+        .trim();
       const responseNormalized = response.toLowerCase().replace(/\s+/g, ' ');
       if (!responseNormalized.includes(completionPromptNormalized)) {
-        issues.push(`Missing or incorrect completion prompt. Expected: "${themeContent.completion_prompt}"`);
+        issues.push(
+          `Missing or incorrect completion prompt. Expected: "${themeContent.completion_prompt}"`
+        );
       }
     }
 
@@ -176,7 +199,7 @@ export class WalkResponseValidator {
   generateDeterministicThemeResponse(
     themeIndex: number,
     awaitingConfirmation: boolean,
-    userReflection?: string
+    _userReflection?: string
   ): string {
     const chunk = this.registry.retrieve('WALK', themeIndex);
     if (!chunk) {
@@ -191,7 +214,7 @@ export class WalkResponseValidator {
       let response = `**Theme ${themeIndex} – ${themeContent.title}**\n\n`;
       response += `**Frame:** ${themeContent.purpose}\n\n`;
       response += `**Guiding Questions:**\n`;
-      themeContent.questions.forEach(q => {
+      themeContent.questions.forEach((q) => {
         response += `• ${q}\n`;
       });
       response += `\nTake a moment with those, and when you're ready, share what comes up.`;

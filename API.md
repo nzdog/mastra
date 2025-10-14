@@ -14,6 +14,7 @@ npm run server
 Start a new protocol walk.
 
 **Request:**
+
 ```json
 {
   "user_input": "What field am I in?"
@@ -21,6 +22,7 @@ Start a new protocol walk.
 ```
 
 **Response:**
+
 ```json
 {
   "session_id": "uuid",
@@ -50,6 +52,7 @@ Start a new protocol walk.
 Continue an existing protocol walk.
 
 **Request:**
+
 ```json
 {
   "session_id": "uuid",
@@ -58,6 +61,7 @@ Continue an existing protocol walk.
 ```
 
 **Response:**
+
 ```json
 {
   "session_id": "uuid",
@@ -87,6 +91,7 @@ Continue an existing protocol walk.
 Complete the protocol and optionally generate a field diagnosis summary.
 
 **Request:**
+
 ```json
 {
   "session_id": "uuid",
@@ -95,6 +100,7 @@ Complete the protocol and optionally generate a field diagnosis summary.
 ```
 
 **Response:**
+
 ```json
 {
   "completed": true,
@@ -107,6 +113,7 @@ Complete the protocol and optionally generate a field diagnosis summary.
 Get the current state of a session (debugging).
 
 **Response:**
+
 ```json
 {
   "session_id": "uuid",
@@ -127,6 +134,7 @@ Get the current state of a session (debugging).
 Health check endpoint.
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -138,22 +146,27 @@ Health check endpoint.
 ## Response Fields
 
 ### `mode`
+
 - `ENTRY`: Presenting protocol overview
 - `WALK`: Presenting theme questions
 - `CONTINUE`: Showing interpretation + completion prompt
 - `COMPLETE`: Field diagnosis (final summary)
 
 ### `composer_output`
+
 Markdown-formatted text from the agent. Parse this for display.
 
 Common sections:
+
 - `**Theme N – Title**` - Theme heading
 - `**Frame:**` - Theme purpose
 - `**Guiding Questions:**` - Questions (as bullets)
 - `**Completion Prompt:**` - Quote after user shares reflection
 
 ### `supports`
+
 Array of protocol excerpts that provide context:
+
 - `source`: Protocol name
 - `theme`: Theme title or "Overview"
 - `excerpt`: Relevant text from protocol
@@ -172,7 +185,7 @@ Array of protocol excerpts that provide context:
 const startRes = await fetch('http://localhost:3000/api/walk/start', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ user_input: 'What field am I in?' })
+  body: JSON.stringify({ user_input: 'What field am I in?' }),
 });
 const { session_id } = await startRes.json();
 
@@ -182,8 +195,8 @@ const continueRes = await fetch('http://localhost:3000/api/walk/continue', {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     session_id,
-    user_response: 'yes, walk me through it'
-  })
+    user_response: 'yes, walk me through it',
+  }),
 });
 const walkData = await continueRes.json();
 
@@ -193,8 +206,8 @@ const completeRes = await fetch('http://localhost:3000/api/walk/complete', {
   headers: { 'Content-Type': 'application/json' },
   body: JSON.stringify({
     session_id,
-    generate_summary: true
-  })
+    generate_summary: true,
+  }),
 });
 const { summary_html } = await completeRes.json();
 ```
@@ -202,6 +215,7 @@ const { summary_html } = await completeRes.json();
 ## Error Responses
 
 All errors return:
+
 ```json
 {
   "error": "Error description",
@@ -210,6 +224,7 @@ All errors return:
 ```
 
 Common status codes:
+
 - `400` - Bad request (missing fields)
 - `404` - Session not found or expired
 - `500` - Internal server error

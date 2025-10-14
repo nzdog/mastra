@@ -7,8 +7,8 @@
  */
 
 import { FieldDiagnosticAgent } from './agent';
-import { ProtocolRegistry } from './tools/registry';
 import { ProtocolParser } from './protocol/parser';
+import { ProtocolRegistry } from './tools/registry';
 
 export interface Session {
   id: string;
@@ -160,11 +160,7 @@ export class RedisSessionStore implements SessionStore {
     const serialized = this.serializeSession(session);
 
     // Store with TTL
-    await this.redis.setex(
-      key,
-      this.SESSION_TTL_SECONDS,
-      JSON.stringify(serialized)
-    );
+    await this.redis.setex(key, this.SESSION_TTL_SECONDS, JSON.stringify(serialized));
   }
 
   async delete(sessionId: string): Promise<void> {
@@ -193,7 +189,7 @@ export class RedisSessionStore implements SessionStore {
       created_at: session.created_at,
       last_accessed: session.last_accessed,
       total_cost: session.total_cost,
-      protocol_path: (session.registry as any).protocol?.metadata?.id || 'field_diagnostic'
+      protocol_path: (session.registry as any).protocol?.metadata?.id || 'field_diagnostic',
     };
   }
 
@@ -228,7 +224,7 @@ export class RedisSessionStore implements SessionStore {
       parser,
       created_at: serialized.created_at,
       last_accessed: serialized.last_accessed,
-      total_cost: serialized.total_cost
+      total_cost: serialized.total_cost,
     };
   }
 }

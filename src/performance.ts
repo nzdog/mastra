@@ -61,7 +61,7 @@ export class PerformanceMonitor {
   } {
     let relevantMetrics = this.metrics;
     if (endpoint) {
-      relevantMetrics = this.metrics.filter(m => m.endpoint === endpoint);
+      relevantMetrics = this.metrics.filter((m) => m.endpoint === endpoint);
     }
 
     if (relevantMetrics.length === 0) {
@@ -77,14 +77,15 @@ export class PerformanceMonitor {
       };
     }
 
-    const durations = relevantMetrics.map(m => m.duration_ms).sort((a, b) => a - b);
+    const durations = relevantMetrics.map((m) => m.duration_ms).sort((a, b) => a - b);
     const totalCacheHits = relevantMetrics.reduce((sum, m) => sum + m.cache_hits, 0);
     const totalCacheMisses = relevantMetrics.reduce((sum, m) => sum + m.cache_misses, 0);
     const totalCacheRequests = totalCacheHits + totalCacheMisses;
 
     return {
       total_requests: relevantMetrics.length,
-      avg_duration_ms: relevantMetrics.reduce((sum, m) => sum + m.duration_ms, 0) / relevantMetrics.length,
+      avg_duration_ms:
+        relevantMetrics.reduce((sum, m) => sum + m.duration_ms, 0) / relevantMetrics.length,
       cache_hit_rate: totalCacheRequests > 0 ? totalCacheHits / totalCacheRequests : 0,
       total_api_calls: relevantMetrics.reduce((sum, m) => sum + m.api_calls, 0),
       total_cost: relevantMetrics.reduce((sum, m) => sum + m.total_cost, 0),
@@ -145,10 +146,10 @@ export function performanceMiddleware(endpoint: string) {
       performanceMonitor.recordRequest({
         endpoint,
         duration_ms: duration,
-        cache_hits: (res.locals.cache_hits || 0),
-        cache_misses: (res.locals.cache_misses || 0),
-        api_calls: (res.locals.api_calls || 0),
-        total_cost: (res.locals.total_cost || 0),
+        cache_hits: res.locals.cache_hits || 0,
+        cache_misses: res.locals.cache_misses || 0,
+        api_calls: res.locals.api_calls || 0,
+        total_cost: res.locals.total_cost || 0,
         memory_usage_mb: performanceMonitor.getMemoryUsage().heap_used_mb,
       });
     });
