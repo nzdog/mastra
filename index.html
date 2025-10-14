@@ -936,13 +936,47 @@
             font-style: italic;
         }
 
+        .intro-protocol-guidance {
+            font-size: 0.9375rem;
+            color: #78716C;
+            line-height: 1.7;
+            text-align: left;
+            margin-bottom: 3rem;
+            max-width: 700px;
+            padding: 0 1rem;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 960ms ease-out, transform 960ms ease-out;
+            will-change: opacity, transform;
+        }
+
+        .intro-protocol-guidance.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .intro-protocol-guidance p {
+            margin-bottom: 1rem;
+        }
+
+        .intro-protocol-guidance p:last-child {
+            margin-bottom: 0;
+        }
+
         .intro-protocol-deck {
             opacity: 0;
+            transform: translateY(50px);
             display: flex;
             flex-direction: column;
             gap: 2rem;
-            margin-top: 3rem;
             width: 100%;
+            transition: opacity 960ms ease-out, transform 960ms ease-out;
+            will-change: opacity, transform;
+        }
+
+        .intro-protocol-deck.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .intro-protocol-card {
@@ -1136,9 +1170,10 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            padding-top: calc(33% - 70px + 60px);
+            padding-top: calc(33% - 70px + 120px);
             max-width: 900px;
             margin: 0 auto;
+            min-height: 100vh;
         }
 
         .intro-protocol-list-page.visible {
@@ -1204,7 +1239,7 @@
             }
 
             .intro-protocol-list-page {
-                padding-top: calc(28vh - 70px + 60px);
+                padding-top: calc(28vh - 70px + 100px);
             }
 
             /* Protocol cards */
@@ -1234,6 +1269,13 @@
             /* Adjust vertical spacing */
             .intro-continue-container {
                 top: calc(28vh + 180px);
+            }
+
+            /* Protocol guidance */
+            .intro-protocol-guidance {
+                font-size: 0.875rem;
+                margin-bottom: 2rem;
+                padding: 0 0.75rem;
             }
         }
 
@@ -1281,7 +1323,7 @@
             }
 
             .intro-protocol-list-page {
-                padding-top: calc(25vh - 60px + 50px);
+                padding-top: calc(25vh - 60px + 90px);
             }
 
             /* Cards - full width with minimal padding */
@@ -1323,6 +1365,13 @@
 
             .intro-continue-hint {
                 font-size: 0.75rem;
+            }
+
+            /* Protocol guidance */
+            .intro-protocol-guidance {
+                font-size: 0.8125rem;
+                margin-bottom: 1.5rem;
+                padding: 0 0.5rem;
             }
 
             /* Header adjustments */
@@ -1391,6 +1440,12 @@
 
         <!-- Protocol List Page (shown after Continue) -->
         <div class="intro-protocol-list-page" id="intro-protocol-list-page">
+            <!-- Protocol Guidance -->
+            <div class="intro-protocol-guidance" id="intro-protocol-guidance">
+                <p>The Field Exit Protocols are meant to be walked in order, as each one supports the next—from identifying the field you're in, to releasing its residue, closing it with integrity, and learning to hold a new one. Following the full sequence provides the most complete process of change.</p>
+                <p>However, the protocols can also be used individually. You can read the "Use this when…" section and begin with whichever one feels most relevant. What matters is that you engage honestly with the process, in whatever order makes sense for you.</p>
+            </div>
+
             <!-- Sequence List -->
             <div class="intro-sequence-container" id="intro-sequence-container">
                 <ul class="intro-sequence-list">
@@ -1503,6 +1558,7 @@
         const introProtocolListPage = document.getElementById('intro-protocol-list-page');
         const introSequenceContainer = document.getElementById('intro-sequence-container');
         const introProtocolDeck = document.getElementById('intro-protocol-deck');
+        const introProtocolGuidance = document.getElementById('intro-protocol-guidance');
         const introBeginContainer = document.getElementById('intro-begin-container');
         const introBeginBtn = document.getElementById('intro-begin-btn');
         const srAnnouncer = document.getElementById('sr-announcer');
@@ -1763,21 +1819,31 @@
         // Handle Continue button click - show protocol list page
         async function showProtocolListPage() {
             console.log('Showing protocol list page...');
-            
+
             // Fade out the intro content (quote, embodiment lines, orientation, continue button)
             await fadeOut(introContent, 800);
-            
+
             // Hide intro content
             introContent.style.display = 'none';
-            
+
             // Show protocol list page
             introProtocolListPage.classList.add('visible');
-            
+
             // Skip sequence list - don't show it
             // await fadeIn(introSequenceContainer, 1000);
             // announceForScreenReader('Protocol sequence revealed: Field Diagnostic and 5 exit protocols');
 
-            // Load and render protocol cards
+            // Fade in guidance text and protocol cards together
+            if (introProtocolGuidance) {
+                // Force browser to render initial state before transition
+                await new Promise(resolve => requestAnimationFrame(() => {
+                    requestAnimationFrame(resolve);
+                }));
+
+                introProtocolGuidance.classList.add('visible');
+            }
+
+            // Load and render protocol cards (happens during guidance fade)
             await loadAndRenderProtocolCards();
 
             // Fade in begin button
@@ -1835,8 +1901,13 @@
                         renderProtocolCard(protocol);
                     }
 
+                    // Force browser to render initial state before transition
+                    await new Promise(resolve => requestAnimationFrame(() => {
+                        requestAnimationFrame(resolve);
+                    }));
+
                     // Fade in the protocol deck
-                    await fadeIn(introProtocolDeck, 1000);
+                    introProtocolDeck.classList.add('visible');
                     announceForScreenReader('Protocol cards revealed. Use tab to navigate and explore each protocol.');
                 }
             } catch (error) {
