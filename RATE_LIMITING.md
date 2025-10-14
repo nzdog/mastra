@@ -47,6 +47,79 @@ npm install express-rate-limit
   - `GET /api/metrics`
 - **Purpose:** Prevents metrics endpoint abuse
 
+## Trust Proxy Configuration (CRITICAL)
+
+**⚠️ CRITICAL FOR PRODUCTION DEPLOYMENTS**
+
+The server includes `app.set('trust proxy', 1)` which is **essential** for rate limiting to work
+correctly when deployed behind a reverse proxy (Railway, Heroku, Fly, etc.).
+
+### Why This Matters
+
+Without `trust proxy`:
+
+- ❌ All requests appear to come from the proxy's IP address
+- ❌ All users share the same rate limit counters
+- ❌ One heavy user triggers 429 errors for everyone
+- ❌ DoS attackers can rotate IPs and bypass limits entirely
+
+With `trust proxy`:
+
+- ✅ Express uses the client IP from `X-Forwarded-For` header
+- ✅ Each user has their own rate limit counters
+- ✅ Rate limiting works as intended per actual client
+- ✅ DoS protection is effective
+
+### Configuration
+
+**Location:** `src/server.ts:346-348`
+
+```typescript
+// Trust proxy - Critical for rate limiting behind reverse proxies
+app.set('trust proxy', 1);
+```
+
+The value `1` means "trust the first proxy" which is correct for most deployments (Railway, Heroku,
+Fly).
+
+### Advanced Configuration
+
+If your app is behind multiple proxies, adjust the value:
+
+```typescript
+// Trust 2 proxies (e.g., Cloudflare + Railway)
+app.set('trust proxy', 2);
+
+// Trust specific IP ranges
+app.set('trust proxy', ['loopback', 'linklocal']);
+
+// Trust all proxies (NOT recommended for security)
+app.set('trust proxy', true);
+```
+
+### Testing Trust Proxy
+
+When testing locally without a proxy:
+
+- `trust proxy` has no effect (requests already have correct IP)
+- Rate limiting still works correctly
+
+When deployed behind a proxy:
+
+- Check that different IPs get different rate limit counters
+- Verify `req.ip` logs show actual client IPs, not proxy IP
+
+### Common Deployment Scenarios
+
+| Platform             | Proxy Setup    | trust proxy Value |
+| -------------------- | -------------- | ----------------- |
+| Railway              | Built-in proxy | `1`               |
+| Heroku               | Built-in proxy | `1`               |
+| Fly.io               | Built-in proxy | `1`               |
+| Cloudflare + Railway | Two proxies    | `2`               |
+| AWS ELB              | Load balancer  | `1`               |
+| Direct (no proxy)    | None           | `1` (harmless)    |
+
 ## Rate Limit Headers
 
 All rate-limited endpoints return the following headers:

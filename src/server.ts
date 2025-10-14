@@ -343,6 +343,10 @@ function formatResponse(
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy - Critical for rate limiting behind reverse proxies (Railway, Heroku, etc.)
+// Without this, all requests appear to come from the proxy's IP, breaking per-client rate limits
+app.set('trust proxy', 1);
+
 // Temporarily disable static middleware to test logo route
 const fs = require('fs');
 const assetsPath = path.join(__dirname, '../assets');
