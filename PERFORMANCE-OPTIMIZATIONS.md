@@ -1,9 +1,9 @@
 # Performance Optimizations
 
-**Applied:** 2025-10-12
-**Status:** ✅ Complete
+**Applied:** 2025-10-12 **Status:** ✅ Complete
 
-This document details all performance optimizations implemented in the Field Diagnostic Agent codebase.
+This document details all performance optimizations implemented in the Field Diagnostic Agent
+codebase.
 
 ---
 
@@ -26,13 +26,13 @@ This document details all performance optimizations implemented in the Field Dia
 
 ### Optimizations Implemented
 
-| Optimization | Impact | Files Modified |
-|-------------|--------|----------------|
-| Protocol Content Caching | ⚡⚡⚡ High | `src/protocol/parser.ts`, `src/protocol/loader.ts` |
-| ENTRY Response Caching | ⚡⚡⚡ High | `src/agent.ts` |
-| History Compression | ⚡⚡ Medium | `src/agent.ts` |
-| Redis Session Store | ⚡⚡⚡ High (scalability) | `src/session-store.ts`, `src/server.ts` |
-| Performance Monitoring | ⚡ Low (visibility) | `src/performance.ts`, `src/server.ts` |
+| Optimization             | Impact                    | Files Modified                                     |
+| ------------------------ | ------------------------- | -------------------------------------------------- |
+| Protocol Content Caching | ⚡⚡⚡ High               | `src/protocol/parser.ts`, `src/protocol/loader.ts` |
+| ENTRY Response Caching   | ⚡⚡⚡ High               | `src/agent.ts`                                     |
+| History Compression      | ⚡⚡ Medium               | `src/agent.ts`                                     |
+| Redis Session Store      | ⚡⚡⚡ High (scalability) | `src/session-store.ts`, `src/server.ts`            |
+| Performance Monitoring   | ⚡ Low (visibility)       | `src/performance.ts`, `src/server.ts`              |
 
 ### Overall Impact
 
@@ -46,7 +46,9 @@ This document details all performance optimizations implemented in the Field Dia
 ## 1. Protocol Content Caching
 
 ### Problem
+
 Every session creation required:
+
 - File I/O to read protocol markdown files
 - YAML frontmatter parsing
 - Markdown content parsing
@@ -55,11 +57,13 @@ Every session creation required:
 **Cost:** ~10-20ms per session creation
 
 ### Solution
+
 Static in-memory cache for parsed protocols with 5-minute TTL.
 
 ### Implementation
 
 #### `src/protocol/parser.ts`
+
 ```typescript
 export class ProtocolParser {
   private static parsedProtocolCache: Map<string, ParsedProtocol> = new Map();
@@ -83,6 +87,7 @@ export class ProtocolParser {
 ```
 
 #### `src/protocol/loader.ts`
+
 ```typescript
 export class ProtocolLoader {
   private static metadataCache: Map<string, ProtocolMetadata[]> | null = null;
@@ -103,6 +108,7 @@ export class ProtocolLoader {
 ```
 
 ### Results
+
 - **Before:** 10-20ms file I/O per session
 - **After:** <1ms cache lookup per session
 - **Improvement:** 10-20x faster protocol loading
@@ -113,18 +119,23 @@ export class ProtocolLoader {
 ## 2. ENTRY Mode Response Caching
 
 ### Problem
-ENTRY mode responses are identical for all users, but were being regenerated for each session, either:
+
+ENTRY mode responses are identical for all users, but were being regenerated for each session,
+either:
+
 - Building from protocol content (fast but still unnecessary)
 - Calling Claude API (expensive and slow)
 
 **Cost:** ~2-5ms per ENTRY request (or ~$0.008 if AI-generated)
 
 ### Solution
+
 Static cache for ENTRY mode responses per protocol, with 10-minute TTL.
 
 ### Implementation
 
 #### `src/agent.ts`
+
 ```typescript
 export class FieldDiagnosticAgent {
   private static entryResponseCache: Map<string, string> = new Map();
@@ -152,6 +163,7 @@ export class FieldDiagnosticAgent {
 ```
 
 ### Results
+
 - **Before:** 2-5ms to build ENTRY response per user
 - **After:** <1ms cache lookup
 - **Improvement:** 5-10x faster ENTRY responses
@@ -162,7 +174,9 @@ export class FieldDiagnosticAgent {
 ## 3. Conversation History Compression
 
 ### Problem
+
 Conversation history grows with each message exchange:
+
 - Full history sent to Claude API for classification
 - Full history sent for response generation
 - Token usage increases linearly with conversation length
@@ -170,7 +184,9 @@ Conversation history grows with each message exchange:
 **Cost:** ~100-200 tokens per extra message pair (~$0.001-0.002)
 
 ### Solution
+
 Compress history after 12 turns (6 exchanges):
+
 - Keep last 12 turns (recent context)
 - Summarize older turns into brief summary
 - Preserve theme progress and answer count
@@ -178,6 +194,7 @@ Compress history after 12 turns (6 exchanges):
 ### Implementation
 
 #### `src/agent.ts`
+
 ```typescript
 async processMessage(userMessage: string): Promise<string> {
   this.conversationHistory.push({
@@ -212,6 +229,7 @@ private compressConversationHistory(history: ConversationTurn[]): ConversationTu
 ```
 
 ### Results
+
 - **Before:** Full history sent to API (grows unbounded)
 - **After:** Fixed at ~13 turns maximum
 - **Token Savings:** 30-50% reduction in long conversations
@@ -222,19 +240,24 @@ private compressConversationHistory(history: ConversationTurn[]): ConversationTu
 ## 4. Redis Session Store
 
 ### Problem
+
 In-memory session storage has limitations:
+
 - Sessions lost on server restart
 - Cannot horizontally scale (shared state)
 - No persistence for debugging/analytics
 
 ### Solution
+
 Abstract session store with two implementations:
+
 1. **InMemorySessionStore** (default, fast, ephemeral)
 2. **RedisSessionStore** (optional, persistent, scalable)
 
 ### Implementation
 
 #### `src/session-store.ts`
+
 ```typescript
 export interface SessionStore {
   get(sessionId: string): Promise<Session | null>;
@@ -245,7 +268,10 @@ export interface SessionStore {
 }
 
 export class RedisSessionStore implements SessionStore {
-  constructor(private redis: Redis, private apiKey: string) {}
+  constructor(
+    private redis: Redis,
+    private apiKey: string
+  ) {}
 
   async get(sessionId: string): Promise<Session | null> {
     const data = await this.redis.get('session:' + sessionId);
@@ -259,7 +285,7 @@ export class RedisSessionStore implements SessionStore {
     const serialized = this.serializeSession(session);
     await this.redis.setex(
       'session:' + sessionId,
-      3600,  // 1 hour TTL
+      3600, // 1 hour TTL
       JSON.stringify(serialized)
     );
   }
@@ -267,6 +293,7 @@ export class RedisSessionStore implements SessionStore {
 ```
 
 #### `src/server.ts`
+
 ```typescript
 // Auto-detect and configure session store
 let sessionStore: SessionStore;
@@ -280,6 +307,7 @@ if (process.env.REDIS_URL) {
 ```
 
 ### Results
+
 - **Performance:** Similar to in-memory (<1ms difference)
 - **Persistence:** Sessions survive server restarts
 - **Scalability:** Multiple server instances share state
@@ -305,18 +333,22 @@ REDIS_URL=redis://:password@hostname:6379
 ## 5. Performance Monitoring
 
 ### Problem
+
 No visibility into:
+
 - Actual cache hit rates
 - Response time percentiles
 - Memory usage trends
 - API cost tracking per endpoint
 
 ### Solution
+
 Comprehensive performance monitoring system with metrics collection and reporting.
 
 ### Implementation
 
 #### `src/performance.ts`
+
 ```typescript
 export class PerformanceMonitor {
   private metrics: PerformanceMetrics[] = [];
@@ -341,8 +373,12 @@ export class PerformanceMonitor {
 }
 
 export class CacheStats {
-  static recordHit(): void { this.hits++; }
-  static recordMiss(): void { this.misses++; }
+  static recordHit(): void {
+    this.hits++;
+  }
+  static recordMiss(): void {
+    this.misses++;
+  }
 
   static getStats() {
     return {
@@ -355,6 +391,7 @@ export class CacheStats {
 ```
 
 #### `src/server.ts`
+
 New endpoint: `GET /api/metrics`
 
 ```json
@@ -377,13 +414,14 @@ New endpoint: `GET /api/metrics`
   "memory": {
     "rss_mb": 156.23,
     "heap_used_mb": 98.45,
-    "heap_total_mb": 128.00,
+    "heap_total_mb": 128.0,
     "external_mb": 12.34
   }
 }
 ```
 
 ### Results
+
 - **Visibility:** Real-time performance metrics
 - **Debugging:** Identify performance bottlenecks
 - **Monitoring:** Track cache hit rates
@@ -396,6 +434,7 @@ New endpoint: `GET /api/metrics`
 ### Before Optimizations
 
 **Per Session (5 themes completed):**
+
 - Protocol loading: 10-20ms
 - ENTRY mode: 2-5ms
 - Classifier calls: 10 × $0.0082 = $0.082
@@ -406,6 +445,7 @@ New endpoint: `GET /api/metrics`
 ### After Optimizations
 
 **Per Session (5 themes completed):**
+
 - Protocol loading: <1ms (cached)
 - ENTRY mode: <1ms (cached)
 - Classifier calls: 10 × $0.0082 = $0.082 (unchanged)
@@ -416,11 +456,13 @@ New endpoint: `GET /api/metrics`
 ### Scalability Improvements
 
 **Before:**
+
 - Single server instance (in-memory sessions)
 - ~1000 concurrent users per instance
 - Sessions lost on deployment
 
 **After:**
+
 - Horizontal scaling with Redis
 - Unlimited concurrent users (distributed)
 - Sessions persistent across deployments
@@ -442,7 +484,7 @@ curl http://localhost:3000/health
   "session_store": "redis",
   "memory_usage": {
     "heap_used_mb": 98.45,
-    "heap_total_mb": 128.00
+    "heap_total_mb": 128.0
   },
   "timestamp": "2025-10-12T10:30:00.000Z"
 }
@@ -476,7 +518,7 @@ curl http://localhost:3000/api/metrics
   "memory": {
     "rss_mb": 156.23,
     "heap_used_mb": 98.45,
-    "heap_total_mb": 128.00,
+    "heap_total_mb": 128.0,
     "external_mb": 12.34
   },
   "timestamp": "2025-10-12T10:30:00.000Z"
@@ -516,16 +558,16 @@ Default values (can be modified in source):
 
 ```typescript
 // Protocol parsing cache
-CACHE_TTL_MS = 5 * 60 * 1000;  // 5 minutes
+CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
 // ENTRY response cache
-CACHE_TTL_MS = 10 * 60 * 1000;  // 10 minutes
+CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
 // Redis session TTL
-SESSION_TTL_SECONDS = 60 * 60;  // 1 hour
+SESSION_TTL_SECONDS = 60 * 60; // 1 hour
 
 // Conversation history compression threshold
-HISTORY_COMPRESSION_THRESHOLD = 12;  // turns
+HISTORY_COMPRESSION_THRESHOLD = 12; // turns
 ```
 
 ---
@@ -634,19 +676,20 @@ npm run server | grep "CACHE HIT"
 ### Test Scenario: 100 Sessions
 
 **Setup:**
+
 - 100 concurrent users
 - Each completes full protocol (5 themes)
 - Measured: total time, API costs, cache hits
 
 **Results:**
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Total Time | 425s | 215s | **49% faster** |
-| Total Cost | $13.00 | $5.20 | **60% savings** |
-| Avg Response Time | 2.5s | 1.3s | **48% faster** |
-| Cache Hit Rate | 0% | 87% | **87% cached** |
-| Memory Usage | 180 MB | 125 MB | **31% less** |
+| Metric            | Before | After  | Improvement     |
+| ----------------- | ------ | ------ | --------------- |
+| Total Time        | 425s   | 215s   | **49% faster**  |
+| Total Cost        | $13.00 | $5.20  | **60% savings** |
+| Avg Response Time | 2.5s   | 1.3s   | **48% faster**  |
+| Cache Hit Rate    | 0%     | 87%    | **87% cached**  |
+| Memory Usage      | 180 MB | 125 MB | **31% less**    |
 
 ---
 
@@ -655,10 +698,12 @@ npm run server | grep "CACHE HIT"
 ### Cache Not Working
 
 **Symptoms:**
+
 - Always seeing "CACHE MISS" logs
 - No improvement in response times
 
 **Solutions:**
+
 1. Check cache TTL hasn't expired
 2. Verify protocol paths are consistent
 3. Restart server to clear stale cache
@@ -666,12 +711,14 @@ npm run server | grep "CACHE HIT"
 ### Redis Connection Errors
 
 **Symptoms:**
+
 ```
 ❌ Redis connection error: ECONNREFUSED
 ⚠️  Falling back to in-memory session store
 ```
 
 **Solutions:**
+
 1. Ensure Redis is running: `redis-cli ping` (should return `PONG`)
 2. Check `REDIS_URL` environment variable
 3. Verify network connectivity
@@ -680,10 +727,12 @@ npm run server | grep "CACHE HIT"
 ### High Memory Usage
 
 **Symptoms:**
+
 - Memory usage growing over time
 - `heap_used_mb` consistently high
 
 **Solutions:**
+
 1. Check session cleanup is running (every 10 minutes)
 2. Reduce cache TTL values
 3. Implement Redis sessions for off-heap storage
@@ -695,11 +744,9 @@ npm run server | grep "CACHE HIT"
 
 ### Key Achievements
 
-✅ **60% cost reduction** through caching and compression
-✅ **50% latency reduction** through protocol and response caching
-✅ **87% cache hit rate** in production
-✅ **Horizontal scaling** enabled with Redis sessions
-✅ **Full observability** with performance metrics
+✅ **60% cost reduction** through caching and compression ✅ **50% latency reduction** through
+protocol and response caching ✅ **87% cache hit rate** in production ✅ **Horizontal scaling**
+enabled with Redis sessions ✅ **Full observability** with performance metrics
 
 ### Files Modified
 

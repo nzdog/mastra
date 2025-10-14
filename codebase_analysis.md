@@ -1,13 +1,14 @@
 # Comprehensive Codebase Analysis
+
 ## Field Diagnostic Agent - Lichen Protocol System
 
-**Generated:** 2025-10-12
-**Repository:** mastra-lichen-agent
-**Current Branch:** ui-improvements-and-fixes
+**Generated:** 2025-10-12 **Repository:** mastra-lichen-agent **Current Branch:**
+ui-improvements-and-fixes
 
 ---
 
 ## Table of Contents
+
 1. [Project Overview](#1-project-overview)
 2. [Detailed Directory Structure](#2-detailed-directory-structure)
 3. [File-by-File Breakdown](#3-file-by-file-breakdown)
@@ -23,9 +24,13 @@
 ## 1. Project Overview
 
 ### Project Type
-**Conversational AI Agent with REST API** - A TypeScript-based intelligent assistant that guides users through the Field Diagnostic Protocol, a structured self-reflection framework from the Lichen Protocol system.
+
+**Conversational AI Agent with REST API** - A TypeScript-based intelligent assistant that guides
+users through the Field Diagnostic Protocol, a structured self-reflection framework from the Lichen
+Protocol system.
 
 ### Tech Stack Summary
+
 - **Runtime:** Node.js with TypeScript (ES2022, CommonJS)
 - **AI/LLM:** Anthropic Claude API (@anthropic-ai/sdk)
 - **Framework:** Mastra Core (@mastra/core v0.19.1)
@@ -34,6 +39,7 @@
 - **Development:** tsx for direct TypeScript execution
 
 ### Architecture Pattern
+
 **Event-Driven Conversational Agent** with three distinct operating modes:
 
 1. **ENTRY Mode** - Protocol orientation and introduction
@@ -41,13 +47,16 @@
 3. **CLOSE Mode** - Field diagnosis and synthesis
 
 The architecture follows a **Retrieval-Augmented Generation (RAG)** pattern with:
+
 - Intent classification
 - Protocol content retrieval
 - AI-powered response composition
 - State management and session tracking
 
 ### Primary Use Case
-Helps users identify and understand the invisible "fields" (systemic pressures, norms, incentives) shaping their behavior, decisions, and emotional experiences through structured guided conversation.
+
+Helps users identify and understand the invisible "fields" (systemic pressures, norms, incentives)
+shaping their behavior, decisions, and emotional experiences through structured guided conversation.
 
 ---
 
@@ -119,21 +128,27 @@ mastra-lichen-agent/
 ### Purpose of Each Major Directory
 
 #### `/src` - Core Application
+
 Contains all TypeScript source code organized by functional domain:
+
 - **Composer:** AI response generation and prompt management
 - **Protocol:** Protocol parsing, validation, and content retrieval
 - **Tools:** Retrieval mechanisms and utilities
 - Root-level files handle orchestration, state, and API serving
 
 #### `/protocols` - Protocol Definitions
+
 Markdown files with YAML frontmatter defining:
+
 - Protocol metadata (id, title, version)
 - Entry sections (purpose, use cases, outcomes)
 - Theme structures (questions, prompts, completion criteria)
 - Summary instructions for AI synthesis
 
 #### `/test` - Test Suite
+
 Automated test scenarios covering:
+
 - Greeting handling
 - ENTRY mode activation
 - WALK mode progression
@@ -141,7 +156,9 @@ Automated test scenarios covering:
 - Full protocol completion
 
 #### `/.claude` - Development Tools
+
 Claude Code CLI customizations:
+
 - Custom agents for git workflows
 - Slash commands for codebase analysis
 - Local configuration settings
@@ -153,9 +170,11 @@ Claude Code CLI customizations:
 ### Core Application Files
 
 #### `src/agent.ts` (581 lines)
+
 **Purpose:** Main orchestrator coordinating all agent behaviors
 
 **Key Responsibilities:**
+
 - Session state management (mode, theme, conversation history)
 - Message processing pipeline (classify → retrieve → compose → update)
 - Theme answer tracking and progression logic
@@ -164,6 +183,7 @@ Claude Code CLI customizations:
 - Optimization: Skips AI calls for static content (ENTRY mode, theme questions)
 
 **Critical Methods:**
+
 - `processMessage()` - Main entry point for user input
 - `determineMode()` - Decides current operational mode
 - `getThemeIndexForResponse()` - Calculates which theme to show
@@ -171,6 +191,7 @@ Claude Code CLI customizations:
 - `buildStaticResponse()` - Constructs responses without AI calls (optimization)
 
 **State Machine:**
+
 ```
 null → ENTRY → WALK (Theme 1-5) → CLOSE
          ↑         ↓
@@ -178,9 +199,11 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 ```
 
 #### `src/server.ts` (524 lines)
+
 **Purpose:** Express API server wrapping the agent for web access
 
 **Key Features:**
+
 - RESTful API with CORS enabled
 - In-memory session storage (1-hour TTL, auto-cleanup every 10 min)
 - Multi-protocol support via slug parameter
@@ -188,6 +211,7 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 - Static file serving for frontend
 
 **Endpoints:**
+
 - `POST /api/walk/start` - Initialize new protocol session
 - `POST /api/walk/continue` - Continue existing session
 - `POST /api/walk/complete` - Finish protocol with summary
@@ -198,26 +222,31 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 - `GET /test` - Serve test interface
 
 **Helper Functions:**
+
 - `extractSupports()` - Pulls relevant protocol excerpts for frontend display
 - `formatResponse()` - Structures API responses consistently
 - `createSession()` - Initializes new agent with protocol
 
 #### `src/classifier.ts` (149 lines)
+
 **Purpose:** AI-powered intent detection
 
 **Classification Intents:**
+
 - `discover` - User wants orientation/clarification
 - `walk` - User wants to start/continue structured walk
 - `memory` - User is continuing from context
 - `none` - Greeting/off-topic
 
 **User Intent Signals:**
+
 - `advance_to_next_theme` - Ready to move forward
 - `request_elaboration` - Needs more explanation
 - `add_more_reflection` - Adding to current theme
 - `navigate_to_theme` - Jumping to specific theme
 
 **Fallback Rules:**
+
 - Confidence < 0.55 → default to ENTRY mode
 - Intent=walk but no active protocol → ENTRY mode
 - Intent=memory but no prior state → ENTRY mode
@@ -225,9 +254,11 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 **References:** src/classifier.ts:23-51
 
 #### `src/types.ts` (58 lines)
+
 **Purpose:** Shared TypeScript type definitions
 
 **Core Types:**
+
 - `Mode` - Operating mode ('ENTRY' | 'WALK' | 'CLOSE')
 - `SessionState` - Complete session state structure
 - `ClassificationResult` - Intent classification output
@@ -238,9 +269,11 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 **References:** src/types.ts:1-58
 
 #### `src/composer/index.ts` (223 lines)
+
 **Purpose:** Orchestrates AI response generation
 
 **Key Features:**
+
 - Mode-specific system prompts (ENTRY_PROMPT, WALK_PROMPT, CLOSE_PROMPT)
 - Protocol metadata injection (total themes, protocol title)
 - Message context building (history + protocol content)
@@ -248,6 +281,7 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 - Retry logic with strengthened constraints
 
 **Context Injection:**
+
 - ENTRY: Protocol content
 - WALK: Current theme + previous answers + state info
 - CLOSE: All theme answers for synthesis
@@ -257,27 +291,33 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 **References:** src/composer/index.ts:19-127
 
 #### `src/composer/client.ts`
+
 **Purpose:** Claude API client wrapper
 
 **Key Methods:**
+
 - `sendMessage()` - Send message to Claude with system prompt
 - `getStructuredResponse<T>()` - Get typed JSON response from Claude
 
 **Configuration:**
+
 - Model: claude-3-5-sonnet-20241022
 - Max tokens: Configurable (default varies by call)
 - Temperature: 1.0 (creative responses)
 
 #### `src/composer/prompts.ts`
+
 **Purpose:** System prompts defining agent behavior for each mode
 
 **Prompts:**
+
 1. **ENTRY_PROMPT** - Introduces protocol with warmth and invitation
 2. **WALK_PROMPT** - Guides through themes with structured reflection
 3. **CLOSE_PROMPT** - Synthesizes field diagnosis from user answers
 4. **CLASSIFIER_PROMPT** - Classifies user intent with structured JSON output
 
 **Design Principles (Stone-aligned):**
+
 - Clarity over cleverness
 - Presence is productivity
 - Integrity is the growth strategy
@@ -285,9 +325,11 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 ### Protocol System Files
 
 #### `src/protocol/parser.ts` (287 lines)
+
 **Purpose:** Parses markdown protocol files into structured data
 
 **Key Methods:**
+
 - `parse()` - Main parsing entry point
 - `extractEntrySections()` - Extracts ENTRY mode sections
 - `extractThemeChunks()` - Extracts WALK mode themes
@@ -295,6 +337,7 @@ null → ENTRY → WALK (Theme 1-5) → CLOSE
 - `parseThemeContent()` - Structures theme data
 
 **Protocol Structure:**
+
 ```
 YAML frontmatter (metadata)
 ---
@@ -309,27 +352,33 @@ YAML frontmatter (metadata)
 **References:** src/protocol/parser.ts:16-276
 
 #### `src/protocol/loader.ts`
+
 **Purpose:** Multi-protocol discovery and loading
 
 **Key Features:**
+
 - Scans `protocols/` directory for .md files
 - Extracts metadata from YAML frontmatter
 - Returns list of available protocols
 - Provides path resolution for protocol slugs
 
 #### `src/protocol/types.ts`
+
 **Purpose:** Protocol-specific type definitions
 
 **Key Types:**
+
 - `ProtocolMetadata` - Protocol identification and structure
 - `ParsedProtocol` - Complete parsed protocol structure
 - `EntrySection` - ENTRY mode content section
 - `ThemeContent` - Structured theme data
 
 #### `src/tools/registry.ts` (86 lines)
+
 **Purpose:** Protocol content retrieval system
 
 **Key Methods:**
+
 - `retrieve(mode, themeIndex)` - Returns appropriate chunk for mode
 - `getTotalThemes()` - Returns theme count
 - `getThemeTitle(index)` - Returns theme name
@@ -343,11 +392,13 @@ YAML frontmatter (metadata)
 ### Support Files
 
 #### `src/validator.ts`
+
 **Purpose:** Validates AI responses match protocol structure
 
 **Status:** Currently disabled (VALIDATION_DISABLED = true)
 
 **Validation Checks:**
+
 - Theme title matches protocol
 - Guiding questions match protocol
 - Required sections present
@@ -356,9 +407,11 @@ YAML frontmatter (metadata)
 **Fallback:** Deterministic protocol content if validation fails twice
 
 #### `src/index.ts`
+
 **Purpose:** CLI interface for local testing
 
 **Features:**
+
 - Interactive readline-based chat
 - Commands: exit, quit, reset, state, help
 - Color-coded output
@@ -367,7 +420,9 @@ YAML frontmatter (metadata)
 ### Configuration Files
 
 #### `package.json`
+
 **Scripts:**
+
 - `dev` - Run CLI with tsx
 - `server` - Run API server
 - `build` - Compile TypeScript
@@ -375,17 +430,21 @@ YAML frontmatter (metadata)
 - `test` - Run test scenarios
 
 **Dependencies:**
+
 - **AI/LLM:** @anthropic-ai/sdk (^0.65.0), @mastra/core (^0.19.1)
 - **Server:** express (^5.1.0), cors (^2.8.5)
 - **Parsing:** gray-matter (^4.0.3), glob (^11.0.3)
 - **Environment:** dotenv (^17.2.3)
 
 **Dev Dependencies:**
+
 - **TypeScript:** typescript (^5.9.3), @types/node (^24.6.2)
 - **Runtime:** tsx (^4.20.6) for direct TS execution
 
 #### `tsconfig.json`
+
 **Configuration:**
+
 - Target: ES2022
 - Module: CommonJS
 - Strict mode enabled
@@ -395,7 +454,9 @@ YAML frontmatter (metadata)
 ### Test Files
 
 #### `test/scenarios.ts` (127 lines)
+
 **Test Scenarios:**
+
 1. **Greeting Test** - Validates greeting handling without protocol activation
 2. **ENTRY Test** - Tests protocol introduction
 3. **WALK Transition** - Tests ENTRY → WALK transition
@@ -403,6 +464,7 @@ YAML frontmatter (metadata)
 5. **Full Walk Test** - Complete protocol walkthrough (5 themes → CLOSE)
 
 **Usage:**
+
 ```bash
 npm run test
 ```
@@ -410,7 +472,9 @@ npm run test
 ### Documentation Files
 
 #### `README.md`
+
 Main project documentation covering:
+
 - Architecture overview (ENTRY/WALK/CLOSE modes)
 - Installation and setup
 - Usage instructions (CLI and API)
@@ -419,7 +483,9 @@ Main project documentation covering:
 - State management
 
 #### `API.md`
+
 Complete API reference:
+
 - Endpoint specifications
 - Request/response schemas
 - Example flow with JavaScript
@@ -427,7 +493,9 @@ Complete API reference:
 - Session management details
 
 #### `INTEGRATION.md`
+
 Frontend integration guide:
+
 - Quick start instructions
 - API response parsing
 - Session state management
@@ -435,7 +503,9 @@ Frontend integration guide:
 - Production checklist
 
 #### `DEPLOYMENT.md`
+
 Deployment instructions:
+
 - Split architecture (Netlify frontend + Railway backend)
 - Environment variable setup
 - Railway deployment steps
@@ -447,37 +517,41 @@ Deployment instructions:
 ## 4. API Endpoints Analysis
 
 ### Base URL
+
 - **Development:** `http://localhost:3000`
 - **Production:** Configured via `PORT` environment variable (Railway sets automatically)
 
 ### Endpoints Overview
 
-| Method | Endpoint | Purpose | Auth Required |
-|--------|----------|---------|---------------|
-| POST | `/api/walk/start` | Start new protocol session | No (MVP) |
-| POST | `/api/walk/continue` | Continue existing session | No (MVP) |
-| POST | `/api/walk/complete` | Complete protocol with summary | No (MVP) |
-| GET | `/api/protocols` | List available protocols | No |
-| GET | `/api/session/:id` | Get session state (debug) | No |
-| GET | `/health` | Health check | No |
-| GET | `/` | Serve production frontend | No |
-| GET | `/test` | Serve test interface | No |
-| GET | `/lichen-logo.png` | Serve logo image | No |
+| Method | Endpoint             | Purpose                        | Auth Required |
+| ------ | -------------------- | ------------------------------ | ------------- |
+| POST   | `/api/walk/start`    | Start new protocol session     | No (MVP)      |
+| POST   | `/api/walk/continue` | Continue existing session      | No (MVP)      |
+| POST   | `/api/walk/complete` | Complete protocol with summary | No (MVP)      |
+| GET    | `/api/protocols`     | List available protocols       | No            |
+| GET    | `/api/session/:id`   | Get session state (debug)      | No            |
+| GET    | `/health`            | Health check                   | No            |
+| GET    | `/`                  | Serve production frontend      | No            |
+| GET    | `/test`              | Serve test interface           | No            |
+| GET    | `/lichen-logo.png`   | Serve logo image               | No            |
 
 ### Detailed Endpoint Analysis
 
 #### POST `/api/walk/start`
+
 **Purpose:** Initialize a new protocol session
 
 **Request Body:**
+
 ```json
 {
   "user_input": "What field am I in?",
-  "protocol_slug": "field_diagnostic"  // optional, defaults to field_diagnostic
+  "protocol_slug": "field_diagnostic" // optional, defaults to field_diagnostic
 }
 ```
 
 **Response:**
+
 ```json
 {
   "session_id": "uuid-here",
@@ -506,6 +580,7 @@ Deployment instructions:
 ```
 
 **Server-side Flow:**
+
 1. Validate request body
 2. Create new session with protocol parser & registry
 3. Initialize FieldDiagnosticAgent
@@ -516,9 +591,11 @@ Deployment instructions:
 **References:** src/server.ts:323-354
 
 #### POST `/api/walk/continue`
+
 **Purpose:** Continue an existing protocol session
 
 **Request Body:**
+
 ```json
 {
   "session_id": "uuid-here",
@@ -529,6 +606,7 @@ Deployment instructions:
 **Response:** Same structure as `/api/walk/start`
 
 **Server-side Flow:**
+
 1. Validate session_id and user_response
 2. Retrieve session (returns 404 if expired)
 3. Process message through agent
@@ -536,6 +614,7 @@ Deployment instructions:
 5. Format and return response
 
 **Mode Transitions:**
+
 - ENTRY → WALK when user accepts invitation
 - WALK (Theme N) → WALK (Theme N+1) when user completes theme
 - WALK (Theme 5) → CLOSE when final theme completed
@@ -543,17 +622,20 @@ Deployment instructions:
 **References:** src/server.ts:357-396
 
 #### POST `/api/walk/complete`
+
 **Purpose:** Complete protocol and optionally generate field diagnosis summary
 
 **Request Body:**
+
 ```json
 {
   "session_id": "uuid-here",
-  "generate_summary": true  // optional, triggers CLOSE mode
+  "generate_summary": true // optional, triggers CLOSE mode
 }
 ```
 
 **Response (with summary):**
+
 ```json
 {
   "session_id": "uuid-here",
@@ -575,6 +657,7 @@ Deployment instructions:
 ```
 
 **Response (without summary):**
+
 ```json
 {
   "completed": true
@@ -582,6 +665,7 @@ Deployment instructions:
 ```
 
 **Server-side Flow:**
+
 1. Validate session_id
 2. Retrieve session
 3. If `generate_summary: true`:
@@ -594,9 +678,11 @@ Deployment instructions:
 **References:** src/server.ts:399-479
 
 #### GET `/api/protocols`
+
 **Purpose:** List all available protocols
 
 **Response:**
+
 ```json
 {
   "protocols": [
@@ -615,6 +701,7 @@ Deployment instructions:
 ```
 
 **Server-side Flow:**
+
 1. Initialize ProtocolLoader
 2. Scan protocols directory
 3. Extract metadata from each .md file
@@ -623,9 +710,11 @@ Deployment instructions:
 **References:** src/server.ts:296-320
 
 #### GET `/api/session/:id`
+
 **Purpose:** Debug endpoint to inspect session state
 
 **Response:**
+
 ```json
 {
   "session_id": "uuid-here",
@@ -644,9 +733,11 @@ Deployment instructions:
 **References:** src/server.ts:482-500
 
 #### GET `/health`
+
 **Purpose:** Health check for monitoring
 
 **Response:**
+
 ```json
 {
   "status": "ok",
@@ -666,6 +757,7 @@ Deployment instructions:
 **Cleanup:** Automatic every 10 minutes via setInterval
 
 **Session Structure:**
+
 ```typescript
 interface Session {
   id: string;
@@ -679,6 +771,7 @@ interface Session {
 ```
 
 **Production Considerations:**
+
 - Current implementation is ephemeral (suitable for MVP)
 - For production, consider Redis or database for persistence
 - Add authentication (JWT or session cookies)
@@ -690,6 +783,7 @@ interface Session {
 ### Error Handling
 
 **Standard Error Response:**
+
 ```json
 {
   "error": "Error type",
@@ -698,6 +792,7 @@ interface Session {
 ```
 
 **Common Status Codes:**
+
 - `400` - Bad request (missing required fields)
 - `404` - Session not found or expired
 - `500` - Internal server error
@@ -710,7 +805,8 @@ interface Session {
 
 ### System Architecture
 
-The Field Diagnostic Agent implements a **sophisticated conversational RAG (Retrieval-Augmented Generation)** architecture with state management and multi-mode operation.
+The Field Diagnostic Agent implements a **sophisticated conversational RAG (Retrieval-Augmented
+Generation)** architecture with state management and multi-mode operation.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -747,17 +843,20 @@ The Field Diagnostic Agent implements a **sophisticated conversational RAG (Retr
 ### Request Lifecycle
 
 #### 1. User Message Receipt
+
 ```
 User → API Server → Session Retrieval → Agent.processMessage()
 ```
 
 #### 2. Intent Classification
+
 ```
 ConversationHistory + State → IntentClassifier → ClassificationResult
                               (Claude API call)
 ```
 
 **Classification Output:**
+
 ```typescript
 {
   intent: 'discover' | 'walk' | 'memory' | 'none',
@@ -777,11 +876,13 @@ ConversationHistory + State → IntentClassifier → ClassificationResult
 **References:** src/agent.ts:69-77
 
 #### 3. Mode Determination
+
 ```
 ClassificationResult + CurrentState → determineMode() → Mode
 ```
 
 **Mode Logic:**
+
 - Already CLOSE → stay CLOSE
 - Theme 5 complete + user confirms → CLOSE
 - Intent=discover & no protocol → ENTRY
@@ -794,11 +895,13 @@ ClassificationResult + CurrentState → determineMode() → Mode
 **References:** src/agent.ts:343-395
 
 #### 4. Protocol Content Retrieval
+
 ```
 Mode + ThemeIndex → ProtocolRegistry.retrieve() → ProtocolChunk
 ```
 
 **Retrieval Rules:**
+
 - **ENTRY Mode:** Returns JSON-encoded entry sections
 - **WALK Mode:** Returns specific theme markdown content
 - **CLOSE Mode:** Returns null (no chunk needed)
@@ -810,6 +913,7 @@ Mode + ThemeIndex → ProtocolRegistry.retrieve() → ProtocolChunk
 #### 5. Response Composition
 
 **Path A: Static Response (Optimization)**
+
 ```
 ENTRY mode OR (WALK mode + showing questions)
 → buildStaticResponse()
@@ -819,6 +923,7 @@ ENTRY mode OR (WALK mode + showing questions)
 ```
 
 **Path B: AI-Generated Response**
+
 ```
 WALK mode (showing interpretation) OR CLOSE mode
 → Composer.compose()
@@ -828,6 +933,7 @@ WALK mode (showing interpretation) OR CLOSE mode
 ```
 
 **Context Injection:**
+
 - **ENTRY:** Protocol content
 - **WALK:** Theme content + previous answers + state
 - **CLOSE:** All theme answers for synthesis
@@ -835,6 +941,7 @@ WALK mode (showing interpretation) OR CLOSE mode
 **References:** src/agent.ts:149-184
 
 #### 6. State Update
+
 ```
 Mode + Classification + ThemeIndex → updateState()
 → Update mode, theme_index, turn_counter, timestamps
@@ -846,6 +953,7 @@ Mode + Classification + ThemeIndex → updateState()
 **References:** src/agent.ts:400-466
 
 #### 7. Response Return
+
 ```
 AgentResponse → formatResponse() → API JSON Response → Client
 ```
@@ -1006,7 +1114,9 @@ USER MESSAGE
 ### Design Patterns
 
 #### 1. Strategy Pattern
+
 **Composer** uses different strategies based on mode:
+
 - ENTRY_PROMPT strategy
 - WALK_PROMPT strategy
 - CLOSE_PROMPT strategy
@@ -1014,13 +1124,17 @@ USER MESSAGE
 Each prompt defines a distinct behavior strategy for the AI.
 
 #### 2. State Pattern
+
 **Agent** maintains session state and changes behavior based on:
+
 - Current mode (ENTRY/WALK/CLOSE)
 - Current theme index
 - Last response type (questions/interpretation)
 
 #### 3. Template Method Pattern
+
 **Parser** defines protocol parsing template:
+
 1. Parse YAML frontmatter
 2. Extract entry sections
 3. Extract theme chunks
@@ -1029,13 +1143,17 @@ Each prompt defines a distinct behavior strategy for the AI.
 Subclasses could customize extraction methods.
 
 #### 4. Registry Pattern
+
 **ProtocolRegistry** acts as central registry for protocol content:
+
 - Single point of access
 - Encapsulates retrieval logic
 - Manages protocol metadata
 
 #### 5. Facade Pattern
+
 **FieldDiagnosticAgent** provides simplified interface to complex subsystem:
+
 - Hides complexity of classifier, registry, composer
 - Provides single `processMessage()` method
 - Manages internal coordination
@@ -1043,9 +1161,11 @@ Subclasses could customize extraction methods.
 ### Performance Optimizations
 
 #### Static Response Optimization
+
 **Problem:** Every response required AI call (~$0.0080)
 
 **Solution:** Skip AI calls for deterministic content
+
 - ENTRY mode: Return JSON-structured protocol intro
 - WALK mode (questions): Return formatted theme questions
 
@@ -1054,6 +1174,7 @@ Subclasses could customize extraction methods.
 **References:** src/agent.ts:150-156, src/agent.ts:471-534
 
 #### Conversation History Pruning
+
 **Implementation:** Keep only last 6 conversation turns
 
 **Impact:** Reduces token usage in classifier/composer calls
@@ -1061,6 +1182,7 @@ Subclasses could customize extraction methods.
 **References:** src/classifier.ts:61, src/composer/index.ts:168
 
 #### Session TTL and Cleanup
+
 **Implementation:** 1-hour TTL with 10-minute cleanup cycle
 
 **Impact:** Prevents memory leaks from abandoned sessions
@@ -1070,6 +1192,7 @@ Subclasses could customize extraction methods.
 ### Extensibility Points
 
 #### Adding New Protocols
+
 1. Create markdown file in `protocols/` directory
 2. Follow template with YAML frontmatter
 3. Define themes with questions/prompts
@@ -1079,6 +1202,7 @@ Subclasses could customize extraction methods.
 **No code changes required**
 
 #### Adding New Modes
+
 1. Define new mode in `types.ts`
 2. Create system prompt in `prompts.ts`
 3. Add mode handling in `agent.ts` `determineMode()`
@@ -1086,15 +1210,18 @@ Subclasses could customize extraction methods.
 5. Add composition logic in `composer/index.ts`
 
 #### Adding New Intents
+
 1. Update Intent type in `types.ts`
 2. Update CLASSIFIER_PROMPT with new intent
 3. Add fallback rules in `classifier.ts`
 4. Add mode determination logic in `agent.ts`
 
 #### Adding Persistence
+
 **Current:** In-memory session storage
 
 **Extension Points:**
+
 1. Create SessionStore interface
 2. Implement Redis/Database adapter
 3. Replace Map in `server.ts` with adapter
@@ -1142,6 +1269,7 @@ npm run server   # API server (port 3000)
 ### Development Workflow
 
 #### Local Development
+
 ```bash
 # Terminal 1: Run API server
 npm run server
@@ -1156,6 +1284,7 @@ open http://localhost:3000/test
 ```
 
 #### Testing
+
 ```bash
 # Run test scenarios
 npm run test
@@ -1165,6 +1294,7 @@ npm run dev
 ```
 
 #### Building for Production
+
 ```bash
 # Compile TypeScript
 npm run build
@@ -1176,10 +1306,12 @@ npm start
 ### Production Deployment
 
 #### Split Architecture
+
 - **Frontend:** Netlify (static hosting)
 - **Backend:** Railway (Node.js server)
 
 #### Railway Setup
+
 1. Connect GitHub repository
 2. Railway auto-detects Node.js
 3. Set environment variables:
@@ -1189,6 +1321,7 @@ npm start
 5. Deploy automatically on push
 
 #### Netlify Setup
+
 1. Connect GitHub repository
 2. Build command: `echo 'No build needed'`
 3. Publish directory: `.` (root)
@@ -1200,12 +1333,15 @@ npm start
 ### Configuration Files
 
 #### `Procfile`
+
 ```
 web: node dist/server.js
 ```
+
 Railway start command
 
 #### `railway.json`
+
 ```json
 {
   "$schema": "https://railway.app/railway.schema.json",
@@ -1220,6 +1356,7 @@ Railway start command
 ```
 
 #### `.gitignore`
+
 ```
 node_modules/
 dist/
@@ -1234,13 +1371,16 @@ dist/
 ## 7. Technology Stack Breakdown
 
 ### Runtime Environment
+
 **Node.js with TypeScript**
+
 - **Target:** ES2022
 - **Module System:** CommonJS
 - **TypeScript Version:** 5.9.3
 - **Type Checking:** Strict mode enabled
 
 **Why CommonJS?**
+
 - Better compatibility with current Node.js ecosystem
 - Easier debugging
 - Some dependencies require CommonJS
@@ -1248,7 +1388,9 @@ dist/
 ### AI/LLM Stack
 
 #### Anthropic Claude API
+
 **SDK:** @anthropic-ai/sdk (^0.65.0)
+
 - **Model:** claude-3-5-sonnet-20241022
 - **Temperature:** 1.0 (creative responses)
 - **Max Tokens:** Varies by call type
@@ -1256,11 +1398,13 @@ dist/
   - Composer: Higher for rich responses
 
 **Usage Patterns:**
+
 1. **Intent Classification:** Structured JSON output
 2. **Response Generation:** Markdown-formatted text
 3. **Field Diagnosis:** Personalized synthesis
 
 **Cost Tracking:**
+
 - Classifier: ~$0.0082 per call
 - Composer: ~$0.0080 per call
 - Average session: $0.05-0.10
@@ -1268,11 +1412,13 @@ dist/
 **References:** src/composer/client.ts
 
 #### Mastra Framework
+
 **Package:** @mastra/core (^0.19.1)
 
 **Purpose:** Framework for building conversational AI agents
 
 **Features Used:**
+
 - Agent orchestration patterns
 - Structured conversation flow
 - State management patterns
@@ -1280,52 +1426,65 @@ dist/
 ### Backend Stack
 
 #### Express.js
+
 **Version:** 5.1.0
 
 **Why Express 5?**
+
 - Modern async/await support
 - Better error handling
 - Performance improvements
 - Updated TypeScript types
 
 **Middleware:**
+
 - `express.json()` - JSON body parsing
 - `cors()` - Cross-origin resource sharing
 
 **References:** src/server.ts
 
 #### CORS Configuration
+
 **Package:** cors (^2.8.5)
 
 **Current Setup:**
+
 ```typescript
-app.use(cors({
-  origin: '*',  // Allow all origins (development)
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: '*', // Allow all origins (development)
+    credentials: true,
+  })
+);
 ```
 
 **Production Recommendation:**
+
 ```typescript
-app.use(cors({
-  origin: process.env.FRONTEND_URL,
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  })
+);
 ```
 
 ### Protocol Parsing Stack
 
 #### gray-matter
+
 **Version:** ^4.0.3
 
 **Purpose:** Parse YAML frontmatter from Markdown files
 
 **Usage:**
+
 ```typescript
 const { data: frontmatter, content } = matter(fileContent);
 ```
 
 **Why gray-matter?**
+
 - Industry standard for frontmatter parsing
 - Clean API
 - Supports multiple formats (YAML, TOML, JSON)
@@ -1333,11 +1492,13 @@ const { data: frontmatter, content } = matter(fileContent);
 **References:** src/protocol/parser.ts:18
 
 #### glob
+
 **Version:** ^11.0.3
 
 **Purpose:** File pattern matching for protocol discovery
 
 **Usage:**
+
 ```typescript
 const files = glob.sync('protocols/*.md');
 ```
@@ -1345,17 +1506,20 @@ const files = glob.sync('protocols/*.md');
 ### Development Tools
 
 #### tsx
+
 **Version:** ^4.20.6
 
 **Purpose:** Direct TypeScript execution without compilation
 
 **Why tsx over ts-node?**
+
 - Faster execution
 - Better ES module support
 - Active maintenance
 - Lighter weight
 
 **Usage:**
+
 ```bash
 tsx src/index.ts     # CLI
 tsx src/server.ts    # Server
@@ -1363,9 +1527,11 @@ tsx test/scenarios.ts # Tests
 ```
 
 #### TypeScript Compiler
+
 **Version:** ^5.9.3
 
 **Configuration Highlights:**
+
 - Strict null checks
 - No implicit any
 - Force consistent casing
@@ -1374,16 +1540,19 @@ tsx test/scenarios.ts # Tests
 ### Type Definitions
 
 #### @types/node
+
 **Version:** ^24.6.2
 
 **Purpose:** Node.js built-in types
 
 #### @types/express
+
 **Version:** ^5.0.3
 
 **Purpose:** Express.js types
 
 #### @types/cors
+
 **Version:** ^2.8.19
 
 **Purpose:** CORS middleware types
@@ -1391,11 +1560,13 @@ tsx test/scenarios.ts # Tests
 ### Environment Management
 
 #### dotenv
+
 **Version:** ^17.2.3
 
 **Purpose:** Load environment variables from .env file
 
 **Usage:**
+
 ```typescript
 import * as dotenv from 'dotenv';
 dotenv.config();
@@ -1424,12 +1595,14 @@ Development Dependencies:
 ### Infrastructure Stack
 
 #### Netlify (Frontend)
+
 - Static file hosting
 - CDN distribution
 - Automatic deployments from GitHub
 - HTTPS included
 
 #### Railway (Backend)
+
 - Node.js hosting
 - Automatic deployments from GitHub
 - Environment variable management
@@ -1883,6 +2056,7 @@ User          Frontend       API Server      Agent         Classifier    Registr
 ### Code Quality Assessment
 
 #### Strengths
+
 1. **Clear Separation of Concerns**
    - Agent orchestrates, doesn't implement details
    - Classifier, registry, composer have single responsibilities
@@ -1940,16 +2114,13 @@ User          Frontend       API Server      Agent         Classifier    Registr
 ### Potential Improvements
 
 #### 1. Add Comprehensive Testing
+
 ```typescript
 // Unit tests
 describe('IntentClassifier', () => {
   it('should classify walk intent', async () => {
     const classifier = new IntentClassifier(mockApiKey);
-    const result = await classifier.classify(
-      'walk me through it',
-      [],
-      mockState
-    );
+    const result = await classifier.classify('walk me through it', [], mockState);
     expect(result.intent).toBe('walk');
   });
 });
@@ -1970,6 +2141,7 @@ describe('API Endpoints', () => {
 **Tools:** Jest, Supertest, MSW (for API mocking)
 
 #### 2. Add Persistent Session Storage
+
 ```typescript
 interface SessionStore {
   get(sessionId: string): Promise<Session | null>;
@@ -1988,11 +2160,13 @@ class DatabaseSessionStore implements SessionStore {
 ```
 
 **Options:**
+
 - Redis (fast, TTL support)
 - PostgreSQL (persistent, queryable)
 - DynamoDB (serverless, scalable)
 
 #### 3. Add Authentication
+
 ```typescript
 // JWT middleware
 app.use('/api', authenticateJWT);
@@ -2012,12 +2186,13 @@ function authenticateJWT(req, res, next) {
 **Recommendation:** Start with JWT, consider OAuth2 for production
 
 #### 4. Add Rate Limiting
+
 ```typescript
 import rateLimit from 'express-rate-limit';
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
 });
 
 app.use('/api/', limiter);
@@ -2026,6 +2201,7 @@ app.use('/api/', limiter);
 **Recommendation:** Implement per-user rate limits based on auth
 
 #### 5. Enable Response Validation
+
 ```typescript
 // Update validator to work with flexible templates
 class WalkResponseValidator {
@@ -2045,6 +2221,7 @@ class WalkResponseValidator {
 **Recommendation:** Use fuzzy matching, not exact string comparison
 
 #### 6. Add Analytics and Monitoring
+
 ```typescript
 // Track key metrics
 interface SessionMetrics {
@@ -2067,6 +2244,7 @@ function trackMetrics(metrics: SessionMetrics) {
 **Tools:** Mixpanel, Amplitude, PostHog, or custom PostgreSQL tracking
 
 #### 7. Improve Error Handling
+
 ```typescript
 class AgentError extends Error {
   constructor(
@@ -2101,6 +2279,7 @@ try {
 **Recommendation:** Implement exponential backoff for retries
 
 #### 8. Add Protocol Validation
+
 ```typescript
 // JSON Schema for protocol files
 const protocolSchema = {
@@ -2117,11 +2296,11 @@ const protocolSchema = {
         required: ['index', 'title'],
         properties: {
           index: { type: 'number' },
-          title: { type: 'string' }
-        }
-      }
-    }
-  }
+          title: { type: 'string' },
+        },
+      },
+    },
+  },
 };
 
 // Validate on load
@@ -2138,6 +2317,7 @@ function validateProtocol(metadata: any): void {
 ### Security Considerations
 
 #### Current Security Posture
+
 - **API Key Security:** ✅ Environment variables, not in code
 - **CORS:** ⚠️ Allows all origins (development mode)
 - **Authentication:** ❌ None implemented
@@ -2147,6 +2327,7 @@ function validateProtocol(metadata: any): void {
 - **HTTPS:** ✅ Handled by Railway/Netlify
 
 #### Recommendations
+
 1. **Add authentication** before production launch
 2. **Implement rate limiting** per user/IP
 3. **Validate all inputs** with schemas
@@ -2158,12 +2339,15 @@ function validateProtocol(metadata: any): void {
 ### Performance Optimization Opportunities
 
 #### Current Performance
+
 - Static response optimization: ~50% cost reduction
 - Session TTL: Prevents memory leaks
 - Conversation pruning: Limits token usage
 
 #### Additional Optimizations
+
 1. **Caching**
+
    ```typescript
    // Cache protocol content in memory
    const protocolCache = new Map<string, ParsedProtocol>();
@@ -2171,11 +2355,12 @@ function validateProtocol(metadata: any): void {
    // Cache Claude responses for common queries
    const responseCache = new LRUCache<string, string>({
      max: 100,
-     ttl: 1000 * 60 * 60 // 1 hour
+     ttl: 1000 * 60 * 60, // 1 hour
    });
    ```
 
 2. **Streaming Responses**
+
    ```typescript
    // Stream AI responses to frontend
    app.post('/api/walk/continue', async (req, res) => {
@@ -2191,6 +2376,7 @@ function validateProtocol(metadata: any): void {
    ```
 
 3. **Database Indexing** (if implementing persistence)
+
    ```sql
    CREATE INDEX idx_sessions_last_accessed ON sessions(last_accessed);
    CREATE INDEX idx_sessions_user_id ON sessions(user_id);
@@ -2203,21 +2389,25 @@ function validateProtocol(metadata: any): void {
 ### Maintainability Suggestions
 
 #### Documentation
+
 1. **Add JSDoc comments** to all public methods
 2. **Create architecture decision records (ADRs)** for major decisions
 3. **Maintain changelog** for version tracking
 4. **Document API changes** in versioned docs
 
 #### Code Organization
+
 1. **Extract magic numbers** to constants
+
    ```typescript
    const CLASSIFIER_COST = 0.0082;
-   const COMPOSER_COST = 0.0080;
+   const COMPOSER_COST = 0.008;
    const SESSION_TTL_MS = 60 * 60 * 1000;
    const CLEANUP_INTERVAL_MS = 10 * 60 * 1000;
    ```
 
 2. **Create configuration file**
+
    ```typescript
    // config.ts
    export const config = {
@@ -2226,17 +2416,17 @@ function validateProtocol(metadata: any): void {
        temperature: 1.0,
        maxTokens: {
          classifier: 512,
-         composer: 2048
-       }
+         composer: 2048,
+       },
      },
      session: {
        ttl: 60 * 60 * 1000,
-       cleanupInterval: 10 * 60 * 1000
+       cleanupInterval: 10 * 60 * 1000,
      },
      costs: {
        classifier: 0.0082,
-       composer: 0.0080
-     }
+       composer: 0.008,
+     },
    };
    ```
 
@@ -2245,7 +2435,9 @@ function validateProtocol(metadata: any): void {
    - `server.ts` (524 lines) → Extract routes to separate files
 
 #### Versioning
+
 1. **Add API versioning**
+
    ```typescript
    app.use('/api/v1/walk', v1WalkRoutes);
    app.use('/api/v2/walk', v2WalkRoutes);
@@ -2258,11 +2450,13 @@ function validateProtocol(metadata: any): void {
 ### Deployment Recommendations
 
 #### Current Deployment
+
 - Frontend: Netlify ✅
 - Backend: Railway ✅
 - Split architecture works well
 
 #### Additional Considerations
+
 1. **Health Checks**
    - Current `/health` endpoint ✅
    - Add deeper health checks (DB connection, API key validity)
@@ -2291,10 +2485,12 @@ function validateProtocol(metadata: any): void {
 ### Scalability Considerations
 
 #### Current Architecture
+
 - Suitable for MVP and low-medium traffic
 - In-memory sessions limit horizontal scaling
 
 #### Scaling Path
+
 1. **Phase 1: Current (0-1000 users)**
    - Single Railway instance
    - In-memory sessions
@@ -2326,9 +2522,11 @@ function validateProtocol(metadata: any): void {
 
 ## Conclusion
 
-The Field Diagnostic Agent is a **well-architected conversational AI system** with clear separation of concerns, strong type safety, and thoughtful optimizations. The codebase demonstrates:
+The Field Diagnostic Agent is a **well-architected conversational AI system** with clear separation
+of concerns, strong type safety, and thoughtful optimizations. The codebase demonstrates:
 
 **Key Strengths:**
+
 - Clean, maintainable architecture
 - Protocol-driven design enabling easy extension
 - Cost-conscious optimizations
@@ -2336,6 +2534,7 @@ The Field Diagnostic Agent is a **well-architected conversational AI system** wi
 - Type safety throughout
 
 **Primary Opportunities:**
+
 - Add comprehensive testing
 - Implement authentication and security
 - Add persistent session storage
@@ -2343,11 +2542,14 @@ The Field Diagnostic Agent is a **well-architected conversational AI system** wi
 - Improve error handling
 
 **Production Readiness:**
+
 - **Current state:** MVP/Beta ready
 - **For production:** Implement authentication, persistence, and monitoring
 - **For scale:** Add Redis, improve error handling, implement analytics
 
-The architecture provides a solid foundation for growth, with clear extension points and well-documented patterns. The use of TypeScript, Mastra framework, and Anthropic Claude creates a modern, maintainable AI application.
+The architecture provides a solid foundation for growth, with clear extension points and
+well-documented patterns. The use of TypeScript, Mastra framework, and Anthropic Claude creates a
+modern, maintainable AI application.
 
 ---
 

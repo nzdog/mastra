@@ -23,7 +23,7 @@ export class ProtocolParser {
 
     // Check if cache is valid
     const cachedTime = ProtocolParser.cacheTimestamps.get(cacheKey);
-    if (cachedTime && (now - cachedTime) < ProtocolParser.CACHE_TTL_MS) {
+    if (cachedTime && now - cachedTime < ProtocolParser.CACHE_TTL_MS) {
       const cached = ProtocolParser.parsedProtocolCache.get(cacheKey);
       if (cached) {
         console.log(`📦 CACHE HIT: Protocol "${path.basename(cacheKey)}" loaded from cache`);
@@ -142,7 +142,7 @@ export class ProtocolParser {
   /**
    * Extract WALK chunks (one per theme)
    */
-  private extractThemeChunks(content: string, metadata: ProtocolMetadata): Map<number, string> {
+  private extractThemeChunks(content: string, _metadata: ProtocolMetadata): Map<number, string> {
     const theme_chunks = new Map<number, string>();
     const lines = content.split('\n');
 
@@ -164,7 +164,10 @@ export class ProtocolParser {
       }
 
       // Stop at Completion Prompts or second horizontal rule
-      if (inThemesSection && (line.startsWith('## Completion Prompts') || (line.startsWith('---') && i > 20))) {
+      if (
+        inThemesSection &&
+        (line.startsWith('## Completion Prompts') || (line.startsWith('---') && i > 20))
+      ) {
         // console.log(`   ⏹️  Stopping at line ${i + 1}: "${line.substring(0, 50)}"`);
         if (currentThemeIndex !== null && themeContent.length > 0) {
           theme_chunks.set(currentThemeIndex, this.buildThemeChunk(themeContent));

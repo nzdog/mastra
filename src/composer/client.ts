@@ -58,8 +58,12 @@ export class ClaudeClient {
         let endIdx = -1;
 
         for (let i = startIdx; i < response.length; i++) {
-          if (response[i] === '{') braceCount++;
-          if (response[i] === '}') braceCount--;
+          if (response[i] === '{') {
+            braceCount++;
+          }
+          if (response[i] === '}') {
+            braceCount--;
+          }
 
           if (braceCount === 0) {
             endIdx = i;
