@@ -799,6 +799,12 @@
             height: 96px;
             opacity: 0.85;
             animation: spinSlow 20s linear infinite;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .logo-spin-intro:hover {
+            opacity: 1;
         }
 
         .intro-content {
@@ -1356,7 +1362,7 @@
     <div class="intro-flow-view" id="intro-flow-view">
         <!-- Spinning Logo -->
         <div class="intro-logo-container">
-            <img src="/lichen-logo.png" alt="Lichen" class="logo-spin-intro">
+            <img src="/lichen-logo.png" alt="Lichen" class="logo-spin-intro" id="intro-logo">
         </div>
 
         <div class="intro-content" id="intro-content">
@@ -1486,6 +1492,7 @@
 
         // DOM Elements - Intro Flow
         const introFlowView = document.getElementById('intro-flow-view');
+        const introLogo = document.getElementById('intro-logo');
         const introQuote = document.getElementById('intro-quote');
         const introQuoteAttribution = document.getElementById('intro-quote-attribution');
         const introEmbodimentLines = document.getElementById('intro-embodiment-lines');
@@ -1499,6 +1506,9 @@
         const introBeginContainer = document.getElementById('intro-begin-container');
         const introBeginBtn = document.getElementById('intro-begin-btn');
         const srAnnouncer = document.getElementById('sr-announcer');
+
+        // Intro animation control
+        let skipIntroAnimations = false;
 
         // DOM Elements - Main App
         const protocolSelectionView = document.getElementById('protocol-selection-view');
@@ -1595,16 +1605,74 @@
             });
         }
 
+        // Organically reveal all intro text with quick, staggered transitions
+        async function revealAllIntroText() {
+            skipIntroAnimations = true;
+
+            // Reset text content
+            introQuote.textContent = '"The field is the sole governing agency of the particle."';
+            introQuoteAttribution.textContent = '— Albert Einstein';
+
+            // Show quote with quick fade
+            introQuote.style.transition = 'opacity 300ms ease';
+            introQuote.style.opacity = '1';
+            introQuote.style.color = '';
+
+            // After a brief moment, show attribution
+            await new Promise(resolve => setTimeout(resolve, 150));
+            introQuoteAttribution.style.transition = 'opacity 300ms ease';
+            introQuoteAttribution.style.opacity = '1';
+            introQuoteAttribution.style.color = '';
+
+            // Create and show all embodiment lines with staggered quick fades
+            const embodimentLines = [
+                "You are the particle.",
+                "Every decision, every signal, every relationship is shaped by the field you're in.",
+                "The Lichen System listens to that field.",
+                "It helps you see where you are.",
+                "It helps you transform the field when the time is right."
+            ];
+
+            // Clear any existing lines
+            introEmbodimentLines.innerHTML = '';
+
+            // Add all lines with quick staggered reveals
+            for (let i = 0; i < embodimentLines.length; i++) {
+                const line = document.createElement('div');
+                line.className = 'intro-text-line';
+                line.textContent = embodimentLines[i];
+                line.style.top = `calc(33% - 70px + ${60 + (i * 40)}px)`;
+                line.style.transition = 'opacity 250ms ease';
+                line.style.opacity = '0';
+                line.style.color = '';
+                introEmbodimentLines.appendChild(line);
+
+                // Quick stagger (100ms between each line)
+                await new Promise(resolve => setTimeout(resolve, 100));
+                line.style.opacity = '1';
+            }
+
+            // Show continue button with final quick fade
+            await new Promise(resolve => setTimeout(resolve, 100));
+            introContinueContainer.style.transition = 'opacity 300ms ease';
+            introContinueContainer.style.opacity = '1';
+        }
+
         // Run the intro flow sequence
         async function runIntroFlow() {
             console.log('Starting intro flow...');
             console.log('introQuote element:', introQuote);
             console.log('introEmbodimentLines element:', introEmbodimentLines);
-            
+
             // Reset all text to plain text (clear any cached spans from previous animations)
             introQuote.textContent = '"The field is the sole governing agency of the particle."';
             introQuoteAttribution.textContent = '— Albert Einstein';
-            
+
+            // Check if animations should be skipped
+            if (skipIntroAnimations) {
+                return; // Exit early, text already revealed
+            }
+
             // 1. Wait 2 seconds with logo visible and spinning
             await new Promise(resolve => setTimeout(resolve, TIMING.initialWait));
             console.log('Initial wait complete, showing quote...');
@@ -1725,7 +1793,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.shiftKey && e.key === 'Enter') {
                 // Only trigger if continue button is visible and intro content is still showing
-                if (introContinueContainer && 
+                if (introContinueContainer &&
                     parseFloat(window.getComputedStyle(introContinueContainer).opacity) > 0.5 &&
                     window.getComputedStyle(introContent).display !== 'none') {
                     e.preventDefault();
@@ -1733,6 +1801,17 @@
                 }
             }
         });
+
+        // Logo click handler - reveal all text instantly
+        if (introLogo) {
+            introLogo.addEventListener('click', () => {
+                // Only trigger if intro content is showing and animations haven't been skipped
+                if (!skipIntroAnimations &&
+                    window.getComputedStyle(introContent).display !== 'none') {
+                    revealAllIntroText();
+                }
+            });
+        }
 
         // Load protocols from API and render cards with progressive disclosure
         async function loadAndRenderProtocolCards() {
