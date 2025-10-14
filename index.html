@@ -821,6 +821,12 @@
             height: 96px;
             opacity: 0.85;
             animation: spinSlow 20s linear infinite;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        .logo-spin-intro:hover {
+            opacity: 1;
         }
 
         .intro-content {
@@ -959,13 +965,47 @@
             font-style: italic;
         }
 
+        .intro-protocol-guidance {
+            font-size: 0.9375rem;
+            color: #78716C;
+            line-height: 1.7;
+            text-align: left;
+            margin-bottom: 3rem;
+            max-width: 700px;
+            padding: 0 1rem;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: opacity 960ms ease-out, transform 960ms ease-out;
+            will-change: opacity, transform;
+        }
+
+        .intro-protocol-guidance.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .intro-protocol-guidance p {
+            margin-bottom: 1rem;
+        }
+
+        .intro-protocol-guidance p:last-child {
+            margin-bottom: 0;
+        }
+
         .intro-protocol-deck {
             opacity: 0;
+            transform: translateY(50px);
             display: flex;
             flex-direction: column;
             gap: 2rem;
-            margin-top: 3rem;
             width: 100%;
+            transition: opacity 960ms ease-out, transform 960ms ease-out;
+            will-change: opacity, transform;
+        }
+
+        .intro-protocol-deck.visible {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         .intro-protocol-card {
@@ -1133,9 +1173,10 @@
             display: none;
             flex-direction: column;
             align-items: center;
-            padding-top: calc(33% - 70px + 60px);
+            padding-top: calc(33% - 70px + 120px);
             max-width: 900px;
             margin: 0 auto;
+            min-height: 100vh;
         }
 
         .intro-protocol-list-page.visible {
@@ -1234,7 +1275,7 @@
             }
 
             .intro-protocol-list-page {
-                padding-top: 0px;
+                padding-top: calc(28vh - 70px + 100px);
             }
 
             /* Protocol cards */
@@ -1363,6 +1404,13 @@
             .composer-output.summary-mode .section-content p {
                 font-size: 0.9375rem;
             }
+
+            /* Protocol guidance */
+            .intro-protocol-guidance {
+                font-size: 0.875rem;
+                margin-bottom: 2rem;
+                padding: 0 0.75rem;
+            }
         }
 
         /* Mobile phones */
@@ -1446,7 +1494,7 @@
             }
 
             .intro-protocol-list-page {
-                padding-top: 0px;
+                padding-top: calc(25vh - 60px + 90px);
             }
 
             /* Cards - full width with minimal padding */
@@ -1487,6 +1535,13 @@
 
             .intro-continue-hint {
                 font-size: 0.75rem;
+            }
+
+            /* Protocol guidance */
+            .intro-protocol-guidance {
+                font-size: 0.8125rem;
+                margin-bottom: 1.5rem;
+                padding: 0 0.5rem;
             }
 
             /* Header adjustments */
@@ -1709,7 +1764,7 @@
     <div class="intro-flow-view" id="intro-flow-view">
         <!-- Spinning Logo -->
         <div class="intro-logo-container">
-            <img src="/lichen-logo.png" alt="Lichen" class="logo-spin-intro">
+            <img src="/lichen-logo.png" alt="Lichen" class="logo-spin-intro" id="intro-logo">
         </div>
 
         <div class="intro-content" id="intro-content">
@@ -1740,6 +1795,12 @@
 
         <!-- Protocol List Page (shown after Continue) -->
         <div class="intro-protocol-list-page" id="intro-protocol-list-page">
+            <!-- Protocol Guidance -->
+            <div class="intro-protocol-guidance" id="intro-protocol-guidance">
+                <p>The Field Exit Protocols are meant to be walked in order, as each one supports the next—from identifying the field you're in, to releasing its residue, closing it with integrity, and learning to hold a new one. Following the full sequence provides the most complete process of change.</p>
+                <p>However, the protocols can also be used individually. You can read the "Use this when…" section and begin with whichever one feels most relevant. What matters is that you engage honestly with the process, in whatever order makes sense for you.</p>
+            </div>
+
             <!-- Sequence List -->
             <div class="intro-sequence-container" id="intro-sequence-container">
                 <ul class="intro-sequence-list">
@@ -1836,6 +1897,7 @@
 
         // DOM Elements - Intro Flow
         const introFlowView = document.getElementById('intro-flow-view');
+        const introLogo = document.getElementById('intro-logo');
         const introQuoteDesktop = document.getElementById('intro-quote-desktop');
         const introQuoteMobile = document.getElementById('intro-quote-mobile');
         const introEmbodimentLines = document.getElementById('intro-embodiment-lines');
@@ -1846,7 +1908,13 @@
         const introProtocolListPage = document.getElementById('intro-protocol-list-page');
         const introSequenceContainer = document.getElementById('intro-sequence-container');
         const introProtocolDeck = document.getElementById('intro-protocol-deck');
+        const introProtocolGuidance = document.getElementById('intro-protocol-guidance');
+        const introBeginContainer = document.getElementById('intro-begin-container');
+        const introBeginBtn = document.getElementById('intro-begin-btn');
         const srAnnouncer = document.getElementById('sr-announcer');
+
+        // Intro animation control
+        let skipIntroAnimations = false;
 
         // DOM Elements - Main App
         const protocolSelectionView = document.getElementById('protocol-selection-view');
@@ -1952,19 +2020,78 @@
             });
         }
 
+        // Organically reveal all intro text with quick, staggered transitions
+        async function revealAllIntroText() {
+            skipIntroAnimations = true;
+
+            // Reset text content for both desktop and mobile quotes (with inline attribution)
+            introQuoteDesktop.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
+            introQuoteMobile.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
+
+            // Show quotes with quick fade
+            introQuoteDesktop.style.transition = 'opacity 300ms ease';
+            introQuoteDesktop.style.opacity = '1';
+            introQuoteDesktop.style.color = '';
+
+            introQuoteMobile.style.transition = 'opacity 300ms ease';
+            introQuoteMobile.style.opacity = '1';
+            introQuoteMobile.style.color = '';
+
+            // Wait a moment before showing embodiment lines
+            await new Promise(resolve => setTimeout(resolve, 150));
+
+            // Create and show all embodiment lines with staggered quick fades
+            const embodimentLines = [
+                "You are the particle.",
+                "Every decision, every signal, every relationship is shaped by the field you're in.",
+                "The Lichen System listens to that field.",
+                "It helps you see where you are.",
+                "It helps you transform the field when the time is right."
+            ];
+
+            // Clear any existing lines
+            introEmbodimentLines.innerHTML = '';
+
+            // Add all lines with quick staggered reveals
+            for (let i = 0; i < embodimentLines.length; i++) {
+                const line = document.createElement('div');
+                line.className = 'intro-text-line';
+                line.textContent = embodimentLines[i];
+                line.style.top = `calc(33% - 70px + ${60 + (i * 40)}px)`;
+                line.style.transition = 'opacity 250ms ease';
+                line.style.opacity = '0';
+                line.style.color = '';
+                introEmbodimentLines.appendChild(line);
+
+                // Quick stagger (100ms between each line)
+                await new Promise(resolve => setTimeout(resolve, 100));
+                line.style.opacity = '1';
+            }
+
+            // Show continue button with final quick fade
+            await new Promise(resolve => setTimeout(resolve, 100));
+            introContinueContainer.style.transition = 'opacity 300ms ease';
+            introContinueContainer.style.opacity = '1';
+        }
+
         // Run the intro flow sequence
         async function runIntroFlow() {
             console.log('Starting intro flow...');
             console.log('introQuoteDesktop element:', introQuoteDesktop);
             console.log('introQuoteMobile element:', introQuoteMobile);
             console.log('introEmbodimentLines element:', introEmbodimentLines);
-            
+
             // Reset all text to plain text for both desktop and mobile versions
             if (introQuoteDesktop) {
                 introQuoteDesktop.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
             }
             if (introQuoteMobile) {
                 introQuoteMobile.textContent = '"The field is the sole governing agency of the particle." — Albert Einstein';
+            }
+
+            // Check if animations should be skipped
+            if (skipIntroAnimations) {
+                return; // Exit early, text already revealed
             }
 
             // 1. Wait 2 seconds with logo visible and spinning
@@ -2064,7 +2191,7 @@
 
             // Fade out the intro content (quote, embodiment lines, orientation, continue button)
             await fadeOut(introContent, 800);
-            
+
             // Hide intro content
             introContent.style.display = 'none';
 
@@ -2079,12 +2206,22 @@
 
             // Show header logo on protocol list page
             pageHeader.classList.add('protocol-list-active');
-            
+
             // Skip sequence list - don't show it
             // await fadeIn(introSequenceContainer, 1000);
             // announceForScreenReader('Protocol sequence revealed: Field Diagnostic and 5 exit protocols');
 
-            // Load and render protocol cards
+            // Fade in guidance text and protocol cards together
+            if (introProtocolGuidance) {
+                // Force browser to render initial state before transition
+                await new Promise(resolve => requestAnimationFrame(() => {
+                    requestAnimationFrame(resolve);
+                }));
+
+                introProtocolGuidance.classList.add('visible');
+            }
+
+            // Load and render protocol cards (happens during guidance fade)
             await loadAndRenderProtocolCards();
         }
 
@@ -2109,6 +2246,17 @@
             }
         });
 
+        // Logo click handler - reveal all text instantly
+        if (introLogo) {
+            introLogo.addEventListener('click', () => {
+                // Only trigger if intro content is showing and animations haven't been skipped
+                if (!skipIntroAnimations &&
+                    window.getComputedStyle(introContent).display !== 'none') {
+                    revealAllIntroText();
+                }
+            });
+        }
+
         // Load protocols from API and render cards with progressive disclosure
         async function loadAndRenderProtocolCards() {
             try {
@@ -2131,8 +2279,13 @@
                         renderProtocolCard(protocol);
                     }
 
+                    // Force browser to render initial state before transition
+                    await new Promise(resolve => requestAnimationFrame(() => {
+                        requestAnimationFrame(resolve);
+                    }));
+
                     // Fade in the protocol deck
-                    await fadeIn(introProtocolDeck, 1000);
+                    introProtocolDeck.classList.add('visible');
                     announceForScreenReader('Protocol cards revealed. Use tab to navigate and explore each protocol.');
                 }
             } catch (error) {
