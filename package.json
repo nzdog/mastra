@@ -20,6 +20,10 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.65.0",
     "@mastra/core": "^0.19.1",
