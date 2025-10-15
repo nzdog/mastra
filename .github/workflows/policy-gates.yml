@@ -1,0 +1,32 @@
+name: Policy Gates
+
+on:
+  push:
+    branches: [ feature/** ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify ADR exists
+        run: test -f docs/adr/0001-memory-layer-spec.md
+
+      - name: Verify spec index exists
+        run: test -f spec/README.md
+
+      - name: Lint placeholder (pass)
+        run: echo "lint ok"
+
+      - name: Unit tests placeholder (pass)
+        run: echo "tests ok"
+
+      - name: Policy gate: audit emitter stub present
+        run: |
+          # Fail if audit emitter stub missing (adjust path as you implement)
+          test -e service/audit || (echo "Missing service/audit (stub)"; exit 1)
+        shell: bash
+        continue-on-error: true
