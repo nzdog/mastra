@@ -18,14 +18,34 @@ jobs:
       - name: Verify spec index exists
         run: test -f SPEC_INDEX.md || (echo "Missing SPEC_INDEX.md"; exit 1)
 
-      - name: Lint placeholder (pass)
-        run: echo "lint ok"
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-      - name: Unit tests placeholder (pass)
-        run: echo "tests ok"
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck (tsc)
+        run: npm run typecheck
+
+      - name: Run ESLint
+        run: npx eslint src/ --max-warnings 0
+
+      - name: Run smoke test
+        run: |
+          SKIP_API_KEY_CHECK=true npm run -s test:smoke
 
       - name: Policy gate: audit emitter stub present
         run: |
-          # Fail if audit emitter stub missing
           test -e src/audit-emitter.ts || (echo "Missing src/audit-emitter.ts (stub)"; exit 1)
+        shell: bash
+
+      - name: ADR front-matter validation
+        run: |
+          # Ensure ADR contains required front-matter keys
+          if ! grep -q "^theme id:" adr/0001-memory-layer-spec.md; then echo "Missing theme id in ADR front-matter"; exit 1; fi
+          if ! grep -q "^version:" adr/0001-memory-layer-spec.md; then echo "Missing version in ADR front-matter"; exit 1; fi
+          if ! grep -q "^last_review:" adr/0001-memory-layer-spec.md; then echo "Missing last_review in ADR front-matter"; exit 1; fi
         shell: bash

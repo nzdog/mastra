@@ -199,6 +199,9 @@ interface SessionState {
   resume_hint: 'awaiting_theme_completion' | 'ready_to_advance' | 'none';
   last_answer_summary: string;
   last_chunk_refs: string[];
+}
+
+Invariant — Memory enriches but never controls.
   turn_counter: number;
   emotion_last?: string;
   field_diagnosed?: string;

@@ -1,3 +1,9 @@
+---
+theme id: memory-layer
+version: 0001-phase0
+last_review: 2025-10-15
+---
+
 # ADR 0001 — Memory Layer Specification
 
 Status: Proposed

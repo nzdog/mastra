@@ -19,9 +19,12 @@ dotenv.config();
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
-if (!API_KEY) {
+// Allow skipping the strict API key check in CI/test/dev for Phase 0.
+if (!API_KEY && process.env.NODE_ENV !== 'test' && process.env.SKIP_API_KEY_CHECK !== 'true') {
   console.error('Error: ANTHROPIC_API_KEY not found in environment variables.');
   process.exit(1);
+} else if (!API_KEY) {
+  console.warn('⚠️  ANTHROPIC_API_KEY missing, continuing in permissive mode for tests/dev.');
 }
 
 // Initialize session store (Redis if REDIS_URL provided, otherwise in-memory)
@@ -547,7 +550,8 @@ app.get('/health', async (_req: Request, res: Response) => {
 });
 
 // v1 contract for health - matches spec path /v1/health and emits audit stub
-import auditEmitter, { AuditEvent } from './audit-emitter';
+import auditEmitter from './audit-emitter';
+import { AuditEvent, VERSION as AUDIT_VERSION } from './audit-types';
 
 app.get('/v1/health', async (req: Request, res: Response) => {
   // Reuse the health logic above
@@ -563,18 +567,27 @@ app.get('/v1/health', async (req: Request, res: Response) => {
       heap_total_mb: Math.round(memory.heap_total_mb * 100) / 100,
     },
     timestamp: new Date().toISOString(),
+    version: '0.1.0',
+    policyVersion: AUDIT_VERSION,
+    commit: process.env.GIT_COMMIT || 'uncommitted',
     path: '/v1/health',
   };
 
   // Emit a signed audit receipt in the future; for now emit a stub event
   const event: AuditEvent = {
+    id: randomUUID(),
     type: 'health.check',
     payload,
     timestamp: new Date().toISOString(),
+    source: 'mastra-server',
   };
 
   // Fire-and-forget
   void auditEmitter.emit(event);
+
+  // Add version headers
+  res.setHeader('x-api-version', payload.version);
+  res.setHeader('x-spec-version', payload.policyVersion);
 
   res.json(payload);
 });

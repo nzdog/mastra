@@ -1,23 +1,32 @@
-/**
- * Audit Emitter (stub)
- *
- * This is a minimal, no-op implementation used by CI policy gates and to
- * scaffold later Merkle-chained audit ledger integration.
- */
-export interface AuditEvent {
-  type: string;
-  payload: Record<string, unknown>;
-  timestamp: string;
-}
+import { randomUUID } from 'crypto';
+import { AuditEvent, AuditReceipt, AuditSink } from './audit-types';
 
-export class AuditEmitter {
+/**
+ * Audit Emitter (typed stub)
+ * Implements AuditSink but performs no external writes. Returns a stubbed receipt.
+ */
+export class AuditEmitter implements AuditSink {
   constructor(private readonly sink?: string) {}
 
-  async emit(event: AuditEvent): Promise<void> {
-    // No-op for now. Later: write to Merkle ledger, sign receipts, etc.
-    // Keep lightweight and synchronous for tests.
-    console.log('AUDIT STUB:', JSON.stringify(event));
-    return Promise.resolve();
+  async emit(event: AuditEvent): Promise<AuditReceipt> {
+    // Compute a simple placeholder hash for the event (not cryptographically secure)
+    const payloadString = JSON.stringify(event.payload || {});
+    const hash = Buffer.from(payloadString).toString('base64').slice(0, 32);
+
+    const receipt: AuditReceipt = {
+      event_id: event.id,
+      receipt_id: randomUUID(),
+      timestamp: new Date().toISOString(),
+      hash,
+      signature: undefined,
+      status: 'stubbed',
+    };
+
+    // Log the audit event and receipt for visibility in Phase 0
+    console.log('AUDIT EVENT:', JSON.stringify(event));
+    console.log('AUDIT RECEIPT (stub):', JSON.stringify(receipt));
+
+    return Promise.resolve(receipt);
   }
 }
 
