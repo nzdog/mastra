@@ -546,6 +546,39 @@ app.get('/health', async (_req: Request, res: Response) => {
   });
 });
 
+// v1 contract for health - matches spec path /v1/health and emits audit stub
+import auditEmitter, { AuditEvent } from './audit-emitter';
+
+app.get('/v1/health', async (req: Request, res: Response) => {
+  // Reuse the health logic above
+  const sessionCount = await sessionStore.size();
+  const memory = performanceMonitor.getMemoryUsage();
+
+  const payload = {
+    status: 'ok',
+    active_sessions: sessionCount,
+    session_store: process.env.REDIS_URL ? 'redis' : 'memory',
+    memory_usage: {
+      heap_used_mb: Math.round(memory.heap_used_mb * 100) / 100,
+      heap_total_mb: Math.round(memory.heap_total_mb * 100) / 100,
+    },
+    timestamp: new Date().toISOString(),
+    path: '/v1/health',
+  };
+
+  // Emit a signed audit receipt in the future; for now emit a stub event
+  const event: AuditEvent = {
+    type: 'health.check',
+    payload,
+    timestamp: new Date().toISOString(),
+  };
+
+  // Fire-and-forget
+  void auditEmitter.emit(event);
+
+  res.json(payload);
+});
+
 // Performance metrics endpoint (rate-limited)
 app.get('/api/metrics', metricsLimiter, (_req: Request, res: Response) => {
   const summary = performanceMonitor.getSummary();

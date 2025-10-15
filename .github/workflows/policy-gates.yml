@@ -13,10 +13,10 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Verify ADR exists
-        run: test -f docs/adr/0001-memory-layer-spec.md
+        run: test -f adr/0001-memory-layer-spec.md || (echo "Missing adr/0001-memory-layer-spec.md"; exit 1)
 
       - name: Verify spec index exists
-        run: test -f spec/README.md
+        run: test -f SPEC_INDEX.md || (echo "Missing SPEC_INDEX.md"; exit 1)
 
       - name: Lint placeholder (pass)
         run: echo "lint ok"
@@ -26,7 +26,6 @@ jobs:
 
       - name: Policy gate: audit emitter stub present
         run: |
-          # Fail if audit emitter stub missing (adjust path as you implement)
-          test -e service/audit || (echo "Missing service/audit (stub)"; exit 1)
+          # Fail if audit emitter stub missing
+          test -e src/audit-emitter.ts || (echo "Missing src/audit-emitter.ts (stub)"; exit 1)
         shell: bash
-        continue-on-error: true
