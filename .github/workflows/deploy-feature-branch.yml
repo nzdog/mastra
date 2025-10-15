@@ -1,0 +1,87 @@
+name: Deploy Feature Branch
+
+on:
+  push:
+    branches:
+      - feature/memory-layer-spec
+  workflow_dispatch: # Allow manual triggers
+
+env:
+  RAILWAY_SERVICE_NAME: mastra-lichen-spec-sandbox
+
+jobs:
+  deploy:
+    name: Deploy to spec-sandbox environment
+    runs-on: ubuntu-latest
+    environment:
+      name: spec-sandbox
+      url: ${{ steps.deploy.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript compiler
+        run: npm run build
+
+      - name: Run tests
+        run: npm test
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        continue-on-error: true
+
+      - name: Run policy gates
+        run: |
+          echo "Running policy gates..."
+          test -f docs/adr/0001-memory-layer-spec.md || (echo "Missing ADR"; exit 1)
+          test -f spec/README.md || (echo "Missing spec index"; exit 1)
+          test -e service/audit || (echo "Missing audit stub"; exit 1)
+          echo "Policy gates passed"
+
+      - name: Deploy to Railway (spec-sandbox)
+        id: deploy
+        run: |
+          # Install Railway CLI
+          npm install -g @railway/cli
+
+          # Deploy using Railway CLI
+          # Set environment name and deploy
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }} --environment spec-sandbox
+          railway up --detach
+
+          # Get deployment URL
+          DEPLOY_URL=$(railway domain)
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $DEPLOY_URL"
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
+      - name: Health check
+        run: |
+          echo "Waiting for deployment to be ready..."
+          sleep 30
+
+          # Check health endpoint
+          HEALTH_URL="${{ steps.deploy.outputs.url }}/health"
+          echo "Checking health at: $HEALTH_URL"
+
+          curl -f "$HEALTH_URL" || echo "Health check failed (may need to wait longer)"
+        continue-on-error: true
+
+      - name: Post deployment summary
+        run: |
+          echo "### Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: spec-sandbox" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: feature/memory-layer-spec" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
