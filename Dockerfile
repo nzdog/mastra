@@ -22,5 +22,5 @@ RUN npm prune --production
 # Expose port (Railway will override this with PORT env var)
 EXPOSE 3000
 
-# Start the application
-CMD ["npm", "run", "server"]
+# Start the application (use compiled JS, not tsx)
+CMD ["node", "dist/server.js"]
