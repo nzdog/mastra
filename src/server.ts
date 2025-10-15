@@ -886,8 +886,10 @@ app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
   });
 });
 
-// Start server
-app.listen(PORT, () => {
+// Start server (bind to HOST to be reachable from container host)
+const HOST = process.env.HOST || '0.0.0.0';
+const PORT_NUM = typeof PORT === 'string' ? Number(PORT) : PORT;
+app.listen(PORT_NUM || 3000, HOST, () => {
   console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
