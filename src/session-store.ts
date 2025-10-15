@@ -10,6 +10,16 @@ import { FieldDiagnosticAgent } from './agent';
 import { ProtocolParser } from './protocol/parser';
 import { ProtocolRegistry } from './tools/registry';
 
+/**
+ * Minimal Redis interface to avoid requiring ioredis as a dependency
+ */
+interface RedisLike {
+  get(key: string): Promise<string | null>;
+  setex(key: string, seconds: number, value: string): Promise<string>;
+  del(key: string): Promise<number>;
+  keys(pattern: string): Promise<string[]>;
+}
+
 export interface Session {
   id: string;
   agent: FieldDiagnosticAgent;
@@ -22,7 +32,7 @@ export interface Session {
 
 export interface SerializedSession {
   id: string;
-  agent_state: any; // Serialized agent state
+  agent_state: unknown; // Serialized agent state
   created_at: string;
   last_accessed: string;
   total_cost: number;
@@ -123,12 +133,12 @@ export class InMemorySessionStore implements SessionStore {
  * ```
  */
 export class RedisSessionStore implements SessionStore {
-  private redis: any; // Use 'any' to avoid requiring ioredis dependency
+  private redis: RedisLike;
   private readonly SESSION_TTL_SECONDS = 60 * 60; // 1 hour
   private readonly KEY_PREFIX = 'session:';
   private apiKey: string;
 
-  constructor(redis: any, apiKey: string) {
+  constructor(redis: RedisLike, apiKey: string) {
     this.redis = redis;
     this.apiKey = apiKey;
   }
@@ -183,13 +193,14 @@ export class RedisSessionStore implements SessionStore {
    * Serialize session to JSON-friendly format
    */
   private serializeSession(session: Session): SerializedSession {
+    const metadata = session.registry.getMetadata();
     return {
       id: session.id,
       agent_state: session.agent.getState(),
       created_at: session.created_at,
       last_accessed: session.last_accessed,
       total_cost: session.total_cost,
-      protocol_path: (session.registry as any).protocol?.metadata?.id || 'field_diagnostic',
+      protocol_path: metadata?.id || 'field_diagnostic',
     };
   }
 
@@ -234,7 +245,7 @@ export class RedisSessionStore implements SessionStore {
  */
 export function createSessionStore(config: {
   type: 'memory' | 'redis';
-  redis?: any;
+  redis?: RedisLike;
   apiKey: string;
 }): SessionStore {
   if (config.type === 'redis' && config.redis) {

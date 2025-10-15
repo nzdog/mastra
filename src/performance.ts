@@ -8,6 +8,8 @@
  * - Memory usage
  */
 
+import { Request, Response, NextFunction } from 'express';
+
 export interface PerformanceMetrics {
   timestamp: string;
   endpoint: string;
@@ -137,7 +139,7 @@ export const performanceMonitor = new PerformanceMonitor();
  * Express middleware to track request performance
  */
 export function performanceMiddleware(endpoint: string) {
-  return (req: any, res: any, next: any) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     const stopTimer = performanceMonitor.startTimer();
 
     // Track cache metrics from response

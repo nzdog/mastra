@@ -106,7 +106,7 @@ export class ClaudeClient {
 
       // Add default confidence if missing (common issue with classifier)
       if (parsed && typeof parsed === 'object' && 'intent' in parsed && !('confidence' in parsed)) {
-        (parsed as any).confidence = 0.7;
+        (parsed as Record<string, unknown>).confidence = 0.7;
       }
 
       return parsed;

@@ -3,7 +3,7 @@ import { IntentClassifier } from './classifier';
 import { Composer } from './composer';
 import { loadProtocol } from './protocol/parser';
 import { ProtocolRegistry } from './tools/registry';
-import { SessionState, ConversationTurn, Mode, ClassificationResult } from './types';
+import { SessionState, ConversationTurn, Mode, ClassificationResult, ProtocolChunk } from './types';
 import { WalkResponseValidator } from './validator';
 
 export class FieldDiagnosticAgent {
@@ -528,7 +528,7 @@ export class FieldDiagnosticAgent {
    */
   private buildStaticResponse(
     mode: Mode,
-    chunk: any,
+    chunk: ProtocolChunk | null,
     themeIndex: number | null,
     _nextThemeTitle: string | null
   ): string {
