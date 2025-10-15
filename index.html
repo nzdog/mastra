@@ -199,6 +199,21 @@
             animation-play-state: paused;
             transition: opacity 1.2s ease-out;
         }
+        /* Dev badge next to header logo */
+        .header-logo-badge {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(40px, -10px);
+            font-size: 0.85rem;
+            color: #374151;
+            background: rgba(255,255,255,0.9);
+            padding: 0.15rem 0.5rem;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            pointer-events: none;
+            z-index: 200;
+        }
 
         .header-center-logo.visible {
             opacity: 0.85;
@@ -1745,7 +1760,8 @@
         <div class="header-title">
             Lichen
         </div>
-        <img src="/lichen-logo.png" alt="" class="header-center-logo" id="header-center-logo">
+    <img src="/lichen-logo.png" alt="" class="header-center-logo" id="header-center-logo">
+    <div class="header-logo-badge" id="memory-layer-badge">Memory Layer Dev</div>
         <div class="header-state" id="header-state">Entry</div>
         <div class="theme-position" id="theme-position"></div>
         <div class="cost-display" id="cost-display">$0.00</div>
@@ -1765,6 +1781,7 @@
         <!-- Spinning Logo -->
         <div class="intro-logo-container">
             <img src="/lichen-logo.png" alt="Lichen" class="logo-spin-intro" id="intro-logo">
+            <div class="header-logo-badge" style="transform: translate(-10px, 36px);">Memory Layer Dev</div>
         </div>
 
         <div class="intro-content" id="intro-content">
@@ -1828,6 +1845,7 @@
             <div class="protocol-selection-view hidden" id="protocol-selection-view">
                 <div class="protocol-selection-header">
                     <img src="/lichen-logo.png" alt="Lichen" style="height: 80px; width: auto; margin-bottom: 2rem;">
+                    <div class="header-logo-badge" style="transform: translate(60px, -40px); font-size: 0.95rem;">Memory Layer Dev</div>
                     <div class="protocol-selection-title">Choose Your Protocol</div>
                     <div class="protocol-selection-subtitle">Select a protocol to begin your walk</div>
                 </div>
@@ -1839,6 +1857,7 @@
             <!-- Entry View -->
             <div class="entry-view hidden" id="entry-view">
                 <img src="/lichen-logo.png" alt="Lichen" id="lichen-logo" style="height: 80px; width: auto; margin-bottom: 2rem;">
+                <div class="header-logo-badge" style="transform: translate(60px, -40px); font-size: 0.95rem;">Memory Layer Dev</div>
                 <div id="protocol-title" style="font-size: 1.5rem; font-weight: 500; color: #78716C; margin-bottom: 3rem; text-align: center; line-height: 1.4;">Field Diagnostic Protocol</div>
                 <button class="walk-button" id="begin-button">Begin walk</button>
             </div>
