@@ -12,7 +12,6 @@ import { ProtocolParser } from './protocol/parser';
 import { Session, SessionStore, createSessionStore } from './session-store';
 import { ProtocolRegistry } from './tools/registry';
 import { SessionState } from './types';
-
 // Load environment variables
 dotenv.config();
 
