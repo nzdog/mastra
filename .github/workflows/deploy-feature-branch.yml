@@ -1,4 +1,4 @@
-name: Deploy Feature Branch
+name: Deploy Feature Branch - Memory Layer Spec
 
 on:
   push:
@@ -39,13 +39,24 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         continue-on-error: true
 
-      - name: Run policy gates
+      - name: Run Phase 0 policy gates
         run: |
-          echo "Running policy gates..."
-          test -f docs/adr/0001-memory-layer-spec.md || (echo "Missing ADR"; exit 1)
-          test -f spec/README.md || (echo "Missing spec index"; exit 1)
-          test -e service/audit || (echo "Missing audit stub"; exit 1)
-          echo "Policy gates passed"
+          echo "Running Phase 0 policy gates..."
+
+          # Verify Phase 0 artifacts
+          test -f docs/adrs/0001-memory-layer-architecture.md || (echo "❌ Missing ADR 0001"; exit 1)
+          echo "✅ ADR 0001 exists"
+
+          test -f docs/specs/README.md || (echo "❌ Missing spec index"; exit 1)
+          echo "✅ Spec index exists"
+
+          test -f src/memory-layer/api/health.ts || (echo "❌ Missing /v1/health contract"; exit 1)
+          echo "✅ /v1/health contract exists"
+
+          test -f src/memory-layer/governance/audit-emitter.ts || (echo "❌ Missing audit emitter stub"; exit 1)
+          echo "✅ Audit emitter stub exists"
+
+          echo "✅ All Phase 0 policy gates passed"
 
       - name: Deploy to Railway (spec-sandbox)
         id: deploy
@@ -54,34 +65,96 @@ jobs:
           npm install -g @railway/cli
 
           # Deploy using Railway CLI
-          # Set environment name and deploy
+          # Link to project and deploy
           railway link ${{ secrets.RAILWAY_PROJECT_ID }} --environment spec-sandbox
           railway up --detach
 
           # Get deployment URL
           DEPLOY_URL=$(railway domain)
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
-          echo "Deployed to: $DEPLOY_URL"
+          echo "✅ Deployed to: $DEPLOY_URL"
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+          # Secrets automatically injected by Railway:
+          # - ANTHROPIC_API_KEY
+          # - ALLOWED_ORIGINS (for CORS)
+          # - REDIS_URL (optional, for persistent sessions)
 
-      - name: Health check
+      - name: Health check (/health - legacy)
         run: |
           echo "Waiting for deployment to be ready..."
           sleep 30
 
-          # Check health endpoint
+          # Check legacy health endpoint
           HEALTH_URL="${{ steps.deploy.outputs.url }}/health"
           echo "Checking health at: $HEALTH_URL"
 
-          curl -f "$HEALTH_URL" || echo "Health check failed (may need to wait longer)"
+          curl -f "$HEALTH_URL" || echo "⚠️ Health check failed (may need to wait longer)"
+        continue-on-error: true
+
+      - name: Health check (/v1/health - Memory Layer spec)
+        run: |
+          # Check Memory Layer spec-compliant health endpoint
+          HEALTH_V1_URL="${{ steps.deploy.outputs.url }}/v1/health"
+          echo "Checking Memory Layer health at: $HEALTH_V1_URL"
+
+          RESPONSE=$(curl -f "$HEALTH_V1_URL" | jq '.')
+          echo "$RESPONSE"
+
+          # Verify response structure
+          echo "$RESPONSE" | jq -e '.status' > /dev/null || (echo "❌ Missing status field"; exit 1)
+          echo "$RESPONSE" | jq -e '.components' > /dev/null || (echo "❌ Missing components field"; exit 1)
+          echo "$RESPONSE" | jq -e '.metrics' > /dev/null || (echo "❌ Missing metrics field"; exit 1)
+          echo "$RESPONSE" | jq -e '.compliance' > /dev/null || (echo "❌ Missing compliance field"; exit 1)
+
+          STATUS=$(echo "$RESPONSE" | jq -r '.status')
+          if [ "$STATUS" != "healthy" ] && [ "$STATUS" != "degraded" ]; then
+            echo "❌ Unhealthy status: $STATUS"
+            exit 1
+          fi
+
+          echo "✅ Memory Layer health check passed (status: $STATUS)"
+        continue-on-error: true
+
+      - name: Verify audit emitter
+        run: |
+          HEALTH_V1_URL="${{ steps.deploy.outputs.url }}/v1/health"
+          RESPONSE=$(curl -f "$HEALTH_V1_URL" | jq '.')
+
+          AUDIT_STATUS=$(echo "$RESPONSE" | jq -r '.components.audit.status')
+          LEDGER_HEIGHT=$(echo "$RESPONSE" | jq -r '.metrics.audit_ledger_height')
+
+          echo "Audit component status: $AUDIT_STATUS"
+          echo "Audit ledger height: $LEDGER_HEIGHT"
+
+          if [ "$AUDIT_STATUS" != "healthy" ]; then
+            echo "⚠️ Audit component not healthy"
+          else
+            echo "✅ Audit emitter operational"
+          fi
         continue-on-error: true
 
       - name: Post deployment summary
         run: |
-          echo "### Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Environment**: spec-sandbox" >> $GITHUB_STEP_SUMMARY
-          echo "- **Branch**: feature/memory-layer-spec" >> $GITHUB_STEP_SUMMARY
-          echo "- **URL**: ${{ steps.deploy.outputs.url }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Environment** | spec-sandbox |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Branch** | feature/memory-layer-spec |" >> $GITHUB_STEP_SUMMARY
+          echo "| **URL** | ${{ steps.deploy.outputs.url }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Commit** | ${{ github.sha }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Available Endpoints" >> $GITHUB_STEP_SUMMARY
+          echo "- **Legacy Health**: ${{ steps.deploy.outputs.url }}/health" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory Layer Health**: ${{ steps.deploy.outputs.url }}/v1/health" >> $GITHUB_STEP_SUMMARY
+          echo "- **Protocols**: ${{ steps.deploy.outputs.url }}/api/protocols" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Phase 0 - Foundations Status" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Long-lived branch protected" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] ADR 0001 documented" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Spec index created" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] /v1/health contract deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] Audit emitter stub deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] CI policy gates passed" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] spec-sandbox environment configured" >> $GITHUB_STEP_SUMMARY

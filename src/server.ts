@@ -7,6 +7,8 @@ import express, { Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import { FieldDiagnosticAgent } from './agent';
+import { healthCheck } from './memory-layer/api/health';
+import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
 import { performanceMonitor, CacheStats } from './performance';
 import { ProtocolLoader } from './protocol/loader';
 import { ProtocolParser } from './protocol/parser';
@@ -529,7 +531,7 @@ app.get('/test', (_req: Request, res: Response) => {
   }
 });
 
-// Health check
+// Health check (legacy endpoint)
 app.get('/health', async (_req: Request, res: Response) => {
   const sessionCount = await sessionStore.size();
   const memory = performanceMonitor.getMemoryUsage();
@@ -544,6 +546,38 @@ app.get('/health', async (_req: Request, res: Response) => {
     },
     timestamp: new Date().toISOString(),
   });
+});
+
+// Memory Layer v1 Health Check (spec-compliant)
+app.get('/v1/health', apiLimiter, async (_req: Request, res: Response) => {
+  try {
+    const healthResponse = await healthCheck();
+
+    // Enrich with actual session metrics
+    const sessionCount = await sessionStore.size();
+    healthResponse.metrics.active_sessions = sessionCount;
+
+    // Enrich with audit ledger height
+    const auditEmitter = getAuditEmitter();
+    healthResponse.metrics.audit_ledger_height = auditEmitter.getLedgerHeight();
+
+    // Verify audit chain integrity
+    const chainVerification = auditEmitter.verifyChainIntegrity();
+    if (!chainVerification.valid) {
+      healthResponse.components.audit.status = 'unhealthy';
+      healthResponse.components.audit.message = chainVerification.message;
+      healthResponse.status = 'unhealthy';
+    }
+
+    res.json(healthResponse);
+  } catch (error) {
+    console.error('Error in /v1/health:', error);
+    res.status(500).json({
+      status: 'unhealthy',
+      error: 'Health check failed',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
 });
 
 // Performance metrics endpoint (rate-limited)
@@ -857,7 +891,8 @@ Endpoints:
   POST   /api/walk/continue   - Continue protocol walk
   POST   /api/walk/complete   - Complete protocol
   GET    /api/session/:id     - Get session state (debug)
-  GET    /health              - Health check
+  GET    /health              - Health check (legacy)
+  GET    /v1/health           - Memory Layer health check (spec-compliant)
 
 Ready to accept connections.
 `);
