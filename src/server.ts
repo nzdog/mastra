@@ -460,7 +460,10 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
+    // Allow Railway domains (*.railway.app and *.up.railway.app)
+    const isRailwayDomain = origin.endsWith('.railway.app') || origin.endsWith('.up.railway.app');
+
+    if (allowedOrigins.includes(origin) || isRailwayDomain) {
       callback(null, true);
     } else {
       console.warn(`🚫 CORS: Blocked request from unauthorized origin: ${origin}`);
@@ -854,18 +857,25 @@ app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
 
 // Get current git branch
 app.get('/api/branch', (_req: Request, res: Response) => {
-  const { execSync } = require('child_process');
-  try {
-    // Use project root directory (parent of src/) for git command
-    const projectRoot = path.join(__dirname, '..');
-    const branch = execSync('git rev-parse --abbrev-ref HEAD', {
-      encoding: 'utf-8',
-      cwd: projectRoot,
-    }).trim();
+  // In production (Railway), use environment variable or return 'production'
+  // In development, try to use git
+  if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT) {
+    const branch = process.env.GIT_BRANCH || process.env.RAILWAY_GIT_BRANCH || 'production';
     res.json({ branch });
-  } catch (error) {
-    console.error('Error fetching git branch:', error);
-    res.json({ branch: 'unknown' });
+  } else {
+    const { execSync } = require('child_process');
+    try {
+      // Use project root directory (parent of src/) for git command
+      const projectRoot = path.join(__dirname, '..');
+      const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+        encoding: 'utf-8',
+        cwd: projectRoot,
+      }).trim();
+      res.json({ branch });
+    } catch (error) {
+      console.error('Error fetching git branch:', error);
+      res.json({ branch: 'development' });
+    }
   }
 });
 
