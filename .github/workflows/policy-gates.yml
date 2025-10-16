@@ -97,6 +97,38 @@ jobs:
           ! grep -r "password.*=" src/ || (echo "⚠️ Potential password detected"; exit 0)
           echo "✅ No obvious hardcoded secrets found"
 
+      # Phase 1.1 - Audit Hardening Gates
+      - name: 'Gate: Schema validation (Phase 1.1)'
+        run: |
+          npm run test:schema-validation
+          echo "✅ Schema validation passed"
+
+      - name: 'Gate: RFC-8785 Canonical JSON (Phase 1.1)'
+        run: |
+          npm run test:canonical-json
+          echo "✅ Canonical JSON determinism verified"
+
+      - name: 'Gate: No PII in audit logs (Phase 1.1)'
+        run: |
+          # Check for common PII patterns in ledger files
+          if [ -d ".ledger/" ]; then
+            ! grep -r "email.*@" .ledger/ || (echo "❌ Potential PII detected in ledger"; exit 1)
+            ! grep -r "ssn.*[0-9]" .ledger/ || (echo "❌ Potential PII detected in ledger"; exit 1)
+            echo "✅ No PII detected in audit logs"
+          else
+            echo "⏩ No ledger directory found (skipping PII check)"
+          fi
+
+      # Phase 1.2 - Metrics & Verification
+      - name: 'Gate: Metrics endpoint check'
+        run: |
+          SKIP_API_KEY_CHECK=true npm run server &
+          SERVER_PID=$!
+          sleep 5
+          curl -sf http://localhost:3000/metrics | grep -q "audit_events_total" || (echo "❌ Metrics endpoint failed"; kill $SERVER_PID; exit 1)
+          kill $SERVER_PID
+          echo "✅ Metrics endpoint operational"
+
       # Branch Protection Validation
       - name: 'Gate: Branch protection check'
         if: github.ref == 'refs/heads/feature/memory-layer-spec'
