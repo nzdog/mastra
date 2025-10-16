@@ -154,6 +154,10 @@ jobs:
             sleep 1
           done
 
+          # Additional wait for full initialization (audit emitter, CORS, etc.)
+          echo "⏳ Waiting for CORS middleware to initialize..."
+          sleep 3
+
           # Test 1: Valid origin receives CORS headers
           echo "🔍 Test 1: Valid origin receives CORS headers"
           RESPONSE=$(curl -sf -H "Origin: http://localhost:3000" -i http://localhost:3000/v1/health)
