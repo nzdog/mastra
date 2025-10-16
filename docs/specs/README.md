@@ -1,7 +1,6 @@
 # Memory Layer Specification Index
 
-**Branch:** `feature/memory-layer-spec` **Environment:** `spec-sandbox` **Status:** Phase 0 -
-Foundations **Version:** 0.1.0
+**Branch:** `feature/memory-layer-phase-2` **Environment:** `spec-sandbox` **Status:** Phase 2 - Complete **Version:** 2.0.0
 
 ## Overview
 
@@ -10,13 +9,14 @@ Protocol system.
 
 ## Specification Documents
 
-| Document                                       | Status  | Description                           |
-| ---------------------------------------------- | ------- | ------------------------------------- |
-| [memory-layer-spec.md](./memory-layer-spec.md) | Draft   | Core Memory Layer specification       |
-| [api-contracts.md](./api-contracts.md)         | Pending | API endpoint contracts and schemas    |
-| [governance-model.md](./governance-model.md)   | Pending | Consent, audit, and ethics governance |
-| [privacy-security.md](./privacy-security.md)   | Pending | Privacy and security architecture     |
-| [observability.md](./observability.md)         | Pending | Metrics, logging, and monitoring      |
+| Document                                       | Status      | Description                           |
+| ---------------------------------------------- | ----------- | ------------------------------------- |
+| [memory-layer-spec.md](./memory-layer-spec.md) | Draft       | Core Memory Layer specification       |
+| [phase-2-api.md](./phase-2-api.md)             | Complete    | Phase 2 API documentation and examples|
+| [api-contracts.md](./api-contracts.md)         | Implemented | API endpoint contracts and schemas    |
+| [governance-model.md](./governance-model.md)   | Partial     | Consent, audit, and ethics governance |
+| [privacy-security.md](./privacy-security.md)   | Pending     | Privacy and security architecture     |
+| [observability.md](./observability.md)         | Implemented | Metrics, logging, and monitoring      |
 
 ## Architecture Decision Records
 
@@ -34,16 +34,23 @@ Protocol system.
 - [ ] Add CI policy gates (lint/tests/audit stub)
 - [ ] Configure `spec-sandbox` environment & secrets
 
-### Phase 1 — Governance & Audit
+### Phase 1 — Governance & Audit ✅
 
-- [ ] Merkle-chained governance ledger sink (dev)
-- [ ] Signed audit receipts for Store/Recall/Distill/Forget/Export/Health
+- [x] Merkle-chained governance ledger sink (dev)
+- [x] Signed audit receipts for Store/Recall/Distill/Forget/Export/Health
+- [x] Ed25519 signatures and JWKS distribution
+- [x] Metrics instrumentation and observability
+- [x] CORS hardening and security headers
 
-### Phase 2 — APIs & Consent Families
+### Phase 2 — APIs & Consent Families ✅
 
-- [ ] Implement six core operations
-- [ ] Personal / Cohort / Population API families
-- [ ] Error envelope + SLOs + version headers
+- [x] Implement five core operations (Store, Recall, Distill, Forget, Export)
+- [x] Personal / Cohort / Population API families
+- [x] Error envelope + SLOs + version headers
+- [x] Consent resolver middleware with fail-closed authorization
+- [x] K-anonymity enforcement for aggregations
+- [x] OpenAPI 3.0 specification
+- [x] Complete API documentation and runbooks
 
 ### Phase 3 — Privacy, Security, Governance
 

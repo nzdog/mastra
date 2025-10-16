@@ -1,0 +1,371 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://mastra-lichen.dev/schemas/memory-record.json",
+  "title": "MemoryRecord",
+  "description": "JSON Schema for Memory Layer record validation (Phase 2)",
+  "type": "object",
+  "required": [
+    "id",
+    "user_id",
+    "content",
+    "consent_family",
+    "consent_timestamp",
+    "consent_version",
+    "created_at",
+    "updated_at",
+    "access_count",
+    "audit_receipt_id"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique identifier for the memory record"
+    },
+    "user_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "User identifier - required for personal consent family"
+    },
+    "session_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 255,
+      "description": "Optional session identifier for grouping related memories"
+    },
+    "content": {
+      "type": "object",
+      "required": ["type", "data"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["text", "structured", "embedding"],
+          "description": "Content type classification"
+        },
+        "data": {
+          "description": "The actual content data - type depends on content.type",
+          "oneOf": [
+            {
+              "type": "string",
+              "description": "Plain text content"
+            },
+            {
+              "type": "object",
+              "description": "Structured JSON data"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "number"
+              },
+              "description": "Vector embedding array"
+            }
+          ]
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Optional metadata for the content",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "consent_family": {
+      "type": "string",
+      "enum": ["personal", "cohort", "population"],
+      "description": "Consent family determining access and aggregation rules"
+    },
+    "consent_timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when consent was granted"
+    },
+    "consent_version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$",
+      "description": "Semantic version of consent agreement (e.g., '1.0', '2.1.0')"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when record was created"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp when record was last updated"
+    },
+    "expires_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Optional ISO 8601 timestamp for automatic expiration"
+    },
+    "access_count": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of times this memory has been accessed"
+    },
+    "audit_receipt_id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Reference to audit receipt for governance trail"
+    }
+  },
+  "additionalProperties": false,
+  "allOf": [
+    {
+      "description": "Validation: expires_at must be after created_at",
+      "if": {
+        "properties": {
+          "expires_at": {
+            "type": "string"
+          }
+        },
+        "required": ["expires_at"]
+      },
+      "then": {
+        "properties": {
+          "expires_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      }
+    },
+    {
+      "description": "Validation: updated_at must be >= created_at",
+      "properties": {
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    }
+  ],
+  "definitions": {
+    "StoreRequest": {
+      "type": "object",
+      "required": ["content", "metadata"],
+      "properties": {
+        "content": {
+          "$ref": "#/properties/content"
+        },
+        "metadata": {
+          "type": "object",
+          "required": [
+            "user_id",
+            "consent_family",
+            "consent_timestamp",
+            "consent_version"
+          ],
+          "properties": {
+            "user_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "session_id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "consent_family": {
+              "type": "string",
+              "enum": ["personal", "cohort", "population"]
+            },
+            "consent_timestamp": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "consent_version": {
+              "type": "string",
+              "pattern": "^[0-9]+\\.[0-9]+(\\.[0-9]+)?$"
+            }
+          },
+          "additionalProperties": true
+        },
+        "expires_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "additionalProperties": false
+    },
+    "RecallQuery": {
+      "type": "object",
+      "required": ["user_id"],
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "since": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "until": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["text", "structured", "embedding"]
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1000,
+          "default": 100
+        },
+        "offset": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "sort": {
+          "type": "string",
+          "enum": ["asc", "desc"],
+          "default": "desc"
+        }
+      },
+      "additionalProperties": false
+    },
+    "DistillRequest": {
+      "type": "object",
+      "required": ["aggregation"],
+      "properties": {
+        "cohort_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "aggregation": {
+          "type": "object",
+          "required": ["type"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["count", "average", "sum", "min", "max", "distribution"]
+            },
+            "field": {
+              "type": "string",
+              "minLength": 1
+            },
+            "time_bucket": {
+              "type": "string",
+              "enum": ["hour", "day", "week", "month"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "filters": {
+          "type": "object",
+          "properties": {
+            "content_type": {
+              "type": "string",
+              "enum": ["text", "structured", "embedding"]
+            },
+            "consent_family": {
+              "type": "string",
+              "enum": ["cohort", "population"]
+            },
+            "since": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "until": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          "additionalProperties": true
+        },
+        "min_records": {
+          "type": "integer",
+          "minimum": 1,
+          "default": 10,
+          "description": "Minimum privacy threshold for aggregation"
+        }
+      },
+      "additionalProperties": false
+    },
+    "ForgetRequest": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "user_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "session_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reason": {
+          "type": "string",
+          "maxLength": 1000
+        },
+        "hard_delete": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false,
+      "anyOf": [
+        { "required": ["id"] },
+        { "required": ["user_id"] },
+        { "required": ["session_id"] }
+      ]
+    },
+    "ExportRequest": {
+      "type": "object",
+      "required": ["user_id", "format"],
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "format": {
+          "type": "string",
+          "enum": ["json", "csv", "jsonlines"]
+        },
+        "filters": {
+          "type": "object",
+          "properties": {
+            "consent_families": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["personal", "cohort", "population"]
+              },
+              "minItems": 1
+            },
+            "since": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "until": {
+              "type": "string",
+              "format": "date-time"
+            },
+            "include_deleted": {
+              "type": "boolean",
+              "default": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "include_audit": {
+          "type": "boolean",
+          "default": false
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

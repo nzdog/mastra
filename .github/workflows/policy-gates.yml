@@ -186,6 +186,183 @@ jobs:
           kill $SERVER_PID
           echo "✅ CORS configuration validation passed"
 
+      # Phase 2: Memory Layer Tests
+      - name: 'Gate: Phase 2 smoke test'
+        run: |
+          npm run test:phase-2-smoke
+          echo "✅ Phase 2 smoke test passed"
+
+      - name: 'Gate: Memory operations test'
+        run: |
+          npm run test:memory-operations
+          echo "✅ Memory operations test passed"
+
+      - name: 'Gate: Memory middleware test'
+        run: |
+          npm run test:memory-middleware
+          echo "✅ Memory middleware test passed"
+
+      - name: 'Gate: Memory storage test'
+        run: |
+          npm run test:memory-storage
+          echo "✅ Memory storage test passed"
+
+      - name: 'Gate: No PII in logs (Phase 2)'
+        run: |
+          # Check for PII patterns in test output and ledger
+          if [ -d ".ledger/" ]; then
+            ! grep -r "email.*@" .ledger/ || (echo "❌ Potential PII detected in ledger"; exit 1)
+            ! grep -r "ssn.*[0-9]" .ledger/ || (echo "❌ Potential PII detected in ledger"; exit 1)
+            echo "✅ No PII detected in audit logs"
+          else
+            echo "⏩ No ledger directory found (skipping PII check)"
+          fi
+
+      - name: 'Gate: Metrics instrumentation (Phase 2)'
+        run: |
+          SKIP_API_KEY_CHECK=true npm run server &
+          SERVER_PID=$!
+
+          # Wait for server to be ready
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID
+              exit 1
+            fi
+            sleep 1
+          done
+
+          # Additional wait for metrics initialization
+          sleep 3
+
+          # Check for Phase 2 memory metrics
+          METRICS=$(curl -sf http://localhost:3000/metrics)
+          echo "$METRICS" | grep -q "memory_operation_duration_seconds" || (echo "❌ Missing memory_operation_duration_seconds metric"; kill $SERVER_PID; exit 1)
+          echo "$METRICS" | grep -q "memory_operation_total" || (echo "❌ Missing memory_operation_total metric"; kill $SERVER_PID; exit 1)
+          echo "$METRICS" | grep -q "memory_store_records_total" || (echo "❌ Missing memory_store_records_total metric"; kill $SERVER_PID; exit 1)
+          echo "$METRICS" | grep -q "memory_recall_records_total" || (echo "❌ Missing memory_recall_records_total metric"; kill $SERVER_PID; exit 1)
+
+          kill $SERVER_PID
+          echo "✅ Memory metrics instrumentation verified"
+
+      - name: 'Gate: Error envelope compliance (Phase 2)'
+        run: |
+          SKIP_API_KEY_CHECK=true npm run server &
+          SERVER_PID=$!
+
+          # Wait for server
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+              echo "✅ Server ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID
+              exit 1
+            fi
+            sleep 1
+          done
+
+          sleep 3
+
+          # Test 1: 401 Unauthorized error envelope
+          echo "🔍 Test 1: 401 error envelope"
+          RESPONSE_401=$(curl -sf -i -X POST http://localhost:3000/v1/personal/store \
+            -H "Content-Type: application/json" \
+            -d '{"content":{"type":"text","data":"test"}}' || true)
+
+          echo "$RESPONSE_401" | grep -qi "HTTP/1.1 401" || (echo "❌ Expected 401 status"; kill $SERVER_PID; exit 1)
+
+          BODY_401=$(echo "$RESPONSE_401" | sed -n '/^{/,$p')
+          echo "$BODY_401" | grep -q '"code":"UNAUTHORIZED"' || (echo "❌ Missing UNAUTHORIZED code"; kill $SERVER_PID; exit 1)
+          echo "$BODY_401" | grep -q '"timestamp"' || (echo "❌ Missing timestamp"; kill $SERVER_PID; exit 1)
+          echo "$BODY_401" | grep -q '"path"' || (echo "❌ Missing path"; kill $SERVER_PID; exit 1)
+
+          # Test 2: 400 Validation error envelope
+          echo "🔍 Test 2: 400 error envelope"
+          RESPONSE_400=$(curl -sf -i -X POST http://localhost:3000/v1/personal/store \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer test_token_12345678" \
+            -d '{"content":{"type":"text","data":"test"}}' || true)
+
+          echo "$RESPONSE_400" | grep -qi "HTTP/1.1 400" || (echo "❌ Expected 400 status"; kill $SERVER_PID; exit 1)
+
+          BODY_400=$(echo "$RESPONSE_400" | sed -n '/^{/,$p')
+          echo "$BODY_400" | grep -q '"code":"VALIDATION_ERROR"' || (echo "❌ Missing VALIDATION_ERROR code"; kill $SERVER_PID; exit 1)
+
+          kill $SERVER_PID
+          echo "✅ Error envelope compliance verified"
+
+      - name: 'Gate: Consent family enforcement (Phase 2)'
+        run: |
+          SKIP_API_KEY_CHECK=true npm run server &
+          SERVER_PID=$!
+
+          # Wait for server
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+              echo "✅ Server ready"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID
+              exit 1
+            fi
+            sleep 1
+          done
+
+          sleep 3
+
+          # Test: Cohort recall should return 403
+          echo "🔍 Testing cohort recall forbidden (403)"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer test_user_12345678" \
+            http://localhost:3000/v1/cohort/recall?user_id=test_user)
+
+          if [ "$RESPONSE" != "403" ]; then
+            echo "❌ Expected 403 for cohort recall, got $RESPONSE"
+            kill $SERVER_PID
+            exit 1
+          fi
+
+          # Test: Population recall should return 403
+          echo "🔍 Testing population recall forbidden (403)"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer test_user_12345678" \
+            http://localhost:3000/v1/population/recall?user_id=test_user)
+
+          if [ "$RESPONSE" != "403" ]; then
+            echo "❌ Expected 403 for population recall, got $RESPONSE"
+            kill $SERVER_PID
+            exit 1
+          fi
+
+          # Test: Population forget should return 403
+          echo "🔍 Testing population forget forbidden (403)"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X DELETE \
+            -H "Authorization: Bearer test_user_12345678" \
+            http://localhost:3000/v1/population/forget?user_id=test_user)
+
+          if [ "$RESPONSE" != "403" ]; then
+            echo "❌ Expected 403 for population forget, got $RESPONSE"
+            kill $SERVER_PID
+            exit 1
+          fi
+
+          kill $SERVER_PID
+          echo "✅ Consent family enforcement verified"
+
       # Branch Protection Validation
       - name: 'Gate: Branch protection check'
         if: github.ref == 'refs/heads/feature/memory-layer-spec'
