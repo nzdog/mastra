@@ -216,11 +216,11 @@ jobs:
 
       - name: 'Audit: Verify audit emitter initialization'
         run: |
-          echo "import { getAuditEmitter } from './src/memory-layer/governance/audit-emitter.js';" > test-audit.js
-          echo "const emitter = getAuditEmitter();" >> test-audit.js
-          echo "console.log('Audit emitter initialized:', emitter.getLedgerHeight() === 0);" >> test-audit.js
-          node test-audit.js
-          rm test-audit.js
+          echo "import { getAuditEmitter } from './dist/memory-layer/governance/audit-emitter.js';" > test-audit.mjs
+          echo "const emitter = getAuditEmitter();" >> test-audit.mjs
+          echo "console.log('Audit emitter initialized:', emitter.getLedgerHeight() === 0);" >> test-audit.mjs
+          node test-audit.mjs
+          rm test-audit.mjs
 
       - name: 'Audit: Generate compliance report'
         run: |
