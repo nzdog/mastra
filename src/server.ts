@@ -17,6 +17,14 @@ import { ProtocolParser } from './protocol/parser';
 import { Session, SessionStore, createSessionStore } from './session-store';
 import { ProtocolRegistry } from './tools/registry';
 import { SessionState } from './types';
+import {
+  auditJwksFetchRequests,
+  auditVerificationDuration,
+  auditVerificationFailures,
+  getMetrics,
+  getContentType,
+  measureAsync,
+} from './observability/metrics';
 
 // Load environment variables
 dotenv.config();
@@ -668,11 +676,15 @@ app.get('/v1/receipts/:id', apiLimiter, async (req: Request, res: Response) => {
 // GET /v1/keys/jwks - Get public keys for verification
 app.get('/v1/keys/jwks', apiLimiter, async (_req: Request, res: Response) => {
   try {
+    // Phase 1.2: Emit JWKS fetch metric
+    auditJwksFetchRequests.labels('success').inc();
     const jwksManager = await getJWKSManager();
     const jwks = await jwksManager.getJWKS();
 
     res.json(jwks);
   } catch (error) {
+    // Phase 1.2: Emit JWKS fetch error metric
+    auditJwksFetchRequests.labels('error').inc();
     console.error('Error in /v1/keys/jwks:', error);
     res.status(500).json({
       error: 'Failed to get JWKS',
@@ -691,7 +703,19 @@ app.post('/v1/receipts/verify', apiLimiter, async (req: Request, res: Response) 
     }
 
     const ledger = await getLedgerSink();
-    const verification = ledger.verifyReceipt(receipt);
+
+    // Phase 1.2: Measure verification duration
+    const verification = await measureAsync(
+      auditVerificationDuration,
+      { verification_type: 'full' },
+      async () => ledger.verifyReceipt(receipt)
+    );
+
+    // Phase 1.2: Emit verification failure metric
+    if (!verification.valid) {
+      const reason = !verification.merkle_valid ? 'merkle_invalid' : 'signature_invalid';
+      auditVerificationFailures.labels(reason).inc();
+    }
 
     res.json({
       valid: verification.valid,
@@ -734,6 +758,28 @@ app.get('/v1/ledger/integrity', apiLimiter, async (req: Request, res: Response) 
       message: error instanceof Error ? error.message : String(error),
     });
   }
+});
+
+// Prometheus metrics endpoint (Phase 1.2)
+app.get('/metrics', metricsLimiter, async (_req: Request, res: Response) => {
+  res.set('Content-Type', getContentType());
+  res.end(await getMetrics());
+});
+
+// Git branch info endpoint (for UI display)
+app.get('/api/git/branch', apiLimiter, (_req: Request, res: Response) => {
+  const { execSync } = require('child_process');
+  let branchName = 'unknown';
+  try {
+    branchName = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+  } catch {
+    // If git command fails, use unknown
+  }
+
+  res.json({
+    branch: branchName,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // Performance metrics endpoint (rate-limited)
@@ -1032,10 +1078,20 @@ app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
 
 // Start server
 app.listen(PORT, () => {
+  // Get current git branch
+  const { execSync } = require('child_process');
+  let branchName = 'unknown';
+  try {
+    branchName = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+  } catch {
+    // If git command fails, use unknown
+  }
+
   console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
 ║        Field Diagnostic Protocol - API Server                  ║
+║        Branch: ${branchName.padEnd(47)}║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
 
@@ -1052,6 +1108,7 @@ Health & Monitoring:
   GET    /health              - Health check (legacy)
   GET    /v1/health           - Memory Layer health check (spec-compliant)
   GET    /api/metrics         - Performance metrics
+  GET    /metrics             - Prometheus audit metrics (Phase 1.2)
 
 Phase 1.1 Verification Endpoints:
   GET    /v1/ledger/root      - Get current Merkle root

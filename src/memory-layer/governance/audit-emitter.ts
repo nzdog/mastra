@@ -5,6 +5,7 @@
  * Part of Memory Layer Specification - Phase 1
  */
 
+import { auditEventsTotal } from '../../observability/metrics';
 import {
   getLedgerSink,
   SignedAuditReceipt,
@@ -121,6 +122,9 @@ export class AuditEmitter {
 
     // Append to ledger - gets Merkle proof + signature
     const signedReceipt: SignedAuditReceipt = await ledger.append(event);
+
+    // Phase 1.2: Emit audit events counter
+    auditEventsTotal.labels(eventType, operation).inc();
 
     console.log(
       `📝 AUDIT: ${eventType} event emitted (event_id: ${event.event_id}, receipt_id: ${signedReceipt.receipt_id})`

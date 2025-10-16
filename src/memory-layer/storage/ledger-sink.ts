@@ -9,6 +9,14 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as lockfile from 'proper-lockfile';
+import {
+  auditLedgerHeight,
+  auditMerkleAppendDuration,
+  auditFileLockWaitDuration,
+  auditCrashRecoveryTempFilesRemoved,
+  measureSync,
+  measureAsync,
+} from '../../observability/metrics';
 import { CryptoSigner, SignatureResult } from '../governance/crypto-signer';
 import { MerkleTree, MerkleNode, MerkleProof } from '../governance/merkle-tree';
 import { canonicalStringify } from '../utils/canonical-json';
@@ -132,6 +140,8 @@ export class LedgerSink {
         const tempPath = path.join(this.ledgerPath, tempFile);
         await fs.promises.unlink(tempPath);
         console.log(`🔧 Removed incomplete write: ${tempFile}`);
+        // Phase 1.2: Emit crash recovery metric
+        auditCrashRecoveryTempFilesRemoved.inc();
       }
 
       // Check receipts directory
@@ -166,13 +176,18 @@ export class LedgerSink {
 
     // Acquire lock for concurrent write protection
     // Phase 1.1: Prevents race conditions in multi-process environments
-    const release = await lockfile.lock(this.ledgerPath, {
-      stale: 10000, // 10 second stale timeout
-      retries: {
-        retries: 5,
-        minTimeout: 100,
-        maxTimeout: 1000,
-      },
+    // Phase 1.2: Measure lock wait time
+    const release = await measureAsync(auditFileLockWaitDuration, undefined, async () => {
+      // Note: Lock contention metrics would require wrapping retry logic separately
+      // For Phase 1.2, we track lock wait time; contention tracking can be added in future phases
+      return await lockfile.lock(this.ledgerPath, {
+        stale: 10000, // 10 second stale timeout
+        retries: {
+          retries: 5,
+          minTimeout: 100,
+          maxTimeout: 1000,
+        },
+      });
     });
 
     try {
@@ -181,7 +196,10 @@ export class LedgerSink {
       const eventData = canonicalStringify(event);
 
       // Append to Merkle tree
-      const { node, proof } = this.merkleTree.append(eventData);
+      // Phase 1.2: Measure Merkle append time
+      const { node, proof } = measureSync(auditMerkleAppendDuration, undefined, () =>
+        this.merkleTree.append(eventData)
+      );
 
       // Sign the Merkle root + event data using canonical JSON
       // Phase 1.1: Canonical serialization prevents signature verification failures
@@ -217,6 +235,9 @@ export class LedgerSink {
 
       // Persist ledger state (with atomic writes)
       await this.persistState(event.event_id, receiptId);
+
+      // Phase 1.2: Emit ledger height metric
+      auditLedgerHeight.set(this.ledgerHeight);
 
       return receipt;
     } finally {

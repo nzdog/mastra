@@ -8,6 +8,7 @@
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import * as path from 'path';
+import { auditSignatureDuration, auditKeyAgeDays, measureSync } from '../../observability/metrics';
 
 export interface SignatureResult {
   signature: string; // Base64-encoded signature
@@ -112,8 +113,13 @@ export class CryptoSigner {
     }
 
     // Ed25519 uses crypto.sign directly (no createSign needed)
+    // Phase 1.2: Measure signature duration
     const dataBuffer = Buffer.from(data, 'utf8');
-    const signatureBuffer = crypto.sign(null, dataBuffer, this.privateKey);
+    const signatureBuffer = measureSync(
+      auditSignatureDuration,
+      { algorithm: this.algorithm },
+      () => crypto.sign(null, dataBuffer, this.privateKey!)
+    );
     const signature = signatureBuffer.toString('base64');
 
     return {
@@ -306,6 +312,9 @@ export class CryptoSigner {
     const stats = fs.statSync(privateKeyPath);
     const createdAt = stats.mtime.toISOString();
     const ageDays = (Date.now() - stats.mtimeMs) / (1000 * 60 * 60 * 24);
+
+    // Phase 1.2: Emit key age metric
+    auditKeyAgeDays.labels(this.keyId).set(Math.round(ageDays * 10) / 10);
 
     return {
       keyId: this.keyId,
