@@ -280,12 +280,9 @@ export class FieldDiagnosticAgent {
       return classification.user_wants_to.navigate_to_theme;
     }
 
-    // Starting the walk - handles both 'walk' intent and 'memory' when theme is null
-    if (
-      this.state.theme_index === null &&
-      (classification.intent === 'walk' || classification.intent === 'memory')
-    ) {
-      console.log('   → Starting walk, returning 1');
+    // Starting the walk - return theme 1 if we're in WALK mode with no current theme
+    if (this.state.theme_index === null) {
+      console.log('   → Starting walk (theme_index is null), returning 1');
       return 1;
     }
 
@@ -571,13 +568,13 @@ export class FieldDiagnosticAgent {
 
       // Fallback (should never reach here if protocol is properly formatted)
       return 'Error: Unable to load protocol introduction.';
-    } else if (mode === 'WALK' && themeIndex && chunk) {
+    } else if (mode === 'WALK' && chunk) {
       // Return theme questions from protocol content
       const content = chunk.content;
       const lines = content.split('\n');
 
       // Extract theme title, purpose, why this matters, and guiding questions
-      let themeTitle = '';
+      let _themeTitle = '';
       let purpose = '';
       let whyThisMatters = '';
       const questions: string[] = [];
@@ -590,7 +587,7 @@ export class FieldDiagnosticAgent {
           // Extract just "Surface Behaviors"
           const titleMatch = line.match(/###\s*\d+\.\s*([^*]+)/);
           if (titleMatch) {
-            themeTitle = titleMatch[1].trim();
+            _themeTitle = titleMatch[1].trim();
           }
         } else if (line.startsWith('**Purpose:**')) {
           purpose = line.replace('**Purpose:**', '').trim();
@@ -606,7 +603,7 @@ export class FieldDiagnosticAgent {
       }
 
       // Build response with proper formatting
-      let response = `**Theme ${themeIndex} – ${themeTitle}**\n**Purpose:** ${purpose}\n`;
+      let response = `**Purpose:** ${purpose}\n`;
       response += `**Why This Matters**\n${whyThisMatters}\n`;
       response += `**Guiding Questions:**\n${questions.join('\n')}\n`;
       response += `Take a moment with those, and when you're ready, share what comes up.`;
@@ -614,6 +611,14 @@ export class FieldDiagnosticAgent {
       return response;
     }
 
+    console.error(
+      '⚠️ buildStaticResponse fallback reached! mode:',
+      mode,
+      'themeIndex:',
+      themeIndex,
+      'chunk:',
+      chunk ? 'present' : 'null'
+    );
     return ''; // Fallback (should never reach here)
   }
 

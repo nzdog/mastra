@@ -418,6 +418,7 @@ app.use(
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
         frameSrc: ["'none'"],
+        upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
       },
     },
     // Strict Transport Security - forces HTTPS (disabled in dev)
@@ -445,8 +446,10 @@ const allowedOrigins = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
   : [
       'http://localhost:3000',
+      'http://localhost:5001',
       'http://localhost:5173', // Vite dev server
       'http://127.0.0.1:3000',
+      'http://127.0.0.1:5001',
       'http://127.0.0.1:5173',
     ];
 
@@ -838,6 +841,23 @@ app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
     last_accessed: session.last_accessed,
     state,
   });
+});
+
+// Get current git branch
+app.get('/api/branch', (_req: Request, res: Response) => {
+  const { execSync } = require('child_process');
+  try {
+    // Use project root directory (parent of src/) for git command
+    const projectRoot = path.join(__dirname, '..');
+    const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+      encoding: 'utf-8',
+      cwd: projectRoot,
+    }).trim();
+    res.json({ branch });
+  } catch (error) {
+    console.error('Error fetching git branch:', error);
+    res.json({ branch: 'unknown' });
+  }
 });
 
 // Start server
