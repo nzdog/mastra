@@ -9,6 +9,157 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+**CORS Hardening & Verification Gates (Phase 1.2)**
+
+- **CORS Configuration Module** (`src/config/cors.ts`):
+  - Environment-driven CORS configuration with safe defaults
+  - Explicit origin allowlist (no wildcard with credentials)
+  - Functions: `parseCorsConfig()`, `isOriginAllowed()`, `getCorsHeaders()`, `getPreflightHeaders()`
+  - Production enforcement: throws error if `CORS_ALLOWED_ORIGINS` not set
+  - Critical validation: prevents `CORS_ALLOW_CREDENTIALS=true` with wildcard origin
+
+- **CORS Observability Metrics**:
+  - `cors_preflight_total` - Counter for preflight (OPTIONS) requests by route and origin_allowed
+  - `cors_reject_total` - Counter for rejected CORS requests by route
+  - `cors_preflight_duration_ms` - Histogram for preflight processing time (P50, P95, P99)
+
+- **Security Headers Middleware**:
+  - `Referrer-Policy: no-referrer` (privacy hardening)
+  - `X-Content-Type-Options: nosniff` (MIME sniffing protection)
+  - `Permissions-Policy` (disable geolocation, microphone, camera, payment, USB, etc.)
+
+- **CORS Smoke Tests** (`test/cors-smoke.test.ts`):
+  - End-to-end validation of CORS configuration
+  - Tests valid origin (receives CORS headers)
+  - Tests invalid origin (rejected, no CORS headers)
+  - Tests preflight OPTIONS requests with cache headers
+  - Validates credentials policy (safe configuration)
+  - Verifies security headers present
+  - Confirms CORS metrics in `/metrics` endpoint
+
+- **CI Policy Gates** (`.github/workflows/policy-gates.yml`):
+  - CORS configuration validation with curl tests
+  - Tests valid/invalid origin handling
+  - Validates preflight OPTIONS responses
+  - Confirms security headers (Referrer-Policy, X-Content-Type-Options, Permissions-Policy)
+  - Verifies CORS metrics instrumentation
+
+- **Documentation**:
+  - Updated `env/SPEC_SANDBOX.md` with comprehensive CORS configuration
+  - Updated `docs/specs/environment-setup.md` with CORS variables table
+  - Added CORS troubleshooting section
+
+- **Runbooks**:
+  - `docs/runbooks/cors-change-checklist.md` - Step-by-step checklist for CORS configuration changes
+  - `docs/runbooks/canary-cors.md` - Gradual rollout guide for high-risk CORS changes
+
+### Changed
+
+**Server CORS Implementation** (`src/server.ts`):
+- Removed legacy `cors` package dependency
+- Replaced with custom CORS middleware using `parseCorsConfig()`
+- Added explicit OPTIONS handler for preflight requests
+- Preflight cache control via `Access-Control-Max-Age` header (default: 600s)
+- CORS rejection logging: `🚫 CORS: Rejected origin="..."`
+- Metrics instrumentation for all CORS operations
+
+**Environment Configuration** (`.env.example`):
+- Added `CORS_ALLOWED_ORIGINS` (required in production)
+- Added `CORS_ALLOW_CREDENTIALS` (default: false)
+- Added `CORS_MAX_AGE` (default: 600 seconds)
+- Added `CORS_ALLOW_METHODS` (default: GET,POST,PUT,PATCH,DELETE,OPTIONS)
+- Added `CORS_ALLOW_HEADERS` (default: Content-Type,Authorization,X-Requested-With,X-API-Version,X-Trace-ID)
+- Added `CORS_EXPOSE_HEADERS` (default: X-API-Version,X-Spec-Version)
+
+### Security
+
+- **CORS Hardening**: Explicit origin allowlist prevents CSRF attacks
+- **No wildcard with credentials**: Runtime validation prevents insecure configuration
+- **Preflight cache**: Reduces OPTIONS requests, improves performance
+- **Security headers**: Comprehensive privacy and security hardening
+- **Observability**: CORS metrics enable monitoring and alerting
+- **CI gates**: Automated validation of CORS configuration on every deploy
+
+---
+
+## [Phase 1.2.1] - 2025-10-16
+
+### Fixed
+
+**CRITICAL: Unified CryptoSigner Usage (Signer Divergence Fix)**
+- **Issue**: LedgerSink created its own CryptoSigner instance instead of using the global singleton, causing signatures to use a different key than published in JWKS. This meant external verifiers could NOT verify signatures.
+- **Solution**: Introduced `SignerRegistry` as the single source of truth for signing keys
+  - All components (LedgerSink, JWKS Manager) now use the same signer instance
+  - Ensures ledger signer kid === JWKS active kid
+
+**Implemented RFC 7638 JWK Thumbprint for Stable kid:**
+- kid is now derived from SHA-256 hash of canonical JWK representation (RFC 7638)
+- Ensures stable, deterministic kid across restarts
+- Example kid: `ZbwG6uXwdVXkcyrc2QC0ETqPd_k9KiZmd9U1m6vnnco` (base64url-encoded)
+
+**JWKS Rotation Grace Period:**
+- JWKS endpoint now returns both current AND previous keys during 48-hour grace period
+- Allows external verifiers to verify signatures during key rotation
+- Previous key automatically expires after grace period
+
+### Added
+
+**SignerRegistry** (`src/memory-layer/governance/signer-registry.ts`):
+- Process-wide singleton managing CryptoSigner lifecycle
+- `getActiveSigner()` - Returns current signer for signing operations
+- `getVerificationSigners()` - Returns current + previous (if in grace period) for verification
+- `rotateKeys()` - Archives current key as previous, generates new current key
+- Tracks rotation timestamp and grace period (48 hours)
+
+**Kid Consistency Monitoring:**
+- Health check now verifies ledger signer kid matches JWKS active kid
+- Health endpoint fails if kids mismatch (critical alert)
+- New metrics:
+  - `audit_jwks_mismatch_total` - Counter for kid mismatches (should always be 0)
+  - `audit_ledger_signer_kid_info` - Info gauge for ledger signer kid
+  - `audit_jwks_active_kid_info` - Info gauge for JWKS active kid
+
+**CI Test for JWKS Verification** (`test/jwks-verification.test.ts`):
+- End-to-end test: creates receipt, fetches JWKS, verifies signature using ONLY JWKS
+- Ensures LedgerSink and JWKS publish the same key
+- Validates JWKS structure (OKP/Ed25519/EdDSA)
+- Tests negative case (tampered data correctly rejected)
+
+**Governance Correction Event:**
+- Emitted `GOVERNANCE_OVERRIDE` event documenting the signer unification fix
+- Immutable audit trail of the correction in ledger
+- Script: `scripts/emit-signer-unification-event.ts`
+
+### Changed
+
+**LedgerSink** (`src/memory-layer/storage/ledger-sink.ts`):
+- No longer creates own CryptoSigner in constructor
+- Gets signer from `SignerRegistry.getActiveSigner()` during initialization
+- Added null checks where signer is used
+
+**JWKS Manager** (`src/memory-layer/governance/jwks-manager.ts`):
+- Uses `SignerRegistry.getVerificationSigners()` instead of `getCryptoSigner()`
+- Returns array of keys (current + previous if in grace)
+
+**CryptoSigner** (`src/memory-layer/governance/crypto-signer.ts`):
+- `generateKeys()` now computes RFC 7638 JWK thumbprint for kid
+- Added `computeJwkThumbprint()` method for SHA-256 hash of canonical JWK
+- Old timestamp-based `generateKeyId()` marked as deprecated
+
+**Server** (`src/server.ts`):
+- Imports `SignerRegistry` and kid metrics
+- Health endpoint verifies kid consistency and emits metrics
+
+### Security
+
+- **CRITICAL FIX**: External verifiers can now successfully verify signatures using JWKS
+- Stable kid prevents confusion during key rotation
+- Grace period prevents verification failures during rotation window
+- Health check detects kid mismatches immediately
+- Comprehensive monitoring via Prometheus metrics
+
 ---
 
 ## [Phase 1.2] - 2025-10-16

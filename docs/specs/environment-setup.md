@@ -21,13 +21,19 @@ Set these in your GitHub repository settings (`Settings` → `Secrets and variab
 
 Set these in Railway dashboard for the `spec-sandbox` environment:
 
-| Variable Name       | Description                                       | Example Value            | Required  |
-| ------------------- | ------------------------------------------------- | ------------------------ | --------- |
-| `ANTHROPIC_API_KEY` | Anthropic Claude API key                          | `sk-ant-api03-...`       | Yes       |
-| `PORT`              | Server port (auto-set by Railway)                 | `3000`                   | No (auto) |
-| `NODE_ENV`          | Environment mode                                  | `production`             | No        |
-| `ALLOWED_ORIGINS`   | CORS allowed origins (comma-separated)            | `https://yourdomain.com` | No        |
-| `REDIS_URL`         | Redis connection string (for persistent sessions) | `redis://...`            | No        |
+| Variable Name              | Description                                      | Example Value                              | Required (Prod) |
+| -------------------------- | ------------------------------------------------ | ------------------------------------------ | --------------- |
+| `ANTHROPIC_API_KEY`        | Anthropic Claude API key                         | `sk-ant-api03-...`                         | Yes             |
+| `PORT`                     | Server port (auto-set by Railway)                | `3000`                                     | No (auto)       |
+| `NODE_ENV`                 | Environment mode                                 | `production`                               | No              |
+| `REDIS_URL`                | Redis connection string (for persistent sessions)| `redis://...`                              | No              |
+| **CORS Configuration (Phase 1.2)**                                                                                     |
+| `CORS_ALLOWED_ORIGINS`     | CORS allowed origins (comma-separated)           | `https://yourdomain.com`                   | **Yes**         |
+| `CORS_ALLOW_CREDENTIALS`   | Allow credentials (cookies, auth headers)        | `false`                                    | No              |
+| `CORS_MAX_AGE`             | Preflight cache duration (seconds)               | `600`                                      | No              |
+| `CORS_ALLOW_METHODS`       | Allowed HTTP methods                             | `GET,POST,PUT,PATCH,DELETE,OPTIONS`        | No              |
+| `CORS_ALLOW_HEADERS`       | Allowed request headers                          | `Content-Type,Authorization`               | No              |
+| `CORS_EXPOSE_HEADERS`      | Headers exposed to client                        | `X-API-Version,X-Spec-Version`             | No              |
 
 ## Setup Instructions
 
@@ -143,10 +149,16 @@ curl https://YOUR_DEPLOYMENT_URL/v1/health | jq '.metrics.audit_ledger_height'
 - Verify ANTHROPIC_API_KEY is set correctly
 - Check audit emitter initialization
 
-**CORS errors:**
+**CORS errors (Phase 1.2):**
 
-- Add your frontend domain to `ALLOWED_ORIGINS` environment variable
-- Format: `https://yourdomain.com,https://www.yourdomain.com`
+- **Symptom:** Browser console shows CORS policy errors
+- **Fix:** Add your frontend domain to `CORS_ALLOWED_ORIGINS` environment variable
+- **Format:** `CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com`
+- **Critical:** In production, `CORS_ALLOWED_ORIGINS` MUST be set (no wildcard allowed)
+- **Preflight cache:** OPTIONS requests cached for `CORS_MAX_AGE` seconds (default: 600)
+- **Credentials:** If you need cookies/auth headers, set `CORS_ALLOW_CREDENTIALS=true` (but never with wildcard origin)
+- **Monitoring:** Check `/metrics` endpoint for `cors_preflight_total` and `cors_reject_total` counters
+- **Validation:** Server logs will show `🚫 CORS: Rejected origin="https://evil.com"` for disallowed origins
 
 ## Security Notes
 

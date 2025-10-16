@@ -1,11 +1,11 @@
 /* eslint-disable import/order */
 import { randomUUID } from 'crypto';
 import * as path from 'path';
-import cors from 'cors';
 import * as dotenv from 'dotenv';
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import { parseCorsConfig, getPreflightHeaders, getCorsHeaders, isOriginAllowed } from './config/cors';
 import { FieldDiagnosticAgent } from './agent';
 import { healthCheck } from './memory-layer/api/health';
 import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
@@ -21,10 +21,17 @@ import {
   auditJwksFetchRequests,
   auditVerificationDuration,
   auditVerificationFailures,
+  auditJwksMismatchTotal,
+  auditLedgerSignerKid,
+  auditJwksActiveKid,
+  corsPreflightTotal,
+  corsRejectTotal,
+  corsPreflightDuration,
   getMetrics,
   getContentType,
   measureAsync,
 } from './observability/metrics';
+import { getSignerRegistry } from './memory-layer/governance/signer-registry';
 
 // Load environment variables
 dotenv.config();
@@ -455,36 +462,80 @@ app.use(
   })
 );
 
-// CORS Configuration - Secure origin validation
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
-  : [
-      'http://localhost:3000',
-      'http://localhost:5173', // Vite dev server
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5173',
-    ];
+// CORS Configuration - Hardened with explicit allowlist
+const corsConfig = parseCorsConfig();
 
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      return callback(null, true);
+// CORS middleware - applies to all routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.get('Origin');
+
+  if (isOriginAllowed(origin, corsConfig)) {
+    const corsHeaders = getCorsHeaders(origin, corsConfig);
+    if (corsHeaders) {
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        res.setHeader(key, value);
+      });
     }
+  } else if (origin) {
+    // Log rejection with route info (no PII)
+    console.warn(`🚫 CORS: Rejected origin="${origin}" on route="${req.path}"`);
+    corsRejectTotal.labels(req.path).inc();
+  }
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
+  next();
+});
+
+// Enhanced CORS middleware - handles preflight (OPTIONS) requests
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'OPTIONS') {
+    const start = Date.now();
+    const origin = req.get('Origin');
+    const route = req.path;
+
+    const preflightHeaders = getPreflightHeaders(origin, corsConfig);
+
+    if (preflightHeaders) {
+      // Origin allowed
+      Object.entries(preflightHeaders).forEach(([key, value]) => {
+        res.setHeader(key, value);
+      });
+      corsPreflightTotal.labels(route, 'true').inc();
     } else {
-      console.warn(`🚫 CORS: Blocked request from unauthorized origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      // Origin rejected - no CORS headers (but still return 200)
+      corsPreflightTotal.labels(route, 'false').inc();
     }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-app.use(cors(corsOptions));
+
+    // Measure preflight duration
+    const duration = Date.now() - start;
+    corsPreflightDuration.observe(duration);
+
+    // End OPTIONS request
+    res.status(200).end();
+    return;
+  }
+
+  next();
+});
+
+// Additional Security Headers (Phase 1.2: CORS Hardening)
+// Helmet provides most headers, but we add explicit ones per spec
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  // Referrer-Policy: no-referrer (privacy hardening)
+  res.setHeader('Referrer-Policy', 'no-referrer');
+
+  // X-Content-Type-Options: nosniff (already set by Helmet, but explicit)
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  // Permissions-Policy: minimal (disable unnecessary features)
+  // Disable geolocation, microphone, camera, payment, USB, etc.
+  res.setHeader(
+    'Permissions-Policy',
+    'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()'
+  );
+
+  next();
+});
+
 app.use(express.json({ limit: '1mb' })); // Add request size limit for security
 
 // Test route
@@ -601,6 +652,34 @@ app.get('/v1/health', apiLimiter, async (_req: Request, res: Response) => {
         : 'expiring_soon'
       : 'current';
     healthResponse.compliance.last_key_rotation = keyStatus.createdAt;
+
+    // Phase 1.2: Verify ledger signer kid matches JWKS active kid
+    try {
+      const registry = await getSignerRegistry();
+      const ledgerSignerKid = registry.getCurrentKid();
+      const jwksManager = await getJWKSManager();
+      const jwks = await jwksManager.getJWKS();
+      const jwksActiveKid = jwks.keys[0]?.kid; // First key is active key
+
+      // Emit info gauges for monitoring
+      auditLedgerSignerKid.labels(ledgerSignerKid).set(1);
+      if (jwksActiveKid) {
+        auditJwksActiveKid.labels(jwksActiveKid).set(1);
+      }
+
+      // Critical check: kids MUST match
+      if (ledgerSignerKid !== jwksActiveKid) {
+        console.error(`❌ CRITICAL: Ledger signer kid (${ledgerSignerKid}) !== JWKS active kid (${jwksActiveKid})`);
+        auditJwksMismatchTotal.inc();
+        healthResponse.status = 'unhealthy';
+        healthResponse.components.audit.status = 'unhealthy';
+        healthResponse.components.audit.message = `KEY MISMATCH: Ledger signer (${ledgerSignerKid}) != JWKS (${jwksActiveKid})`;
+      }
+    } catch (error) {
+      console.error('⚠️ Failed to verify kid consistency:', error);
+      healthResponse.components.audit.status = 'degraded';
+      healthResponse.components.audit.message = 'Failed to verify kid consistency';
+    }
 
     // Emit HEALTH audit event (Phase 1)
     await auditEmitter.emit('HEALTH', 'health_check', {

@@ -111,6 +111,66 @@ export const auditJwksFetchRequests = new promClient.Counter({
   registers: [register],
 });
 
+/**
+ * Total number of JWKS/Ledger kid mismatches detected
+ * Phase 1.2: Critical alert metric - should always be 0
+ */
+export const auditJwksMismatchTotal = new promClient.Counter({
+  name: 'audit_jwks_mismatch_total',
+  help: 'Total number of JWKS/Ledger kid mismatches detected (critical alert)',
+  registers: [register],
+});
+
+/**
+ * Info gauge for ledger signer kid
+ * Phase 1.2: For monitoring/dashboards
+ */
+export const auditLedgerSignerKid = new promClient.Gauge({
+  name: 'audit_ledger_signer_kid_info',
+  help: 'Current ledger signer key ID (info metric)',
+  labelNames: ['kid'],
+  registers: [register],
+});
+
+/**
+ * Info gauge for JWKS active kid
+ * Phase 1.2: For monitoring/dashboards
+ */
+export const auditJwksActiveKid = new promClient.Gauge({
+  name: 'audit_jwks_active_kid_info',
+  help: 'Current JWKS active key ID (info metric)',
+  labelNames: ['kid'],
+  registers: [register],
+});
+
+// =============================================================================
+// CORS METRICS
+// =============================================================================
+
+/** Total number of CORS preflight requests */
+export const corsPreflightTotal = new promClient.Counter({
+  name: 'cors_preflight_total',
+  help: 'Total number of CORS preflight (OPTIONS) requests',
+  labelNames: ['route', 'origin_allowed'],
+  registers: [register],
+});
+
+/** Total number of rejected CORS requests */
+export const corsRejectTotal = new promClient.Counter({
+  name: 'cors_reject_total',
+  help: 'Total number of rejected CORS requests (invalid origin)',
+  labelNames: ['route'],
+  registers: [register],
+});
+
+/** Time to process CORS preflight request (milliseconds) */
+export const corsPreflightDuration = new promClient.Histogram({
+  name: 'cors_preflight_duration_ms',
+  help: 'Time to process CORS preflight request (milliseconds)',
+  buckets: [0.1, 0.5, 1, 2, 5, 10, 25, 50], // milliseconds
+  registers: [register],
+});
+
 // =============================================================================
 // OPERATIONAL METRICS
 // =============================================================================
