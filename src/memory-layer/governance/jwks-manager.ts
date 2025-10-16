@@ -3,9 +3,10 @@
  *
  * Manages public key distribution for audit receipt verification
  * Phase 1.1: Ed25519 keys with rotation support
+ * Phase 1.2: Uses SignerRegistry for unified key management
  */
 
-import { getCryptoSigner } from './crypto-signer';
+import { getSignerRegistry } from './signer-registry';
 
 export interface JWK {
   kty: string; // Key Type ('OKP' for Ed25519)
@@ -29,24 +30,26 @@ export interface JWKS {
 export class JWKSManager {
   /**
    * Get current JWKS (active keys only)
-   * Phase 1.1: Single active key, will support rotation in future
+   * Phase 1.2: Returns current key + previous key (if within grace period)
    */
   async getJWKS(): Promise<JWKS> {
-    const signer = await getCryptoSigner();
-    const jwk = signer.getPublicKeyJWK();
+    const registry = await getSignerRegistry();
+    const signers = registry.getVerificationSigners();
+
+    // Get JWKs from all verification signers (current + previous if in grace)
+    const keys = signers.map(signer => signer.getPublicKeyJWK());
 
     return {
-      keys: [jwk],
+      keys,
     };
   }
 
   /**
    * Get full JWKS (active + historical keys)
-   * Phase 1.1: Single key, will support multiple keys in future
+   * Phase 1.2: Same as getJWKS() - includes grace period keys
    */
   async getFullJWKS(): Promise<JWKS> {
-    // For now, same as getJWKS()
-    // In future: include archived keys for verification of old receipts
+    // Phase 1.2: getJWKS() already includes rotation grace period keys
     return this.getJWKS();
   }
 

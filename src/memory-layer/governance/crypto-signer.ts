@@ -75,9 +75,10 @@ export class CryptoSigner {
   /**
    * Generate new Ed25519 key pair
    * Phase 1.1: Modern elliptic curve cryptography
+   * Phase 1.2: Uses RFC 7638 JWK thumbprint for stable kid
    */
   private async generateKeys(): Promise<void> {
-    console.log(`🔑 Generating new Ed25519 key pair (keyId: ${this.keyId})...`);
+    console.log(`🔑 Generating new Ed25519 key pair...`);
 
     const { privateKey, publicKey } = crypto.generateKeyPairSync('ed25519', {
       publicKeyEncoding: {
@@ -92,6 +93,12 @@ export class CryptoSigner {
 
     this.privateKey = crypto.createPrivateKey(privateKey);
     this.publicKey = crypto.createPublicKey(publicKey);
+
+    // Phase 1.2: Compute RFC 7638 JWK thumbprint for stable kid
+    const jwk = this.publicKey.export({ format: 'jwk' });
+    this.keyId = this.computeJwkThumbprint(jwk);
+
+    console.log(`🔑 Key ID (RFC 7638 thumbprint): ${this.keyId}`);
 
     // Save keys to disk
     const privateKeyPath = path.join(this.keyDir, `${this.keyId}-private.pem`);
@@ -220,11 +227,52 @@ export class CryptoSigner {
 
   /**
    * Generate unique key ID
+   * Phase 1.2: Deprecated - use RFC 7638 thumbprint instead
    */
   private generateKeyId(): string {
     const timestamp = Date.now();
     const random = crypto.randomBytes(4).toString('hex');
     return `key_${timestamp}_${random}`;
+  }
+
+  /**
+   * Compute RFC 7638 JWK thumbprint for a public key
+   * Ensures stable kid across restarts
+   *
+   * Phase 1.2: Uses SHA-256 hash of canonical JWK representation
+   *
+   * @param jwk JSON Web Key (public key)
+   * @returns Base64url-encoded SHA-256 thumbprint
+   */
+  private computeJwkThumbprint(jwk: Record<string, unknown>): string {
+    // RFC 7638: Required members only, in lexicographic order
+    const requiredMembers: Record<string, unknown> = {};
+
+    if (jwk.kty === 'OKP') {
+      // Ed25519: crv, kty, x
+      requiredMembers.crv = jwk.crv;
+      requiredMembers.kty = jwk.kty;
+      requiredMembers.x = jwk.x;
+    } else if (jwk.kty === 'RSA') {
+      // RSA: e, kty, n
+      requiredMembers.e = jwk.e;
+      requiredMembers.kty = jwk.kty;
+      requiredMembers.n = jwk.n;
+    } else {
+      throw new Error(`Unsupported key type for thumbprint: ${jwk.kty}`);
+    }
+
+    // Canonicalize JSON (lexicographic order, no whitespace)
+    const canonicalJson = JSON.stringify(requiredMembers, Object.keys(requiredMembers).sort());
+
+    // SHA-256 hash
+    const hash = crypto.createHash('sha256').update(canonicalJson, 'utf8').digest();
+
+    // Base64url encode (replace + with -, / with _, remove padding =)
+    return hash.toString('base64')
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=/g, '');
   }
 
   /**

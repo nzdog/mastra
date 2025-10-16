@@ -18,6 +18,7 @@ import {
   measureAsync,
 } from '../../observability/metrics';
 import { CryptoSigner, SignatureResult } from '../governance/crypto-signer';
+import { getSignerRegistry } from '../governance/signer-registry';
 import { MerkleTree, MerkleNode, MerkleProof } from '../governance/merkle-tree';
 import { canonicalStringify } from '../utils/canonical-json';
 
@@ -76,14 +77,14 @@ export interface LedgerState {
  */
 export class LedgerSink {
   private merkleTree: MerkleTree;
-  private signer: CryptoSigner;
+  private signer: CryptoSigner | null = null; // Phase 1.2: Initialized from SignerRegistry
   private ledgerPath: string;
   private ledgerHeight: number = 0;
   private initialized: boolean = false;
 
   constructor(ledgerDir?: string) {
     this.merkleTree = new MerkleTree();
-    this.signer = new CryptoSigner();
+    // Phase 1.2: Do NOT create CryptoSigner here - use SignerRegistry instead
     this.ledgerPath = ledgerDir || path.join(process.cwd(), '.ledger');
 
     // Create ledger directory if it doesn't exist
@@ -96,14 +97,17 @@ export class LedgerSink {
    * Initialize ledger sink
    * Loads existing ledger or creates new one
    * Phase 1.1: Includes crash recovery
+   * Phase 1.2: Uses SignerRegistry for unified key management
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
       return;
     }
 
-    // Initialize crypto signer (loads or generates keys)
-    await this.signer.initialize();
+    // Phase 1.2: Get signer from SignerRegistry (ensures same key as JWKS)
+    const registry = await getSignerRegistry();
+    this.signer = registry.getActiveSigner();
+    console.log(`🔗 LedgerSink using SignerRegistry signer (kid: ${this.signer.getKeyId()})`);
 
     // Phase 1.1: Check for incomplete writes from crashes
     await this.recoverFromCrash();
@@ -203,6 +207,9 @@ export class LedgerSink {
 
       // Sign the Merkle root + event data using canonical JSON
       // Phase 1.1: Canonical serialization prevents signature verification failures
+      if (!this.signer) {
+        throw new Error('Signer not initialized from SignerRegistry');
+      }
       const signaturePayload = canonicalStringify({
         root: proof.root,
         leaf: proof.leaf,
@@ -256,6 +263,10 @@ export class LedgerSink {
     signature_valid: boolean;
     message: string;
   } {
+    if (!this.signer) {
+      throw new Error('Signer not initialized from SignerRegistry');
+    }
+
     // Verify Merkle proof using canonical JSON
     // Phase 1.1: Must use same serialization as during signing
     const eventData = canonicalStringify(receipt.event);
@@ -321,6 +332,9 @@ export class LedgerSink {
    * Get key rotation status
    */
   getKeyRotationStatus() {
+    if (!this.signer) {
+      throw new Error('Signer not initialized from SignerRegistry');
+    }
     return this.signer.getKeyRotationStatus();
   }
 
@@ -476,6 +490,10 @@ export class LedgerSink {
       publicKey: string;
     };
   }> {
+    if (!this.signer) {
+      throw new Error('Signer not initialized from SignerRegistry');
+    }
+
     const statePath = path.join(this.ledgerPath, 'ledger-state.json');
     const stateData = fs.readFileSync(statePath, 'utf8');
     const state: LedgerState = JSON.parse(stateData);
