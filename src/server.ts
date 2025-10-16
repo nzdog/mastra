@@ -647,9 +647,18 @@ app.post(
       res.json(response);
     } catch (error) {
       console.error('Error in /api/walk/start:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error('Protocol slug:', req.body.protocol_slug);
+      console.error('User input:', req.body.user_input);
       res.status(500).json({
         error: 'Internal server error',
         message: error instanceof Error ? error.message : String(error),
+        stack:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.stack
+              : undefined
+            : undefined,
       });
     }
   }
