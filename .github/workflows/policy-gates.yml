@@ -161,24 +161,22 @@ jobs:
           # Test 1: Valid origin receives CORS headers
           echo "🔍 Test 1: Valid origin receives CORS headers"
           RESPONSE=$(curl -sf -H "Origin: http://localhost:3000" -i http://localhost:3000/v1/health)
-          echo "DEBUG: Full response headers:"
-          echo "$RESPONSE"
-          echo "$RESPONSE" | grep -q "access-control-allow-origin: http://localhost:3000" || (echo "❌ Valid origin CORS failed"; kill $SERVER_PID; exit 1)
+          echo "$RESPONSE" | grep -qi "access-control-allow-origin: http://localhost:3000" || (echo "❌ Valid origin CORS failed"; kill $SERVER_PID; exit 1)
 
           # Test 2: Invalid origin is rejected (no CORS headers)
           echo "🔍 Test 2: Invalid origin is rejected (no CORS headers)"
           RESPONSE_INVALID=$(curl -sf -H "Origin: https://evil.com" -i http://localhost:3000/v1/health)
-          echo "$RESPONSE_INVALID" | grep -q "access-control-allow-origin" && (echo "❌ Invalid origin NOT rejected"; kill $SERVER_PID; exit 1) || true
+          echo "$RESPONSE_INVALID" | grep -qi "access-control-allow-origin" && (echo "❌ Invalid origin NOT rejected"; kill $SERVER_PID; exit 1) || true
 
           # Test 3: Preflight OPTIONS works
           echo "🔍 Test 3: Preflight OPTIONS request works"
-          curl -sf -X OPTIONS -H "Origin: http://localhost:3000" -H "Access-Control-Request-Method: GET" -i http://localhost:3000/v1/health | grep -q "access-control-allow-origin" || (echo "❌ Preflight failed"; kill $SERVER_PID; exit 1)
+          curl -sf -X OPTIONS -H "Origin: http://localhost:3000" -H "Access-Control-Request-Method: GET" -i http://localhost:3000/v1/health | grep -qi "access-control-allow-origin" || (echo "❌ Preflight failed"; kill $SERVER_PID; exit 1)
 
           # Test 4: Security headers present
           echo "🔍 Test 4: Security headers present"
-          curl -sf -i http://localhost:3000/v1/health | grep -q "referrer-policy: no-referrer" || (echo "❌ Referrer-Policy missing"; kill $SERVER_PID; exit 1)
-          curl -sf -i http://localhost:3000/v1/health | grep -q "x-content-type-options: nosniff" || (echo "❌ X-Content-Type-Options missing"; kill $SERVER_PID; exit 1)
-          curl -sf -i http://localhost:3000/v1/health | grep -q "permissions-policy" || (echo "❌ Permissions-Policy missing"; kill $SERVER_PID; exit 1)
+          curl -sf -i http://localhost:3000/v1/health | grep -qi "referrer-policy: no-referrer" || (echo "❌ Referrer-Policy missing"; kill $SERVER_PID; exit 1)
+          curl -sf -i http://localhost:3000/v1/health | grep -qi "x-content-type-options: nosniff" || (echo "❌ X-Content-Type-Options missing"; kill $SERVER_PID; exit 1)
+          curl -sf -i http://localhost:3000/v1/health | grep -qi "permissions-policy" || (echo "❌ Permissions-Policy missing"; kill $SERVER_PID; exit 1)
 
           # Test 5: CORS metrics in /metrics endpoint
           echo "🔍 Test 5: CORS metrics in /metrics endpoint"
