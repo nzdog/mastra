@@ -161,6 +161,8 @@ jobs:
           # Test 1: Valid origin receives CORS headers
           echo "🔍 Test 1: Valid origin receives CORS headers"
           RESPONSE=$(curl -sf -H "Origin: http://localhost:3000" -i http://localhost:3000/v1/health)
+          echo "DEBUG: Full response headers:"
+          echo "$RESPONSE"
           echo "$RESPONSE" | grep -q "access-control-allow-origin: http://localhost:3000" || (echo "❌ Valid origin CORS failed"; kill $SERVER_PID; exit 1)
 
           # Test 2: Invalid origin is rejected (no CORS headers)
