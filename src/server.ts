@@ -31,9 +31,12 @@ dotenv.config();
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
-if (!API_KEY) {
+// Allow skipping the strict API key check in CI/test/dev for Phase 0.
+if (!API_KEY && process.env.NODE_ENV !== 'test' && process.env.SKIP_API_KEY_CHECK !== 'true') {
   console.error('Error: ANTHROPIC_API_KEY not found in environment variables.');
   process.exit(1);
+} else if (!API_KEY) {
+  console.warn('⚠️  ANTHROPIC_API_KEY missing, continuing in permissive mode for tests/dev.');
 }
 
 // Initialize session store (Redis if REDIS_URL provided, otherwise in-memory)

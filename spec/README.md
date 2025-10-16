@@ -1,3 +1,8 @@
+# Memory Layer Spec - detailed files
+
+This directory will contain the Memory Layer specification artifacts, JSON schemas, and example
+contracts. Currently seeded for CI.
+
 # Memory Layer Specification (Themes 1–10)
 
 This directory indexes the canonical specification themes and tracks implementation status.
