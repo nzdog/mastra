@@ -8,8 +8,9 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { MerkleTree, MerkleNode, MerkleProof } from '../governance/merkle-tree';
 import { CryptoSigner, SignatureResult } from '../governance/crypto-signer';
+import { MerkleTree, MerkleNode, MerkleProof } from '../governance/merkle-tree';
+import { canonicalStringify } from '../utils/canonical-json';
 
 export interface AuditEvent {
   event_id: string;
@@ -25,6 +26,10 @@ export interface AuditEvent {
     expiry?: string;
     revocable: boolean;
   };
+  // Phase 1.1 fields
+  schemaVersion?: string; // e.g., '1.1.0'
+  policyVersion?: string; // e.g., '2025-01'
+  consentScope?: string[]; // e.g., ['personal', 'audit']
 }
 
 export interface SignedAuditReceipt {
@@ -111,14 +116,16 @@ export class LedgerSink {
       throw new Error('LedgerSink not initialized. Call initialize() first.');
     }
 
-    // Serialize event for Merkle tree
-    const eventData = JSON.stringify(event);
+    // Serialize event for Merkle tree using canonical JSON
+    // Phase 1.1: Ensures deterministic serialization for verification
+    const eventData = canonicalStringify(event);
 
     // Append to Merkle tree
     const { node, proof } = this.merkleTree.append(eventData);
 
-    // Sign the Merkle root + event data
-    const signaturePayload = JSON.stringify({
+    // Sign the Merkle root + event data using canonical JSON
+    // Phase 1.1: Canonical serialization prevents signature verification failures
+    const signaturePayload = canonicalStringify({
       root: proof.root,
       leaf: proof.leaf,
       event_id: event.event_id,
@@ -164,12 +171,14 @@ export class LedgerSink {
     signature_valid: boolean;
     message: string;
   } {
-    // Verify Merkle proof
-    const eventData = JSON.stringify(receipt.event);
+    // Verify Merkle proof using canonical JSON
+    // Phase 1.1: Must use same serialization as during signing
+    const eventData = canonicalStringify(receipt.event);
     const merkleValid = this.merkleTree.verifyProof(receipt.merkle.proof, eventData);
 
-    // Verify signature
-    const signaturePayload = JSON.stringify({
+    // Verify signature using canonical JSON
+    // Phase 1.1: Must use same serialization as during signing
+    const signaturePayload = canonicalStringify({
       root: receipt.merkle.root_hash,
       leaf: receipt.merkle.leaf_hash,
       event_id: receipt.event.event_id,

@@ -113,6 +113,10 @@ export class AuditEmitter {
           }
         : undefined,
       payload,
+      // Phase 1.1 fields
+      schemaVersion: '1.1.0',
+      policyVersion: '2025-01',
+      consentScope: consentContext?.scope || ['audit'],
     };
 
     // Append to ledger - gets Merkle proof + signature

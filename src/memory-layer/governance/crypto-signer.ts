@@ -2,7 +2,7 @@
  * Cryptographic Signing for Audit Receipts
  *
  * Provides digital signatures for tamper-proof audit receipts
- * Phase 1: RSA-based signing with key management
+ * Phase 1.1: Ed25519-based signing with JWKS support
  */
 
 import * as crypto from 'crypto';
@@ -11,8 +11,9 @@ import * as path from 'path';
 
 export interface SignatureResult {
   signature: string; // Base64-encoded signature
-  algorithm: string;
-  keyId: string; // Identifier for the signing key
+  algorithm: string; // 'Ed25519' or 'RS256' (legacy)
+  keyId: string; // kid - Key ID for JWKS
+  alg: string; // JOSE algorithm identifier ('EdDSA' or 'RS256')
   timestamp: string;
 }
 
@@ -26,14 +27,15 @@ export interface VerificationResult {
 /**
  * Cryptographic signer for audit receipts
  *
- * Uses RSA-SHA256 for digital signatures
+ * Phase 1.1: Uses Ed25519 for digital signatures (modern, fast, small)
  * Supports key rotation and verification
  */
 export class CryptoSigner {
   private privateKey: crypto.KeyObject | null = null;
   private publicKey: crypto.KeyObject | null = null;
   private keyId: string;
-  private algorithm: string = 'RSA-SHA256';
+  private algorithm: string = 'Ed25519';
+  private alg: string = 'EdDSA'; // JOSE algorithm identifier
   private keyDir: string;
 
   constructor(keyId?: string, keyDir?: string) {
@@ -70,13 +72,13 @@ export class CryptoSigner {
   }
 
   /**
-   * Generate new RSA key pair
+   * Generate new Ed25519 key pair
+   * Phase 1.1: Modern elliptic curve cryptography
    */
   private async generateKeys(): Promise<void> {
-    console.log(`🔑 Generating new RSA key pair (keyId: ${this.keyId})...`);
+    console.log(`🔑 Generating new Ed25519 key pair (keyId: ${this.keyId})...`);
 
-    const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', {
-      modulusLength: 2048,
+    const { privateKey, publicKey } = crypto.generateKeyPairSync('ed25519', {
       publicKeyEncoding: {
         type: 'spki',
         format: 'pem',
@@ -97,27 +99,27 @@ export class CryptoSigner {
     fs.writeFileSync(privateKeyPath, privateKey, { mode: 0o600 }); // Private key: owner read/write only
     fs.writeFileSync(publicKeyPath, publicKey, { mode: 0o644 }); // Public key: world readable
 
-    console.log(`✅ RSA key pair generated and saved (keyId: ${this.keyId})`);
+    console.log(`✅ Ed25519 key pair generated and saved (keyId: ${this.keyId})`);
   }
 
   /**
    * Sign data with private key
-   * Returns signature result with metadata
+   * Phase 1.1: Ed25519 signatures (no hash needed, built-in)
    */
   sign(data: string): SignatureResult {
     if (!this.privateKey) {
       throw new Error('Private key not initialized. Call initialize() first.');
     }
 
-    const signer = crypto.createSign('RSA-SHA256');
-    signer.update(data, 'utf8');
-    signer.end();
-
-    const signature = signer.sign(this.privateKey, 'base64');
+    // Ed25519 uses crypto.sign directly (no createSign needed)
+    const dataBuffer = Buffer.from(data, 'utf8');
+    const signatureBuffer = crypto.sign(null, dataBuffer, this.privateKey);
+    const signature = signatureBuffer.toString('base64');
 
     return {
       signature,
       algorithm: this.algorithm,
+      alg: this.alg,
       keyId: this.keyId,
       timestamp: new Date().toISOString(),
     };
@@ -125,6 +127,7 @@ export class CryptoSigner {
 
   /**
    * Verify signature with public key
+   * Phase 1.1: Ed25519 verification
    */
   verify(data: string, signature: string): VerificationResult {
     if (!this.publicKey) {
@@ -137,11 +140,11 @@ export class CryptoSigner {
     }
 
     try {
-      const verifier = crypto.createVerify('RSA-SHA256');
-      verifier.update(data, 'utf8');
-      verifier.end();
+      // Ed25519 uses crypto.verify directly
+      const dataBuffer = Buffer.from(data, 'utf8');
+      const signatureBuffer = Buffer.from(signature, 'base64');
 
-      const valid = verifier.verify(this.publicKey, signature, 'base64');
+      const valid = crypto.verify(null, dataBuffer, this.publicKey, signatureBuffer);
 
       return {
         valid,
@@ -171,6 +174,35 @@ export class CryptoSigner {
       type: 'spki',
       format: 'pem',
     }) as string;
+  }
+
+  /**
+   * Get public key in JWK format (for JWKS endpoint)
+   * Phase 1.1: Supports Ed25519 keys
+   */
+  getPublicKeyJWK(): {
+    kty: string;
+    use: string;
+    kid: string;
+    alg: string;
+    crv?: string;
+    x?: string;
+  } {
+    if (!this.publicKey) {
+      throw new Error('Public key not initialized');
+    }
+
+    // Export public key as JWK
+    const jwk = this.publicKey.export({ format: 'jwk' });
+
+    return {
+      kty: jwk.kty as string, // 'OKP' for Ed25519
+      use: 'sig', // Signature use
+      kid: this.keyId,
+      alg: this.alg, // 'EdDSA' for Ed25519
+      crv: jwk.crv as string | undefined, // 'Ed25519'
+      x: jwk.x as string | undefined, // Public key bytes (base64url)
+    };
   }
 
   /**
