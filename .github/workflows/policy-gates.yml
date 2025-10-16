@@ -138,7 +138,21 @@ jobs:
           CORS_ALLOW_CREDENTIALS="false" \
           npm run server &
           SERVER_PID=$!
-          sleep 5
+
+          # Wait for server to be ready (with retries)
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start after 30 attempts"
+              kill $SERVER_PID
+              exit 1
+            fi
+            sleep 1
+          done
 
           # Test 1: Valid origin receives CORS headers
           echo "🔍 Test 1: Valid origin receives CORS headers"
