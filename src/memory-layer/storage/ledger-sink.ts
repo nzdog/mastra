@@ -8,6 +8,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
+import * as lockfile from 'proper-lockfile';
 import { CryptoSigner, SignatureResult } from '../governance/crypto-signer';
 import { MerkleTree, MerkleNode, MerkleProof } from '../governance/merkle-tree';
 import { canonicalStringify } from '../utils/canonical-json';
@@ -86,6 +87,7 @@ export class LedgerSink {
   /**
    * Initialize ledger sink
    * Loads existing ledger or creates new one
+   * Phase 1.1: Includes crash recovery
    */
   async initialize(): Promise<void> {
     if (this.initialized) {
@@ -95,11 +97,20 @@ export class LedgerSink {
     // Initialize crypto signer (loads or generates keys)
     await this.signer.initialize();
 
+    // Phase 1.1: Check for incomplete writes from crashes
+    await this.recoverFromCrash();
+
     // Try to load existing ledger state
     const statePath = path.join(this.ledgerPath, 'ledger-state.json');
     if (fs.existsSync(statePath)) {
       await this.loadState();
       console.log(`📚 Loaded existing ledger (height: ${this.ledgerHeight})`);
+
+      // Phase 1.1: Verify ledger integrity after crash recovery
+      const verification = this.merkleTree.verifyChain();
+      if (!verification.valid) {
+        throw new Error(`Ledger corrupted: ${verification.message}`);
+      }
     } else {
       console.log('📚 Initialized new ledger');
     }
@@ -108,57 +119,110 @@ export class LedgerSink {
   }
 
   /**
+   * Recover from crash by removing incomplete writes
+   * Phase 1.1: Removes .tmp files left by crashed atomic writes
+   */
+  private async recoverFromCrash(): Promise<void> {
+    try {
+      // Find and remove any .tmp files in ledger directory
+      const files = await fs.promises.readdir(this.ledgerPath);
+      const tempFiles = files.filter((f) => f.includes('.tmp.'));
+
+      for (const tempFile of tempFiles) {
+        const tempPath = path.join(this.ledgerPath, tempFile);
+        await fs.promises.unlink(tempPath);
+        console.log(`🔧 Removed incomplete write: ${tempFile}`);
+      }
+
+      // Check receipts directory
+      const receiptsDir = path.join(this.ledgerPath, 'receipts');
+      if (fs.existsSync(receiptsDir)) {
+        const receiptFiles = await fs.promises.readdir(receiptsDir);
+        const tempReceiptFiles = receiptFiles.filter((f) => f.includes('.tmp.'));
+
+        for (const tempFile of tempReceiptFiles) {
+          const tempPath = path.join(receiptsDir, tempFile);
+          await fs.promises.unlink(tempPath);
+          console.log(`🔧 Removed incomplete receipt write: ${tempFile}`);
+        }
+      }
+    } catch (error) {
+      // If directory doesn't exist yet, that's fine
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+        console.error('⚠️  Crash recovery error:', error);
+      }
+    }
+  }
+
+  /**
    * Append audit event to ledger
    * Returns signed audit receipt with Merkle proof
+   * Phase 1.1: With file locking for concurrent writes
    */
   async append(event: AuditEvent): Promise<SignedAuditReceipt> {
     if (!this.initialized) {
       throw new Error('LedgerSink not initialized. Call initialize() first.');
     }
 
-    // Serialize event for Merkle tree using canonical JSON
-    // Phase 1.1: Ensures deterministic serialization for verification
-    const eventData = canonicalStringify(event);
-
-    // Append to Merkle tree
-    const { node, proof } = this.merkleTree.append(eventData);
-
-    // Sign the Merkle root + event data using canonical JSON
-    // Phase 1.1: Canonical serialization prevents signature verification failures
-    const signaturePayload = canonicalStringify({
-      root: proof.root,
-      leaf: proof.leaf,
-      event_id: event.event_id,
-      timestamp: event.timestamp,
-    });
-    const signature = this.signer.sign(signaturePayload);
-
-    // Increment ledger height
-    this.ledgerHeight++;
-
-    // Generate receipt ID
-    const receiptId = this.generateReceiptId(event.event_id, node.index);
-
-    const receipt: SignedAuditReceipt = {
-      event,
-      merkle: {
-        leaf_hash: node.hash,
-        root_hash: proof.root,
-        proof,
-        index: node.index,
+    // Acquire lock for concurrent write protection
+    // Phase 1.1: Prevents race conditions in multi-process environments
+    const release = await lockfile.lock(this.ledgerPath, {
+      stale: 10000, // 10 second stale timeout
+      retries: {
+        retries: 5,
+        minTimeout: 100,
+        maxTimeout: 1000,
       },
-      signature,
-      ledger_height: this.ledgerHeight,
-      receipt_id: receiptId,
-    };
+    });
 
-    // Persist receipt to disk
-    await this.persistReceipt(receipt);
+    try {
+      // Serialize event for Merkle tree using canonical JSON
+      // Phase 1.1: Ensures deterministic serialization for verification
+      const eventData = canonicalStringify(event);
 
-    // Persist ledger state
-    await this.persistState(event.event_id, receiptId);
+      // Append to Merkle tree
+      const { node, proof } = this.merkleTree.append(eventData);
 
-    return receipt;
+      // Sign the Merkle root + event data using canonical JSON
+      // Phase 1.1: Canonical serialization prevents signature verification failures
+      const signaturePayload = canonicalStringify({
+        root: proof.root,
+        leaf: proof.leaf,
+        event_id: event.event_id,
+        timestamp: event.timestamp,
+      });
+      const signature = this.signer.sign(signaturePayload);
+
+      // Increment ledger height
+      this.ledgerHeight++;
+
+      // Generate receipt ID
+      const receiptId = this.generateReceiptId(event.event_id, node.index);
+
+      const receipt: SignedAuditReceipt = {
+        event,
+        merkle: {
+          leaf_hash: node.hash,
+          root_hash: proof.root,
+          proof,
+          index: node.index,
+        },
+        signature,
+        ledger_height: this.ledgerHeight,
+        receipt_id: receiptId,
+      };
+
+      // Persist receipt to disk (with atomic writes)
+      await this.persistReceipt(receipt);
+
+      // Persist ledger state (with atomic writes)
+      await this.persistState(event.event_id, receiptId);
+
+      return receipt;
+    } finally {
+      // Always release lock
+      await release();
+    }
   }
 
   /**
@@ -279,7 +343,37 @@ export class LedgerSink {
   }
 
   /**
+   * Atomic write with fsync for durability
+   * Phase 1.1: Prevents data loss from crashes
+   */
+  private async atomicWrite(filePath: string, data: string): Promise<void> {
+    const tempPath = `${filePath}.tmp.${Date.now()}`;
+
+    try {
+      // Write to temp file
+      await fs.promises.writeFile(tempPath, data, 'utf8');
+
+      // Sync to disk (critical for durability)
+      const fd = await fs.promises.open(tempPath, 'r');
+      await fd.sync();
+      await fd.close();
+
+      // Atomic rename
+      await fs.promises.rename(tempPath, filePath);
+    } catch (error) {
+      // Cleanup temp file on error
+      try {
+        await fs.promises.unlink(tempPath);
+      } catch {
+        // Ignore cleanup errors
+      }
+      throw error;
+    }
+  }
+
+  /**
    * Persist audit receipt to disk
+   * Phase 1.1: Uses atomic writes with fsync
    */
   private async persistReceipt(receipt: SignedAuditReceipt): Promise<void> {
     const receiptsDir = path.join(this.ledgerPath, 'receipts');
@@ -288,11 +382,12 @@ export class LedgerSink {
     }
 
     const receiptPath = path.join(receiptsDir, `${receipt.receipt_id}.json`);
-    fs.writeFileSync(receiptPath, JSON.stringify(receipt, null, 2), 'utf8');
+    await this.atomicWrite(receiptPath, JSON.stringify(receipt, null, 2));
   }
 
   /**
    * Persist ledger state
+   * Phase 1.1: Uses atomic writes with fsync
    */
   private async persistState(lastEventId: string, lastReceiptId: string): Promise<void> {
     const state: LedgerState = {
@@ -305,7 +400,7 @@ export class LedgerSink {
     };
 
     const statePath = path.join(this.ledgerPath, 'ledger-state.json');
-    fs.writeFileSync(statePath, JSON.stringify(state, null, 2), 'utf8');
+    await this.atomicWrite(statePath, JSON.stringify(state, null, 2));
   }
 
   /**

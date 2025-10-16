@@ -9,6 +9,8 @@ import helmet from 'helmet';
 import { FieldDiagnosticAgent } from './agent';
 import { healthCheck } from './memory-layer/api/health';
 import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
+import { getLedgerSink } from './memory-layer/storage/ledger-sink';
+import { getJWKSManager } from './memory-layer/governance/jwks-manager';
 import { performanceMonitor, CacheStats } from './performance';
 import { ProtocolLoader } from './protocol/loader';
 import { ProtocolParser } from './protocol/parser';
@@ -607,6 +609,133 @@ app.get('/v1/health', apiLimiter, async (_req: Request, res: Response) => {
   }
 });
 
+// Phase 1.1: Verification API Endpoints
+
+// GET /v1/ledger/root - Get current Merkle root
+app.get('/v1/ledger/root', apiLimiter, async (_req: Request, res: Response) => {
+  try {
+    const ledger = await getLedgerSink();
+    const signer = ledger.getKeyRotationStatus();
+
+    res.json({
+      root: ledger.getRootHash(),
+      height: ledger.getLedgerHeight(),
+      timestamp: new Date().toISOString(),
+      kid: signer.keyId,
+      algorithm: 'Ed25519',
+    });
+  } catch (error) {
+    console.error('Error in /v1/ledger/root:', error);
+    res.status(500).json({
+      error: 'Failed to get ledger root',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// GET /v1/receipts/:id - Get and verify specific receipt
+app.get('/v1/receipts/:id', apiLimiter, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const ledger = await getLedgerSink();
+
+    const receipt = await ledger.getReceipt(id);
+    if (!receipt) {
+      return res.status(404).json({ error: 'Receipt not found' });
+    }
+
+    // Verify receipt
+    const verification = ledger.verifyReceipt(receipt);
+
+    res.json({
+      receipt,
+      verification: {
+        valid: verification.valid,
+        merkle_valid: verification.merkle_valid,
+        signature_valid: verification.signature_valid,
+        message: verification.message,
+      },
+    });
+  } catch (error) {
+    console.error('Error in /v1/receipts/:id:', error);
+    res.status(500).json({
+      error: 'Failed to get receipt',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// GET /v1/keys/jwks - Get public keys for verification
+app.get('/v1/keys/jwks', apiLimiter, async (_req: Request, res: Response) => {
+  try {
+    const jwksManager = await getJWKSManager();
+    const jwks = await jwksManager.getJWKS();
+
+    res.json(jwks);
+  } catch (error) {
+    console.error('Error in /v1/keys/jwks:', error);
+    res.status(500).json({
+      error: 'Failed to get JWKS',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// POST /v1/receipts/verify - Verify a receipt
+app.post('/v1/receipts/verify', apiLimiter, async (req: Request, res: Response) => {
+  try {
+    const { receipt } = req.body;
+
+    if (!receipt) {
+      return res.status(400).json({ error: 'Missing receipt' });
+    }
+
+    const ledger = await getLedgerSink();
+    const verification = ledger.verifyReceipt(receipt);
+
+    res.json({
+      valid: verification.valid,
+      details: {
+        merkle_valid: verification.merkle_valid,
+        signature_valid: verification.signature_valid,
+        message: verification.message,
+      },
+    });
+  } catch (error) {
+    console.error('Error in /v1/receipts/verify:', error);
+    res.status(500).json({
+      error: 'Failed to verify receipt',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// GET /v1/ledger/integrity - Verify ledger integrity
+app.get('/v1/ledger/integrity', apiLimiter, async (req: Request, res: Response) => {
+  try {
+    const { full } = req.query;
+    const ledger = await getLedgerSink();
+
+    // Phase 1.1: Full chain verification (for now, will add incremental later)
+    const result = ledger.verifyChain();
+
+    res.json({
+      valid: result.valid,
+      message: result.message,
+      brokenAt: result.brokenAt,
+      height: ledger.getLedgerHeight(),
+      timestamp: new Date().toISOString(),
+      verificationType: full === 'true' ? 'full' : 'incremental',
+    });
+  } catch (error) {
+    console.error('Error in /v1/ledger/integrity:', error);
+    res.status(500).json({
+      error: 'Failed to verify integrity',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
 // Performance metrics endpoint (rate-limited)
 app.get('/api/metrics', metricsLimiter, (_req: Request, res: Response) => {
   const summary = performanceMonitor.getSummary();
@@ -912,14 +1041,24 @@ app.listen(PORT, () => {
 
 🚀 Server running on http://localhost:${PORT}
 
-Endpoints:
+Protocol Walk Endpoints:
   GET    /api/protocols       - List available protocols
   POST   /api/walk/start      - Start new protocol walk
   POST   /api/walk/continue   - Continue protocol walk
   POST   /api/walk/complete   - Complete protocol
   GET    /api/session/:id     - Get session state (debug)
+
+Health & Monitoring:
   GET    /health              - Health check (legacy)
   GET    /v1/health           - Memory Layer health check (spec-compliant)
+  GET    /api/metrics         - Performance metrics
+
+Phase 1.1 Verification Endpoints:
+  GET    /v1/ledger/root      - Get current Merkle root
+  GET    /v1/receipts/:id     - Get and verify audit receipt
+  POST   /v1/receipts/verify  - Verify a receipt
+  GET    /v1/keys/jwks        - Get public keys (JWKS)
+  GET    /v1/ledger/integrity - Verify ledger chain integrity
 
 Ready to accept connections.
 `);

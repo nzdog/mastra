@@ -35,12 +35,14 @@
     "express-rate-limit": "^8.1.0",
     "glob": "^11.0.3",
     "gray-matter": "^4.0.3",
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "proper-lockfile": "^4.1.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@types/node": "^24.6.2",
+    "@types/proper-lockfile": "^4.1.4",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "eslint": "^9.37.0",
