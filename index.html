@@ -1861,8 +1861,6 @@
             <div class="entry-view hidden" id="entry-view">
                 <img src="/lichen-logo.png" alt="Lichen" id="lichen-logo" style="height: 80px; width: auto; margin-bottom: 2rem;">
                 <div id="protocol-title" style="font-size: 1.5rem; font-weight: 500; color: #78716C; margin-bottom: 3rem; text-align: center; line-height: 1.4; cursor: pointer; transition: color 0.2s ease;" 
-                     onmouseover="this.style.color='#57534E'" 
-                     onmouseout="this.style.color='#78716C'"
                      title="Click to expand all sections">Field Diagnostic Protocol</div>
                 <button class="walk-button" id="begin-button">Begin walk</button>
             </div>
@@ -3066,6 +3064,14 @@
             if (protocolTitleEl) {
                 protocolTitleEl.classList.remove('fade-out');
                 protocolTitleEl.classList.add('fade-in-only');
+                
+                // Add hover effect listeners
+                protocolTitleEl.addEventListener('mouseenter', () => {
+                    protocolTitleEl.style.color = '#57534E';
+                });
+                protocolTitleEl.addEventListener('mouseleave', () => {
+                    protocolTitleEl.style.color = '#78716C';
+                });
             }
 
             // Create response area in entry view (only if it doesn't exist)
