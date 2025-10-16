@@ -31,13 +31,17 @@ export class IntentClassifier {
       return this.applyFallbackRules(result, state);
     } catch (error) {
       console.error('Classification error:', error);
-      // Fallback to safe default - use active protocol from state if available
+
+      // Smarter fallback based on state
+      // If we just showed theme questions, assume the user is answering (continuity)
+      const isContinuing = state.last_response === 'theme_questions' && state.theme_index !== null;
+
       return {
-        intent: 'discover',
-        continuity: false,
+        intent: isContinuing ? 'memory' : 'discover',
+        continuity: isContinuing,
         protocol_pointer: {
           protocol_slug: state.active_protocol || 'field_diagnostic',
-          theme_index: null,
+          theme_index: state.theme_index,
         },
         user_wants_to: {
           advance_to_next_theme: false,
