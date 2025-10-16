@@ -1,9 +1,15 @@
 /**
- * Audit Emitter Stub
+ * Audit Emitter - Phase 1 Implementation
  *
- * Provides tamper-evident audit logging with Merkle chain structure
- * Part of Memory Layer Specification - Phase 0 (Stub) / Phase 1 (Implementation)
+ * Provides tamper-evident audit logging with Merkle chain and cryptographic signatures
+ * Part of Memory Layer Specification - Phase 1
  */
+
+import {
+  getLedgerSink,
+  SignedAuditReceipt,
+  AuditEvent as LedgerEvent,
+} from '../storage/ledger-sink';
 
 export type AuditEventType =
   | 'STORE'
@@ -24,15 +30,14 @@ export interface AuditEvent {
   timestamp: string;
   operation: string;
   user_id?: string; // Pseudonymized
-  consent_context: {
-    family: 'personal' | 'cohort' | 'population';
-    consent_status: 'active' | 'revoked' | 'contested' | 'ambiguous';
-    consent_diffs?: Record<string, any>; // For ambiguity events
+  session_id?: string;
+  consent_context?: {
+    consent_level: 'personal' | 'cohort' | 'population';
+    scope: string[];
+    expiry?: string;
+    revocable: boolean;
   };
   payload: Record<string, any>;
-  previous_hash: string | null; // Merkle chain
-  current_hash: string;
-  signature?: string; // Cryptographic signature (Phase 1)
 }
 
 export interface AuditReceipt {
@@ -40,66 +45,92 @@ export interface AuditReceipt {
   event_id: string;
   timestamp: string;
   signature: string;
-  merkle_proof: string[];
+  merkle_root: string;
+  merkle_proof: any;
   ledger_height: number;
 }
 
 /**
- * Audit Emitter Class (Stub)
+ * Audit Emitter Class - Phase 1 Implementation
  *
- * Phase 0: In-memory logging with basic structure
- * Phase 1: Merkle chain with cryptographic signatures
- * Phase 1+: Persistent sink (database, S3, etc.)
+ * Phase 1: Merkle-chained ledger with cryptographic signatures
+ * Phase 1+: Persistent sink with database/S3 backend
  */
 export class AuditEmitter {
-  private events: AuditEvent[] = [];
-  private lastHash: string | null = null;
+  private initialized: boolean = false;
+
+  /**
+   * Initialize audit emitter (lazy initialization)
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) {
+      return;
+    }
+
+    // Initialize ledger sink (will load or create)
+    const ledger = await getLedgerSink();
+    console.log(`📝 AUDIT: Audit emitter initialized (Phase 1 - ledger height: ${ledger.getLedgerHeight()})`);
+
+    this.initialized = true;
+  }
 
   /**
    * Emit an audit event
-   * Returns a signed receipt for the event
+   * Returns a signed receipt with Merkle proof
    */
   async emit(
     eventType: AuditEventType,
     operation: string,
     payload: Record<string, any>,
-    consentContext?: Partial<AuditEvent['consent_context']>,
-    userId?: string
+    consentContext?: {
+      consent_level?: 'personal' | 'cohort' | 'population';
+      scope?: string[];
+      expiry?: string;
+      revocable?: boolean;
+    },
+    userId?: string,
+    sessionId?: string
   ): Promise<AuditReceipt> {
-    const event: AuditEvent = {
+    // Ensure initialized
+    await this.initialize();
+
+    const ledger = await getLedgerSink();
+
+    // Create ledger event
+    const event: LedgerEvent = {
       event_id: this.generateEventId(),
-      event_type: eventType,
       timestamp: new Date().toISOString(),
+      event_type: eventType,
       operation,
       user_id: userId,
-      consent_context: {
-        family: consentContext?.family || 'personal',
-        consent_status: consentContext?.consent_status || 'active',
-        consent_diffs: consentContext?.consent_diffs,
-      },
+      session_id: sessionId,
+      consent_context: consentContext
+        ? {
+            consent_level: consentContext.consent_level || 'personal',
+            scope: consentContext.scope || [],
+            expiry: consentContext.expiry,
+            revocable: consentContext.revocable ?? true,
+          }
+        : undefined,
       payload,
-      previous_hash: this.lastHash,
-      current_hash: '', // Will be computed
-      signature: undefined, // Phase 1: Add cryptographic signature
     };
 
-    // Compute hash (stub - will use proper Merkle tree in Phase 1)
-    event.current_hash = this.computeHash(event);
-    this.lastHash = event.current_hash;
+    // Append to ledger - gets Merkle proof + signature
+    const signedReceipt: SignedAuditReceipt = await ledger.append(event);
 
-    // Store event
-    this.events.push(event);
+    console.log(
+      `📝 AUDIT: ${eventType} event emitted (event_id: ${event.event_id}, receipt_id: ${signedReceipt.receipt_id})`
+    );
 
-    console.log(`📝 AUDIT: ${eventType} event emitted (event_id: ${event.event_id})`);
-
-    // Generate receipt
+    // Convert to AuditReceipt interface
     const receipt: AuditReceipt = {
-      receipt_id: this.generateReceiptId(),
-      event_id: event.event_id,
-      timestamp: event.timestamp,
-      signature: 'STUB_SIGNATURE', // Phase 1: Real cryptographic signature
-      merkle_proof: [], // Phase 1: Merkle proof path
-      ledger_height: this.events.length,
+      receipt_id: signedReceipt.receipt_id,
+      event_id: signedReceipt.event.event_id,
+      timestamp: signedReceipt.event.timestamp,
+      signature: signedReceipt.signature.signature,
+      merkle_root: signedReceipt.merkle.root_hash,
+      merkle_proof: signedReceipt.merkle.proof,
+      ledger_height: signedReceipt.ledger_height,
     };
 
     return receipt;
@@ -111,18 +142,20 @@ export class AuditEmitter {
   async emitAmbiguityEvent(
     operation: string,
     consentDiffs: Record<string, any>,
-    userId?: string
+    userId?: string,
+    sessionId?: string
   ): Promise<AuditReceipt> {
     return this.emit(
       'AMBIGUITY_EVENT',
       operation,
       { reason: 'contested_consent', details: consentDiffs },
       {
-        family: 'personal',
-        consent_status: 'ambiguous',
-        consent_diffs: consentDiffs,
+        consent_level: 'personal',
+        scope: ['ambiguity_tracking'],
+        revocable: true,
       },
-      userId
+      userId,
+      sessionId
     );
   }
 
@@ -133,7 +166,8 @@ export class AuditEmitter {
     overrideType: 'policy_engine' | 'ethics_committee' | 'constitutional',
     rationale: string,
     policyDiffs: Record<string, any>,
-    userId?: string
+    userId?: string,
+    sessionId?: string
   ): Promise<AuditReceipt> {
     return this.emit(
       'GOVERNANCE_OVERRIDE',
@@ -143,8 +177,13 @@ export class AuditEmitter {
         rationale,
         policy_diffs: policyDiffs,
       },
-      { family: 'personal', consent_status: 'active' },
-      userId
+      {
+        consent_level: 'personal',
+        scope: ['governance_override'],
+        revocable: false, // Overrides are not revocable
+      },
+      userId,
+      sessionId
     );
   }
 
@@ -167,36 +206,55 @@ export class AuditEmitter {
   /**
    * Get ledger height (total events)
    */
-  getLedgerHeight(): number {
-    return this.events.length;
+  async getLedgerHeight(): Promise<number> {
+    const ledger = await getLedgerSink();
+    return ledger.getLedgerHeight();
   }
 
   /**
-   * Get recent events (for debugging/monitoring)
+   * Get recent receipts (for debugging/monitoring)
    */
-  getRecentEvents(limit: number = 10): AuditEvent[] {
-    return this.events.slice(-limit);
+  async getRecentReceipts(limit: number = 10): Promise<SignedAuditReceipt[]> {
+    const ledger = await getLedgerSink();
+    return ledger.listReceipts(limit);
   }
 
   /**
-   * Verify chain integrity (stub - Phase 1 will do proper Merkle verification)
+   * Verify chain integrity using Merkle tree verification
    */
-  verifyChainIntegrity(): { valid: boolean; message: string } {
-    if (this.events.length === 0) {
-      return { valid: true, message: 'No events in chain' };
-    }
+  async verifyChainIntegrity(): Promise<{ valid: boolean; message: string; brokenAt?: number }> {
+    await this.initialize();
+    const ledger = await getLedgerSink();
+    return ledger.verifyChain();
+  }
 
-    // Stub verification - just checks hash chain continuity
-    for (let i = 1; i < this.events.length; i++) {
-      if (this.events[i].previous_hash !== this.events[i - 1].current_hash) {
-        return {
-          valid: false,
-          message: `Chain broken at event ${i}: ${this.events[i].event_id}`,
-        };
-      }
-    }
+  /**
+   * Verify a specific audit receipt
+   */
+  async verifyReceipt(receipt: SignedAuditReceipt): Promise<{
+    valid: boolean;
+    merkle_valid: boolean;
+    signature_valid: boolean;
+    message: string;
+  }> {
+    await this.initialize();
+    const ledger = await getLedgerSink();
+    return ledger.verifyReceipt(receipt);
+  }
 
-    return { valid: true, message: 'Chain integrity verified (stub)' };
+  /**
+   * Get key rotation status
+   */
+  async getKeyRotationStatus(): Promise<{
+    keyId: string;
+    createdAt: string;
+    ageDays: number;
+    needsRotation: boolean;
+    maxAgeDays: number;
+  }> {
+    await this.initialize();
+    const ledger = await getLedgerSink();
+    return ledger.getKeyRotationStatus();
   }
 
   /**
@@ -204,30 +262,6 @@ export class AuditEmitter {
    */
   private generateEventId(): string {
     return `evt_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-  }
-
-  /**
-   * Generate unique receipt ID
-   */
-  private generateReceiptId(): string {
-    return `rcpt_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-  }
-
-  /**
-   * Compute hash for event (stub - Phase 1 will use proper cryptographic hash)
-   */
-  private computeHash(event: AuditEvent): string {
-    // Stub: Simple string concatenation hash
-    // Phase 1: Use SHA-256 or similar
-    const payload = JSON.stringify({
-      event_id: event.event_id,
-      event_type: event.event_type,
-      timestamp: event.timestamp,
-      operation: event.operation,
-      previous_hash: event.previous_hash,
-    });
-
-    return `hash_${Buffer.from(payload).toString('base64').substring(0, 32)}`;
   }
 }
 

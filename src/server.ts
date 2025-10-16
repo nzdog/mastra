@@ -557,17 +557,44 @@ app.get('/v1/health', apiLimiter, async (_req: Request, res: Response) => {
     const sessionCount = await sessionStore.size();
     healthResponse.metrics.active_sessions = sessionCount;
 
-    // Enrich with audit ledger height
+    // Enrich with audit ledger metrics (Phase 1)
     const auditEmitter = getAuditEmitter();
-    healthResponse.metrics.audit_ledger_height = auditEmitter.getLedgerHeight();
+    const ledgerHeight = await auditEmitter.getLedgerHeight();
+    healthResponse.metrics.audit_ledger_height = ledgerHeight;
 
-    // Verify audit chain integrity
-    const chainVerification = auditEmitter.verifyChainIntegrity();
+    // Get recent receipts to find last timestamp
+    if (ledgerHeight > 0) {
+      const recentReceipts = await auditEmitter.getRecentReceipts(1);
+      if (recentReceipts.length > 0) {
+        healthResponse.metrics.last_audit_receipt_timestamp = recentReceipts[0].event.timestamp;
+      }
+    }
+
+    // Verify audit chain integrity (Phase 1 - Merkle chain verification)
+    const chainVerification = await auditEmitter.verifyChainIntegrity();
     if (!chainVerification.valid) {
       healthResponse.components.audit.status = 'unhealthy';
       healthResponse.components.audit.message = chainVerification.message;
       healthResponse.status = 'unhealthy';
+    } else {
+      healthResponse.components.audit.message = `Merkle chain verified (${ledgerHeight} events)`;
     }
+
+    // Get key rotation status (Phase 1)
+    const keyStatus = await auditEmitter.getKeyRotationStatus();
+    healthResponse.compliance.key_rotation_status = keyStatus.needsRotation
+      ? keyStatus.ageDays >= 90
+        ? 'expired'
+        : 'expiring_soon'
+      : 'current';
+    healthResponse.compliance.last_key_rotation = keyStatus.createdAt;
+
+    // Emit HEALTH audit event (Phase 1)
+    await auditEmitter.emit('HEALTH', 'health_check', {
+      status: healthResponse.status,
+      session_count: sessionCount,
+      ledger_height: ledgerHeight,
+    });
 
     res.json(healthResponse);
   } catch (error) {
