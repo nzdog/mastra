@@ -293,7 +293,8 @@ function formatResponse(
   session: Session
 ) {
   // Parse theme number from state
-  const themeNumber = state.theme_index || 1;
+  let themeNumber = state.theme_index || 1;
+
   const totalThemes = session.registry.getTotalThemes(); // Dynamically get total themes from protocol
   const protocolMetadata = session.registry.getMetadata();
   const protocolName = protocolMetadata.title;
@@ -308,6 +309,21 @@ function formatResponse(
     mode = 'WALK';
   } else {
     mode = 'CONTINUE';
+  }
+
+  // When showing interpretation/completion, check if response mentions the NEXT theme
+  // If so, display the CURRENT theme (the one being completed), not the next one
+  if (
+    state.last_response === 'interpretation_and_completion' &&
+    agentResponse.includes('Ready to move into **Theme')
+  ) {
+    // Extract the theme number being moved TO from the response
+    const nextThemeMatch = agentResponse.match(/Ready to move into \*\*Theme (\d+)/);
+    if (nextThemeMatch) {
+      const nextTheme = parseInt(nextThemeMatch[1]);
+      // Display the current theme (one before the next)
+      themeNumber = nextTheme - 1;
+    }
   }
 
   // Extract supports
