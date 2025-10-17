@@ -60,4 +60,4 @@ jobs:
         run: |
           echo "❌ Code formatting issues detected. Run 'npm run format' to fix."
           echo "Files with issues:"
-          npx prettier --check . --ignore-unknown --list-different || true
+          npx prettier --list-different . --ignore-unknown || true

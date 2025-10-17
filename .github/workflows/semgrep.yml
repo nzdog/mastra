@@ -37,20 +37,10 @@ jobs:
 
       - name: Upload SARIF to GitHub Security
         if: always()
-        uses: github/codeql-action/upload-sarif@v2
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: semgrep.sarif
         continue-on-error: true
-
-      - name: Post PR Review with Reviewdog
-        if: always()
-        uses: reviewdog/action-sarif@v1
-        with:
-          sarif_file: semgrep.sarif
-          reporter: github-pr-review
-          fail_on_error: false
-          filter_mode: nofilter
-          level: warning
 
       - name: Check for HIGH severity findings
         if: always()
