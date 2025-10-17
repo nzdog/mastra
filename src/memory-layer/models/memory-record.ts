@@ -5,9 +5,9 @@
 
 /**
  * Consent family types defining data sharing boundaries
- * - personal: User-only access, includes PII
- * - cohort: Group-level aggregated data, no PII
- * - population: System-wide aggregated data, no PII
+ * - personal: User-only access, hashed/pseudonymous identifiers only (no raw PII)
+ * - cohort: Group-level aggregated data, no direct identifiers
+ * - population: System-wide aggregated data, no direct identifiers
  */
 export type ConsentFamily = 'personal' | 'cohort' | 'population';
 

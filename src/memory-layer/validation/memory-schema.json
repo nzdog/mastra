@@ -6,7 +6,7 @@
   "type": "object",
   "required": [
     "id",
-    "user_id",
+    "hashed_pseudonym",
     "content",
     "consent_family",
     "consent_timestamp",
@@ -22,11 +22,10 @@
       "format": "uuid",
       "description": "Unique identifier for the memory record"
     },
-    "user_id": {
+    "hashed_pseudonym": {
       "type": "string",
-      "minLength": 1,
-      "maxLength": 255,
-      "description": "User identifier - required for personal consent family"
+      "pattern": "^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$",
+      "description": "Hashed pseudonymous identifier (e.g., sha256(email+salt)), never raw PII"
     },
     "session_id": {
       "type": "string",
@@ -154,15 +153,16 @@
         "metadata": {
           "type": "object",
           "required": [
-            "user_id",
+            "hashed_pseudonym",
             "consent_family",
             "consent_timestamp",
             "consent_version"
           ],
           "properties": {
-            "user_id": {
+            "hashed_pseudonym": {
               "type": "string",
-              "minLength": 1
+              "pattern": "^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$",
+              "description": "Hashed pseudonymous identifier (e.g., sha256(email+salt)), never raw PII"
             },
             "session_id": {
               "type": "string",
@@ -192,11 +192,12 @@
     },
     "RecallQuery": {
       "type": "object",
-      "required": ["user_id"],
+      "required": ["hashed_pseudonym"],
       "properties": {
-        "user_id": {
+        "hashed_pseudonym": {
           "type": "string",
-          "minLength": 1
+          "pattern": "^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$",
+          "description": "Hashed pseudonymous identifier (e.g., sha256(email+salt)), never raw PII"
         },
         "session_id": {
           "type": "string",
@@ -298,9 +299,10 @@
           "type": "string",
           "format": "uuid"
         },
-        "user_id": {
+        "hashed_pseudonym": {
           "type": "string",
-          "minLength": 1
+          "pattern": "^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$",
+          "description": "Hashed pseudonymous identifier (e.g., sha256(email+salt)), never raw PII"
         },
         "session_id": {
           "type": "string",
@@ -318,17 +320,18 @@
       "additionalProperties": false,
       "anyOf": [
         { "required": ["id"] },
-        { "required": ["user_id"] },
+        { "required": ["hashed_pseudonym"] },
         { "required": ["session_id"] }
       ]
     },
     "ExportRequest": {
       "type": "object",
-      "required": ["user_id", "format"],
+      "required": ["hashed_pseudonym", "format"],
       "properties": {
-        "user_id": {
+        "hashed_pseudonym": {
           "type": "string",
-          "minLength": 1
+          "pattern": "^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$",
+          "description": "Hashed pseudonymous identifier (e.g., sha256(email+salt)), never raw PII"
         },
         "format": {
           "type": "string",

@@ -104,7 +104,7 @@ paths:
                     metadata:
                       source: "app.tutorial"
                   metadata:
-                    user_id: "user_12345"
+                    hashed_pseudonym: "hs_abc123def456ghi789jkl012mno345pqr678stu"
                     session_id: "session_abc123"
                     consent_family: "personal"
                     consent_timestamp: "2025-10-17T12:00:00Z"
@@ -119,7 +119,7 @@ paths:
                       feature: "dark_mode"
                       duration_seconds: 300
                   metadata:
-                    user_id: "user_67890"
+                    hashed_pseudonym: "a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd"
                     consent_family: "cohort"
                     consent_timestamp: "2025-10-17T12:00:00Z"
                     consent_version: "1.0"
@@ -160,7 +160,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ConsentFamily'
         - $ref: '#/components/parameters/TraceID'
-        - name: user_id
+        - name: hashed_pseudonym
           in: query
           required: true
           schema:
@@ -309,7 +309,7 @@ paths:
       description: |
         Deletes memory records with consent family enforcement.
         Supports GDPR right to be forgotten.
-        Can delete by ID, user_id, or session_id.
+        Can delete by ID, hashed_pseudonym, or session_id.
       operationId: forgetMemories
       tags:
         - Personal
@@ -321,7 +321,7 @@ paths:
           schema:
             type: string
           description: Specific memory record ID to delete
-        - name: user_id
+        - name: hashed_pseudonym
           in: query
           schema:
             type: string
@@ -380,7 +380,7 @@ paths:
       parameters:
         - $ref: '#/components/parameters/ConsentFamily'
         - $ref: '#/components/parameters/TraceID'
-        - name: user_id
+        - name: hashed_pseudonym
           in: query
           required: true
           schema:
@@ -553,12 +553,12 @@ components:
         metadata:
           type: object
           required:
-            - user_id
+            - hashed_pseudonym
             - consent_family
             - consent_timestamp
             - consent_version
           properties:
-            user_id:
+            hashed_pseudonym:
               type: string
             session_id:
               type: string
@@ -579,7 +579,7 @@ components:
       type: object
       required:
         - id
-        - user_id
+        - hashed_pseudonym
         - consent_family
         - created_at
         - audit_receipt_id
@@ -588,7 +588,7 @@ components:
         id:
           type: string
           format: uuid
-        user_id:
+        hashed_pseudonym:
           type: string
         session_id:
           type: string
@@ -611,7 +611,7 @@ components:
       type: object
       required:
         - id
-        - user_id
+        - hashed_pseudonym
         - content
         - consent_family
         - consent_timestamp
@@ -624,7 +624,7 @@ components:
         id:
           type: string
           format: uuid
-        user_id:
+        hashed_pseudonym:
           type: string
         session_id:
           type: string
@@ -687,9 +687,9 @@ components:
         query:
           type: object
           required:
-            - user_id
+            - hashed_pseudonym
           properties:
-            user_id:
+            hashed_pseudonym:
               type: string
             session_id:
               type: string
@@ -838,7 +838,7 @@ components:
         metadata:
           type: object
           properties:
-            user_id:
+            hashed_pseudonym:
               type: string
             session_id:
               type: string
@@ -853,7 +853,7 @@ components:
     ExportMetadata:
       type: object
       required:
-        - user_id
+        - hashed_pseudonym
         - format
         - record_count
         - size_bytes
@@ -862,7 +862,7 @@ components:
         - includes_deleted
         - includes_audit
       properties:
-        user_id:
+        hashed_pseudonym:
           type: string
         format:
           type: string
@@ -999,7 +999,7 @@ components:
               message: "Access denied for consent family: population"
               details:
                 family: "population"
-                user_id: "user_12345"
+                hashed_pseudonym: "hs_abc123def456ghi789jkl012mno345pqr678stu"
             timestamp: "2025-10-17T12:00:00Z"
             path: "/v1/population/distill"
             method: "POST"
