@@ -275,6 +275,16 @@ export class InMemoryStore implements MemoryStore {
   }
 
   /**
+   * Iterate over all records (for backfill/migration)
+   * Returns an iterable of all memory records
+   */
+  *iterateAll(): Iterable<MemoryRecord> {
+    for (const record of this.records.values()) {
+      yield { ...record }; // Return copy to prevent mutation
+    }
+  }
+
+  /**
    * Add record to indexes
    */
   private addToIndex(record: MemoryRecord): void {

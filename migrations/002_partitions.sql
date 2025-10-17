@@ -29,25 +29,31 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- ============================================================================
 -- Pre-check: Verify table is partitioned
 -- ============================================================================
+-- SAFE: If table is not partitioned, this migration skips partition creation
+-- Use 002a_convert_to_partitioned.sql to convert existing heap tables first
 
 DO $$
 DECLARE
   is_partitioned BOOLEAN;
 BEGIN
-  -- Check if memory_records table is partitioned
+  -- Check if memory_records table exists and is partitioned
   SELECT relkind = 'p' INTO is_partitioned
   FROM pg_class
   WHERE relname = 'memory_records';
 
   IF is_partitioned IS NULL THEN
-    RAISE EXCEPTION 'Table memory_records does not exist. Run migration 001_create_memory_records.sql first.';
+    RAISE NOTICE 'Table memory_records does not exist yet. Skipping partition setup (run 001_create_memory_records.sql first).';
+    RETURN;
   END IF;
 
   IF NOT is_partitioned THEN
-    RAISE EXCEPTION 'Table memory_records must be converted to partitioned table first. See docs/runbooks/partitioning-migrations.md section 3.2 for conversion steps.';
+    RAISE NOTICE 'Table memory_records exists but is not partitioned. Skipping partition helpers.';
+    RAISE NOTICE 'For new installs: Use migrations/002_partitions_dev.sql (recreates as partitioned).';
+    RAISE NOTICE 'For existing prod: Use migrations/002a_convert_to_partitioned.sql (safe conversion).';
+    RETURN;
   END IF;
 
-  RAISE NOTICE 'Pre-check passed: memory_records is a partitioned table';
+  RAISE NOTICE 'Pre-check passed: memory_records is a partitioned table. Proceeding with partition setup.';
 END $$;
 
 -- ============================================================================

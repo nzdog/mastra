@@ -68,15 +68,14 @@ async function backfillToPostgres(): Promise<void> {
   let totalSkipped = 0;
 
   try {
-    // Get all records from memory store
-    // Note: Using internal access since we need all records across all pseudonyms
-    const memoryStoreInternal = memoryStore as any;
-    const allRecords = memoryStoreInternal.records || new Map();
+    // Get all records from memory store using public iterator
+    const memoryStoreWithIterator = memoryStore as any;
+    if (typeof memoryStoreWithIterator.iterateAll !== 'function') {
+      throw new Error('Memory store does not support iterateAll() method. Update required.');
+    }
 
-    console.log(`[Backfill] Found ${allRecords.size} records in memory store`);
-
-    // Process in batches
-    const recordsArray = Array.from(allRecords.values());
+    const recordsArray = Array.from(memoryStoreWithIterator.iterateAll());
+    console.log(`[Backfill] Found ${recordsArray.length} records in memory store`);
     const filteredRecords = config.consentFamily
       ? recordsArray.filter((r: any) => r.consent_family === config.consentFamily)
       : recordsArray;

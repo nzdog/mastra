@@ -57,8 +57,32 @@ class MemoryKMSProvider implements KMSProvider {
   private keys: Map<string, Buffer> = new Map();
 
   constructor() {
-    // Initialize default KEK for development
-    this.keys.set('kek-default', crypto.randomBytes(32)); // 256-bit KEK
+    // Initialize KEK for development
+    // Use DEV_KEK_BASE64 env var for persistence across restarts
+    const base64KEK = process.env.DEV_KEK_BASE64;
+    let devKEK: Buffer;
+
+    if (base64KEK) {
+      try {
+        devKEK = Buffer.from(base64KEK, 'base64');
+        if (devKEK.length !== 32) {
+          throw new Error(`Invalid DEV_KEK_BASE64 length: ${devKEK.length} bytes (expected 32)`);
+        }
+        console.log('[MemoryKMSProvider] Using persistent KEK from DEV_KEK_BASE64');
+      } catch (err) {
+        console.error('[MemoryKMSProvider] Failed to parse DEV_KEK_BASE64:', err);
+        throw new Error('Invalid DEV_KEK_BASE64: must be base64-encoded 256-bit key (32 bytes)');
+      }
+    } else {
+      // Generate ephemeral KEK
+      devKEK = crypto.randomBytes(32);
+      console.warn(
+        '[MemoryKMSProvider] ⚠️  Using ephemeral KEK (DEV_KEK_BASE64 not set) – encrypted data will be lost on restart.'
+      );
+      console.warn(`[MemoryKMSProvider] To persist KEK, set: DEV_KEK_BASE64=${devKEK.toString('base64')}`);
+    }
+
+    this.keys.set('kek-default', devKEK);
   }
 
   async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
