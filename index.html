@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lichen Field</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         * {
@@ -78,7 +80,7 @@
         }
 
         .fade-out {
-            animation: fadeOut 1.2s ease-out forwards;
+            animation: fadeOut 0.6s ease-out forwards;
         }
 
         /* Spin animation for logo */
@@ -2646,9 +2648,6 @@
             // Fade out main logo and title
             if (logo) logo.classList.add('fade-out');
             if (title) title.classList.add('fade-out');
-
-            // Wait for fade animations to complete
-            await new Promise(resolve => setTimeout(resolve, 1200));
 
             try {
                 const response = await fetch(`${API_BASE}/api/walk/start`, {

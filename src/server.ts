@@ -433,10 +433,10 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for frontend
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'], // Allow inline scripts and jspdf CDN
         styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for frontend
         imgSrc: ["'self'", 'data:', 'https:'],
-        connectSrc: ["'self'"], // API calls only to same origin
+        connectSrc: ["'self'", 'https://cdnjs.cloudflare.com'], // Allow API calls and CDN source maps
         fontSrc: ["'self'"],
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
@@ -523,6 +523,27 @@ app.get('/lichen-logo.png', (_req: Request, res: Response) => {
   } catch (error) {
     console.error(`❌ Error serving logo:`, error);
     res.status(404).send('Logo not found');
+  }
+});
+
+// Favicon endpoints
+app.get('/favicon.ico', (_req: Request, res: Response) => {
+  const faviconPath = path.join(__dirname, '../favicon.ico');
+  if (fs.existsSync(faviconPath)) {
+    res.setHeader('Content-Type', 'image/x-icon');
+    res.sendFile(faviconPath);
+  } else {
+    res.status(404).send('Favicon not found');
+  }
+});
+
+app.get('/favicon.png', (_req: Request, res: Response) => {
+  const faviconPath = path.join(__dirname, '../favicon.png');
+  if (fs.existsSync(faviconPath)) {
+    res.setHeader('Content-Type', 'image/png');
+    res.sendFile(faviconPath);
+  } else {
+    res.status(404).send('Favicon not found');
   }
 });
 
