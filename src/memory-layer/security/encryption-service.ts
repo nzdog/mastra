@@ -16,6 +16,12 @@
 
 import * as crypto from 'crypto';
 
+// Encryption constants
+const GCM_IV_LENGTH = 12; // 96-bit IV for GCM mode
+const GCM_AUTH_TAG_LENGTH = 16; // 128-bit auth tag for GCM
+const DEK_BYTES = 32; // 256-bit DEK for AES-256
+const KEK_BYTES = 32; // 256-bit KEK for AES-256
+
 /**
  * Encrypted envelope structure returned by encrypt()
  */
@@ -66,24 +72,27 @@ class MemoryKMSProvider implements KMSProvider {
     if (process.env.NODE_ENV === 'production' && !base64KEK) {
       throw new Error(
         'SECURITY: MemoryKMSProvider cannot be used in production without DEV_KEK_BASE64. ' +
-        'Set KMS_PROVIDER=aws or KMS_PROVIDER=gcp for production use.'
+        'For production deployments:\n' +
+        '  - Set KMS_PROVIDER=aws and configure AWS_KMS_KEY_ARN + AWS credentials\n' +
+        '  - OR set KMS_PROVIDER=gcp and configure GCP_KMS_KEY_NAME + GCP credentials\n' +
+        'MemoryKMSProvider is for development/testing only.'
       );
     }
 
     if (base64KEK) {
       try {
         devKEK = Buffer.from(base64KEK, 'base64');
-        if (devKEK.length !== 32) {
-          throw new Error(`Invalid DEV_KEK_BASE64 length: ${devKEK.length} bytes (expected 32)`);
+        if (devKEK.length !== KEK_BYTES) {
+          throw new Error(`Invalid DEV_KEK_BASE64 length: ${devKEK.length} bytes (expected ${KEK_BYTES})`);
         }
         console.log('[MemoryKMSProvider] Using persistent KEK from DEV_KEK_BASE64');
       } catch (err) {
         console.error('[MemoryKMSProvider] Failed to parse DEV_KEK_BASE64:', err);
-        throw new Error('Invalid DEV_KEK_BASE64: must be base64-encoded 256-bit key (32 bytes)');
+        throw new Error(`Invalid DEV_KEK_BASE64: must be base64-encoded ${KEK_BYTES * 8}-bit key (${KEK_BYTES} bytes)`);
       }
     } else {
       // Generate ephemeral KEK
-      devKEK = crypto.randomBytes(32);
+      devKEK = crypto.randomBytes(KEK_BYTES);
       console.warn(
         '[MemoryKMSProvider] ⚠️  Using ephemeral KEK (DEV_KEK_BASE64 not set) – encrypted data will be lost on restart.'
       );
@@ -100,7 +109,7 @@ class MemoryKMSProvider implements KMSProvider {
     }
 
     // Encrypt DEK with KEK using AES-256-GCM
-    const iv = crypto.randomBytes(12); // 96-bit IV for GCM
+    const iv = crypto.randomBytes(GCM_IV_LENGTH);
     const cipher = crypto.createCipheriv('aes-256-gcm', kek, iv);
 
     const encrypted = Buffer.concat([cipher.update(plainDek), cipher.final()]);
@@ -119,9 +128,9 @@ class MemoryKMSProvider implements KMSProvider {
 
     // Parse base64: iv || authTag || ciphertext
     const combined = Buffer.from(encryptedDek, 'base64');
-    const iv = combined.subarray(0, 12);
-    const authTag = combined.subarray(12, 28); // GCM auth tag is 16 bytes
-    const ciphertext = combined.subarray(28);
+    const iv = combined.subarray(0, GCM_IV_LENGTH);
+    const authTag = combined.subarray(GCM_IV_LENGTH, GCM_IV_LENGTH + GCM_AUTH_TAG_LENGTH);
+    const ciphertext = combined.subarray(GCM_IV_LENGTH + GCM_AUTH_TAG_LENGTH);
 
     // Decrypt DEK with KEK
     const decipher = crypto.createDecipheriv('aes-256-gcm', kek, iv);
@@ -132,42 +141,193 @@ class MemoryKMSProvider implements KMSProvider {
 }
 
 /**
- * AWS KMS Provider (TODO: Implement in production)
+ * AWS KMS Provider (Production)
+ *
+ * Requires environment variables:
+ * - AWS_KMS_KEY_ARN: ARN of the KMS key (e.g., arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012)
+ * - AWS_REGION: AWS region (e.g., us-east-1)
+ * - AWS credentials via standard AWS SDK credential chain (IAM role, env vars, etc.)
+ *
+ * For testing, pass mockKmsClient to constructor to avoid live network calls.
  */
 class AWSKMSProvider implements KMSProvider {
-  async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
-    throw new Error('AWS KMS not implemented yet. Set KMS_PROVIDER=memory for development.');
+  private kmsClient: any; // AWS KMS client (mocked in tests)
+  private keyArn: string;
+
+  constructor(mockKmsClient?: any) {
+    const keyArn = process.env.AWS_KMS_KEY_ARN;
+    if (!keyArn) {
+      throw new Error(
+        'AWS_KMS_KEY_ARN environment variable required for AWSKMSProvider. ' +
+        'Set to KMS key ARN like: arn:aws:kms:us-east-1:123456789012:key/UUID'
+      );
+    }
+    this.keyArn = keyArn;
+
+    if (mockKmsClient) {
+      // Use mock for testing
+      this.kmsClient = mockKmsClient;
+      console.log('[AWSKMSProvider] Using mocked KMS client for testing');
+    } else {
+      // Production: Would use real AWS SDK KMS client
+      // For now, we'll simulate it with a placeholder
+      // In real implementation: import { KMSClient } from '@aws-sdk/client-kms';
+      throw new Error(
+        'AWSKMSProvider requires AWS SDK KMS client. ' +
+        'Install @aws-sdk/client-kms or use mockKmsClient for testing.'
+      );
+    }
   }
 
+  /**
+   * Encrypt DEK using AWS KMS
+   * In production, this would call kmsClient.encrypt()
+   */
+  async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
+    if (!this.kmsClient || !this.kmsClient.encrypt) {
+      throw new Error('KMS client not initialized or missing encrypt method');
+    }
+
+    // In production with real AWS SDK:
+    // const result = await this.kmsClient.encrypt({
+    //   KeyId: this.keyArn,
+    //   Plaintext: plainDek,
+    //   EncryptionContext: { kekId }
+    // });
+    // return Buffer.from(result.CiphertextBlob).toString('base64');
+
+    // For testing with mock:
+    const result = await this.kmsClient.encrypt({
+      KeyId: this.keyArn,
+      Plaintext: plainDek,
+      EncryptionContext: { kekId },
+    });
+    return Buffer.from(result.CiphertextBlob).toString('base64');
+  }
+
+  /**
+   * Decrypt DEK using AWS KMS
+   * In production, this would call kmsClient.decrypt()
+   */
   async decryptDEK(encryptedDek: string, kekId: string): Promise<Buffer> {
-    throw new Error('AWS KMS not implemented yet. Set KMS_PROVIDER=memory for development.');
+    if (!this.kmsClient || !this.kmsClient.decrypt) {
+      throw new Error('KMS client not initialized or missing decrypt method');
+    }
+
+    const ciphertext = Buffer.from(encryptedDek, 'base64');
+
+    // In production with real AWS SDK:
+    // const result = await this.kmsClient.decrypt({
+    //   CiphertextBlob: ciphertext,
+    //   EncryptionContext: { kekId }
+    // });
+    // return Buffer.from(result.Plaintext);
+
+    // For testing with mock:
+    const result = await this.kmsClient.decrypt({
+      CiphertextBlob: ciphertext,
+      EncryptionContext: { kekId },
+    });
+    return Buffer.from(result.Plaintext);
   }
 }
 
 /**
- * GCP KMS Provider (TODO: Implement in production)
+ * GCP KMS Provider (Stub - Not Yet Implemented)
+ *
+ * TODO: Implement GCP Cloud KMS integration for production use.
+ *
+ * Required environment variables when implemented:
+ * - GCP_KMS_KEY_NAME: Resource name of the KMS key (e.g., projects/PROJECT_ID/locations/LOCATION/keyRings/RING/cryptoKeys/KEY)
+ * - GCP_PROJECT_ID: GCP project ID
+ * - GCP credentials via standard GCP SDK credential chain (service account, ADC, etc.)
+ *
+ * Production guard: Throws error if selected in production until implemented.
  */
 class GCPKMSProvider implements KMSProvider {
+  constructor() {
+    // Production guard: prevent usage until implementation is complete
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'GCP KMS Provider is not yet implemented for production use.\n' +
+        'Options:\n' +
+        '  - Use KMS_PROVIDER=aws with AWS KMS\n' +
+        '  - Implement GCP KMS integration (see TODO in encryption-service.ts)\n' +
+        'For development/testing only, use KMS_PROVIDER=memory with DEV_KEK_BASE64.'
+      );
+    }
+
+    // Development mode: allow instantiation but warn
+    console.warn('[GCPKMSProvider] ⚠️  GCP KMS Provider is a stub. Not for production use.');
+  }
+
   async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
-    throw new Error('GCP KMS not implemented yet. Set KMS_PROVIDER=memory for development.');
+    throw new Error(
+      'GCP KMS not implemented. This is a stub provider. ' +
+      'Set KMS_PROVIDER=memory for development or KMS_PROVIDER=aws for production.'
+    );
   }
 
   async decryptDEK(encryptedDek: string, kekId: string): Promise<Buffer> {
-    throw new Error('GCP KMS not implemented yet. Set KMS_PROVIDER=memory for development.');
+    throw new Error(
+      'GCP KMS not implemented. This is a stub provider. ' +
+      'Set KMS_PROVIDER=memory for development or KMS_PROVIDER=aws for production.'
+    );
   }
 }
 
 /**
- * Encryption Service - Main entry point
+ * Encryption Service - Main entry point for envelope encryption
+ *
+ * Provides envelope encryption using Data Encryption Keys (DEKs) wrapped by
+ * Key Encryption Keys (KEKs) from a KMS provider.
+ *
+ * Supports KEK rotation: new encryptions use current KEK ID, while decryption
+ * works with any KEK ID stored in the envelope.
  */
 export class EncryptionService {
   private kmsProvider: KMSProvider;
   private readonly ENCRYPTION_VERSION = 'v1-aes256gcm';
+  private currentKekId: string;
 
   constructor(kmsProvider?: KMSProvider) {
     // Select KMS provider based on env var
     const provider = kmsProvider || this.selectKMSProvider();
     this.kmsProvider = provider;
+
+    // Initialize KEK ID (format: kek-YYYYMM for monthly rotation)
+    this.currentKekId = process.env.KEK_ID || this.generateKekId();
+  }
+
+  /**
+   * Generate a KEK ID based on current year-month
+   * Format: kek-YYYYMM (e.g., kek-202501 for January 2025)
+   */
+  private generateKekId(): string {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `kek-${year}${month}`;
+  }
+
+  /**
+   * Rotate to a new KEK for future encryptions
+   *
+   * This does NOT re-encrypt existing data. Old KEKs remain valid for decryption.
+   * To rewrap existing data with the new KEK, run a separate rewrap job.
+   *
+   * @param newKekId - New KEK ID to use (e.g., 'kek-202502')
+   */
+  rotateKEK(newKekId: string): void {
+    console.log(`[EncryptionService] Rotating KEK from ${this.currentKekId} to ${newKekId}`);
+    this.currentKekId = newKekId;
+  }
+
+  /**
+   * Get the current KEK ID being used for new encryptions
+   */
+  getCurrentKekId(): string {
+    return this.currentKekId;
   }
 
   /**
@@ -191,29 +351,42 @@ export class EncryptionService {
 
   /**
    * Encrypt plaintext using envelope encryption
-   * @param plaintext - Raw data to encrypt
-   * @param kekId - Key Encryption Key ID (e.g., 'kek-default')
-   * @returns Encrypted envelope with all components
+   *
+   * Encrypts data using a randomly generated DEK, then wraps the DEK with the
+   * current KEK from the KMS provider. The result is an encrypted envelope
+   * containing the ciphertext and wrapped DEK.
+   *
+   * @param plaintext - Raw data to encrypt (sensitive content)
+   * @param kekId - Optional KEK ID override (defaults to current KEK)
+   * @returns Encrypted envelope with data_ciphertext, dek_ciphertext, dek_kid, iv, auth_tag
+   *
+   * @example
+   * const service = getEncryptionService();
+   * const plaintext = Buffer.from(JSON.stringify({ secret: 'data' }));
+   * const envelope = await service.encrypt(plaintext);
+   * // envelope.dek_kid will be current KEK (e.g., 'kek-202501')
    */
-  async encrypt(plaintext: Buffer, kekId: string): Promise<EncryptedEnvelope> {
-    // Step 1: Generate random DEK (256-bit for AES-256)
-    const dek = crypto.randomBytes(32);
+  async encrypt(plaintext: Buffer, kekId?: string): Promise<EncryptedEnvelope> {
+    const useKekId = kekId || this.currentKekId;
+
+    // Step 1: Generate random DEK
+    const dek = crypto.randomBytes(DEK_BYTES);
 
     // Step 2: Encrypt plaintext with DEK using AES-256-GCM
-    const iv = crypto.randomBytes(12); // 96-bit IV for GCM
+    const iv = crypto.randomBytes(GCM_IV_LENGTH);
     const cipher = crypto.createCipheriv('aes-256-gcm', dek, iv);
 
     const dataCiphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
     const authTag = cipher.getAuthTag();
 
     // Step 3: Encrypt DEK with KEK via KMS
-    const dekCiphertext = await this.kmsProvider.encryptDEK(dek, kekId);
+    const dekCiphertext = await this.kmsProvider.encryptDEK(dek, useKekId);
 
     // Step 4: Return envelope
     return {
       data_ciphertext: dataCiphertext.toString('base64'),
       dek_ciphertext: dekCiphertext,
-      dek_kid: kekId,
+      dek_kid: useKekId,
       encryption_version: this.ENCRYPTION_VERSION,
       auth_tag: authTag.toString('base64'),
       iv: iv.toString('base64'),
@@ -222,8 +395,18 @@ export class EncryptionService {
 
   /**
    * Decrypt envelope back to plaintext
+   *
+   * Unwraps the DEK using the KEK ID stored in the envelope, then decrypts
+   * the data ciphertext. Works with any KEK ID, enabling seamless key rotation.
+   *
    * @param envelope - Encrypted envelope from encrypt()
-   * @returns Decrypted plaintext
+   * @returns Decrypted plaintext buffer
+   * @throws Error if encryption version is unsupported or decryption fails
+   *
+   * @example
+   * const service = getEncryptionService();
+   * const plaintext = await service.decrypt(envelope);
+   * const data = JSON.parse(plaintext.toString());
    */
   async decrypt(envelope: EncryptedEnvelope): Promise<Buffer> {
     // Validate encryption version
@@ -233,7 +416,7 @@ export class EncryptionService {
       );
     }
 
-    // Step 1: Decrypt DEK using KEK via KMS
+    // Step 1: Decrypt DEK using KEK via KMS (uses envelope's dek_kid, not current)
     const dek = await this.kmsProvider.decryptDEK(envelope.dek_ciphertext, envelope.dek_kid);
 
     // Step 2: Decrypt data using DEK

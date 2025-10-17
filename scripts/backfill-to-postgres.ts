@@ -13,6 +13,12 @@ import { getMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { getPostgresStore } from '../src/memory-layer/storage/postgres-store';
 import { backfillRecordsTotal, backfillFailuresTotal } from '../src/observability/metrics';
 
+// Backfill constants
+const DEFAULT_BATCH_SIZE = 100;
+const MAX_BATCH_SIZE = 1000;
+const MIN_BATCH_SIZE = 1;
+const BACKFILL_BATCH_DELAY_MS = parseInt(process.env.BACKFILL_BATCH_DELAY_MS || '100', 10);
+
 /**
  * Backfill configuration
  */
@@ -27,10 +33,10 @@ interface BackfillConfig {
  */
 function loadBackfillConfig(): BackfillConfig {
   // Validate batch size
-  const batchSize = parseInt(process.env.BACKFILL_BATCH_SIZE || '100', 10);
-  if (isNaN(batchSize) || batchSize <= 0 || batchSize > 1000) {
+  const batchSize = parseInt(process.env.BACKFILL_BATCH_SIZE || String(DEFAULT_BATCH_SIZE), 10);
+  if (isNaN(batchSize) || batchSize < MIN_BATCH_SIZE || batchSize > MAX_BATCH_SIZE) {
     throw new Error(
-      `Invalid BACKFILL_BATCH_SIZE: ${process.env.BACKFILL_BATCH_SIZE}. Must be between 1 and 1000.`
+      `Invalid BACKFILL_BATCH_SIZE: ${process.env.BACKFILL_BATCH_SIZE}. Must be between ${MIN_BATCH_SIZE} and ${MAX_BATCH_SIZE}.`
     );
   }
 
@@ -115,7 +121,7 @@ async function backfillToPostgres(): Promise<void> {
 
       // Small delay between batches to avoid overwhelming Postgres
       if (i + config.batchSize < filteredRecords.length) {
-        await new Promise((resolve) => setTimeout(resolve, 100));
+        await new Promise((resolve) => setTimeout(resolve, BACKFILL_BATCH_DELAY_MS));
       }
     }
 

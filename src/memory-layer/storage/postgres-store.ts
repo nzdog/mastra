@@ -18,6 +18,7 @@ import {
   cryptoEncryptFailuresTotal,
   cryptoDecryptFailuresTotal,
   cryptoOpsDuration,
+  postgresPoolErrorsTotal,
 } from '../../observability/metrics';
 
 /**
@@ -33,6 +34,25 @@ interface PostgresConfig {
   max: number; // Pool size
   idleTimeoutMillis: number;
   connectionTimeoutMillis: number;
+}
+
+/**
+ * Database row structure from memory_records table
+ * Maps exactly to the PostgreSQL schema for type safety
+ */
+interface PostgresRow {
+  id: string;
+  hashed_pseudonym: string;
+  session_id: string | null;
+  content: string | object; // JSONB column (parsed as object by pg)
+  consent_family: string;
+  consent_timestamp: string;
+  consent_version: string;
+  created_at: string;
+  updated_at: string;
+  expires_at: string | null;
+  access_count: number;
+  audit_receipt_id: string;
 }
 
 /**
@@ -62,9 +82,10 @@ export class PostgresStore implements MemoryStore {
     const pgConfig = config || loadConfig();
     this.pool = new Pool(pgConfig);
 
-    // Handle pool errors
+    // Handle pool errors and record metrics
     this.pool.on('error', (err) => {
       console.error('Unexpected error on idle PostgreSQL client', err);
+      postgresPoolErrorsTotal.inc({ error_type: err.name || 'unknown' });
     });
   }
 
@@ -105,7 +126,7 @@ export class PostgresStore implements MemoryStore {
         try {
           const encryptionService = getEncryptionService();
           const plaintext = Buffer.from(JSON.stringify(record.content.data));
-          const encrypted = await encryptionService.encrypt(plaintext, 'kek-default');
+          const encrypted = await encryptionService.encrypt(plaintext); // Uses current KEK
 
           // Storage-layer encrypted content structure (not in MemoryContent interface)
           contentToStore = {
@@ -278,12 +299,55 @@ export class PostgresStore implements MemoryStore {
   }
 
   /**
-   * Forget (delete) records - STUB for Phase 3
-   * TODO: Implement proper hard delete with audit trail
+   * Forget (delete) records for GDPR compliance
+   *
+   * Permanently deletes memory records based on the request criteria.
+   * Supports deletion by:
+   * - Specific record ID
+   * - All records for a hashed_pseudonym
+   * - All records for a session_id
+   *
+   * @param request - ForgetRequest with id, hashed_pseudonym, or session_id
+   * @returns Array of deleted record IDs
    */
   async forget(request: ForgetRequest): Promise<string[]> {
-    console.warn('[PostgresStore] forget() not yet implemented - returning empty array');
-    return [];
+    const client = await this.pool.connect();
+    try {
+      const conditions: string[] = [];
+      const values: any[] = [];
+      let paramIndex = 1;
+
+      if (request.id) {
+        // Delete specific record by ID
+        conditions.push(`id = $${paramIndex++}`);
+        values.push(request.id);
+      } else if (request.hashed_pseudonym) {
+        // Delete all records for user
+        conditions.push(`hashed_pseudonym = $${paramIndex++}`);
+        values.push(request.hashed_pseudonym);
+      } else if (request.session_id) {
+        // Delete all records for session
+        conditions.push(`session_id = $${paramIndex++}`);
+        values.push(request.session_id);
+      } else {
+        throw new Error('ForgetRequest must specify id, hashed_pseudonym, or session_id');
+      }
+
+      const whereClause = conditions.join(' AND ');
+      const query = `
+        DELETE FROM memory_records
+        WHERE ${whereClause}
+        RETURNING id
+      `;
+
+      const result = await client.query(query, values);
+      const deletedIds = result.rows.map((row) => row.id);
+
+      console.log(`[PostgresStore] Deleted ${deletedIds.length} records for forget request`);
+      return deletedIds;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -395,9 +459,18 @@ export class PostgresStore implements MemoryStore {
 
   /**
    * Convert database row to MemoryRecord
-   * Week 3: Added decryption support
+   *
+   * Transforms PostgreSQL row data into MemoryRecord format. Handles:
+   * - JSON parsing of content field
+   * - Decryption of encrypted content (if encryption enabled)
+   * - Type coercion for timestamps and IDs
+   *
+   * Week 3: Added decryption support and type safety
+   *
+   * @param row - PostgreSQL row from memory_records table
+   * @returns Fully hydrated MemoryRecord with decrypted content
    */
-  private async rowToRecord(row: any): Promise<MemoryRecord> {
+  private async rowToRecord(row: PostgresRow): Promise<MemoryRecord> {
     let content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
 
     // Week 3: Decrypt content if encrypted
@@ -426,14 +499,14 @@ export class PostgresStore implements MemoryStore {
     return {
       id: row.id,
       hashed_pseudonym: row.hashed_pseudonym,
-      session_id: row.session_id,
+      session_id: row.session_id || undefined,
       content,
-      consent_family: row.consent_family,
+      consent_family: row.consent_family as 'personal' | 'cohort' | 'population',
       consent_timestamp: row.consent_timestamp,
       consent_version: row.consent_version,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      expires_at: row.expires_at,
+      expires_at: row.expires_at || undefined,
       access_count: row.access_count,
       audit_receipt_id: row.audit_receipt_id,
     };

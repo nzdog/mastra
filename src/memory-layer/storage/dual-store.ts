@@ -129,10 +129,17 @@ export class DualStore implements MemoryStore {
 
       if (secondaryResults.length > 0) {
         // Update lag metric if we had to fallback - calculate real lag
+        // Results should be sorted by created_at DESC (newest first)
         const newest = secondaryResults[0];
-        const created = new Date(newest.created_at || Date.now());
-        const lagSeconds = Math.max(0, (Date.now() - created.getTime()) / 1000);
-        dualWriteLagSeconds.set({ store: 'secondary_fallback' }, lagSeconds);
+
+        if (!newest.created_at) {
+          console.warn('[DualStore] Cannot calculate lag: missing created_at timestamp');
+          // Do not set metric - avoid false zero lag
+        } else {
+          const createdTimestamp = new Date(newest.created_at).getTime();
+          const lagSeconds = Math.max(0, (Date.now() - createdTimestamp) / 1000);
+          dualWriteLagSeconds.set({ store: 'secondary_fallback' }, lagSeconds);
+        }
       }
 
       return secondaryResults;
@@ -161,16 +168,47 @@ export class DualStore implements MemoryStore {
   }
 
   /**
-   * Forget: Delete from both stores
+   * Forget: Delete from both stores with mismatch detection
+   *
+   * Deletes records from both primary and secondary stores. If secondary store
+   * fails or returns different count, records metrics and logs warnings.
+   *
+   * @param request - ForgetRequest specifying what to delete
+   * @returns Array of deleted IDs from primary store
    */
   async forget(request: ForgetRequest): Promise<string[]> {
+    const secondaryStoreType = this.config.primaryStore === 'memory' ? 'postgres' : 'memory';
+
+    // Delete from primary store (required)
     const primaryDeleted = await this.primaryStore.forget(request);
 
+    // Delete from secondary store (best-effort unless failFast)
     try {
-      await this.secondaryStore.forget(request);
+      const secondaryDeleted = await this.secondaryStore.forget(request);
+
+      // Check for count mismatch
+      if (primaryDeleted.length !== secondaryDeleted.length) {
+        const diff = Math.abs(primaryDeleted.length - secondaryDeleted.length);
+        console.warn(
+          `[DualStore] Forget count mismatch: primary=${primaryDeleted.length}, secondary=${secondaryDeleted.length} (diff=${diff})`
+        );
+        dualWriteFailuresTotal.inc({
+          store: secondaryStoreType,
+          reason: 'forget_mismatch',
+        });
+      }
     } catch (err) {
+      dualWriteFailuresTotal.inc({
+        store: secondaryStoreType,
+        reason: 'forget_failed',
+      });
       console.error('[DualStore] Secondary forget failed:', err);
-      // Continue - primary deletion succeeded
+
+      if (this.config.failFast) {
+        throw new Error('Secondary store forget failed (failFast=true)');
+      }
+
+      // Continue if not failFast - primary deletion succeeded
     }
 
     return primaryDeleted;

@@ -360,6 +360,18 @@ export const backfillFailuresTotal = new promClient.Counter({
 });
 
 // =============================================================================
+// POSTGRES POOL METRICS
+// =============================================================================
+
+/** Total number of PostgreSQL pool errors */
+export const postgresPoolErrorsTotal = new promClient.Counter({
+  name: 'postgres_pool_errors_total',
+  help: 'Total number of PostgreSQL connection pool errors',
+  labelNames: ['error_type'],
+  registers: [register],
+});
+
+// =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 
