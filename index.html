@@ -2902,7 +2902,7 @@
             themePosition.textContent = `Theme ${themeNum} of ${totalThemes}`;
 
             // Parse and render composer output (but keep hidden)
-            renderComposerOutput(data.composer_output);
+            renderComposerOutput(data.composer_output, themeNum, data.theme_title);
 
             // Render supports - DISABLED
             // renderSupports(data);
@@ -3411,10 +3411,12 @@
             return result;
         }
 
-        function renderComposerOutput(markdown) {
+        function renderComposerOutput(markdown, themeNumber = null, themeTitle = null) {
             composerOutput.innerHTML = '';
 
             console.log('📄 Composer output markdown:', markdown);
+            console.log('📌 Theme number provided:', themeNumber);
+            console.log('📌 Theme title provided:', themeTitle);
 
             // Parse markdown sections
             const sections = parseMarkdown(markdown);
@@ -3431,8 +3433,12 @@
                 if (responseArea) responseArea.style.display = 'block';
             }
 
-            // Render theme title if available
-            if (sections.theme_name) {
+            // Render theme title - use provided number and title, or fall back to parsed theme_name
+            if (themeNumber && themeTitle) {
+                composerOutput.innerHTML += `
+                    <div class="theme-title">Theme ${themeNumber} – ${themeTitle}</div>
+                `;
+            } else if (sections.theme_name) {
                 composerOutput.innerHTML += `
                     <div class="theme-title">${sections.theme_name}</div>
                 `;
@@ -3529,8 +3535,11 @@
             const sections = {};
 
             // Extract theme name from markdown (e.g., **Theme 1 – Surface Behaviors**)
+            // But NOT if it's part of "Ready to move into **Theme X**" (which refers to NEXT theme)
             const themeMatch = markdown.match(/\*\*(Theme\s+\d+\s*[–—:-]\s*[^*]+)\*\*/i);
-            if (themeMatch) sections.theme_name = themeMatch[1].trim();
+            if (themeMatch && !markdown.includes('Ready to move into **Theme')) {
+                sections.theme_name = themeMatch[1].trim();
+            }
 
             // ENTRY mode sections
             const purposeMatch = markdown.match(/\*\*Purpose\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);

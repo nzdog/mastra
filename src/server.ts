@@ -329,6 +329,12 @@ function formatResponse(
   // Extract supports
   const supports = extractSupports(session.registry, session.parser, state);
 
+  // Get theme title if in WALK or CONTINUE mode
+  let themeTitle = null;
+  if ((mode === 'WALK' || mode === 'CONTINUE') && themeNumber) {
+    themeTitle = session.registry.getThemeTitle(themeNumber);
+  }
+
   // Check if user has completed all themes and is on final theme
   // Show completion options when on final theme AND showing interpretation (not questions)
   const isFinalTheme = themeNumber === totalThemes;
@@ -339,6 +345,7 @@ function formatResponse(
     session_id: sessionId,
     protocol_name: protocolName,
     theme_number: themeNumber,
+    theme_title: themeTitle,
     total_themes: totalThemes,
     mode,
     composer_output: agentResponse,
