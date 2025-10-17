@@ -72,10 +72,10 @@ class MemoryKMSProvider implements KMSProvider {
     if (process.env.NODE_ENV === 'production' && !base64KEK) {
       throw new Error(
         'SECURITY: MemoryKMSProvider cannot be used in production without DEV_KEK_BASE64. ' +
-        'For production deployments:\n' +
-        '  - Set KMS_PROVIDER=aws and configure AWS_KMS_KEY_ARN + AWS credentials\n' +
-        '  - OR set KMS_PROVIDER=gcp and configure GCP_KMS_KEY_NAME + GCP credentials\n' +
-        'MemoryKMSProvider is for development/testing only.'
+          'For production deployments:\n' +
+          '  - Set KMS_PROVIDER=aws and configure AWS_KMS_KEY_ARN + AWS credentials\n' +
+          '  - OR set KMS_PROVIDER=gcp and configure GCP_KMS_KEY_NAME + GCP credentials\n' +
+          'MemoryKMSProvider is for development/testing only.'
       );
     }
 
@@ -83,12 +83,16 @@ class MemoryKMSProvider implements KMSProvider {
       try {
         devKEK = Buffer.from(base64KEK, 'base64');
         if (devKEK.length !== KEK_BYTES) {
-          throw new Error(`Invalid DEV_KEK_BASE64 length: ${devKEK.length} bytes (expected ${KEK_BYTES})`);
+          throw new Error(
+            `Invalid DEV_KEK_BASE64 length: ${devKEK.length} bytes (expected ${KEK_BYTES})`
+          );
         }
         console.log('[MemoryKMSProvider] Using persistent KEK from DEV_KEK_BASE64');
       } catch (err) {
         console.error('[MemoryKMSProvider] Failed to parse DEV_KEK_BASE64:', err);
-        throw new Error(`Invalid DEV_KEK_BASE64: must be base64-encoded ${KEK_BYTES * 8}-bit key (${KEK_BYTES} bytes)`);
+        throw new Error(
+          `Invalid DEV_KEK_BASE64: must be base64-encoded ${KEK_BYTES * 8}-bit key (${KEK_BYTES} bytes)`
+        );
       }
     } else {
       // Generate ephemeral KEK
@@ -96,7 +100,9 @@ class MemoryKMSProvider implements KMSProvider {
       console.warn(
         '[MemoryKMSProvider] ⚠️  Using ephemeral KEK (DEV_KEK_BASE64 not set) – encrypted data will be lost on restart.'
       );
-      console.warn(`[MemoryKMSProvider] To persist KEK, set: DEV_KEK_BASE64=${devKEK.toString('base64')}`);
+      console.warn(
+        `[MemoryKMSProvider] To persist KEK, set: DEV_KEK_BASE64=${devKEK.toString('base64')}`
+      );
     }
 
     this.keys.set('kek-default', devKEK);
@@ -154,20 +160,20 @@ class MemoryKMSProvider implements KMSProvider {
 class AWSKMSProvider implements KMSProvider {
   constructor() {
     throw new Error(
-      "[AWSKMSProvider] Not implemented in this release.\n" +
-      "Options:\n" +
-      "  - Set KMS_PROVIDER=memory for development (with DEV_KEK_BASE64 env var)\n" +
-      "  - Set KMS_PROVIDER=gcp for testing (stub only, not for production)\n" +
-      "⚠️  Production deployments must implement AWS KMS integration or use alternative KMS."
+      '[AWSKMSProvider] Not implemented in this release.\n' +
+        'Options:\n' +
+        '  - Set KMS_PROVIDER=memory for development (with DEV_KEK_BASE64 env var)\n' +
+        '  - Set KMS_PROVIDER=gcp for testing (stub only, not for production)\n' +
+        '⚠️  Production deployments must implement AWS KMS integration or use alternative KMS.'
     );
   }
 
   async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
-    throw new Error("AWS KMS not implemented");
+    throw new Error('AWS KMS not implemented');
   }
 
   async decryptDEK(encryptedDek: string, kekId: string): Promise<Buffer> {
-    throw new Error("AWS KMS not implemented");
+    throw new Error('AWS KMS not implemented');
   }
 }
 
@@ -189,10 +195,10 @@ class GCPKMSProvider implements KMSProvider {
     if (process.env.NODE_ENV === 'production') {
       throw new Error(
         'GCP KMS Provider is not yet implemented for production use.\n' +
-        'Options:\n' +
-        '  - Use KMS_PROVIDER=aws with AWS KMS\n' +
-        '  - Implement GCP KMS integration (see TODO in encryption-service.ts)\n' +
-        'For development/testing only, use KMS_PROVIDER=memory with DEV_KEK_BASE64.'
+          'Options:\n' +
+          '  - Use KMS_PROVIDER=aws with AWS KMS\n' +
+          '  - Implement GCP KMS integration (see TODO in encryption-service.ts)\n' +
+          'For development/testing only, use KMS_PROVIDER=memory with DEV_KEK_BASE64.'
       );
     }
 
@@ -203,14 +209,14 @@ class GCPKMSProvider implements KMSProvider {
   async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
     throw new Error(
       'GCP KMS not implemented. This is a stub provider. ' +
-      'Set KMS_PROVIDER=memory for development or KMS_PROVIDER=aws for production.'
+        'Set KMS_PROVIDER=memory for development or KMS_PROVIDER=aws for production.'
     );
   }
 
   async decryptDEK(encryptedDek: string, kekId: string): Promise<Buffer> {
     throw new Error(
       'GCP KMS not implemented. This is a stub provider. ' +
-      'Set KMS_PROVIDER=memory for development or KMS_PROVIDER=aws for production.'
+        'Set KMS_PROVIDER=memory for development or KMS_PROVIDER=aws for production.'
     );
   }
 }
@@ -276,11 +282,11 @@ export class EncryptionService {
     const provider = process.env.KMS_PROVIDER || 'memory';
 
     // Production guard: fail early if AWS provider selected
-    if (process.env.NODE_ENV === "production" && provider === "aws") {
+    if (process.env.NODE_ENV === 'production' && provider === 'aws') {
       throw new Error(
-        "FATAL: AWS KMS Provider not implemented. " +
-        "Set KMS_PROVIDER=memory (non-prod only) or KMS_PROVIDER=gcp (testing only). " +
-        "Production deployments require full KMS integration."
+        'FATAL: AWS KMS Provider not implemented. ' +
+          'Set KMS_PROVIDER=memory (non-prod only) or KMS_PROVIDER=gcp (testing only). ' +
+          'Production deployments require full KMS integration.'
       );
     }
 
@@ -422,19 +428,19 @@ export async function assertKmsUsable(): Promise<void> {
     if (provider === 'aws') {
       throw new Error(
         'FATAL: AWS KMS Provider not implemented in this release. ' +
-        'Production deployments must:\n' +
-        '  - Implement AWS KMS integration (see TODO in encryption-service.ts)\n' +
-        '  - OR use alternative KMS provider\n' +
-        'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
+          'Production deployments must:\n' +
+          '  - Implement AWS KMS integration (see TODO in encryption-service.ts)\n' +
+          '  - OR use alternative KMS provider\n' +
+          'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
       );
     }
     if (provider === 'gcp') {
       throw new Error(
         'FATAL: GCP KMS Provider not implemented for production use. ' +
-        'Production deployments must:\n' +
-        '  - Implement GCP KMS integration (see TODO in encryption-service.ts)\n' +
-        '  - OR use AWS KMS (when implemented)\n' +
-        'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
+          'Production deployments must:\n' +
+          '  - Implement GCP KMS integration (see TODO in encryption-service.ts)\n' +
+          '  - OR use AWS KMS (when implemented)\n' +
+          'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
       );
     }
   }

@@ -240,9 +240,12 @@ async function main(): Promise<void> {
 
     console.log('\n[RECALL] Test 6: Recall personal memories');
     try {
-      const response = await authedRequest(`/v1/personal/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`, {
-        method: 'GET',
-      });
+      const response = await authedRequest(
+        `/v1/personal/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`,
+        {
+          method: 'GET',
+        }
+      );
 
       if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
       if (!Array.isArray(response.data.records)) throw new Error('Invalid records');
@@ -291,9 +294,12 @@ async function main(): Promise<void> {
 
     console.log('\n[RECALL] Test 9: Recall forbidden for cohort family');
     try {
-      const response = await authedRequest(`/v1/cohort/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`, {
-        method: 'GET',
-      });
+      const response = await authedRequest(
+        `/v1/cohort/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`,
+        {
+          method: 'GET',
+        }
+      );
 
       if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
       if (response.data.error.code !== 'FORBIDDEN') throw new Error('Expected FORBIDDEN');
@@ -307,9 +313,12 @@ async function main(): Promise<void> {
 
     console.log('\n[RECALL] Test 10: Recall forbidden for population family');
     try {
-      const response = await authedRequest(`/v1/population/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`, {
-        method: 'GET',
-      });
+      const response = await authedRequest(
+        `/v1/population/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`,
+        {
+          method: 'GET',
+        }
+      );
 
       if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
 
@@ -497,9 +506,12 @@ async function main(): Promise<void> {
 
     console.log('\n[FORGET] Test 17: Forget forbidden for population');
     try {
-      const response = await authedRequest(`/v1/population/forget?hashed_pseudonym=${HASHED_PSEUDONYM}`, {
-        method: 'DELETE',
-      });
+      const response = await authedRequest(
+        `/v1/population/forget?hashed_pseudonym=${HASHED_PSEUDONYM}`,
+        {
+          method: 'DELETE',
+        }
+      );
 
       if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
 
@@ -651,7 +663,11 @@ async function main(): Promise<void> {
       results.push({ test: 'PII Validation - accept valid hash', passed: true });
     } catch (err) {
       console.error('❌ Failed:', err);
-      results.push({ test: 'PII Validation - accept valid hash', passed: false, error: String(err) });
+      results.push({
+        test: 'PII Validation - accept valid hash',
+        passed: false,
+        error: String(err),
+      });
     }
 
     // ============================================================================

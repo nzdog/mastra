@@ -54,7 +54,8 @@ async function main(): Promise<void> {
     const stored = await store.store(record);
 
     if (stored.id !== record.id) throw new Error('ID mismatch');
-    if (stored.hashed_pseudonym !== record.hashed_pseudonym) throw new Error('hashed_pseudonym mismatch');
+    if (stored.hashed_pseudonym !== record.hashed_pseudonym)
+      throw new Error('hashed_pseudonym mismatch');
 
     console.log('✅ Store record passed');
     results.push({ test: 'Store record', passed: true });
@@ -144,7 +145,9 @@ async function main(): Promise<void> {
 
     // Store multiple records for same user
     for (let i = 0; i < 3; i++) {
-      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: `session_${i}` }));
+      await store.store(
+        createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: `session_${i}` })
+      );
     }
 
     const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
@@ -166,10 +169,19 @@ async function main(): Promise<void> {
     const sessionId = 'session_specific';
 
     // Store records with different sessions
-    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId }));
-    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: 'other_session' }));
+    await store.store(
+      createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId })
+    );
+    await store.store(
+      createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: 'other_session' })
+    );
 
-    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, session_id: sessionId, limit: 100, offset: 0 };
+    const query: RecallQuery = {
+      hashed_pseudonym: hashedPseudonym,
+      session_id: sessionId,
+      limit: 100,
+      offset: 0,
+    };
     const records = await store.recall(query);
 
     if (records.length !== 1) throw new Error(`Expected 1 record, got ${records.length}`);
@@ -222,11 +234,21 @@ async function main(): Promise<void> {
     }
 
     // Query with ascending sort
-    const ascQuery: RecallQuery = { hashed_pseudonym: hashedPseudonym, sort: 'asc', limit: 100, offset: 0 };
+    const ascQuery: RecallQuery = {
+      hashed_pseudonym: hashedPseudonym,
+      sort: 'asc',
+      limit: 100,
+      offset: 0,
+    };
     const ascRecords = await store.recall(ascQuery);
 
     // Query with descending sort
-    const descQuery: RecallQuery = { hashed_pseudonym: hashedPseudonym, sort: 'desc', limit: 100, offset: 0 };
+    const descQuery: RecallQuery = {
+      hashed_pseudonym: hashedPseudonym,
+      sort: 'desc',
+      limit: 100,
+      offset: 0,
+    };
     const descRecords = await store.recall(descQuery);
 
     // Verify order
@@ -251,13 +273,24 @@ async function main(): Promise<void> {
 
     // Store records with different content types
     await store.store(
-      createTestRecord({ hashed_pseudonym: hashedPseudonym, content: { type: 'text', data: 'text' } })
+      createTestRecord({
+        hashed_pseudonym: hashedPseudonym,
+        content: { type: 'text', data: 'text' },
+      })
     );
     await store.store(
-      createTestRecord({ hashed_pseudonym: hashedPseudonym, content: { type: 'structured', data: {} } })
+      createTestRecord({
+        hashed_pseudonym: hashedPseudonym,
+        content: { type: 'structured', data: {} },
+      })
     );
 
-    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, type: 'text', limit: 100, offset: 0 };
+    const query: RecallQuery = {
+      hashed_pseudonym: hashedPseudonym,
+      type: 'text',
+      limit: 100,
+      offset: 0,
+    };
     const records = await store.recall(query);
 
     if (records.length !== 1) throw new Error(`Expected 1 record, got ${records.length}`);
@@ -286,7 +319,13 @@ async function main(): Promise<void> {
     await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, created_at: future }));
 
     // Query for records between past and present
-    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, since: past, until: present, limit: 100, offset: 0 };
+    const query: RecallQuery = {
+      hashed_pseudonym: hashedPseudonym,
+      since: past,
+      until: present,
+      limit: 100,
+      offset: 0,
+    };
     const records = await store.recall(query);
 
     if (records.length !== 2) throw new Error(`Expected 2 records, got ${records.length}`);
@@ -337,7 +376,8 @@ async function main(): Promise<void> {
     const forgetRequest: ForgetRequest = { hashed_pseudonym: hashedPseudonym, hard_delete: true };
     const deletedIds = await store.forget(forgetRequest);
 
-    if (deletedIds.length !== 3) throw new Error(`Expected 3 deleted records, got ${deletedIds.length}`);
+    if (deletedIds.length !== 3)
+      throw new Error(`Expected 3 deleted records, got ${deletedIds.length}`);
 
     console.log('✅ Forget by user_id passed');
     results.push({ test: 'Forget by user_id', passed: true });
@@ -353,14 +393,21 @@ async function main(): Promise<void> {
     const sessionId = 'session_forget';
 
     // Store records with different sessions
-    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId }));
-    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId }));
-    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: 'other_session' }));
+    await store.store(
+      createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId })
+    );
+    await store.store(
+      createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId })
+    );
+    await store.store(
+      createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: 'other_session' })
+    );
 
     const forgetRequest: ForgetRequest = { session_id: sessionId, hard_delete: true };
     const deletedIds = await store.forget(forgetRequest);
 
-    if (deletedIds.length !== 2) throw new Error(`Expected 2 deleted records, got ${deletedIds.length}`);
+    if (deletedIds.length !== 2)
+      throw new Error(`Expected 2 deleted records, got ${deletedIds.length}`);
 
     console.log('✅ Forget by session_id passed');
     results.push({ test: 'Forget by session_id', passed: true });
@@ -403,7 +450,12 @@ async function main(): Promise<void> {
 
     // Store records for this session
     for (let i = 0; i < 3; i++) {
-      await store.store(createTestRecord({ session_id: sessionId, hashed_pseudonym: `hs_${i}_aGFzaGVkX3BzZXVkb255bV90ZXN0` }));
+      await store.store(
+        createTestRecord({
+          session_id: sessionId,
+          hashed_pseudonym: `hs_${i}_aGFzaGVkX3BzZXVkb255bV90ZXN0`,
+        })
+      );
     }
 
     // Count records for this session
@@ -426,7 +478,12 @@ async function main(): Promise<void> {
     const families: ConsentFamily[] = ['personal', 'cohort', 'population'];
     for (const family of families) {
       for (let i = 0; i < 2; i++) {
-        await store.store(createTestRecord({ consent_family: family, hashed_pseudonym: `hs_${family}_${i}_aGFzaGVkX3BzZXVkb255bV90ZXN0` }));
+        await store.store(
+          createTestRecord({
+            consent_family: family,
+            hashed_pseudonym: `hs_${family}_${i}_aGFzaGVkX3BzZXVkb255bV90ZXN0`,
+          })
+        );
       }
     }
 
@@ -513,14 +570,24 @@ async function main(): Promise<void> {
 
     // Store multiple records
     for (let i = 0; i < 5; i++) {
-      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, consent_family: 'personal' }));
+      await store.store(
+        createTestRecord({ hashed_pseudonym: hashedPseudonym, consent_family: 'personal' })
+      );
     }
     for (let i = 0; i < 3; i++) {
-      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, consent_family: 'cohort' }));
+      await store.store(
+        createTestRecord({ hashed_pseudonym: hashedPseudonym, consent_family: 'cohort' })
+      );
     }
 
-    const personalCount = await store.count({ hashed_pseudonym: hashedPseudonym, consent_family: 'personal' });
-    const cohortCount = await store.count({ hashed_pseudonym: hashedPseudonym, consent_family: 'cohort' });
+    const personalCount = await store.count({
+      hashed_pseudonym: hashedPseudonym,
+      consent_family: 'personal',
+    });
+    const cohortCount = await store.count({
+      hashed_pseudonym: hashedPseudonym,
+      consent_family: 'cohort',
+    });
 
     if (personalCount !== 5) throw new Error(`Expected 5 personal records, got ${personalCount}`);
     if (cohortCount !== 3) throw new Error(`Expected 3 cohort records, got ${cohortCount}`);
@@ -537,9 +604,24 @@ async function main(): Promise<void> {
     const store = new InMemoryStore();
 
     // Store records for each family
-    await store.store(createTestRecord({ consent_family: 'personal', hashed_pseudonym: 'hs_dXNlcl8xX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA' }));
-    await store.store(createTestRecord({ consent_family: 'cohort', hashed_pseudonym: 'hs_dXNlcl8yX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA' }));
-    await store.store(createTestRecord({ consent_family: 'population', hashed_pseudonym: 'hs_dXNlcl8zX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA' }));
+    await store.store(
+      createTestRecord({
+        consent_family: 'personal',
+        hashed_pseudonym: 'hs_dXNlcl8xX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+      })
+    );
+    await store.store(
+      createTestRecord({
+        consent_family: 'cohort',
+        hashed_pseudonym: 'hs_dXNlcl8yX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+      })
+    );
+    await store.store(
+      createTestRecord({
+        consent_family: 'population',
+        hashed_pseudonym: 'hs_dXNlcl8zX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+      })
+    );
 
     const stats = await store.getStats();
 
@@ -597,7 +679,11 @@ async function main(): Promise<void> {
     }
   } catch (err) {
     console.error('❌ Failed:', err);
-    results.push({ test: 'Reject invalid hashed_pseudonym format', passed: false, error: String(err) });
+    results.push({
+      test: 'Reject invalid hashed_pseudonym format',
+      passed: false,
+      error: String(err),
+    });
   }
 
   // ============================================================================

@@ -90,7 +90,11 @@ describe('PostgresStore', () => {
       await store.store(record);
 
       // Update with new content
-      const updated = { ...record, content: { type: 'text' as const, data: 'Updated content' }, access_count: 10 };
+      const updated = {
+        ...record,
+        content: { type: 'text' as const, data: 'Updated content' },
+        access_count: 10,
+      };
       const result = await store.store(updated);
 
       expect(result.content.data).toBe('Updated content');

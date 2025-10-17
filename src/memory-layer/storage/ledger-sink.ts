@@ -53,9 +53,9 @@ export interface SignedAuditReceipt {
   signature: SignatureResult;
   ledger_height: number;
   receipt_id: string;
-  schemaVersion: string;     // e.g., "1.0.0"
-  policyVersion: string;     // e.g., "2025-10-phase2"
-  consentScope: string[];    // e.g., ["personal:read", "personal:write"]
+  schemaVersion: string; // e.g., "1.0.0"
+  policyVersion: string; // e.g., "2025-10-phase2"
+  consentScope: string[]; // e.g., ["personal:read", "personal:write"]
 }
 
 export interface LedgerState {

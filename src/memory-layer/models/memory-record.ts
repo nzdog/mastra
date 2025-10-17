@@ -99,7 +99,10 @@ export function requiresAggregation(family: ConsentFamily): boolean {
  * Helper to create a new memory record with defaults
  */
 export function createMemoryRecord(
-  partial: Pick<MemoryRecord, 'hashed_pseudonym' | 'content' | 'consent_family' | 'consent_timestamp' | 'consent_version'>
+  partial: Pick<
+    MemoryRecord,
+    'hashed_pseudonym' | 'content' | 'consent_family' | 'consent_timestamp' | 'consent_version'
+  >
 ): Omit<MemoryRecord, 'id' | 'created_at' | 'updated_at' | 'audit_receipt_id'> {
   return {
     ...partial,

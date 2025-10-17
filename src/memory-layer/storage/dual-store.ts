@@ -239,7 +239,9 @@ export class DualStore implements MemoryStore {
       console.error(`[DualStore] Secondary forget failed (${primaryDeleted.length} ids):`, err);
 
       // GDPR requires atomic deletion - always fail
-      throw new Error(`Secondary store forget failed (${primaryDeleted.length} records affected): ${(err as Error).message}`);
+      throw new Error(
+        `Secondary store forget failed (${primaryDeleted.length} records affected): ${(err as Error).message}`
+      );
     }
   }
 

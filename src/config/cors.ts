@@ -33,8 +33,8 @@ export function parseCorsConfig(): CorsConfig {
   const allowedOrigins = new Set<string>(
     originsStr
       .split(',')
-      .map(o => o.trim())
-      .filter(o => o.length > 0)
+      .map((o) => o.trim())
+      .filter((o) => o.length > 0)
   );
 
   // If no origins specified, use safe defaults for development
@@ -67,8 +67,8 @@ export function parseCorsConfig(): CorsConfig {
   // Parse allowed methods
   const allowMethods = (process.env.CORS_ALLOW_METHODS || 'GET,POST,PUT,PATCH,DELETE,OPTIONS')
     .split(',')
-    .map(m => m.trim().toUpperCase())
-    .filter(m => m.length > 0);
+    .map((m) => m.trim().toUpperCase())
+    .filter((m) => m.length > 0);
 
   // Parse allowed headers (minimal set by default)
   const defaultAllowHeaders = [
@@ -79,16 +79,17 @@ export function parseCorsConfig(): CorsConfig {
     'X-Trace-ID',
   ];
   const allowHeaders = process.env.CORS_ALLOW_HEADERS
-    ? process.env.CORS_ALLOW_HEADERS.split(',').map(h => h.trim()).filter(h => h.length > 0)
+    ? process.env.CORS_ALLOW_HEADERS.split(',')
+        .map((h) => h.trim())
+        .filter((h) => h.length > 0)
     : defaultAllowHeaders;
 
   // Parse exposed headers (minimal set by default)
-  const defaultExposeHeaders = [
-    'X-API-Version',
-    'X-Spec-Version',
-  ];
+  const defaultExposeHeaders = ['X-API-Version', 'X-Spec-Version'];
   const exposeHeaders = process.env.CORS_EXPOSE_HEADERS
-    ? process.env.CORS_EXPOSE_HEADERS.split(',').map(h => h.trim()).filter(h => h.length > 0)
+    ? process.env.CORS_EXPOSE_HEADERS.split(',')
+        .map((h) => h.trim())
+        .filter((h) => h.length > 0)
     : defaultExposeHeaders;
 
   const config: CorsConfig = {
@@ -104,7 +105,7 @@ export function parseCorsConfig(): CorsConfig {
   console.log('🌐 CORS Configuration:');
   console.log(`   Environment: ${env}`);
   console.log(`   Allowed Origins: ${config.allowedOrigins.size} origin(s)`);
-  config.allowedOrigins.forEach(origin => {
+  config.allowedOrigins.forEach((origin) => {
     console.log(`     - ${origin}`);
   });
   console.log(`   Credentials: ${config.allowCredentials}`);

@@ -5,7 +5,12 @@ import * as dotenv from 'dotenv';
 import express, { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { parseCorsConfig, getPreflightHeaders, getCorsHeaders, isOriginAllowed } from './config/cors';
+import {
+  parseCorsConfig,
+  getPreflightHeaders,
+  getCorsHeaders,
+  isOriginAllowed,
+} from './config/cors';
 import { FieldDiagnosticAgent } from './agent';
 import { healthCheck } from './memory-layer/api/health';
 import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
@@ -690,7 +695,9 @@ app.get('/v1/health', apiLimiter, async (_req: Request, res: Response) => {
 
       // Critical check: kids MUST match
       if (ledgerSignerKid !== jwksActiveKid) {
-        console.error(`❌ CRITICAL: Ledger signer kid (${ledgerSignerKid}) !== JWKS active kid (${jwksActiveKid})`);
+        console.error(
+          `❌ CRITICAL: Ledger signer kid (${ledgerSignerKid}) !== JWKS active kid (${jwksActiveKid})`
+        );
         auditJwksMismatchTotal.inc();
         healthResponse.status = 'unhealthy';
         healthResponse.components.audit.status = 'unhealthy';

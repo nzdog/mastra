@@ -46,7 +46,9 @@ export class InMemoryStore implements MemoryStore {
   private validateHashedPseudonym(hashedPseudonym: string): void {
     // Check for email pattern
     if (hashedPseudonym.includes('@')) {
-      throw new Error('Invalid hashed_pseudonym: contains @ symbol (possible raw email). Must be hashed.');
+      throw new Error(
+        'Invalid hashed_pseudonym: contains @ symbol (possible raw email). Must be hashed.'
+      );
     }
 
     // Check for spaces
@@ -144,7 +146,8 @@ export class InMemoryStore implements MemoryStore {
       }
     } else if (request.hashed_pseudonym) {
       // Delete all records for hashed_pseudonym
-      const userRecordIds = this.indexes.byHashedPseudonym.get(request.hashed_pseudonym) || new Set();
+      const userRecordIds =
+        this.indexes.byHashedPseudonym.get(request.hashed_pseudonym) || new Set();
       recordsToDelete = Array.from(userRecordIds)
         .map((id) => this.records.get(id))
         .filter((r): r is MemoryRecord => r !== undefined);

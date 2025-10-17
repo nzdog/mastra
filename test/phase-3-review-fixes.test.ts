@@ -48,13 +48,9 @@ describe('Circuit Breaker', () => {
     privateStore.circuitBreakerTripped = true;
 
     // Verify methods throw when breaker is open
-    await expect(
-      store.count({ hashed_pseudonym: 'test' })
-    ).rejects.toThrow('Circuit breaker open');
+    await expect(store.count({ hashed_pseudonym: 'test' })).rejects.toThrow('Circuit breaker open');
 
-    await expect(
-      store.get('test-id')
-    ).rejects.toThrow('Circuit breaker open');
+    await expect(store.get('test-id')).rejects.toThrow('Circuit breaker open');
   });
 
   test('should reset breaker on successful connection', async () => {
@@ -124,9 +120,9 @@ describe('GDPR-Safe Forget', () => {
     secondaryForgetSpy.mockRejectedValueOnce(new Error('Simulated secondary failure'));
 
     // Attempt forget - should fail even though config.failFast might be false
-    await expect(
-      dualStore.forget({ id: 'test-forget-1' })
-    ).rejects.toThrow('Secondary store forget failed');
+    await expect(dualStore.forget({ id: 'test-forget-1' })).rejects.toThrow(
+      'Secondary store forget failed'
+    );
 
     secondaryForgetSpy.mockRestore();
   });
@@ -195,9 +191,9 @@ describe('GDPR-Safe Forget', () => {
     secondaryForgetSpy.mockResolvedValueOnce(['test-forget-3a']); // Only 1 instead of 2
 
     // Should throw due to mismatch
-    await expect(
-      dualStore.forget({ hashed_pseudonym: 'pseudonym-789' })
-    ).rejects.toThrow('GDPR erasure incomplete');
+    await expect(dualStore.forget({ hashed_pseudonym: 'pseudonym-789' })).rejects.toThrow(
+      'GDPR erasure incomplete'
+    );
 
     secondaryForgetSpy.mockRestore();
   });
@@ -257,8 +253,10 @@ describe('Encryption Detection', () => {
     // Verify the detection logic would identify this as encrypted
     // (via data_ciphertext presence, not encryption_version)
     const isEncrypted =
-      (mockRow.encryption_version !== null && mockRow.encryption_version !== undefined)
-      || (mockRow.content && typeof mockRow.content === 'object' && 'data_ciphertext' in mockRow.content);
+      (mockRow.encryption_version !== null && mockRow.encryption_version !== undefined) ||
+      (mockRow.content &&
+        typeof mockRow.content === 'object' &&
+        'data_ciphertext' in mockRow.content);
 
     // Empty string is not null or undefined, so this WOULD be detected as encrypted
     // This is correct behavior - the fix ensures we check for null/undefined explicitly
@@ -292,8 +290,10 @@ describe('Encryption Detection', () => {
 
     // Verify detection via data_ciphertext presence
     const isEncrypted =
-      (mockRow.encryption_version !== null && mockRow.encryption_version !== undefined)
-      || (mockRow.content && typeof mockRow.content === 'object' && 'data_ciphertext' in mockRow.content);
+      (mockRow.encryption_version !== null && mockRow.encryption_version !== undefined) ||
+      (mockRow.content &&
+        typeof mockRow.content === 'object' &&
+        'data_ciphertext' in mockRow.content);
 
     expect(isEncrypted).toBe(true);
   });
@@ -422,9 +422,7 @@ describe('Performance & Correctness', () => {
     });
 
     // Should log a warning about cursor-based pagination
-    expect(consoleSpy).toHaveBeenCalledWith(
-      expect.stringContaining('cursor-based pagination')
-    );
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('cursor-based pagination'));
 
     consoleSpy.mockRestore();
   });

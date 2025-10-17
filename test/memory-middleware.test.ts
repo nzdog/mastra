@@ -492,7 +492,11 @@ async function main(): Promise<void> {
       results.push({ test: 'Invalid schema (missing metadata)', passed: true });
     } catch (err) {
       console.error('❌ Failed:', err);
-      results.push({ test: 'Invalid schema (missing metadata)', passed: false, error: String(err) });
+      results.push({
+        test: 'Invalid schema (missing metadata)',
+        passed: false,
+        error: String(err),
+      });
     }
 
     // ============================================================================

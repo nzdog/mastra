@@ -87,6 +87,7 @@ curl http://localhost:3000/metrics
 ```
 
 Available metrics include:
+
 - `audit_events_total` - Total audit events by type and operation
 - `audit_ledger_height` - Current ledger height (Merkle tree size)
 - `audit_signature_duration_ms` - Cryptographic signature timing
@@ -99,7 +100,8 @@ Available metrics include:
 - `audit_jwks_fetch_requests_total` - JWKS endpoint requests
 - `audit_crash_recovery_temp_files_removed_total` - Crash recovery events
 
-See [docs/specs/metrics.md](./docs/specs/metrics.md) for detailed metrics documentation and Grafana dashboard examples.
+See [docs/specs/metrics.md](./docs/specs/metrics.md) for detailed metrics documentation and Grafana
+dashboard examples.
 
 ### CLI Commands
 
@@ -255,7 +257,8 @@ The CLOSE mode generates pattern-level field names by abstracting user language:
 
 ## Project Roadmap
 
-This project is implementing the **Lichen Protocol Memory Layer** in phases, tracked via the Master Roadmap issue.
+This project is implementing the **Lichen Protocol Memory Layer** in phases, tracked via the Master
+Roadmap issue.
 
 ### Current Status
 
@@ -278,6 +281,7 @@ This project is implementing the **Lichen Protocol Memory Layer** in phases, tra
 ### Roadmap Tracking
 
 See the **Master Roadmap issue** (tracked in repository variables) for:
+
 - Live progress tracking across all phases
 - Child issue status (planned, in-progress, blocked, done)
 - Recently completed items (last 7 days)
@@ -288,12 +292,14 @@ The roadmap is automatically synced when issues are opened, closed, or labeled.
 ### Contributing to the Roadmap
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md) for:
+
 - How to create child issues for phases/themes
 - Label conventions and workflow
 - Issue templates and PR process
 - Development workflow and testing requirements
 
 **Related Documentation:**
+
 - [CHANGELOG.md](./CHANGELOG.md) - Version history and changes
 - [docs/adr/](./docs/adr/) - Architecture Decision Records
 - [docs/specs/](./docs/specs/) - Specifications and feature docs
@@ -309,6 +315,7 @@ ISC
 
 This is an experimental protocol agent implementing the Lichen Protocol Memory Layer.
 
-For detailed contribution guidelines, roadmap workflow, and development setup, see [CONTRIBUTING.md](./CONTRIBUTING.md).
+For detailed contribution guidelines, roadmap workflow, and development setup, see
+[CONTRIBUTING.md](./CONTRIBUTING.md).
 
 Feedback and improvements welcome!

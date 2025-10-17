@@ -4,18 +4,9 @@
  */
 
 // Core memory record types
-export type {
-  MemoryRecord,
-  MemoryContent,
-  ConsentFamily,
-  ContentType,
-} from './memory-record';
+export type { MemoryRecord, MemoryContent, ConsentFamily, ContentType } from './memory-record';
 
-export {
-  allowsPII,
-  requiresAggregation,
-  createMemoryRecord,
-} from './memory-record';
+export { allowsPII, requiresAggregation, createMemoryRecord } from './memory-record';
 
 // Error handling types
 export {

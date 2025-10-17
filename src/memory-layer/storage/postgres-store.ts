@@ -109,7 +109,9 @@ export class PostgresStore implements MemoryStore {
         console.error('[PostgresStore] Circuit breaker tripped. Pausing connections for 10s.');
 
         // Close pool (use stored config for recovery)
-        await this.pool.end().catch((endErr) => console.error('[PostgresStore] Error closing pool:', endErr));
+        await this.pool
+          .end()
+          .catch((endErr) => console.error('[PostgresStore] Error closing pool:', endErr));
 
         // Reset after delay
         setTimeout(async () => {
@@ -205,7 +207,9 @@ export class PostgresStore implements MemoryStore {
         } catch (err) {
           cryptoEncryptFailuresTotal.inc({ reason: 'encryption_failed' });
           // Redacted: No PII/content in logs, only record ID and error type
-          console.error(`[PostgresStore] Encryption failed for record (id=${record.id}, reason=${(err as Error).name || 'unknown'})`);
+          console.error(
+            `[PostgresStore] Encryption failed for record (id=${record.id}, reason=${(err as Error).name || 'unknown'})`
+          );
           throw new Error('Failed to encrypt record');
         }
       }
@@ -299,7 +303,9 @@ export class PostgresStore implements MemoryStore {
       // TODO: Implement cursor-based pagination for large offsets (>10k records)
       // Current OFFSET approach degrades performance linearly with offset size
       if ((query.offset || 0) > 10000) {
-        console.warn(`[PostgresStore] Large OFFSET detected (${query.offset}). Consider cursor-based pagination for better performance.`);
+        console.warn(
+          `[PostgresStore] Large OFFSET detected (${query.offset}). Consider cursor-based pagination for better performance.`
+        );
       }
 
       const sql = `
@@ -591,8 +597,8 @@ export class PostgresStore implements MemoryStore {
     // This ensures we can decrypt records even if ENCRYPTION_ENABLED is toggled off
     // Explicit null/undefined checks to avoid falsy empty string issues
     const isEncrypted =
-      (row.encryption_version !== null && row.encryption_version !== undefined)
-      || (content && typeof content === 'object' && 'data_ciphertext' in content);
+      (row.encryption_version !== null && row.encryption_version !== undefined) ||
+      (content && typeof content === 'object' && 'data_ciphertext' in content);
 
     if (isEncrypted) {
       const decryptStart = Date.now();
@@ -612,7 +618,9 @@ export class PostgresStore implements MemoryStore {
       } catch (err) {
         cryptoDecryptFailuresTotal.inc({ reason: 'decryption_failed' });
         // Redacted: No PII/content in logs, only record ID and error type
-        console.error(`[PostgresStore] Decryption failed for record (id=${row.id}, encryption_version=${row.encryption_version || 'none'}, reason=${(err as Error).name || 'unknown'})`);
+        console.error(
+          `[PostgresStore] Decryption failed for record (id=${row.id}, encryption_version=${row.encryption_version || 'none'}, reason=${(err as Error).name || 'unknown'})`
+        );
         throw new Error('Failed to decrypt record');
       }
     }
