@@ -27,6 +27,28 @@ export interface DualStoreConfig {
 }
 
 /**
+ * Timeout constant for secondary store operations
+ * Prevents hanging on secondary store failures
+ */
+const SECONDARY_STORE_TIMEOUT_MS = 5000; // 5 seconds
+
+/**
+ * Wrap a promise with a timeout
+ * @param promise - Promise to wrap
+ * @param timeoutMs - Timeout in milliseconds
+ * @param operation - Operation name for error messages
+ * @returns Promise that rejects if timeout is exceeded
+ */
+function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`${operation} timed out after ${timeoutMs}ms`)), timeoutMs)
+    ),
+  ]);
+}
+
+/**
  * Load dual-write config from environment
  */
 function loadDualStoreConfig(): DualStoreConfig {
@@ -80,9 +102,13 @@ export class DualStore implements MemoryStore {
       throw err; // Always fail on primary store failure
     }
 
-    // Write to secondary store (best-effort unless failFast)
+    // Write to secondary store (best-effort unless failFast) with timeout
     try {
-      await this.secondaryStore.store(record);
+      await withTimeout(
+        this.secondaryStore.store(record),
+        SECONDARY_STORE_TIMEOUT_MS,
+        'Secondary store write'
+      );
       // Success: Both stores written
       dualWriteRecordsTotal.inc({
         primary_store: this.config.primaryStore,
@@ -90,9 +116,13 @@ export class DualStore implements MemoryStore {
         status: 'both_success',
       });
     } catch (err) {
+      const reason =
+        (err as Error).message?.includes('timed out')
+          ? 'secondary_store_timeout'
+          : 'secondary_store_failed';
       dualWriteFailuresTotal.inc({
         store: secondaryStoreType,
-        reason: 'secondary_store_failed',
+        reason,
       });
       console.error('[DualStore] Secondary store failed:', err);
 
@@ -208,9 +238,13 @@ export class DualStore implements MemoryStore {
       return primaryDeleted;
     }
 
-    // Delete from secondary store (MUST succeed for GDPR compliance)
+    // Delete from secondary store (MUST succeed for GDPR compliance) with timeout
     try {
-      const secondaryDeleted = await this.secondaryStore.forget(request);
+      const secondaryDeleted = await withTimeout(
+        this.secondaryStore.forget(request),
+        SECONDARY_STORE_TIMEOUT_MS,
+        'Secondary store forget'
+      );
 
       // Check for count mismatch - this is a GDPR violation
       if (primaryDeleted.length !== secondaryDeleted.length) {

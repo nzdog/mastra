@@ -74,8 +74,11 @@ export interface RecallQuery {
   /** Maximum number of results to return (default: 100) */
   limit?: number;
 
-  /** Pagination offset (default: 0) */
+  /** Pagination offset (default: 0) - DEPRECATED: Use cursor instead for large datasets */
   offset?: number;
+
+  /** Cursor-based pagination token (recommended for large datasets) */
+  cursor?: string;
 
   /** Sort order: 'asc' or 'desc' by created_at (default: 'desc') */
   sort?: 'asc' | 'desc';

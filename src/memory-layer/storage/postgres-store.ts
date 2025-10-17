@@ -87,6 +87,7 @@ export class PostgresStore implements MemoryStore {
   private readonly MAX_POOL_ERRORS = 5;
   private readonly CIRCUIT_BREAKER_RESET_MS = 10000; // 10 seconds
   private circuitBreakerTripped = false;
+  private circuitBreakerResetting = false; // Prevent concurrent reset attempts
   private pgConfig: PostgresConfig;
 
   constructor(config?: PostgresConfig) {
@@ -104,8 +105,14 @@ export class PostgresStore implements MemoryStore {
       );
 
       // Circuit breaker: trip after MAX_POOL_ERRORS consecutive errors
-      if (this.consecutivePoolErrors >= this.MAX_POOL_ERRORS && !this.circuitBreakerTripped) {
+      // Prevent concurrent reset attempts with circuitBreakerResetting flag
+      if (
+        this.consecutivePoolErrors >= this.MAX_POOL_ERRORS &&
+        !this.circuitBreakerTripped &&
+        !this.circuitBreakerResetting
+      ) {
         this.circuitBreakerTripped = true;
+        this.circuitBreakerResetting = true;
         console.error('[PostgresStore] Circuit breaker tripped. Pausing connections for 10s.');
 
         // Close pool (use stored config for recovery)
@@ -120,9 +127,11 @@ export class PostgresStore implements MemoryStore {
             this.pool = new Pool(this.pgConfig);
             this.consecutivePoolErrors = 0;
             this.circuitBreakerTripped = false;
+            this.circuitBreakerResetting = false;
           } catch (e) {
             console.error('[PostgresStore] Failed to reinitialize pool:', e);
-            // Keep breaker tripped; will retry on next reset interval or health check
+            // Keep breaker tripped and resetting flag set; will retry on next health check
+            this.circuitBreakerResetting = false; // Allow retry later
           }
         }, this.CIRCUIT_BREAKER_RESET_MS);
       }
@@ -293,25 +302,56 @@ export class PostgresStore implements MemoryStore {
       // Expiration filter (exclude expired records)
       conditions.push(`(expires_at IS NULL OR expires_at > NOW())`);
 
+      // Cursor-based pagination support (recommended for large datasets)
+      let cursorCreatedAt: string | null = null;
+      let cursorId: string | null = null;
+
+      if (query.cursor) {
+        try {
+          const decoded = Buffer.from(query.cursor, 'base64').toString('utf8');
+          const [timestamp, id] = decoded.split(':');
+          cursorCreatedAt = timestamp;
+          cursorId = id;
+
+          // Add cursor conditions based on sort order
+          const sortOrder = query.sort === 'asc' ? 'ASC' : 'DESC';
+          if (sortOrder === 'DESC') {
+            // For DESC: created_at < cursor OR (created_at = cursor AND id < cursor_id)
+            conditions.push(
+              `(created_at < $${paramIndex} OR (created_at = $${paramIndex} AND id < $${paramIndex + 1}))`
+            );
+          } else {
+            // For ASC: created_at > cursor OR (created_at = cursor AND id > cursor_id)
+            conditions.push(
+              `(created_at > $${paramIndex} OR (created_at = $${paramIndex} AND id > $${paramIndex + 1}))`
+            );
+          }
+          values.push(cursorCreatedAt, cursorId);
+          paramIndex += 2;
+        } catch (err) {
+          console.warn(`[PostgresStore] Invalid cursor format: ${query.cursor}`);
+          // Continue without cursor - fall back to offset
+        }
+      }
+
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
       const sortOrder = query.sort === 'asc' ? 'ASC' : 'DESC';
 
       // Cap LIMIT and OFFSET to prevent performance issues and DoS
       const limit = Math.min(query.limit || 100, MAX_QUERY_LIMIT);
-      const offset = Math.min(query.offset || 0, MAX_QUERY_OFFSET);
+      const offset = query.cursor ? 0 : Math.min(query.offset || 0, MAX_QUERY_OFFSET); // Ignore offset if cursor provided
 
-      // TODO: Implement cursor-based pagination for large offsets (>10k records)
-      // Current OFFSET approach degrades performance linearly with offset size
-      if ((query.offset || 0) > 10000) {
+      // Warn on large OFFSET (recommend cursor instead)
+      if ((query.offset || 0) > 10000 && !query.cursor) {
         console.warn(
-          `[PostgresStore] Large OFFSET detected (${query.offset}). Consider cursor-based pagination for better performance.`
+          `[PostgresStore] Large OFFSET detected (${query.offset}). Use cursor-based pagination for better performance.`
         );
       }
 
       const sql = `
         SELECT * FROM memory_records
         ${whereClause}
-        ORDER BY created_at ${sortOrder}
+        ORDER BY created_at ${sortOrder}, id ${sortOrder}
         LIMIT $${paramIndex++} OFFSET $${paramIndex++}
       `;
 
@@ -593,11 +633,11 @@ export class PostgresStore implements MemoryStore {
   private async rowToRecord(row: PostgresRow): Promise<MemoryRecord> {
     let content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
 
-    // Detect if content is encrypted using encryption_version field OR data_ciphertext presence
-    // This ensures we can decrypt records even if ENCRYPTION_ENABLED is toggled off
+    // Detect if content is encrypted using encryption_version field AND data_ciphertext presence
+    // Both indicators must be present for data integrity (catches schema mismatches)
     // Explicit null/undefined checks to avoid falsy empty string issues
     const isEncrypted =
-      (row.encryption_version !== null && row.encryption_version !== undefined) ||
+      (row.encryption_version !== null && row.encryption_version !== undefined) &&
       (content && typeof content === 'object' && 'data_ciphertext' in content);
 
     if (isEncrypted) {

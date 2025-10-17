@@ -63,21 +63,18 @@ class MemoryKMSProvider implements KMSProvider {
   private keys: Map<string, Buffer> = new Map();
 
   constructor() {
+    // CRITICAL-2: Block MemoryKMS in production entirely
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(
+        'FATAL: MemoryKMSProvider is for development/testing only. ' +
+          'Production deployments MUST use KMS_PROVIDER=aws or KMS_PROVIDER=gcp with proper cloud KMS integration.'
+      );
+    }
+
     // Initialize KEK for development
     // Use DEV_KEK_BASE64 env var for persistence across restarts
     const base64KEK = process.env.DEV_KEK_BASE64;
     let devKEK: Buffer;
-
-    // Production safety: require KEK env var in production
-    if (process.env.NODE_ENV === 'production' && !base64KEK) {
-      throw new Error(
-        'SECURITY: MemoryKMSProvider cannot be used in production without DEV_KEK_BASE64. ' +
-          'For production deployments:\n' +
-          '  - Set KMS_PROVIDER=aws and configure AWS_KMS_KEY_ARN + AWS credentials\n' +
-          '  - OR set KMS_PROVIDER=gcp and configure GCP_KMS_KEY_NAME + GCP credentials\n' +
-          'MemoryKMSProvider is for development/testing only.'
-      );
-    }
 
     if (base64KEK) {
       try {
@@ -147,24 +144,25 @@ class MemoryKMSProvider implements KMSProvider {
 }
 
 /**
- * AWS KMS Provider (Stub - Not Implemented)
+ * AWS KMS Provider (NOT IMPLEMENTED - DO NOT USE)
  *
- * TODO: Implement AWS KMS integration for production use.
- * Requires: @aws-sdk/client-kms package installation
+ * ⚠️  CRITICAL: This is a stub. AWS KMS integration is NOT implemented.
  *
- * Required environment variables when implemented:
- * - AWS_KMS_KEY_ARN: ARN of the KMS key (e.g., arn:aws:kms:us-east-1:123456789012:key/UUID)
- * - AWS_REGION: AWS region (e.g., us-east-1)
- * - AWS credentials via standard AWS SDK credential chain (IAM role, env vars, etc.)
+ * To implement:
+ * 1. Install @aws-sdk/client-kms package
+ * 2. Implement encryptDEK/decryptDEK using AWS KMS API
+ * 3. Configure: AWS_KMS_KEY_ARN, AWS_REGION, AWS credentials
+ * 4. Remove the constructor guard below
+ *
+ * For development/testing: Use KMS_PROVIDER=memory (not for production)
  */
 class AWSKMSProvider implements KMSProvider {
   constructor() {
+    // CRITICAL-1: Explicit startup guard
     throw new Error(
-      '[AWSKMSProvider] Not implemented in this release.\n' +
-        'Options:\n' +
-        '  - Set KMS_PROVIDER=memory for development (with DEV_KEK_BASE64 env var)\n' +
-        '  - Set KMS_PROVIDER=gcp for testing (stub only, not for production)\n' +
-        '⚠️  Production deployments must implement AWS KMS integration or use alternative KMS.'
+      '[AWSKMSProvider] NOT IMPLEMENTED. Do not use KMS_PROVIDER=aws.\n' +
+        'For development: Set KMS_PROVIDER=memory (with DEV_KEK_BASE64)\n' +
+        'For production: Implement AWS KMS integration first (see class docstring)'
     );
   }
 
@@ -178,32 +176,26 @@ class AWSKMSProvider implements KMSProvider {
 }
 
 /**
- * GCP KMS Provider (Stub - Not Yet Implemented)
+ * GCP KMS Provider (NOT IMPLEMENTED - DO NOT USE)
  *
- * TODO: Implement GCP Cloud KMS integration for production use.
+ * ⚠️  CRITICAL: This is a stub. GCP KMS integration is NOT implemented.
  *
- * Required environment variables when implemented:
- * - GCP_KMS_KEY_NAME: Resource name of the KMS key (e.g., projects/PROJECT_ID/locations/LOCATION/keyRings/RING/cryptoKeys/KEY)
- * - GCP_PROJECT_ID: GCP project ID
- * - GCP credentials via standard GCP SDK credential chain (service account, ADC, etc.)
+ * To implement:
+ * 1. Install @google-cloud/kms package
+ * 2. Implement encryptDEK/decryptDEK using Cloud KMS API
+ * 3. Configure: GCP_KMS_KEY_NAME, GCP_PROJECT_ID, GCP credentials
+ * 4. Remove the constructor guard below
  *
- * Production guard: Throws error if selected in production until implemented.
+ * For development/testing: Use KMS_PROVIDER=memory (not for production)
  */
 class GCPKMSProvider implements KMSProvider {
   constructor() {
-    // Production guard: prevent usage until implementation is complete
-    if (process.env.NODE_ENV === 'production') {
-      throw new Error(
-        'GCP KMS Provider is not yet implemented for production use.\n' +
-          'Options:\n' +
-          '  - Use KMS_PROVIDER=aws with AWS KMS\n' +
-          '  - Implement GCP KMS integration (see TODO in encryption-service.ts)\n' +
-          'For development/testing only, use KMS_PROVIDER=memory with DEV_KEK_BASE64.'
-      );
-    }
-
-    // Development mode: allow instantiation but warn
-    console.warn('[GCPKMSProvider] ⚠️  GCP KMS Provider is a stub. Not for production use.');
+    // CRITICAL-1: Explicit startup guard (all environments)
+    throw new Error(
+      '[GCPKMSProvider] NOT IMPLEMENTED. Do not use KMS_PROVIDER=gcp.\n' +
+        'For development: Set KMS_PROVIDER=memory (with DEV_KEK_BASE64)\n' +
+        'For production: Implement GCP KMS integration first (see class docstring)'
+    );
   }
 
   async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {

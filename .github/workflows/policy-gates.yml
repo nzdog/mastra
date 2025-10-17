@@ -607,14 +607,12 @@ jobs:
         run: |
           echo "🔍 Checking for destructive SQL in production migrations..."
 
-          # On main/master branches, fail if DROP TABLE found in non-dev migrations
-          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
-            if git grep -n -i -E "DROP[[:space:]]+TABLE" -- migrations/*.sql | grep -v "_dev.sql"; then
-              echo "❌ FAIL: Destructive SQL detected in production migrations"
-              echo "  DROP TABLE statements must only be in files ending with _dev.sql"
-              echo "  Production migrations must be non-destructive and idempotent"
-              exit 1
-            fi
+          # HIGH-6: Run on ALL branches to prevent accidental destructive SQL
+          if git grep -n -i -E "DROP[[:space:]]+TABLE" -- migrations/*.sql | grep -v "_dev.sql"; then
+            echo "❌ FAIL: Destructive SQL detected in production migrations"
+            echo "  DROP TABLE statements must only be in files ending with _dev.sql"
+            echo "  Production migrations must be non-destructive and idempotent"
+            exit 1
           fi
 
           echo "✅ No destructive SQL in production migrations"

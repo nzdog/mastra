@@ -1265,3 +1265,50 @@ Phase 1.1 Verification Endpoints:
 Ready to accept connections.
 `);
 });
+
+// ============================================================================
+// Graceful Shutdown Handlers (HIGH-4: Process Exit Handlers)
+// ============================================================================
+
+/**
+ * Graceful shutdown handler for SIGTERM/SIGINT
+ * Ensures clean shutdown of database connections and active sessions
+ */
+async function gracefulShutdown(signal: string): Promise<void> {
+  console.log(`\n⚠️  Received ${signal} - starting graceful shutdown...`);
+
+  try {
+    // 1. Close PostgreSQL pool if using Postgres persistence
+    if (process.env.PERSISTENCE === 'postgres') {
+      const { getPostgresStore } = require('./memory-layer/storage/postgres-store');
+      const postgresStore = getPostgresStore();
+      console.log('🔌 Closing PostgreSQL connection pool...');
+      await postgresStore.close();
+      console.log('✅ PostgreSQL pool closed');
+    }
+
+    // 2. Close Redis connection if using Redis for sessions
+    if (process.env.REDIS_URL && sessionStore) {
+      console.log('🔌 Closing Redis connection...');
+      const redisClient = (sessionStore as any).redis;
+      if (redisClient && typeof redisClient.quit === 'function') {
+        await redisClient.quit();
+        console.log('✅ Redis connection closed');
+      }
+    }
+
+    // 3. Log shutdown metrics
+    const sessionCount = await sessionStore.size();
+    console.log(`📊 Shutdown stats: ${sessionCount} active sessions`);
+
+    console.log('✅ Graceful shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+}
+
+// Register signal handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));

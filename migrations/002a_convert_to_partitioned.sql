@@ -76,7 +76,7 @@ END $$;
 -- ============================================================================
 
 CREATE TABLE memory_records_new (
-  id TEXT PRIMARY KEY,
+  id UUID NOT NULL,
   hashed_pseudonym TEXT NOT NULL,
   session_id TEXT,
   content JSONB NOT NULL,
@@ -87,7 +87,8 @@ CREATE TABLE memory_records_new (
   updated_at TIMESTAMP NOT NULL,
   expires_at TIMESTAMP,
   access_count INTEGER NOT NULL DEFAULT 0,
-  audit_receipt_id TEXT NOT NULL
+  audit_receipt_id TEXT NOT NULL,
+  PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
 COMMENT ON TABLE memory_records_new IS 'Partitioned memory records table (conversion in progress)';
