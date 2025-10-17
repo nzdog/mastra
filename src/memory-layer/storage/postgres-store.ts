@@ -73,6 +73,29 @@ export class PostgresStore implements MemoryStore {
    * Week 3: Added envelope encryption support
    */
   async store(record: MemoryRecord): Promise<MemoryRecord> {
+    // Input validation (before touching the pool)
+    if (!record.id) {
+      throw new Error('Invalid MemoryRecord: id is required');
+    }
+    if (!record.hashed_pseudonym) {
+      throw new Error('Invalid MemoryRecord: hashed_pseudonym is required');
+    }
+    if (!record.content) {
+      throw new Error('Invalid MemoryRecord: content is required');
+    }
+    if (!record.content.type) {
+      throw new Error('Invalid MemoryRecord: content.type is required');
+    }
+    if (!record.consent_family) {
+      throw new Error('Invalid MemoryRecord: consent_family is required');
+    }
+    const validConsentFamilies = ['personal', 'cohort', 'population'];
+    if (!validConsentFamilies.includes(record.consent_family)) {
+      throw new Error(
+        `Invalid MemoryRecord: consent_family must be one of [${validConsentFamilies.join(', ')}], got '${record.consent_family}'`
+      );
+    }
+
     const client = await this.pool.connect();
     try {
       // Week 3: Encrypt content before storing if enabled

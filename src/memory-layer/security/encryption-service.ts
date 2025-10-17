@@ -62,6 +62,14 @@ class MemoryKMSProvider implements KMSProvider {
     const base64KEK = process.env.DEV_KEK_BASE64;
     let devKEK: Buffer;
 
+    // Production safety: require KEK env var in production
+    if (process.env.NODE_ENV === 'production' && !base64KEK) {
+      throw new Error(
+        'SECURITY: MemoryKMSProvider cannot be used in production without DEV_KEK_BASE64. ' +
+        'Set KMS_PROVIDER=aws or KMS_PROVIDER=gcp for production use.'
+      );
+    }
+
     if (base64KEK) {
       try {
         devKEK = Buffer.from(base64KEK, 'base64');

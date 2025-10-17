@@ -128,8 +128,11 @@ export class DualStore implements MemoryStore {
       const secondaryResults = await this.secondaryStore.recall(query);
 
       if (secondaryResults.length > 0) {
-        // Update lag metric if we had to fallback
-        dualWriteLagSeconds.set({ store: 'secondary_fallback' }, 1);
+        // Update lag metric if we had to fallback - calculate real lag
+        const newest = secondaryResults[0];
+        const created = new Date(newest.created_at || Date.now());
+        const lagSeconds = Math.max(0, (Date.now() - created.getTime()) / 1000);
+        dualWriteLagSeconds.set({ store: 'secondary_fallback' }, lagSeconds);
       }
 
       return secondaryResults;
