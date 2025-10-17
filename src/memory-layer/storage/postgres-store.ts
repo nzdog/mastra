@@ -637,8 +637,11 @@ export class PostgresStore implements MemoryStore {
     // Both indicators must be present for data integrity (catches schema mismatches)
     // Explicit null/undefined checks to avoid falsy empty string issues
     const isEncrypted =
-      (row.encryption_version !== null && row.encryption_version !== undefined) &&
-      (content && typeof content === 'object' && 'data_ciphertext' in content);
+      row.encryption_version !== null &&
+      row.encryption_version !== undefined &&
+      content &&
+      typeof content === 'object' &&
+      'data_ciphertext' in content;
 
     if (isEncrypted) {
       const decryptStart = Date.now();

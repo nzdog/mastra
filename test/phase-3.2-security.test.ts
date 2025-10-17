@@ -215,11 +215,11 @@ describe('Encryption Detection Logic (CRITICAL-6)', () => {
 
     // Encryption detection logic (AND semantics)
     const isEncryptedInvalid =
-      (mockRowInvalid.encryption_version !== null &&
-        mockRowInvalid.encryption_version !== undefined) &&
-      (mockRowInvalid.content &&
-        typeof mockRowInvalid.content === 'object' &&
-        'data_ciphertext' in mockRowInvalid.content);
+      mockRowInvalid.encryption_version !== null &&
+      mockRowInvalid.encryption_version !== undefined &&
+      mockRowInvalid.content &&
+      typeof mockRowInvalid.content === 'object' &&
+      'data_ciphertext' in mockRowInvalid.content;
 
     // Should NOT be detected as encrypted (missing data_ciphertext)
     expect(isEncryptedInvalid).toBe(false);
@@ -240,11 +240,11 @@ describe('Encryption Detection Logic (CRITICAL-6)', () => {
     };
 
     const isEncryptedValid =
-      (mockRowValid.encryption_version !== null &&
-        mockRowValid.encryption_version !== undefined) &&
-      (mockRowValid.content &&
-        typeof mockRowValid.content === 'object' &&
-        'data_ciphertext' in mockRowValid.content);
+      mockRowValid.encryption_version !== null &&
+      mockRowValid.encryption_version !== undefined &&
+      mockRowValid.content &&
+      typeof mockRowValid.content === 'object' &&
+      'data_ciphertext' in mockRowValid.content;
 
     // Should be detected as encrypted (both indicators present)
     expect(isEncryptedValid).toBe(true);

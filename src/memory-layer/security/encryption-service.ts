@@ -166,11 +166,11 @@ class AWSKMSProvider implements KMSProvider {
     );
   }
 
-  async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
+  async encryptDEK(_plainDek: Buffer, _kekId: string): Promise<string> {
     throw new Error('AWS KMS not implemented');
   }
 
-  async decryptDEK(encryptedDek: string, kekId: string): Promise<Buffer> {
+  async decryptDEK(_encryptedDek: string, _kekId: string): Promise<Buffer> {
     throw new Error('AWS KMS not implemented');
   }
 }
@@ -198,14 +198,14 @@ class GCPKMSProvider implements KMSProvider {
     );
   }
 
-  async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
+  async encryptDEK(_plainDek: Buffer, _kekId: string): Promise<string> {
     throw new Error(
       'GCP KMS not implemented. This is a stub provider. ' +
         'Set KMS_PROVIDER=memory for development or KMS_PROVIDER=aws for production.'
     );
   }
 
-  async decryptDEK(encryptedDek: string, kekId: string): Promise<Buffer> {
+  async decryptDEK(_encryptedDek: string, _kekId: string): Promise<Buffer> {
     throw new Error(
       'GCP KMS not implemented. This is a stub provider. ' +
         'Set KMS_PROVIDER=memory for development or KMS_PROVIDER=aws for production.'

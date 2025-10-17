@@ -3,8 +3,6 @@
  * Phase 2: Memory Layer - APIs & Consent Families
  */
 
-import { Request } from 'express';
-
 /**
  * Standard error codes for Memory Layer operations
  */

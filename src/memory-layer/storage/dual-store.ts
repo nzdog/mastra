@@ -116,10 +116,9 @@ export class DualStore implements MemoryStore {
         status: 'both_success',
       });
     } catch (err) {
-      const reason =
-        (err as Error).message?.includes('timed out')
-          ? 'secondary_store_timeout'
-          : 'secondary_store_failed';
+      const reason = (err as Error).message?.includes('timed out')
+        ? 'secondary_store_timeout'
+        : 'secondary_store_failed';
       dualWriteFailuresTotal.inc({
         store: secondaryStoreType,
         reason,

@@ -393,7 +393,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
     // For now, we query all cohort records (in production, filter by cohort_id)
     // TODO(Phase 3): Implement cross-user cohort aggregation via membership service.
     // Current MVP scope: aggregates authenticated user's cohort records only for privacy.
-    const totalCount = await store.count({
+    const _totalCount = await store.count({
       consent_family: 'cohort',
       since: body.filters?.since,
       until: body.filters?.until,
@@ -413,7 +413,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
   } else {
     // Population: aggregate system-wide data
     // Query all population-level records
-    const totalCount = await store.count({
+    const _totalCount = await store.count({
       consent_family: 'population',
       since: body.filters?.since,
       until: body.filters?.until,

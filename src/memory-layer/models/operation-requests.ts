@@ -190,7 +190,9 @@ export interface ExportRequest {
  * Validation helper for StoreRequest
  */
 export function validateStoreRequest(req: unknown): req is StoreRequest {
-  if (typeof req !== 'object' || req === null) return false;
+  if (typeof req !== 'object' || req === null) {
+    return false;
+  }
   const r = req as StoreRequest;
   return (
     r.content !== undefined &&
@@ -208,7 +210,9 @@ export function validateStoreRequest(req: unknown): req is StoreRequest {
  * Validation helper for RecallQuery
  */
 export function validateRecallQuery(query: unknown): query is RecallQuery {
-  if (typeof query !== 'object' || query === null) return false;
+  if (typeof query !== 'object' || query === null) {
+    return false;
+  }
   const q = query as RecallQuery;
   return typeof q.hashed_pseudonym === 'string';
 }
@@ -217,7 +221,9 @@ export function validateRecallQuery(query: unknown): query is RecallQuery {
  * Validation helper for ForgetRequest
  */
 export function validateForgetRequest(req: unknown): req is ForgetRequest {
-  if (typeof req !== 'object' || req === null) return false;
+  if (typeof req !== 'object' || req === null) {
+    return false;
+  }
   const r = req as ForgetRequest;
   // At least one identifier must be provided
   return r.id !== undefined || r.hashed_pseudonym !== undefined || r.session_id !== undefined;
