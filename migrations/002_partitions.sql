@@ -27,6 +27,30 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- ============================================================================
+-- Pre-check: Verify table is partitioned
+-- ============================================================================
+
+DO $$
+DECLARE
+  is_partitioned BOOLEAN;
+BEGIN
+  -- Check if memory_records table is partitioned
+  SELECT relkind = 'p' INTO is_partitioned
+  FROM pg_class
+  WHERE relname = 'memory_records';
+
+  IF is_partitioned IS NULL THEN
+    RAISE EXCEPTION 'Table memory_records does not exist. Run migration 001_create_memory_records.sql first.';
+  END IF;
+
+  IF NOT is_partitioned THEN
+    RAISE EXCEPTION 'Table memory_records must be converted to partitioned table first. See docs/runbooks/partitioning-migrations.md section 3.2 for conversion steps.';
+  END IF;
+
+  RAISE NOTICE 'Pre-check passed: memory_records is a partitioned table';
+END $$;
+
+-- ============================================================================
 -- Helper function to create new partitions automatically
 -- ============================================================================
 

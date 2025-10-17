@@ -23,13 +23,31 @@ interface BackfillConfig {
 }
 
 /**
- * Load backfill config from environment
+ * Load backfill config from environment with validation
  */
 function loadBackfillConfig(): BackfillConfig {
+  // Validate batch size
+  const batchSize = parseInt(process.env.BACKFILL_BATCH_SIZE || '100', 10);
+  if (isNaN(batchSize) || batchSize <= 0 || batchSize > 1000) {
+    throw new Error(
+      `Invalid BACKFILL_BATCH_SIZE: ${process.env.BACKFILL_BATCH_SIZE}. Must be between 1 and 1000.`
+    );
+  }
+
+  // Validate consent family if provided
+  const consentFamily = process.env.BACKFILL_CONSENT_FAMILY;
+  if (consentFamily && !['personal', 'cohort', 'population'].includes(consentFamily)) {
+    throw new Error(
+      `Invalid BACKFILL_CONSENT_FAMILY: ${consentFamily}. Must be one of: personal, cohort, population.`
+    );
+  }
+
+  const dryRun = process.env.BACKFILL_DRY_RUN === 'true';
+
   return {
-    batchSize: parseInt(process.env.BACKFILL_BATCH_SIZE || '100', 10),
-    dryRun: process.env.BACKFILL_DRY_RUN === 'true',
-    consentFamily: process.env.BACKFILL_CONSENT_FAMILY,
+    batchSize,
+    dryRun,
+    consentFamily,
   };
 }
 

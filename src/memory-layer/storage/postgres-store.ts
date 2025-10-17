@@ -255,56 +255,119 @@ export class PostgresStore implements MemoryStore {
   }
 
   /**
-   * TODO(Phase 3): Implement forget with hard delete support
+   * Forget (delete) records - STUB for Phase 3
+   * TODO: Implement proper hard delete with audit trail
    */
   async forget(request: ForgetRequest): Promise<string[]> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.forget()');
+    console.warn('[PostgresStore] forget() not yet implemented - returning empty array');
+    return [];
   }
 
   /**
-   * TODO(Phase 3): Implement get by ID
+   * Get a single record by ID
    */
   async get(id: string): Promise<MemoryRecord | null> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.get()');
+    const client = await this.pool.connect();
+    try {
+      const query = 'SELECT * FROM memory_records WHERE id = $1';
+      const result = await client.query(query, [id]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return await this.rowToRecord(result.rows[0]);
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement access count increment
+   * Increment access count - STUB for Phase 3
+   * TODO: Implement proper access count tracking
    */
   async incrementAccessCount(id: string): Promise<MemoryRecord | null> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.incrementAccessCount()');
+    console.warn('[PostgresStore] incrementAccessCount() not yet implemented - returning null');
+    return null;
   }
 
   /**
-   * TODO(Phase 3): Implement exists check
+   * Check if a record exists by ID
    */
   async exists(id: string): Promise<boolean> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.exists()');
+    const client = await this.pool.connect();
+    try {
+      const query = 'SELECT EXISTS(SELECT 1 FROM memory_records WHERE id = $1) as exists';
+      const result = await client.query(query, [id]);
+      return result.rows[0].exists;
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement TTL sweep job
+   * Clear expired records - STUB for Phase 3
+   * TODO: Implement TTL sweep job
    */
   async clearExpired(): Promise<number> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.clearExpired()');
+    console.warn('[PostgresStore] clearExpired() not yet implemented - returning 0');
+    return 0;
   }
 
   /**
-   * TODO(Phase 3): Implement stats aggregation
+   * Get storage statistics
    */
   async getStats(): Promise<{
     total_records: number;
     records_by_family: Record<string, number>;
     storage_bytes: number;
   }> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.getStats()');
+    const client = await this.pool.connect();
+    try {
+      // Get total count
+      const totalQuery = 'SELECT COUNT(*) as count FROM memory_records';
+      const totalResult = await client.query(totalQuery);
+      const total_records = parseInt(totalResult.rows[0].count, 10);
+
+      // Get counts by consent family
+      const familyQuery = `
+        SELECT consent_family, COUNT(*) as count
+        FROM memory_records
+        GROUP BY consent_family
+      `;
+      const familyResult = await client.query(familyQuery);
+      const records_by_family: Record<string, number> = {};
+      for (const row of familyResult.rows) {
+        records_by_family[row.consent_family] = parseInt(row.count, 10);
+      }
+
+      // Get approximate storage size (PostgreSQL specific)
+      const sizeQuery = `
+        SELECT pg_total_relation_size('memory_records') as bytes
+      `;
+      const sizeResult = await client.query(sizeQuery);
+      const storage_bytes = parseInt(sizeResult.rows[0].bytes, 10) || 0;
+
+      return {
+        total_records,
+        records_by_family,
+        storage_bytes,
+      };
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement clear for testing
+   * Clear all records (for testing only)
    */
   async clear(): Promise<void> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.clear()');
+    const client = await this.pool.connect();
+    try {
+      await client.query('TRUNCATE TABLE memory_records');
+    } finally {
+      client.release();
+    }
   }
 
   /**

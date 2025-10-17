@@ -65,15 +65,12 @@ export class DualStore implements MemoryStore {
    * Secondary write failure → log, record metric, continue if not failFast
    */
   async store(record: MemoryRecord): Promise<MemoryRecord> {
+    const secondaryStoreType = this.config.primaryStore === 'memory' ? 'postgres' : 'memory';
+
     // Write to primary store (always required)
     let primaryResult: MemoryRecord;
     try {
       primaryResult = await this.primaryStore.store(record);
-      dualWriteRecordsTotal.inc({
-        primary_store: this.config.primaryStore,
-        secondary_store: this.config.primaryStore === 'memory' ? 'postgres' : 'memory',
-        status: 'primary_success',
-      });
     } catch (err) {
       dualWriteFailuresTotal.inc({
         store: this.config.primaryStore,
@@ -86,13 +83,13 @@ export class DualStore implements MemoryStore {
     // Write to secondary store (best-effort unless failFast)
     try {
       await this.secondaryStore.store(record);
+      // Success: Both stores written
       dualWriteRecordsTotal.inc({
         primary_store: this.config.primaryStore,
-        secondary_store: this.config.primaryStore === 'memory' ? 'postgres' : 'memory',
+        secondary_store: secondaryStoreType,
         status: 'both_success',
       });
     } catch (err) {
-      const secondaryStoreType = this.config.primaryStore === 'memory' ? 'postgres' : 'memory';
       dualWriteFailuresTotal.inc({
         store: secondaryStoreType,
         reason: 'secondary_store_failed',
