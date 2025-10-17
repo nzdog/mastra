@@ -191,6 +191,98 @@ export const auditFileLockContention = new promClient.Counter({
 });
 
 // =============================================================================
+// PHASE 2: MEMORY LAYER METRICS
+// =============================================================================
+
+/** Duration of memory operations in seconds */
+export const memoryOperationDuration = new promClient.Histogram({
+  name: 'memory_operation_duration_seconds',
+  help: 'Duration of memory operations in seconds',
+  labelNames: ['operation', 'consent_family', 'status'],
+  buckets: [0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2.5], // seconds
+  registers: [register],
+});
+
+/** Total number of memory operations */
+export const memoryOperationTotal = new promClient.Counter({
+  name: 'memory_operation_total',
+  help: 'Total number of memory operations by type',
+  labelNames: ['operation', 'consent_family', 'status'],
+  registers: [register],
+});
+
+/** Total number of memory records stored */
+export const memoryStoreRecordsTotal = new promClient.Counter({
+  name: 'memory_store_records_total',
+  help: 'Total number of memory records stored',
+  labelNames: ['consent_family', 'content_type'],
+  registers: [register],
+});
+
+/** Total number of memory records recalled */
+export const memoryRecallRecordsTotal = new promClient.Counter({
+  name: 'memory_recall_records_total',
+  help: 'Total number of memory records recalled',
+  labelNames: ['consent_family'],
+  registers: [register],
+});
+
+/** Total number of memory records forgotten (deleted) */
+export const memoryForgetRecordsTotal = new promClient.Counter({
+  name: 'memory_forget_records_total',
+  help: 'Total number of memory records forgotten (deleted)',
+  labelNames: ['consent_family', 'hard_delete'],
+  registers: [register],
+});
+
+/** Total number of distillation operations */
+export const memoryDistillTotal = new promClient.Counter({
+  name: 'memory_distill_total',
+  help: 'Total number of distillation operations',
+  labelNames: ['consent_family', 'aggregation_type', 'privacy_met'],
+  registers: [register],
+});
+
+/** Total number of export operations */
+export const memoryExportTotal = new promClient.Counter({
+  name: 'memory_export_total',
+  help: 'Total number of export operations',
+  labelNames: ['consent_family', 'format'],
+  registers: [register],
+});
+
+/** Current number of memory records in storage */
+export const memoryRecordsInStorage = new promClient.Gauge({
+  name: 'memory_records_in_storage',
+  help: 'Current number of memory records in storage',
+  labelNames: ['consent_family'],
+  registers: [register],
+});
+
+/** Total storage size in bytes */
+export const memoryStorageSizeBytes = new promClient.Gauge({
+  name: 'memory_storage_size_bytes',
+  help: 'Total storage size in bytes',
+  registers: [register],
+});
+
+/** Number of consent resolution failures */
+export const memoryConsentResolutionFailures = new promClient.Counter({
+  name: 'memory_consent_resolution_failures_total',
+  help: 'Number of consent resolution failures',
+  labelNames: ['reason', 'consent_family'],
+  registers: [register],
+});
+
+/** Number of k-anonymity violations */
+export const memoryKAnonymityViolations = new promClient.Counter({
+  name: 'memory_k_anonymity_violations_total',
+  help: 'Number of k-anonymity violations (privacy threshold not met)',
+  labelNames: ['consent_family', 'operation'],
+  registers: [register],
+});
+
+// =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 

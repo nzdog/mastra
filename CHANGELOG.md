@@ -9,6 +9,121 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+---
+
+## [Phase 2.0] - 2025-10-17
+
+### Added
+
+**Memory Layer APIs & Consent Families (Phase 2 Complete)**
+
+- **Memory Operations API** (`/v1/{family}/*`):
+  - Five core operations: Store, Recall, Distill, Forget, Export
+  - Consent family-based routing: `/v1/personal/*`, `/v1/cohort/*`, `/v1/population/*`
+  - Full request/response models with TypeScript types
+  - OpenAPI 3.0 specification at `openapi/memory-layer-v1.yaml`
+
+- **Consent Family System**:
+  - Three consent families: Personal (hashed/pseudonymous identifiers only), Cohort (group aggregation, no direct identifiers), Population (system-wide aggregation, no direct identifiers)
+  - Consent resolver middleware with fail-closed authorization (401/403)
+  - Bearer token authentication with user_id extraction
+  - Scope-based authorization per family (read, write, delete, export, aggregate)
+  - Audit events for consent resolution (success/failure)
+
+- **Storage Layer**:
+  - `MemoryStoreInterface` - Abstract storage interface for memory records
+  - `InMemoryStore` - In-memory implementation with filtering, pagination, soft delete
+  - Support for text, structured, and embedding content types
+  - Session grouping and expiration support
+  - Access count tracking
+
+- **Aggregation System** (`src/memory-layer/aggregation/simple-aggregator.ts`):
+  - Six aggregation types: count, average, sum, min, max, distribution
+  - K-anonymity enforcement (min 5 for cohort, min 100 for population)
+  - Temporal bucketing (hour, day, week, month)
+  - Privacy threshold validation with metadata
+
+- **Middleware Stack**:
+  - **Consent Resolver** (`src/memory-layer/middleware/consent-resolver.ts`):
+    - Extracts consent family from URL path
+    - Validates Bearer token authentication
+    - Checks family authorization and attaches consent context
+    - Emits audit events for auth success/failure
+  - **Schema Validator** (`src/memory-layer/middleware/schema-validator.ts`):
+    - Validates request bodies against operation schemas
+    - Type guards for StoreRequest, RecallQuery, ForgetRequest
+  - **SLO Middleware** (`src/memory-layer/middleware/slo-middleware.ts`):
+    - Tracks request latency per operation
+    - Enforces SLO targets (store: 500ms, recall: 1s, distill: 5s, forget: 500ms, export: 10s)
+    - Circuit breaker for SLO violations (50% rate over 1 min)
+    - Prometheus metrics for latency and violations
+  - **Error Handler** (`src/memory-layer/middleware/error-handler.ts`):
+    - Standardized error envelope with error codes
+    - Trace ID correlation for debugging
+    - Audit event emission for errors
+
+- **Data Models**:
+  - `MemoryRecord` - Core record structure with consent family, content, metadata
+  - `MemoryContent` - Content wrapper with type (text/structured/embedding)
+  - `ConsentFamily` - Type-safe consent family enum (personal, cohort, population)
+  - Request models: `StoreRequest`, `RecallQuery`, `DistillRequest`, `ForgetRequest`, `ExportRequest`
+  - Response models: `StoreResponse`, `RecallResponse`, `DistillResponse`, `ForgetResponse`, `ExportResponse`
+  - `ErrorResponse` - Standardized error envelope with error codes
+
+- **Error Handling**:
+  - Error code enum: `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `SLO_VIOLATION`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE`
+  - HTTP status mapping for each error code
+  - Detailed error responses with trace IDs and context
+
+- **Metrics & Observability**:
+  - `memory_operation_latency_ms` - Histogram for operation latency by operation/family/status
+  - `slo_violation_total` - Counter for SLO violations by operation
+  - SLO latency header (`X-SLO-Latency`) on all responses
+  - Circuit breaker state tracking
+
+- **Documentation**:
+  - Complete OpenAPI 3.0 specification (`openapi/memory-layer-v1.yaml`)
+  - API documentation with examples (`docs/specs/phase-2-api.md`)
+  - Request/response examples for all operations
+  - Error code reference and troubleshooting guide
+  - SLO targets and circuit breaker behavior
+  - Consent family capability matrix
+
+- **Runbooks**:
+  - Phase 2 rollout runbook (`docs/runbooks/phase-2-rollout.md`)
+  - Consent family triage guide (`docs/runbooks/consent-family-triage.md`)
+
+### Changed
+
+**Server Integration** (`src/server.ts`):
+- Mounted memory router at `/v1/{family}/*` paths
+- Integrated memory layer middleware stack
+- Added error handling for memory operations
+- Version headers: `X-API-Version: 1.0.0`, `X-Spec-Version: 1.0`
+
+**Specification Index** (`docs/specs/README.md`):
+- Updated Phase 2 status to "Complete"
+- Added links to Phase 2 documentation
+- Marked Phase 2 implementation checklist items as complete
+
+### Security
+
+- **Fail-closed authorization**: 401 if no auth, 403 if family not allowed
+- **Consent family enforcement**: User can only access data within authorized family
+- **K-anonymity validation**: Prevents PII leakage in aggregations (min 5/100 records)
+- **Audit trail**: All operations emit audit events with receipt IDs
+- **Bearer token authentication**: Required for all memory operations
+- **Scope validation**: Per-family operation scopes (read, write, delete, export, aggregate)
+- **Trace ID correlation**: All requests tracked with trace IDs for debugging
+
+### Breaking Changes
+
+- None (Phase 2 is net-new functionality)
+
+---
+
+## [Phase 1.2.2] - 2025-10-17
+
 ### Added
 
 **CORS Hardening & Verification Gates (Phase 1.2)**

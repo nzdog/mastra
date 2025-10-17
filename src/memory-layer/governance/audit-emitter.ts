@@ -114,9 +114,9 @@ export class AuditEmitter {
           }
         : undefined,
       payload,
-      // Phase 1.1 fields
-      schemaVersion: '1.1.0',
-      policyVersion: '2025-01',
+      // Phase 1.1 fields (updated for Phase 2)
+      schemaVersion: '1.0.0',
+      policyVersion: '2025-10-phase2',
       consentScope: consentContext?.scope || ['audit'],
     };
 

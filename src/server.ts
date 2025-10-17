@@ -32,6 +32,9 @@ import {
   measureAsync,
 } from './observability/metrics';
 import { getSignerRegistry } from './memory-layer/governance/signer-registry';
+import memoryRouter from './memory-layer/api/memory-router';
+import { getMemoryStore } from './memory-layer/storage/in-memory-store';
+import { errorHandler } from './memory-layer/middleware/error-handler';
 
 // Load environment variables
 dotenv.config();
@@ -218,6 +221,24 @@ setInterval(
     await sessionStore.cleanup();
   },
   10 * 60 * 1000
+);
+
+// Initialize memory store (singleton)
+const memoryStore = getMemoryStore();
+
+// Cleanup expired memory records every 60 seconds (TTL enforcement)
+setInterval(
+  async () => {
+    try {
+      const deletedCount = await memoryStore.clearExpired();
+      if (deletedCount > 0) {
+        console.log(`🧹 MEMORY: Cleared ${deletedCount} expired memory records`);
+      }
+    } catch (error) {
+      console.error('❌ MEMORY: Error clearing expired records:', error);
+    }
+  },
+  60 * 1000 // Run every 60 seconds
 );
 
 // Helper: Get session (async wrapper for SessionStore)
@@ -1157,6 +1178,41 @@ app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
     state,
   });
 });
+
+// ============================================================================
+// Phase 2: Memory Layer Routes
+// ============================================================================
+
+/**
+ * Memory Layer API Routes
+ *
+ * All memory operations follow the pattern: /v1/{family}/{operation}
+ * Where {family} is one of: personal, cohort, population
+ *
+ * Operations:
+ * - POST /v1/{family}/store - Store new memory record
+ * - GET /v1/{family}/recall - Retrieve memory records
+ * - POST /v1/{family}/distill - Aggregate data with k-anonymity
+ * - DELETE /v1/{family}/forget - Delete memory records (GDPR)
+ * - GET /v1/{family}/export - Export user data (GDPR)
+ *
+ * Middleware stack (applied in memory-router):
+ * 1. Consent resolver - validates auth and extracts consent family
+ * 2. Schema validator - validates request against JSON schema
+ * 3. SLO middleware - tracks latency and enforces SLO
+ * 4. Operation handlers - execute memory operations with audit
+ */
+app.use('/v1/:family', apiLimiter, memoryRouter);
+
+// ============================================================================
+// Error Handling (must be last)
+// ============================================================================
+
+/**
+ * Global error handler for memory layer operations
+ * Converts all errors to ErrorResponse format with trace IDs
+ */
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {

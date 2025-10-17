@@ -53,6 +53,9 @@ export interface SignedAuditReceipt {
   signature: SignatureResult;
   ledger_height: number;
   receipt_id: string;
+  schemaVersion: string;     // e.g., "1.0.0"
+  policyVersion: string;     // e.g., "2025-10-phase2"
+  consentScope: string[];    // e.g., ["personal:read", "personal:write"]
 }
 
 export interface LedgerState {
@@ -235,6 +238,9 @@ export class LedgerSink {
         signature,
         ledger_height: this.ledgerHeight,
         receipt_id: receiptId,
+        schemaVersion: event.schemaVersion || '1.0.0',
+        policyVersion: event.policyVersion || '2025-10-phase2',
+        consentScope: event.consentScope || [],
       };
 
       // Persist receipt to disk (with atomic writes)
