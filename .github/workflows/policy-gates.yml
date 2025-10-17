@@ -408,6 +408,227 @@ jobs:
             echo "✅ No deprecated user_id references found"
           fi
 
+      # Phase 3 Week 2: Auth, RBAC, Rate Limiting Gates
+      - name: 'Gate: Auth provider NOT mock in production (Phase 3)'
+        run: |
+          echo "🔍 Checking AUTH_PROVIDER configuration..."
+
+          # On main branch, fail if AUTH_PROVIDER=mock
+          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
+            if grep -q "AUTH_PROVIDER=mock" .env* 2>/dev/null; then
+              echo "❌ FAIL: AUTH_PROVIDER=mock detected on production branch"
+              echo "  Production must use AUTH_PROVIDER=jwks with valid JWKS_URL"
+              exit 1
+            fi
+          fi
+
+          echo "✅ Auth provider configuration check passed"
+
+      - name: 'Gate: Rate limiting configured on main branches (Phase 3)'
+        run: |
+          echo "🔍 Checking rate limiting configuration..."
+
+          # On main branch, warn if rate limiting disabled
+          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
+            if grep -q "RATE_LIMIT_ENABLED=false" .env* 2>/dev/null; then
+              echo "⚠️ WARNING: RATE_LIMIT_ENABLED=false on production branch"
+              echo "  Consider enabling rate limiting for production"
+              # Not failing - just warning
+            fi
+          fi
+
+          echo "✅ Rate limiting configuration check passed"
+
+      - name: 'Gate: Auth verifier tests (Phase 3 Week 2)'
+        run: |
+          npm run test -- auth-verifier.test.ts
+          echo "✅ Auth verifier tests passed"
+
+      - name: 'Gate: Access control tests (Phase 3 Week 2)'
+        run: |
+          npm run test -- access-control.test.ts
+          echo "✅ Access control tests passed"
+
+      - name: 'Gate: Pseudonym rotation tests (Phase 3 Week 2)'
+        run: |
+          npm run test -- pseudonym-rotation.test.ts
+          echo "✅ Pseudonym rotation tests passed"
+
+      - name: 'Gate: No hardcoded salts in production (Phase 3)'
+        run: |
+          echo "🔍 Checking for default pseudonym salt..."
+
+          # Check if default salt is still in use
+          if grep -r "default-dev-salt-change-in-prod" src/ --include="*.ts"; then
+            echo "⚠️ WARNING: Default pseudonym salt found in source code"
+            echo "  Ensure PSEUDONYM_PERIOD_SALT is set via environment variable in production"
+            # Not failing - salt should come from env, not code
+          fi
+
+          echo "✅ Salt configuration check passed"
+
+      # Phase 3 Week 3: Encryption & Postgres Hardening Gates
+      - name: 'Gate: Encryption roundtrip tests (Phase 3 Week 3)'
+        run: |
+          npm run test -- encryption-roundtrip.test.ts
+          echo "✅ Encryption roundtrip tests passed"
+
+      - name: 'Gate: Postgres store tests (Phase 3 Week 3)'
+        run: |
+          npm run test -- postgres-store.test.ts
+          echo "✅ Postgres store tests passed"
+
+      - name: 'Gate: Encryption metrics available (Phase 3 Week 3)'
+        run: |
+          SKIP_API_KEY_CHECK=true ENCRYPTION_ENABLED=true npm run server &
+          SERVER_PID=$!
+
+          # Wait for server
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID
+              exit 1
+            fi
+            sleep 1
+          done
+
+          sleep 3
+
+          # Check for encryption metrics
+          METRICS=$(curl -sf http://localhost:3000/metrics)
+          echo "$METRICS" | grep -q "crypto_encrypt_failures_total" || (echo "❌ Missing crypto_encrypt_failures_total metric"; kill $SERVER_PID; exit 1)
+          echo "$METRICS" | grep -q "crypto_decrypt_failures_total" || (echo "❌ Missing crypto_decrypt_failures_total metric"; kill $SERVER_PID; exit 1)
+          echo "$METRICS" | grep -q "crypto_ops_duration_ms" || (echo "❌ Missing crypto_ops_duration_ms metric"; kill $SERVER_PID; exit 1)
+
+          kill $SERVER_PID
+          echo "✅ Encryption metrics verified"
+
+      - name: 'Gate: Partitioning migration exists (Phase 3 Week 3)'
+        run: |
+          test -f migrations/002_partitions.sql
+          grep -q "PARTITION BY RANGE (created_at)" migrations/002_partitions.sql
+          grep -q "create_monthly_partition" migrations/002_partitions.sql
+          echo "✅ Partitioning migration validated"
+
+      - name: 'Gate: TTL sweep job exists (Phase 3 Week 3)'
+        run: |
+          test -f src/memory-layer/jobs/ttl-sweep.ts
+          grep -q "class TTLSweepJob" src/memory-layer/jobs/ttl-sweep.ts
+          grep -q "ttl_sweep_records_total" src/memory-layer/jobs/ttl-sweep.ts
+          echo "✅ TTL sweep job validated"
+
+      - name: 'Gate: Dual-write tests (Phase 3 Week 3)'
+        run: |
+          npm run test -- dual-write.test.ts
+          echo "✅ Dual-write tests passed"
+
+      - name: 'Gate: Backfill tests (Phase 3 Week 3)'
+        run: |
+          npm run test -- backfill.test.ts
+          echo "✅ Backfill tests passed"
+
+      - name: 'Gate: Dual-write adapter selector support (Phase 3 Week 3)'
+        run: |
+          test -f src/memory-layer/storage/dual-store.ts
+          grep -q "class DualStore" src/memory-layer/storage/dual-store.ts
+          grep -q "case 'dual-write'" src/memory-layer/storage/adapter-selector.ts
+          grep -q "getDualStore" src/memory-layer/storage/adapter-selector.ts
+          echo "✅ Dual-write adapter selector validated"
+
+      - name: 'Gate: Backfill script exists (Phase 3 Week 3)'
+        run: |
+          test -f scripts/backfill-to-postgres.ts
+          grep -q "backfillToPostgres" scripts/backfill-to-postgres.ts
+          grep -q "verifyBackfill" scripts/backfill-to-postgres.ts
+          echo "✅ Backfill script validated"
+
+      - name: 'Gate: Dual-write metrics available (Phase 3 Week 3)'
+        run: |
+          SKIP_API_KEY_CHECK=true PERSISTENCE=dual-write DUAL_WRITE_ENABLED=true npm run server &
+          SERVER_PID=$!
+
+          # Wait for server
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID
+              exit 1
+            fi
+            sleep 1
+          done
+
+          sleep 3
+
+          # Check for dual-write metrics
+          METRICS=$(curl -sf http://localhost:3000/metrics)
+          echo "$METRICS" | grep -q "dual_write_records_total" || (echo "❌ Missing dual_write_records_total metric"; kill $SERVER_PID; exit 1)
+          echo "$METRICS" | grep -q "dual_write_failures_total" || (echo "❌ Missing dual_write_failures_total metric"; kill $SERVER_PID; exit 1)
+          echo "$METRICS" | grep -q "backfill_records_total" || (echo "❌ Missing backfill_records_total metric"; kill $SERVER_PID; exit 1)
+
+          kill $SERVER_PID
+          echo "✅ Dual-write metrics verified"
+
+      # Phase 3 Week 3: Migration Safety Gates
+      - name: 'Gate: No destructive SQL in production migrations (Phase 3 Week 3)'
+        run: |
+          echo "🔍 Checking for destructive SQL in production migrations..."
+
+          # On main/master branches, fail if DROP TABLE found in non-dev migrations
+          if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
+            if git grep -n -i -E "DROP[[:space:]]+TABLE" -- migrations/*.sql | grep -v "_dev.sql"; then
+              echo "❌ FAIL: Destructive SQL detected in production migrations"
+              echo "  DROP TABLE statements must only be in files ending with _dev.sql"
+              echo "  Production migrations must be non-destructive and idempotent"
+              exit 1
+            fi
+          fi
+
+          echo "✅ No destructive SQL in production migrations"
+
+      - name: 'Gate: Safe migration banner validation (Phase 3 Week 3)'
+        run: |
+          echo "🔍 Validating safe migration banner..."
+
+          # Verify 002_partitions.sql contains SAFE PRODUCTION MIGRATION banner
+          if ! grep -q "SAFE PRODUCTION MIGRATION" migrations/002_partitions.sql; then
+            echo "❌ FAIL: migrations/002_partitions.sql missing 'SAFE PRODUCTION MIGRATION' banner"
+            echo "  Ensure correct migration file is being used"
+            exit 1
+          fi
+
+          # Verify it uses IF NOT EXISTS patterns
+          if ! grep -q "IF NOT EXISTS" migrations/002_partitions.sql; then
+            echo "❌ FAIL: migrations/002_partitions.sql missing IF NOT EXISTS patterns"
+            echo "  Production migrations must be idempotent"
+            exit 1
+          fi
+
+          # Verify helper function exists
+          if ! grep -q "create_monthly_partition" migrations/002_partitions.sql; then
+            echo "❌ FAIL: migrations/002_partitions.sql missing partition helper function"
+            exit 1
+          fi
+
+          echo "✅ Safe migration banner validated"
+
+      - name: 'Gate: Migration runbook exists (Phase 3 Week 3)'
+        run: |
+          test -f docs/runbooks/partitioning-migrations.md
+          grep -q "Production-Safe Migration" docs/runbooks/partitioning-migrations.md
+          grep -q "Dev-Only Migration" docs/runbooks/partitioning-migrations.md
+          echo "✅ Migration runbook validated"
+
       # Branch Protection Validation
       - name: 'Gate: Branch protection check'
         if: github.ref == 'refs/heads/feature/memory-layer-spec'

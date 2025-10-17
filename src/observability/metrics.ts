@@ -283,6 +283,83 @@ export const memoryKAnonymityViolations = new promClient.Counter({
 });
 
 // =============================================================================
+// PHASE 3: ENCRYPTION METRICS
+// =============================================================================
+
+/** Total number of encryption failures */
+export const cryptoEncryptFailuresTotal = new promClient.Counter({
+  name: 'crypto_encrypt_failures_total',
+  help: 'Total number of encryption failures',
+  labelNames: ['reason'],
+  registers: [register],
+});
+
+/** Total number of decryption failures */
+export const cryptoDecryptFailuresTotal = new promClient.Counter({
+  name: 'crypto_decrypt_failures_total',
+  help: 'Total number of decryption failures',
+  labelNames: ['reason'],
+  registers: [register],
+});
+
+/** Duration of cryptographic operations in milliseconds */
+export const cryptoOpsDuration = new promClient.Histogram({
+  name: 'crypto_ops_duration_ms',
+  help: 'Duration of cryptographic operations (encrypt/decrypt) in milliseconds',
+  labelNames: ['op'],
+  buckets: [0.5, 1, 2, 5, 10, 25, 50, 100, 250, 500], // milliseconds
+  registers: [register],
+});
+
+// =============================================================================
+// PHASE 3 WEEK 3: DUAL-WRITE MIGRATION METRICS
+// =============================================================================
+
+/** Total number of dual-write records written */
+export const dualWriteRecordsTotal = new promClient.Counter({
+  name: 'dual_write_records_total',
+  help: 'Total number of records written in dual-write mode',
+  labelNames: ['primary_store', 'secondary_store', 'status'],
+  registers: [register],
+});
+
+/** Total number of dual-write failures */
+export const dualWriteFailuresTotal = new promClient.Counter({
+  name: 'dual_write_failures_total',
+  help: 'Total number of dual-write failures by store',
+  labelNames: ['store', 'reason'],
+  registers: [register],
+});
+
+/** Lag between primary and secondary stores in seconds */
+export const dualWriteLagSeconds = new promClient.Gauge({
+  name: 'dual_write_lag_seconds',
+  help: 'Lag between primary and secondary stores (optional)',
+  labelNames: ['store'],
+  registers: [register],
+});
+
+// =============================================================================
+// BACKFILL METRICS
+// =============================================================================
+
+/** Total number of records backfilled */
+export const backfillRecordsTotal = new promClient.Counter({
+  name: 'backfill_records_total',
+  help: 'Total number of records backfilled to Postgres',
+  labelNames: ['status'],
+  registers: [register],
+});
+
+/** Total number of backfill failures */
+export const backfillFailuresTotal = new promClient.Counter({
+  name: 'backfill_failures_total',
+  help: 'Total number of backfill operation failures',
+  labelNames: ['reason'],
+  registers: [register],
+});
+
+// =============================================================================
 // HELPER FUNCTIONS
 // =============================================================================
 
