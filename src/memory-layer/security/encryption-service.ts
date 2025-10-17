@@ -141,94 +141,33 @@ class MemoryKMSProvider implements KMSProvider {
 }
 
 /**
- * AWS KMS Provider (Production)
+ * AWS KMS Provider (Stub - Not Implemented)
  *
- * Requires environment variables:
- * - AWS_KMS_KEY_ARN: ARN of the KMS key (e.g., arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012)
+ * TODO: Implement AWS KMS integration for production use.
+ * Requires: @aws-sdk/client-kms package installation
+ *
+ * Required environment variables when implemented:
+ * - AWS_KMS_KEY_ARN: ARN of the KMS key (e.g., arn:aws:kms:us-east-1:123456789012:key/UUID)
  * - AWS_REGION: AWS region (e.g., us-east-1)
  * - AWS credentials via standard AWS SDK credential chain (IAM role, env vars, etc.)
- *
- * For testing, pass mockKmsClient to constructor to avoid live network calls.
  */
 class AWSKMSProvider implements KMSProvider {
-  private kmsClient: any; // AWS KMS client (mocked in tests)
-  private keyArn: string;
-
-  constructor(mockKmsClient?: any) {
-    const keyArn = process.env.AWS_KMS_KEY_ARN;
-    if (!keyArn) {
-      throw new Error(
-        'AWS_KMS_KEY_ARN environment variable required for AWSKMSProvider. ' +
-        'Set to KMS key ARN like: arn:aws:kms:us-east-1:123456789012:key/UUID'
-      );
-    }
-    this.keyArn = keyArn;
-
-    if (mockKmsClient) {
-      // Use mock for testing
-      this.kmsClient = mockKmsClient;
-      console.log('[AWSKMSProvider] Using mocked KMS client for testing');
-    } else {
-      // Production: Would use real AWS SDK KMS client
-      // For now, we'll simulate it with a placeholder
-      // In real implementation: import { KMSClient } from '@aws-sdk/client-kms';
-      throw new Error(
-        'AWSKMSProvider requires AWS SDK KMS client. ' +
-        'Install @aws-sdk/client-kms or use mockKmsClient for testing.'
-      );
-    }
+  constructor() {
+    throw new Error(
+      "[AWSKMSProvider] Not implemented in this release.\n" +
+      "Options:\n" +
+      "  - Set KMS_PROVIDER=memory for development (with DEV_KEK_BASE64 env var)\n" +
+      "  - Set KMS_PROVIDER=gcp for testing (stub only, not for production)\n" +
+      "⚠️  Production deployments must implement AWS KMS integration or use alternative KMS."
+    );
   }
 
-  /**
-   * Encrypt DEK using AWS KMS
-   * In production, this would call kmsClient.encrypt()
-   */
   async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
-    if (!this.kmsClient || !this.kmsClient.encrypt) {
-      throw new Error('KMS client not initialized or missing encrypt method');
-    }
-
-    // In production with real AWS SDK:
-    // const result = await this.kmsClient.encrypt({
-    //   KeyId: this.keyArn,
-    //   Plaintext: plainDek,
-    //   EncryptionContext: { kekId }
-    // });
-    // return Buffer.from(result.CiphertextBlob).toString('base64');
-
-    // For testing with mock:
-    const result = await this.kmsClient.encrypt({
-      KeyId: this.keyArn,
-      Plaintext: plainDek,
-      EncryptionContext: { kekId },
-    });
-    return Buffer.from(result.CiphertextBlob).toString('base64');
+    throw new Error("AWS KMS not implemented");
   }
 
-  /**
-   * Decrypt DEK using AWS KMS
-   * In production, this would call kmsClient.decrypt()
-   */
   async decryptDEK(encryptedDek: string, kekId: string): Promise<Buffer> {
-    if (!this.kmsClient || !this.kmsClient.decrypt) {
-      throw new Error('KMS client not initialized or missing decrypt method');
-    }
-
-    const ciphertext = Buffer.from(encryptedDek, 'base64');
-
-    // In production with real AWS SDK:
-    // const result = await this.kmsClient.decrypt({
-    //   CiphertextBlob: ciphertext,
-    //   EncryptionContext: { kekId }
-    // });
-    // return Buffer.from(result.Plaintext);
-
-    // For testing with mock:
-    const result = await this.kmsClient.decrypt({
-      CiphertextBlob: ciphertext,
-      EncryptionContext: { kekId },
-    });
-    return Buffer.from(result.Plaintext);
+    throw new Error("AWS KMS not implemented");
   }
 }
 
@@ -335,6 +274,15 @@ export class EncryptionService {
    */
   private selectKMSProvider(): KMSProvider {
     const provider = process.env.KMS_PROVIDER || 'memory';
+
+    // Production guard: fail early if AWS provider selected
+    if (process.env.NODE_ENV === "production" && provider === "aws") {
+      throw new Error(
+        "FATAL: AWS KMS Provider not implemented. " +
+        "Set KMS_PROVIDER=memory (non-prod only) or KMS_PROVIDER=gcp (testing only). " +
+        "Production deployments require full KMS integration."
+      );
+    }
 
     switch (provider) {
       case 'memory':

@@ -7,8 +7,10 @@
  * - Respects encryption settings (encryption handled by store layer)
  * - Records metrics for monitoring progress
  * - Can be run multiple times safely
+ * - Resumable: Checkpoint persistence allows restart from last processed record
  */
 
+import * as fs from 'fs';
 import { getMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { getPostgresStore } from '../src/memory-layer/storage/postgres-store';
 import { backfillRecordsTotal, backfillFailuresTotal } from '../src/observability/metrics';
@@ -18,6 +20,7 @@ const DEFAULT_BATCH_SIZE = 100;
 const MAX_BATCH_SIZE = 1000;
 const MIN_BATCH_SIZE = 1;
 const BACKFILL_BATCH_DELAY_MS = parseInt(process.env.BACKFILL_BATCH_DELAY_MS || '100', 10);
+const CHECKPOINT_FILE = './backfill.checkpoint.json';
 
 /**
  * Backfill configuration
@@ -26,6 +29,52 @@ interface BackfillConfig {
   batchSize: number;
   dryRun: boolean;
   consentFamily?: string; // Optional filter
+}
+
+/**
+ * Checkpoint structure for resumable backfills
+ */
+interface Checkpoint {
+  lastId: string;
+  timestamp: string;
+}
+
+/**
+ * Save checkpoint to disk
+ */
+function saveCheckpoint(id: string): void {
+  const checkpoint: Checkpoint = {
+    lastId: id,
+    timestamp: new Date().toISOString(),
+  };
+  fs.writeFileSync(CHECKPOINT_FILE, JSON.stringify(checkpoint, null, 2), 'utf8');
+}
+
+/**
+ * Load checkpoint from disk
+ */
+function loadCheckpoint(): string | null {
+  if (!fs.existsSync(CHECKPOINT_FILE)) {
+    return null;
+  }
+  try {
+    const data = fs.readFileSync(CHECKPOINT_FILE, 'utf8');
+    const checkpoint: Checkpoint = JSON.parse(data);
+    return checkpoint.lastId;
+  } catch (err) {
+    console.error('[Backfill] Failed to load checkpoint:', err);
+    return null;
+  }
+}
+
+/**
+ * Clear checkpoint file
+ */
+function clearCheckpoint(): void {
+  if (fs.existsSync(CHECKPOINT_FILE)) {
+    fs.unlinkSync(CHECKPOINT_FILE);
+    console.log('[Backfill] Checkpoint cleared');
+  }
 }
 
 /**
@@ -88,7 +137,20 @@ async function backfillToPostgres(): Promise<void> {
 
     console.log(`[Backfill] Processing ${filteredRecords.length} records (after filtering)`);
 
-    for (let i = 0; i < filteredRecords.length; i += config.batchSize) {
+    // Load checkpoint for resumable backfill
+    const checkpoint = loadCheckpoint();
+    let startIndex = 0;
+    if (checkpoint) {
+      const checkpointIndex = filteredRecords.findIndex((r: any) => r.id === checkpoint);
+      if (checkpointIndex >= 0) {
+        startIndex = checkpointIndex + 1; // Resume from next record
+        console.log(`[Backfill] Resuming from checkpoint (index ${startIndex}/${filteredRecords.length})`);
+      } else {
+        console.log('[Backfill] Checkpoint not found in records, starting from beginning');
+      }
+    }
+
+    for (let i = startIndex; i < filteredRecords.length; i += config.batchSize) {
       const batch = filteredRecords.slice(i, i + config.batchSize);
       console.log(`[Backfill] Processing batch ${Math.floor(i / config.batchSize) + 1}/${Math.ceil(filteredRecords.length / config.batchSize)} (${batch.length} records)`);
 
@@ -119,10 +181,20 @@ async function backfillToPostgres(): Promise<void> {
         }
       }
 
+      // Save checkpoint after each batch
+      if (batch.length > 0 && !config.dryRun) {
+        saveCheckpoint(batch[batch.length - 1].id);
+      }
+
       // Small delay between batches to avoid overwhelming Postgres
       if (i + config.batchSize < filteredRecords.length) {
         await new Promise((resolve) => setTimeout(resolve, BACKFILL_BATCH_DELAY_MS));
       }
+    }
+
+    // Clear checkpoint on successful completion
+    if (!config.dryRun) {
+      clearCheckpoint();
     }
 
     console.log('[Backfill] Backfill complete');

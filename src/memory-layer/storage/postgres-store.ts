@@ -53,6 +53,7 @@ interface PostgresRow {
   expires_at: string | null;
   access_count: number;
   audit_receipt_id: string;
+  encryption_version: string | null;
 }
 
 /**
@@ -77,15 +78,49 @@ function loadConfig(): PostgresConfig {
  */
 export class PostgresStore implements MemoryStore {
   private pool: Pool;
+  private consecutivePoolErrors = 0;
+  private readonly MAX_POOL_ERRORS = 5;
+  private circuitBreakerTripped = false;
 
   constructor(config?: PostgresConfig) {
     const pgConfig = config || loadConfig();
     this.pool = new Pool(pgConfig);
 
-    // Handle pool errors and record metrics
-    this.pool.on('error', (err) => {
-      console.error('Unexpected error on idle PostgreSQL client', err);
-      postgresPoolErrorsTotal.inc({ error_type: err.name || 'unknown' });
+    // Handle pool errors with circuit breaker
+    this.pool.on('error', (err: any) => {
+      this.consecutivePoolErrors++;
+      postgresPoolErrorsTotal.inc({ error_type: err.code || err.name || 'unknown' });
+
+      console.error(
+        `[PostgresStore] Unexpected pool error (${this.consecutivePoolErrors}/${this.MAX_POOL_ERRORS}):`,
+        err.message
+      );
+
+      // Circuit breaker: trip after MAX_POOL_ERRORS consecutive errors
+      if (this.consecutivePoolErrors >= this.MAX_POOL_ERRORS && !this.circuitBreakerTripped) {
+        this.circuitBreakerTripped = true;
+        console.error('[PostgresStore] Circuit breaker tripped. Pausing connections for 10s.');
+
+        // Close pool and reset after delay
+        this.pool
+          .end()
+          .catch((endErr) => console.error('[PostgresStore] Error closing pool:', endErr));
+
+        setTimeout(() => {
+          console.log('[PostgresStore] Circuit breaker reset. Reinitializing pool.');
+          this.pool = new Pool(pgConfig);
+          this.consecutivePoolErrors = 0;
+          this.circuitBreakerTripped = false;
+        }, 10000);
+      }
+    });
+
+    // Reset error counter on successful connection
+    this.pool.on('connect', () => {
+      if (this.consecutivePoolErrors > 0) {
+        console.log('[PostgresStore] Connection restored. Resetting error counter.');
+        this.consecutivePoolErrors = 0;
+      }
     });
   }
 
@@ -121,6 +156,8 @@ export class PostgresStore implements MemoryStore {
     try {
       // Week 3: Encrypt content before storing if enabled
       let contentToStore: any = record.content;
+      let encryptionVersion: string | null = null;
+
       if (isEncryptionEnabled()) {
         const encryptStart = Date.now();
         try {
@@ -139,6 +176,7 @@ export class PostgresStore implements MemoryStore {
             type: record.content.type, // Preserve metadata
           };
 
+          encryptionVersion = encrypted.encryption_version;
           cryptoOpsDuration.observe({ op: 'encrypt' }, Date.now() - encryptStart);
         } catch (err) {
           cryptoEncryptFailuresTotal.inc({ reason: 'encryption_failed' });
@@ -151,12 +189,13 @@ export class PostgresStore implements MemoryStore {
         INSERT INTO memory_records (
           id, hashed_pseudonym, session_id, content,
           consent_family, consent_timestamp, consent_version,
-          created_at, updated_at, expires_at, access_count, audit_receipt_id
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+          created_at, updated_at, expires_at, access_count, audit_receipt_id, encryption_version
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
         ON CONFLICT (id) DO UPDATE SET
           updated_at = EXCLUDED.updated_at,
           content = EXCLUDED.content,
-          access_count = EXCLUDED.access_count
+          access_count = EXCLUDED.access_count,
+          encryption_version = EXCLUDED.encryption_version
         RETURNING *
       `;
 
@@ -173,6 +212,7 @@ export class PostgresStore implements MemoryStore {
         record.expires_at || null,
         record.access_count,
         record.audit_receipt_id,
+        encryptionVersion,
       ];
 
       const result = await client.query(query, values);
@@ -462,10 +502,12 @@ export class PostgresStore implements MemoryStore {
    *
    * Transforms PostgreSQL row data into MemoryRecord format. Handles:
    * - JSON parsing of content field
-   * - Decryption of encrypted content (if encryption enabled)
+   * - Decryption of encrypted content (detected via encryption_version)
    * - Type coercion for timestamps and IDs
    *
    * Week 3: Added decryption support and type safety
+   * Critical Issue #2 fix: Uses encryption_version to detect encrypted records,
+   * preventing data loss when ENCRYPTION_ENABLED toggles.
    *
    * @param row - PostgreSQL row from memory_records table
    * @returns Fully hydrated MemoryRecord with decrypted content
@@ -473,8 +515,13 @@ export class PostgresStore implements MemoryStore {
   private async rowToRecord(row: PostgresRow): Promise<MemoryRecord> {
     let content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
 
-    // Week 3: Decrypt content if encrypted
-    if (isEncryptionEnabled() && content.data_ciphertext) {
+    // Detect if content is encrypted using encryption_version field OR data_ciphertext presence
+    // This ensures we can decrypt records even if ENCRYPTION_ENABLED is toggled off
+    const isEncrypted =
+      row.encryption_version ||
+      (content && typeof content === 'object' && 'data_ciphertext' in content);
+
+    if (isEncrypted) {
       const decryptStart = Date.now();
       try {
         const encryptionService = getEncryptionService();
@@ -509,6 +556,7 @@ export class PostgresStore implements MemoryStore {
       expires_at: row.expires_at || undefined,
       access_count: row.access_count,
       audit_receipt_id: row.audit_receipt_id,
+      encryption_version: row.encryption_version || undefined,
     };
   }
 
