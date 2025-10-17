@@ -21,6 +21,11 @@ import {
   postgresPoolErrorsTotal,
 } from '../../observability/metrics';
 
+// Query and performance constants
+const MAX_QUERY_LIMIT = 10000; // Maximum LIMIT for queries (prevent DoS)
+const MAX_QUERY_OFFSET = 100000; // Maximum OFFSET for queries (performance guard)
+const BATCH_DECRYPT_CONCURRENCY = 10; // Bounded concurrency for decryption
+
 /**
  * PostgreSQL configuration from environment
  */
@@ -80,14 +85,16 @@ export class PostgresStore implements MemoryStore {
   private pool: Pool;
   private consecutivePoolErrors = 0;
   private readonly MAX_POOL_ERRORS = 5;
+  private readonly CIRCUIT_BREAKER_RESET_MS = 10000; // 10 seconds
   private circuitBreakerTripped = false;
+  private pgConfig: PostgresConfig;
 
   constructor(config?: PostgresConfig) {
-    const pgConfig = config || loadConfig();
-    this.pool = new Pool(pgConfig);
+    this.pgConfig = config || loadConfig();
+    this.pool = new Pool(this.pgConfig);
 
     // Handle pool errors with circuit breaker
-    this.pool.on('error', (err: any) => {
+    this.pool.on('error', async (err: any) => {
       this.consecutivePoolErrors++;
       postgresPoolErrorsTotal.inc({ error_type: err.code || err.name || 'unknown' });
 
@@ -101,17 +108,21 @@ export class PostgresStore implements MemoryStore {
         this.circuitBreakerTripped = true;
         console.error('[PostgresStore] Circuit breaker tripped. Pausing connections for 10s.');
 
-        // Close pool and reset after delay
-        this.pool
-          .end()
-          .catch((endErr) => console.error('[PostgresStore] Error closing pool:', endErr));
+        // Close pool (use stored config for recovery)
+        await this.pool.end().catch((endErr) => console.error('[PostgresStore] Error closing pool:', endErr));
 
-        setTimeout(() => {
-          console.log('[PostgresStore] Circuit breaker reset. Reinitializing pool.');
-          this.pool = new Pool(pgConfig);
-          this.consecutivePoolErrors = 0;
-          this.circuitBreakerTripped = false;
-        }, 10000);
+        // Reset after delay
+        setTimeout(async () => {
+          try {
+            console.log('[PostgresStore] Circuit breaker reset. Reinitializing pool.');
+            this.pool = new Pool(this.pgConfig);
+            this.consecutivePoolErrors = 0;
+            this.circuitBreakerTripped = false;
+          } catch (e) {
+            console.error('[PostgresStore] Failed to reinitialize pool:', e);
+            // Keep breaker tripped; will retry on next reset interval or health check
+          }
+        }, this.CIRCUIT_BREAKER_RESET_MS);
       }
     });
 
@@ -125,10 +136,23 @@ export class PostgresStore implements MemoryStore {
   }
 
   /**
+   * Check circuit breaker status before pool operations
+   * Throws error if breaker is open (tripped)
+   * @private
+   */
+  private checkCircuitBreaker(): void {
+    if (this.circuitBreakerTripped) {
+      throw new Error('Circuit breaker open - database temporarily unavailable');
+    }
+  }
+
+  /**
    * Store a new memory record
    * Week 3: Added envelope encryption support
    */
   async store(record: MemoryRecord): Promise<MemoryRecord> {
+    this.checkCircuitBreaker();
+
     // Input validation (before touching the pool)
     if (!record.id) {
       throw new Error('Invalid MemoryRecord: id is required');
@@ -180,7 +204,8 @@ export class PostgresStore implements MemoryStore {
           cryptoOpsDuration.observe({ op: 'encrypt' }, Date.now() - encryptStart);
         } catch (err) {
           cryptoEncryptFailuresTotal.inc({ reason: 'encryption_failed' });
-          console.error('[PostgresStore] Encryption failed:', err);
+          // Redacted: No PII/content in logs, only record ID and error type
+          console.error(`[PostgresStore] Encryption failed for record (id=${record.id}, reason=${(err as Error).name || 'unknown'})`);
           throw new Error('Failed to encrypt record');
         }
       }
@@ -227,6 +252,7 @@ export class PostgresStore implements MemoryStore {
    * Week 3: Added decryption support
    */
   async recall(query: RecallQuery): Promise<MemoryRecord[]> {
+    this.checkCircuitBreaker();
     const client = await this.pool.connect();
     try {
       const conditions: string[] = [];
@@ -265,8 +291,16 @@ export class PostgresStore implements MemoryStore {
 
       const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
       const sortOrder = query.sort === 'asc' ? 'ASC' : 'DESC';
-      const limit = query.limit || 100;
-      const offset = query.offset || 0;
+
+      // Cap LIMIT and OFFSET to prevent performance issues and DoS
+      const limit = Math.min(query.limit || 100, MAX_QUERY_LIMIT);
+      const offset = Math.min(query.offset || 0, MAX_QUERY_OFFSET);
+
+      // TODO: Implement cursor-based pagination for large offsets (>10k records)
+      // Current OFFSET approach degrades performance linearly with offset size
+      if ((query.offset || 0) > 10000) {
+        console.warn(`[PostgresStore] Large OFFSET detected (${query.offset}). Consider cursor-based pagination for better performance.`);
+      }
 
       const sql = `
         SELECT * FROM memory_records
@@ -278,7 +312,9 @@ export class PostgresStore implements MemoryStore {
       values.push(limit, offset);
 
       const result = await client.query(sql, values);
-      return Promise.all(result.rows.map((row) => this.rowToRecord(row)));
+
+      // Batch decryption with bounded concurrency to avoid memory spikes
+      return this.batchRowsToRecords(result.rows);
     } finally {
       client.release();
     }
@@ -286,8 +322,19 @@ export class PostgresStore implements MemoryStore {
 
   /**
    * Count records matching filters
+   *
+   * Returns the number of non-expired records matching the given filters.
+   * Automatically excludes expired records (expires_at <= NOW()).
+   *
+   * @param filters - Query filters (hashed_pseudonym, session_id, consent_family, etc.)
+   * @returns Count of matching records
+   *
+   * @example
+   * const count = await store.count({ hashed_pseudonym: 'abc123' });
+   * console.log(`User has ${count} active memories`);
    */
   async count(filters: QueryFilters): Promise<number> {
+    this.checkCircuitBreaker();
     const client = await this.pool.connect();
     try {
       const conditions: string[] = [];
@@ -351,6 +398,7 @@ export class PostgresStore implements MemoryStore {
    * @returns Array of deleted record IDs
    */
   async forget(request: ForgetRequest): Promise<string[]> {
+    this.checkCircuitBreaker();
     const client = await this.pool.connect();
     try {
       const conditions: string[] = [];
@@ -383,6 +431,7 @@ export class PostgresStore implements MemoryStore {
       const result = await client.query(query, values);
       const deletedIds = result.rows.map((row) => row.id);
 
+      // Redacted: Log count only, no IDs or PII
       console.log(`[PostgresStore] Deleted ${deletedIds.length} records for forget request`);
       return deletedIds;
     } finally {
@@ -394,6 +443,7 @@ export class PostgresStore implements MemoryStore {
    * Get a single record by ID
    */
   async get(id: string): Promise<MemoryRecord | null> {
+    this.checkCircuitBreaker();
     const client = await this.pool.connect();
     try {
       const query = 'SELECT * FROM memory_records WHERE id = $1';
@@ -422,6 +472,7 @@ export class PostgresStore implements MemoryStore {
    * Check if a record exists by ID
    */
   async exists(id: string): Promise<boolean> {
+    this.checkCircuitBreaker();
     const client = await this.pool.connect();
     try {
       const query = 'SELECT EXISTS(SELECT 1 FROM memory_records WHERE id = $1) as exists';
@@ -449,6 +500,7 @@ export class PostgresStore implements MemoryStore {
     records_by_family: Record<string, number>;
     storage_bytes: number;
   }> {
+    this.checkCircuitBreaker();
     const client = await this.pool.connect();
     try {
       // Get total count
@@ -489,12 +541,32 @@ export class PostgresStore implements MemoryStore {
    * Clear all records (for testing only)
    */
   async clear(): Promise<void> {
+    this.checkCircuitBreaker();
     const client = await this.pool.connect();
     try {
       await client.query('TRUNCATE TABLE memory_records');
     } finally {
       client.release();
     }
+  }
+
+  /**
+   * Batch convert rows to records with bounded concurrency
+   * Prevents memory spikes from unbounded Promise.all() on large result sets
+   * @param rows - Array of PostgresRow to convert
+   * @returns Array of MemoryRecord
+   */
+  private async batchRowsToRecords(rows: PostgresRow[]): Promise<MemoryRecord[]> {
+    const results: MemoryRecord[] = [];
+    const batchSize = BATCH_DECRYPT_CONCURRENCY;
+
+    for (let i = 0; i < rows.length; i += batchSize) {
+      const batch = rows.slice(i, i + batchSize);
+      const batchResults = await Promise.all(batch.map((row) => this.rowToRecord(row)));
+      results.push(...batchResults);
+    }
+
+    return results;
   }
 
   /**
@@ -517,9 +589,10 @@ export class PostgresStore implements MemoryStore {
 
     // Detect if content is encrypted using encryption_version field OR data_ciphertext presence
     // This ensures we can decrypt records even if ENCRYPTION_ENABLED is toggled off
+    // Explicit null/undefined checks to avoid falsy empty string issues
     const isEncrypted =
-      row.encryption_version ||
-      (content && typeof content === 'object' && 'data_ciphertext' in content);
+      (row.encryption_version !== null && row.encryption_version !== undefined)
+      || (content && typeof content === 'object' && 'data_ciphertext' in content);
 
     if (isEncrypted) {
       const decryptStart = Date.now();
@@ -538,7 +611,8 @@ export class PostgresStore implements MemoryStore {
         cryptoOpsDuration.observe({ op: 'decrypt' }, Date.now() - decryptStart);
       } catch (err) {
         cryptoDecryptFailuresTotal.inc({ reason: 'decryption_failed' });
-        console.error('[PostgresStore] Decryption failed:', err);
+        // Redacted: No PII/content in logs, only record ID and error type
+        console.error(`[PostgresStore] Decryption failed for record (id=${row.id}, encryption_version=${row.encryption_version || 'none'}, reason=${(err as Error).name || 'unknown'})`);
         throw new Error('Failed to decrypt record');
       }
     }

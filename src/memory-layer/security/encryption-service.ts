@@ -320,25 +320,30 @@ export class EncryptionService {
     // Step 1: Generate random DEK
     const dek = crypto.randomBytes(DEK_BYTES);
 
-    // Step 2: Encrypt plaintext with DEK using AES-256-GCM
-    const iv = crypto.randomBytes(GCM_IV_LENGTH);
-    const cipher = crypto.createCipheriv('aes-256-gcm', dek, iv);
+    try {
+      // Step 2: Encrypt plaintext with DEK using AES-256-GCM
+      const iv = crypto.randomBytes(GCM_IV_LENGTH);
+      const cipher = crypto.createCipheriv('aes-256-gcm', dek, iv);
 
-    const dataCiphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
-    const authTag = cipher.getAuthTag();
+      const dataCiphertext = Buffer.concat([cipher.update(plaintext), cipher.final()]);
+      const authTag = cipher.getAuthTag();
 
-    // Step 3: Encrypt DEK with KEK via KMS
-    const dekCiphertext = await this.kmsProvider.encryptDEK(dek, useKekId);
+      // Step 3: Encrypt DEK with KEK via KMS
+      const dekCiphertext = await this.kmsProvider.encryptDEK(dek, useKekId);
 
-    // Step 4: Return envelope
-    return {
-      data_ciphertext: dataCiphertext.toString('base64'),
-      dek_ciphertext: dekCiphertext,
-      dek_kid: useKekId,
-      encryption_version: this.ENCRYPTION_VERSION,
-      auth_tag: authTag.toString('base64'),
-      iv: iv.toString('base64'),
-    };
+      // Step 4: Return envelope
+      return {
+        data_ciphertext: dataCiphertext.toString('base64'),
+        dek_ciphertext: dekCiphertext,
+        dek_kid: useKekId,
+        encryption_version: this.ENCRYPTION_VERSION,
+        auth_tag: authTag.toString('base64'),
+        iv: iv.toString('base64'),
+      };
+    } finally {
+      // Security: Zeroize DEK buffer to prevent memory exposure
+      dek.fill(0);
+    }
   }
 
   /**
@@ -367,15 +372,20 @@ export class EncryptionService {
     // Step 1: Decrypt DEK using KEK via KMS (uses envelope's dek_kid, not current)
     const dek = await this.kmsProvider.decryptDEK(envelope.dek_ciphertext, envelope.dek_kid);
 
-    // Step 2: Decrypt data using DEK
-    const iv = Buffer.from(envelope.iv, 'base64');
-    const authTag = Buffer.from(envelope.auth_tag, 'base64');
-    const ciphertext = Buffer.from(envelope.data_ciphertext, 'base64');
+    try {
+      // Step 2: Decrypt data using DEK
+      const iv = Buffer.from(envelope.iv, 'base64');
+      const authTag = Buffer.from(envelope.auth_tag, 'base64');
+      const ciphertext = Buffer.from(envelope.data_ciphertext, 'base64');
 
-    const decipher = crypto.createDecipheriv('aes-256-gcm', dek, iv);
-    decipher.setAuthTag(authTag);
+      const decipher = crypto.createDecipheriv('aes-256-gcm', dek, iv);
+      decipher.setAuthTag(authTag);
 
-    return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+      return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+    } finally {
+      // Security: Zeroize DEK buffer to prevent memory exposure
+      dek.fill(0);
+    }
   }
 }
 
@@ -392,4 +402,58 @@ export function getEncryptionService(): EncryptionService {
     encryptionServiceInstance = new EncryptionService();
   }
   return encryptionServiceInstance;
+}
+
+/**
+ * Health check: Verify KMS provider can encrypt/decrypt round-trip
+ *
+ * This function should be called at server startup to ensure the KMS provider
+ * is properly configured and functional. For memory provider, it verifies
+ * DEK encryption/decryption works. For AWS/GCP, it should be extended to
+ * verify real KMS connectivity.
+ *
+ * @throws Error if KMS provider is not usable
+ */
+export async function assertKmsUsable(): Promise<void> {
+  const provider = process.env.KMS_PROVIDER || 'memory';
+
+  // Block production usage of unimplemented providers
+  if (process.env.NODE_ENV === 'production') {
+    if (provider === 'aws') {
+      throw new Error(
+        'FATAL: AWS KMS Provider not implemented in this release. ' +
+        'Production deployments must:\n' +
+        '  - Implement AWS KMS integration (see TODO in encryption-service.ts)\n' +
+        '  - OR use alternative KMS provider\n' +
+        'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
+      );
+    }
+    if (provider === 'gcp') {
+      throw new Error(
+        'FATAL: GCP KMS Provider not implemented for production use. ' +
+        'Production deployments must:\n' +
+        '  - Implement GCP KMS integration (see TODO in encryption-service.ts)\n' +
+        '  - OR use AWS KMS (when implemented)\n' +
+        'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
+      );
+    }
+  }
+
+  try {
+    const service = getEncryptionService();
+    const testData = Buffer.from('kms-health-check-test-data');
+
+    // Round-trip test: encrypt then decrypt
+    const encrypted = await service.encrypt(testData);
+    const decrypted = await service.decrypt(encrypted);
+
+    if (!testData.equals(decrypted)) {
+      throw new Error('Round-trip decryption failed: data mismatch');
+    }
+
+    console.log(`[EncryptionService] KMS health check passed (provider=${provider})`);
+  } catch (err) {
+    console.error('[EncryptionService] KMS health check failed:', err);
+    throw new Error(`KMS provider '${provider}' is not usable: ${(err as Error).message}`);
+  }
 }

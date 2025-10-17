@@ -28,43 +28,61 @@ const CHECKPOINT_FILE = './backfill.checkpoint.json';
 interface BackfillConfig {
   batchSize: number;
   dryRun: boolean;
+  failFast: boolean; // Abort on first failure
   consentFamily?: string; // Optional filter
 }
 
 /**
- * Checkpoint structure for resumable backfills
+ * Checkpoint structure for resumable backfills (timestamp-based)
+ * Uses created_at timestamp + id tie-breaker for stable resume
  */
-interface Checkpoint {
-  lastId: string;
-  timestamp: string;
+interface BackfillCheckpoint {
+  lastCreatedAtISO: string; // ISO 8601 timestamp of last processed record
+  lastId?: string; // ID tie-breaker for records with same timestamp
+  timestamp: string; // Checkpoint creation time
 }
 
 /**
- * Save checkpoint to disk
+ * Save checkpoint to disk (timestamp-based)
  */
-function saveCheckpoint(id: string): void {
-  const checkpoint: Checkpoint = {
-    lastId: id,
+function saveCheckpoint(record: any): void {
+  const checkpoint: BackfillCheckpoint = {
+    lastCreatedAtISO: record.created_at,
+    lastId: record.id,
     timestamp: new Date().toISOString(),
   };
   fs.writeFileSync(CHECKPOINT_FILE, JSON.stringify(checkpoint, null, 2), 'utf8');
 }
 
 /**
- * Load checkpoint from disk
+ * Load checkpoint from disk (timestamp-based)
  */
-function loadCheckpoint(): string | null {
+function loadCheckpoint(): BackfillCheckpoint | null {
   if (!fs.existsSync(CHECKPOINT_FILE)) {
     return null;
   }
   try {
     const data = fs.readFileSync(CHECKPOINT_FILE, 'utf8');
-    const checkpoint: Checkpoint = JSON.parse(data);
-    return checkpoint.lastId;
+    const checkpoint: BackfillCheckpoint = JSON.parse(data);
+    return checkpoint;
   } catch (err) {
     console.error('[Backfill] Failed to load checkpoint:', err);
     return null;
   }
+}
+
+/**
+ * Save failed record IDs to disk for analysis
+ */
+function saveFailedRecords(failedIds: string[]): void {
+  const failureFile = './backfill-failed.json';
+  const data = {
+    timestamp: new Date().toISOString(),
+    count: failedIds.length,
+    ids: failedIds,
+  };
+  fs.writeFileSync(failureFile, JSON.stringify(data, null, 2), 'utf8');
+  console.error(`[Backfill] Failed record IDs saved to ${failureFile}`);
 }
 
 /**
@@ -98,10 +116,12 @@ function loadBackfillConfig(): BackfillConfig {
   }
 
   const dryRun = process.env.BACKFILL_DRY_RUN === 'true';
+  const failFast = process.env.BACKFILL_FAIL_FAST === 'true';
 
   return {
     batchSize,
     dryRun,
+    failFast,
     consentFamily,
   };
 }
@@ -137,22 +157,42 @@ async function backfillToPostgres(): Promise<void> {
 
     console.log(`[Backfill] Processing ${filteredRecords.length} records (after filtering)`);
 
-    // Load checkpoint for resumable backfill
+    // Load checkpoint for resumable backfill (timestamp-based)
     const checkpoint = loadCheckpoint();
-    let startIndex = 0;
+    let recordsToProcess = filteredRecords;
     if (checkpoint) {
-      const checkpointIndex = filteredRecords.findIndex((r: any) => r.id === checkpoint);
-      if (checkpointIndex >= 0) {
-        startIndex = checkpointIndex + 1; // Resume from next record
-        console.log(`[Backfill] Resuming from checkpoint (index ${startIndex}/${filteredRecords.length})`);
-      } else {
-        console.log('[Backfill] Checkpoint not found in records, starting from beginning');
-      }
+      // Filter records using timestamp + id tie-breaker for stable resume
+      recordsToProcess = filteredRecords.filter((r: any) => {
+        const recordTime = new Date(r.created_at).getTime();
+        const checkpointTime = new Date(checkpoint.lastCreatedAtISO).getTime();
+
+        // created_at > lastCreatedAt OR (created_at == lastCreatedAt AND id > lastId)
+        if (recordTime > checkpointTime) {
+          return true;
+        }
+        if (recordTime === checkpointTime && checkpoint.lastId && r.id > checkpoint.lastId) {
+          return true;
+        }
+        return false;
+      });
+
+      const skipped = filteredRecords.length - recordsToProcess.length;
+      console.log(`[Backfill] Resuming from checkpoint: ${checkpoint.lastCreatedAtISO} (skipped ${skipped} records)`);
     }
 
-    for (let i = startIndex; i < filteredRecords.length; i += config.batchSize) {
-      const batch = filteredRecords.slice(i, i + config.batchSize);
-      console.log(`[Backfill] Processing batch ${Math.floor(i / config.batchSize) + 1}/${Math.ceil(filteredRecords.length / config.batchSize)} (${batch.length} records)`);
+    // Sort by created_at for stable processing order
+    recordsToProcess.sort((a: any, b: any) => {
+      const timeA = new Date(a.created_at).getTime();
+      const timeB = new Date(b.created_at).getTime();
+      if (timeA !== timeB) return timeA - timeB;
+      return a.id.localeCompare(b.id); // Tie-breaker: sort by ID
+    });
+
+    const failedIds: string[] = [];
+
+    for (let i = 0; i < recordsToProcess.length; i += config.batchSize) {
+      const batch = recordsToProcess.slice(i, i + config.batchSize);
+      console.log(`[Backfill] Processing batch ${Math.floor(i / config.batchSize) + 1}/${Math.ceil(recordsToProcess.length / config.batchSize)} (${batch.length} records)`);
 
       for (const record of batch) {
         totalProcessed++;
@@ -170,24 +210,31 @@ async function backfillToPostgres(): Promise<void> {
           backfillRecordsTotal.inc({ status: 'success' });
 
           if (totalSucceeded % 100 === 0) {
-            console.log(`[Backfill] Progress: ${totalSucceeded}/${filteredRecords.length} migrated`);
+            console.log(`[Backfill] Progress: ${totalSucceeded}/${recordsToProcess.length} migrated`);
           }
         } catch (err: any) {
           totalFailed++;
+          failedIds.push(record.id);
           backfillFailuresTotal.inc({ reason: err.message || 'unknown' });
           console.error(`[Backfill] Failed to migrate record ${record.id}:`, err.message);
 
-          // Continue processing other records
+          if (config.failFast) {
+            console.error('[Backfill] FAIL_FAST enabled, aborting backfill');
+            saveFailedRecords(failedIds);
+            throw new Error(`Backfill aborted after ${totalFailed} failure(s) (failFast=true)`);
+          }
+
+          // Continue processing other records if not failFast
         }
       }
 
-      // Save checkpoint after each batch
+      // Save checkpoint after each batch (timestamp-based)
       if (batch.length > 0 && !config.dryRun) {
-        saveCheckpoint(batch[batch.length - 1].id);
+        saveCheckpoint(batch[batch.length - 1]);
       }
 
       // Small delay between batches to avoid overwhelming Postgres
-      if (i + config.batchSize < filteredRecords.length) {
+      if (i + config.batchSize < recordsToProcess.length) {
         await new Promise((resolve) => setTimeout(resolve, BACKFILL_BATCH_DELAY_MS));
       }
     }
@@ -205,6 +252,7 @@ async function backfillToPostgres(): Promise<void> {
 
     if (totalFailed > 0) {
       console.warn(`[Backfill] WARNING: ${totalFailed} records failed to migrate`);
+      saveFailedRecords(failedIds);
       process.exit(1);
     }
 
@@ -287,11 +335,13 @@ async function main() {
       console.log('Environment variables:');
       console.log('  BACKFILL_BATCH_SIZE=100             # Records per batch (default: 100)');
       console.log('  BACKFILL_DRY_RUN=true               # Dry run mode (no writes)');
+      console.log('  BACKFILL_FAIL_FAST=true             # Abort on first failure');
       console.log('  BACKFILL_CONSENT_FAMILY=personal    # Filter by consent family');
       console.log('  ENCRYPTION_ENABLED=true             # Enable encryption during migration');
       console.log('');
       console.log('Examples:');
       console.log('  BACKFILL_DRY_RUN=true npm run backfill');
+      console.log('  BACKFILL_FAIL_FAST=true npm run backfill');
       console.log('  BACKFILL_CONSENT_FAMILY=personal npm run backfill');
       console.log('  ENCRYPTION_ENABLED=true npm run backfill');
       break;

@@ -136,9 +136,15 @@ export class DualStore implements MemoryStore {
           console.warn('[DualStore] Cannot calculate lag: missing created_at timestamp');
           // Do not set metric - avoid false zero lag
         } else {
-          const createdTimestamp = new Date(newest.created_at).getTime();
-          const lagSeconds = Math.max(0, (Date.now() - createdTimestamp) / 1000);
-          dualWriteLagSeconds.set({ store: 'secondary_fallback' }, lagSeconds);
+          const createdTimestamp = new Date(newest.created_at as any).getTime();
+
+          // NaN guard: Invalid date parsing should not set metric
+          if (Number.isNaN(createdTimestamp)) {
+            console.warn(`[DualStore] Invalid created_at timestamp: ${newest.created_at}`);
+          } else {
+            const lagSeconds = Math.max(0, (Date.now() - createdTimestamp) / 1000);
+            dualWriteLagSeconds.set({ store: 'secondary_fallback' }, lagSeconds);
+          }
         }
       }
 
@@ -170,48 +176,71 @@ export class DualStore implements MemoryStore {
   /**
    * Forget: Delete from both stores with mismatch detection
    *
+   * GDPR Compliance: This method ALWAYS enforces failFast=true semantics regardless
+   * of config. GDPR erasure must be atomic across both stores.
+   *
    * Deletes records from both primary and secondary stores. If secondary store
-   * fails or returns different count, records metrics and logs warnings.
+   * fails or returns different count, throws error (no claim of success).
    *
    * @param request - ForgetRequest specifying what to delete
    * @returns Array of deleted IDs from primary store
+   * @throws Error if secondary deletion fails or counts mismatch
    */
   async forget(request: ForgetRequest): Promise<string[]> {
     const secondaryStoreType = this.config.primaryStore === 'memory' ? 'postgres' : 'memory';
 
     // Delete from primary store (required)
-    const primaryDeleted = await this.primaryStore.forget(request);
+    let primaryDeleted: string[];
+    try {
+      primaryDeleted = await this.primaryStore.forget(request);
+    } catch (err) {
+      dualWriteFailuresTotal.inc({
+        store: this.config.primaryStore,
+        reason: 'forget_failed',
+      });
+      console.error('[DualStore] Primary forget failed:', err);
+      throw err; // Always fail on primary failure
+    }
 
-    // Delete from secondary store (best-effort unless failFast)
+    // Only proceed if primary succeeded and deleted records
+    if (primaryDeleted.length === 0) {
+      // No records to delete - success (no secondary attempt needed)
+      return primaryDeleted;
+    }
+
+    // Delete from secondary store (MUST succeed for GDPR compliance)
     try {
       const secondaryDeleted = await this.secondaryStore.forget(request);
 
-      // Check for count mismatch
+      // Check for count mismatch - this is a GDPR violation
       if (primaryDeleted.length !== secondaryDeleted.length) {
         const diff = Math.abs(primaryDeleted.length - secondaryDeleted.length);
-        console.warn(
-          `[DualStore] Forget count mismatch: primary=${primaryDeleted.length}, secondary=${secondaryDeleted.length} (diff=${diff})`
+        console.error(
+          `[DualStore] GDPR VIOLATION: Forget count mismatch: primary=${primaryDeleted.length}, secondary=${secondaryDeleted.length} (diff=${diff}, ids=${primaryDeleted.length})`
         );
         dualWriteFailuresTotal.inc({
           store: secondaryStoreType,
           reason: 'forget_mismatch',
         });
+
+        // GDPR requires atomic deletion - surface failure
+        throw new Error(
+          `GDPR erasure incomplete: primary deleted ${primaryDeleted.length} records, secondary deleted ${secondaryDeleted.length}`
+        );
       }
+
+      // Success: Both stores deleted same count
+      return primaryDeleted;
     } catch (err) {
       dualWriteFailuresTotal.inc({
         store: secondaryStoreType,
         reason: 'forget_failed',
       });
-      console.error('[DualStore] Secondary forget failed:', err);
+      console.error(`[DualStore] Secondary forget failed (${primaryDeleted.length} ids):`, err);
 
-      if (this.config.failFast) {
-        throw new Error('Secondary store forget failed (failFast=true)');
-      }
-
-      // Continue if not failFast - primary deletion succeeded
+      // GDPR requires atomic deletion - always fail
+      throw new Error(`Secondary store forget failed (${primaryDeleted.length} records affected): ${(err as Error).message}`);
     }
-
-    return primaryDeleted;
   }
 
   /**
