@@ -8,17 +8,17 @@
  * Other methods stubbed with TODO Phase 3.
  */
 
-import { Pool, PoolClient } from 'pg';
-import { MemoryRecord } from '../models/memory-record';
-import { RecallQuery, ForgetRequest } from '../models/operation-requests';
-import { MemoryStore, QueryFilters } from './memory-store-interface';
-import { getEncryptionService } from '../security/encryption-service';
-import { isEncryptionEnabled } from './adapter-selector';
+import { Pool } from 'pg';
 import {
   cryptoEncryptFailuresTotal,
   cryptoDecryptFailuresTotal,
   cryptoOpsDuration,
 } from '../../observability/metrics';
+import { MemoryRecord } from '../models/memory-record';
+import { RecallQuery, ForgetRequest } from '../models/operation-requests';
+import { getEncryptionService } from '../security/encryption-service';
+import { isEncryptionEnabled } from './adapter-selector';
+import { MemoryStore, QueryFilters } from './memory-store-interface';
 
 /**
  * PostgreSQL configuration from environment
@@ -257,28 +257,28 @@ export class PostgresStore implements MemoryStore {
   /**
    * TODO(Phase 3): Implement forget with hard delete support
    */
-  async forget(request: ForgetRequest): Promise<string[]> {
+  async forget(_request: ForgetRequest): Promise<string[]> {
     throw new Error('TODO(Phase 3): Implement PostgresStore.forget()');
   }
 
   /**
    * TODO(Phase 3): Implement get by ID
    */
-  async get(id: string): Promise<MemoryRecord | null> {
+  async get(_id: string): Promise<MemoryRecord | null> {
     throw new Error('TODO(Phase 3): Implement PostgresStore.get()');
   }
 
   /**
    * TODO(Phase 3): Implement access count increment
    */
-  async incrementAccessCount(id: string): Promise<MemoryRecord | null> {
+  async incrementAccessCount(_id: string): Promise<MemoryRecord | null> {
     throw new Error('TODO(Phase 3): Implement PostgresStore.incrementAccessCount()');
   }
 
   /**
    * TODO(Phase 3): Implement exists check
    */
-  async exists(id: string): Promise<boolean> {
+  async exists(_id: string): Promise<boolean> {
     throw new Error('TODO(Phase 3): Implement PostgresStore.exists()');
   }
 
@@ -312,7 +312,7 @@ export class PostgresStore implements MemoryStore {
    * Week 3: Added decryption support
    */
   private async rowToRecord(row: any): Promise<MemoryRecord> {
-    let content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+    const content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
 
     // Week 3: Decrypt content if encrypted
     if (isEncryptionEnabled() && content.data_ciphertext) {

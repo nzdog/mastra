@@ -244,16 +244,9 @@ export class MerkleTree {
   /**
    * Import tree state from persistence
    */
-  import(state: {
-    nodes: MerkleNode[];
-    root: string;
-    size: number;
-    algorithm: string;
-  }): void {
+  import(state: { nodes: MerkleNode[]; root: string; size: number; algorithm: string }): void {
     if (state.algorithm !== this.hashAlgorithm) {
-      throw new Error(
-        `Algorithm mismatch: expected ${this.hashAlgorithm}, got ${state.algorithm}`
-      );
+      throw new Error(`Algorithm mismatch: expected ${this.hashAlgorithm}, got ${state.algorithm}`);
     }
 
     this.loadNodes(state.nodes);

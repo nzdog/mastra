@@ -7,9 +7,9 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { ConsentFamily } from '../models/memory-record';
-import { createErrorResponse, ErrorCode, getStatusCode } from '../models/error-envelope';
 import { getAuditEmitter } from '../governance/audit-emitter';
+import { createErrorResponse, ErrorCode, getStatusCode } from '../models/error-envelope';
+import { ConsentFamily } from '../models/memory-record';
 
 /**
  * Consent context attached to request
@@ -63,7 +63,11 @@ function extractConsentFamily(path: string): ConsentFamily | null {
  * In production, this would validate JWT tokens and check user permissions
  * Token should contain hashed pseudonym, not raw email/PII
  */
-function validateUserToken(authHeader: string | undefined): { valid: boolean; hashed_pseudonym?: string; error?: string } {
+function validateUserToken(authHeader: string | undefined): {
+  valid: boolean;
+  hashed_pseudonym?: string;
+  error?: string;
+} {
   if (!authHeader) {
     return { valid: false, error: 'Missing Authorization header' };
   }
@@ -126,7 +130,8 @@ function checkFamilyAuthorization(
  */
 export function consentResolver(req: Request, res: Response, next: NextFunction): void {
   // Generate or extract trace ID
-  const traceId = (req.get('X-Trace-ID') || `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`) as string;
+  const traceId = (req.get('X-Trace-ID') ||
+    `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`) as string;
   req.headers['x-trace-id'] = traceId;
 
   // Extract consent family from path
@@ -135,7 +140,13 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
   // Skip consent resolution for non-family routes (health, metrics, etc.)
   if (!family) {
     // Allow these routes to pass through without consent context
-    if (req.path === '/v1/health' || req.path === '/metrics' || req.path.startsWith('/v1/ledger') || req.path.startsWith('/v1/keys') || req.path.startsWith('/v1/receipts')) {
+    if (
+      req.path === '/v1/health' ||
+      req.path === '/metrics' ||
+      req.path.startsWith('/v1/ledger') ||
+      req.path.startsWith('/v1/keys') ||
+      req.path.startsWith('/v1/receipts')
+    ) {
       return next();
     }
 

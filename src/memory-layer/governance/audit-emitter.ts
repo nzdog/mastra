@@ -70,7 +70,9 @@ export class AuditEmitter {
 
     // Initialize ledger sink (will load or create)
     const ledger = await getLedgerSink();
-    console.log(`📝 AUDIT: Audit emitter initialized (Phase 1 - ledger height: ${ledger.getLedgerHeight()})`);
+    console.log(
+      `📝 AUDIT: Audit emitter initialized (Phase 1 - ledger height: ${ledger.getLedgerHeight()})`
+    );
 
     this.initialized = true;
   }

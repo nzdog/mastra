@@ -359,7 +359,9 @@ async function main(): Promise<void> {
         });
 
         if (verifyResponse.status !== 200) {
-          console.warn(`⚠️  Failed to verify receipt ${receiptId}: status ${verifyResponse.status}`);
+          console.warn(
+            `⚠️  Failed to verify receipt ${receiptId}: status ${verifyResponse.status}`
+          );
           continue;
         }
 
@@ -428,9 +430,12 @@ async function main(): Promise<void> {
     // ============================================================================
     console.log('\n🚫 TEST 9: Fail-closed - 403 Forbidden (cohort recall)');
     try {
-      const recallResponse = await authedRequest('/v1/cohort/recall?hashed_pseudonym=' + HASHED_PSEUDONYM, {
-        method: 'GET',
-      });
+      const recallResponse = await authedRequest(
+        '/v1/cohort/recall?hashed_pseudonym=' + HASHED_PSEUDONYM,
+        {
+          method: 'GET',
+        }
+      );
 
       if (recallResponse.status !== 403) {
         throw new Error(`Expected 403, got ${recallResponse.status}`);

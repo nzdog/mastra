@@ -12,11 +12,13 @@ async function waitForServer(maxAttempts = 30): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await fetch(`${BASE_URL}/v1/health`);
-      if (res.ok) return;
-    } catch (e) {
+      if (res.ok) {
+        return;
+      }
+    } catch {
       // Server not ready
     }
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
   throw new Error('Server did not start in time');
 }
@@ -31,8 +33,8 @@ async function testHardDeleteVerification() {
   const storeRes = await fetch(`${BASE_URL}/v1/personal/store`, {
     method: 'POST',
     headers: {
-      'Authorization': 'Bearer test_token',
-      'Content-Type': 'application/json'
+      Authorization: 'Bearer test_token',
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       content: { type: 'text', data: 'sensitive data to be deleted' },
@@ -40,9 +42,9 @@ async function testHardDeleteVerification() {
         hashed_pseudonym: VALID_HASHED_PSEUDONYM,
         consent_family: 'personal',
         consent_timestamp: new Date().toISOString(),
-        consent_version: '1.0'
-      }
-    })
+        consent_version: '1.0',
+      },
+    }),
   });
 
   assert.strictEqual(storeRes.status, 201, 'Store should succeed');
@@ -58,13 +60,13 @@ async function testHardDeleteVerification() {
   const recallBeforeRes = await fetch(
     `${BASE_URL}/v1/personal/recall?hashed_pseudonym=${VALID_HASHED_PSEUDONYM}`,
     {
-      headers: { 'Authorization': 'Bearer test_token' }
+      headers: { Authorization: 'Bearer test_token' },
     }
   );
 
   const recallBeforeData = await recallBeforeRes.json();
   assert.ok(
-    recallBeforeData.records.some(r => r.id === recordId),
+    recallBeforeData.records.some((r) => r.id === recordId),
     'Record should exist before delete'
   );
   console.log('     ✓ Record confirmed in storage');
@@ -74,14 +76,14 @@ async function testHardDeleteVerification() {
   const forgetRes = await fetch(`${BASE_URL}/v1/personal/forget`, {
     method: 'DELETE',
     headers: {
-      'Authorization': 'Bearer test_token',
-      'Content-Type': 'application/json'
+      Authorization: 'Bearer test_token',
+      'Content-Type': 'application/json',
     },
     body: JSON.stringify({
       hashed_pseudonym: VALID_HASHED_PSEUDONYM,
       memory_ids: [recordId],
-      hard_delete: true
-    })
+      hard_delete: true,
+    }),
   });
 
   assert.strictEqual(forgetRes.status, 200, 'Forget should succeed');
@@ -97,13 +99,13 @@ async function testHardDeleteVerification() {
   const recallAfterRes = await fetch(
     `${BASE_URL}/v1/personal/recall?hashed_pseudonym=${VALID_HASHED_PSEUDONYM}`,
     {
-      headers: { 'Authorization': 'Bearer test_token' }
+      headers: { Authorization: 'Bearer test_token' },
     }
   );
 
   const recallAfterData = await recallAfterRes.json();
   assert.ok(
-    !recallAfterData.records.some(r => r.id === recordId),
+    !recallAfterData.records.some((r) => r.id === recordId),
     'Record should NOT exist after hard delete'
   );
   console.log('     ✓ Record confirmed irretrievable');
@@ -132,8 +134,8 @@ async function testHardDeleteVerification() {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       receipt_id: forgetReceiptId,
-      expected_root: rootData.merkle_root
-    })
+      expected_root: rootData.merkle_root,
+    }),
   });
 
   assert.strictEqual(verifyRes.status, 200, 'Verification should succeed');
@@ -145,7 +147,7 @@ async function testHardDeleteVerification() {
 }
 
 // Run test
-testHardDeleteVerification().catch(err => {
+testHardDeleteVerification().catch((err) => {
   console.error('\n❌ Hard Delete Verification Test FAILED');
   console.error(err);
   process.exit(1);

@@ -10,12 +10,14 @@
  * - Proper error handling with asyncHandler
  */
 
-import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
+import { Request, Response } from 'express';
+import { aggregate, DEFAULT_K_ANONYMITY } from '../aggregation/simple-aggregator';
+import { getAuditEmitter } from '../governance/audit-emitter';
+import { ConsentContext } from '../middleware/consent-resolver';
 import { asyncHandler, MemoryLayerError } from '../middleware/error-handler';
 import { ErrorCode } from '../models/error-envelope';
-import { getMemoryStore } from '../storage/in-memory-store';
-import { getAuditEmitter } from '../governance/audit-emitter';
+import { MemoryRecord, ConsentFamily } from '../models/memory-record';
 import {
   StoreRequest,
   RecallQuery,
@@ -35,9 +37,7 @@ import {
   createBaseResponse,
   createPaginationMetadata,
 } from '../models/operation-responses';
-import { MemoryRecord, ConsentFamily } from '../models/memory-record';
-import { aggregate, DEFAULT_K_ANONYMITY } from '../aggregation/simple-aggregator';
-import { ConsentContext } from '../middleware/consent-resolver';
+import { getMemoryStore } from '../storage/in-memory-store';
 
 /**
  * Extend Express Request to include consent context
@@ -311,7 +311,12 @@ export const recallHandler = asyncHandler(async (req: Request, res: Response) =>
   const response: RecallResponse = {
     ...createBaseResponse(receipt.receipt_id),
     records,
-    pagination: createPaginationMetadata(totalCount, records.length, query.offset || 0, query.limit || 100),
+    pagination: createPaginationMetadata(
+      totalCount,
+      records.length,
+      query.offset || 0,
+      query.limit || 100
+    ),
     query: {
       hashed_pseudonym: query.hashed_pseudonym,
       session_id: query.session_id,
@@ -388,7 +393,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
     // For now, we query all cohort records (in production, filter by cohort_id)
     // TODO(Phase 3): Implement cross-user cohort aggregation via membership service.
     // Current MVP scope: aggregates authenticated user's cohort records only for privacy.
-    const totalCount = await store.count({
+    const _totalCount = await store.count({
       consent_family: 'cohort',
       since: body.filters?.since,
       until: body.filters?.until,
@@ -408,7 +413,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
   } else {
     // Population: aggregate system-wide data
     // Query all population-level records
-    const totalCount = await store.count({
+    const _totalCount = await store.count({
       consent_family: 'population',
       since: body.filters?.since,
       until: body.filters?.until,
@@ -429,7 +434,12 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
   }
 
   // Perform aggregation
-  const aggregationResult = aggregate(records, body.aggregation.type, body.aggregation.field, minRecords);
+  const aggregationResult = aggregate(
+    records,
+    body.aggregation.type,
+    body.aggregation.field,
+    minRecords
+  );
 
   // Check if privacy threshold met
   if (!aggregationResult.meets_k_anonymity) {
@@ -479,12 +489,13 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
       filtered_records: aggregationResult.record_count,
       privacy_threshold_met: true,
       min_records: minRecords,
-      time_range: body.filters?.since && body.filters?.until
-        ? {
-            start: body.filters.since,
-            end: body.filters.until,
-          }
-        : undefined,
+      time_range:
+        body.filters?.since && body.filters?.until
+          ? {
+              start: body.filters.since,
+              end: body.filters.until,
+            }
+          : undefined,
     },
   };
 
@@ -516,7 +527,8 @@ export const forgetHandler = asyncHandler(async (req: Request, res: Response) =>
   // Parse query parameters (DELETE can have body or query params)
   const forgetRequest: ForgetRequest = {
     id: req.query.id as string | undefined,
-    hashed_pseudonym: req.query.hashed_pseudonym as string | undefined || consentContext.hashed_pseudonym,
+    hashed_pseudonym:
+      (req.query.hashed_pseudonym as string | undefined) || consentContext.hashed_pseudonym,
     session_id: req.query.session_id as string | undefined,
     reason: req.query.reason as string | undefined,
     hard_delete: consentContext.family === 'personal', // Only personal can hard delete
@@ -532,12 +544,14 @@ export const forgetHandler = asyncHandler(async (req: Request, res: Response) =>
   }
 
   // Validate user can only delete own records
-  if (forgetRequest.hashed_pseudonym && forgetRequest.hashed_pseudonym !== consentContext.hashed_pseudonym) {
-    throw new MemoryLayerError(
-      ErrorCode.FORBIDDEN,
-      'Cannot delete records for another user',
-      { auth_user: consentContext.hashed_pseudonym, request_user: forgetRequest.hashed_pseudonym }
-    );
+  if (
+    forgetRequest.hashed_pseudonym &&
+    forgetRequest.hashed_pseudonym !== consentContext.hashed_pseudonym
+  ) {
+    throw new MemoryLayerError(ErrorCode.FORBIDDEN, 'Cannot delete records for another user', {
+      auth_user: consentContext.hashed_pseudonym,
+      request_user: forgetRequest.hashed_pseudonym,
+    });
   }
 
   // Emit audit event BEFORE operation
@@ -628,7 +642,7 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
     format: (req.query.format as 'json' | 'csv' | 'jsonlines') || 'json',
     filters: {
       consent_families: req.query.consent_families
-        ? (req.query.consent_families as string).split(',') as ConsentFamily[]
+        ? ((req.query.consent_families as string).split(',') as ConsentFamily[])
         : undefined,
       since: req.query.since as string | undefined,
       until: req.query.until as string | undefined,
@@ -712,7 +726,8 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
       break;
     case 'csv':
       // Simple CSV export (flatten records)
-      const csvHeaders = 'id,hashed_pseudonym,consent_family,created_at,content_type,access_count\n';
+      const csvHeaders =
+        'id,hashed_pseudonym,consent_family,created_at,content_type,access_count\n';
       const csvRows = records
         .map(
           (r) =>
@@ -753,7 +768,8 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
     ...createBaseResponse(receipt.receipt_id),
     data: exportData,
     metadata: {
-      hashed_pseudonym: consentContext.family === 'personal' ? consentContext.hashed_pseudonym : 'anonymized',
+      hashed_pseudonym:
+        consentContext.family === 'personal' ? consentContext.hashed_pseudonym : 'anonymized',
       format: exportRequest.format,
       record_count: records.length,
       size_bytes: sizeBytes,

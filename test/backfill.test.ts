@@ -8,11 +8,11 @@
  * - Failures are counted correctly
  */
 
+import { v4 as uuidv4 } from 'uuid';
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { MemoryRecord } from '../src/memory-layer/models/memory-record';
 import { InMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
-import { MemoryRecord } from '../src/memory-layer/models/memory-record';
-import { v4 as uuidv4 } from 'uuid';
 
 describe('Backfill', () => {
   let memoryStore: InMemoryStore;
@@ -36,7 +36,7 @@ describe('Backfill', () => {
     await memoryStore.clear();
     try {
       await postgresStore.clear();
-    } catch (err) {
+    } catch {
       // clear() not implemented yet - OK
     }
   });
@@ -167,7 +167,7 @@ describe('Backfill', () => {
         try {
           await postgresStore.store(record);
           successCount++;
-        } catch (err) {
+        } catch {
           failureCount++;
         }
       }

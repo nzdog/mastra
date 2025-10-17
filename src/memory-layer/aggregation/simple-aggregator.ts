@@ -36,7 +36,10 @@ export function meetsKAnonymity(recordCount: number, minK: number = DEFAULT_K_AN
  * Count aggregation
  * Returns total number of records
  */
-export function count(records: MemoryRecord[], minK: number = DEFAULT_K_ANONYMITY): AggregationResult {
+export function count(
+  records: MemoryRecord[],
+  minK: number = DEFAULT_K_ANONYMITY
+): AggregationResult {
   const recordCount = records.length;
   const meetsThreshold = meetsKAnonymity(recordCount, minK);
 

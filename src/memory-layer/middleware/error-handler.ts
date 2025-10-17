@@ -7,7 +7,12 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { createErrorResponse, ErrorCode, getStatusCode, isErrorResponse } from '../models/error-envelope';
+import {
+  createErrorResponse,
+  ErrorCode,
+  getStatusCode,
+  isErrorResponse,
+} from '../models/error-envelope';
 
 /**
  * Custom error class with error code
@@ -74,14 +79,20 @@ function logError(error: Error | MemoryLayerError, req: Request, traceId: string
  * Catches all errors and converts to ErrorResponse format.
  * Must be registered after all routes.
  */
-export function errorHandler(err: Error | MemoryLayerError, req: Request, res: Response, next: NextFunction): void {
+export function errorHandler(
+  err: Error | MemoryLayerError,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): void {
   // If response already sent, delegate to default Express error handler
   if (res.headersSent) {
     return next(err);
   }
 
   // Extract or generate trace ID
-  const traceId = (req.get('X-Trace-ID') || `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`) as string;
+  const traceId = (req.get('X-Trace-ID') ||
+    `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`) as string;
 
   // Log error with structured logging
   logError(err, req, traceId);
@@ -94,13 +105,7 @@ export function errorHandler(err: Error | MemoryLayerError, req: Request, res: R
 
   // Handle MemoryLayerError
   if (err instanceof MemoryLayerError) {
-    const errorResponse = createErrorResponse(
-      err.code,
-      err.message,
-      err.details,
-      req,
-      traceId
-    );
+    const errorResponse = createErrorResponse(err.code, err.message, err.details, req, traceId);
 
     res.status(getStatusCode(err.code)).json(errorResponse);
     return;
@@ -145,7 +150,8 @@ export function errorHandler(err: Error | MemoryLayerError, req: Request, res: R
  * Must be registered after all routes but before error handler.
  */
 export function notFoundHandler(req: Request, res: Response): void {
-  const traceId = (req.get('X-Trace-ID') || `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`) as string;
+  const traceId = (req.get('X-Trace-ID') ||
+    `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`) as string;
 
   const errorResponse = createErrorResponse(
     ErrorCode.NOT_FOUND,
@@ -172,7 +178,9 @@ export function notFoundHandler(req: Request, res: Response): void {
  *
  * Wraps async route handlers to catch promise rejections
  */
-export function asyncHandler(fn: (req: Request, res: Response, next: NextFunction) => Promise<any>) {
+export function asyncHandler(
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+) {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
