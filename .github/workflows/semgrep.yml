@@ -1,0 +1,66 @@
+name: 🔍 Semgrep Security Analysis
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - feature/**
+      - fix/**
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write
+
+jobs:
+  semgrep:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        id: semgrep
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/security-audit
+            p/javascript
+            p/typescript
+            p/owasp-top-ten
+          generateSarif: true
+        continue-on-error: true
+
+      - name: Upload SARIF to GitHub Security
+        if: always()
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: semgrep.sarif
+        continue-on-error: true
+
+      - name: Post PR Review with Reviewdog
+        if: always()
+        uses: reviewdog/action-sarif@v1
+        with:
+          sarif_file: semgrep.sarif
+          reporter: github-pr-review
+          fail_on_error: false
+          filter_mode: nofilter
+          level: warning
+
+      - name: Check for HIGH severity findings
+        if: always()
+        run: |
+          if [ -f semgrep.sarif ]; then
+            HIGH_COUNT=$(jq '[.runs[].results[] | select(.level == "error" or .level == "high")] | length' semgrep.sarif || echo "0")
+            echo "Found $HIGH_COUNT high severity findings"
+            if [ "$HIGH_COUNT" -gt "0" ]; then
+              echo "❌ Found $HIGH_COUNT HIGH severity security issues. Please fix before merging."
+              exit 1
+            fi
+          fi
+          echo "✅ No high severity security issues found"
