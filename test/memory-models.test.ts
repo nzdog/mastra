@@ -64,7 +64,7 @@ const validStoreRequest = {
     metadata: { source: 'test' },
   },
   metadata: {
-    user_id: 'user-123',
+    hashed_pseudonym: 'hs_dXNlci0xMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0',
     consent_family: 'personal' as ConsentFamily,
     consent_timestamp: new Date().toISOString(),
     consent_version: '1.0',
@@ -78,14 +78,14 @@ console.log('✓ Test 5: Store request validation works');
 
 // Test 6: Recall query validation
 const validRecallQuery = {
-  user_id: 'user-123',
+  hashed_pseudonym: 'hs_dXNlci0xMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0',
   session_id: 'session-456',
   limit: 50,
   offset: 0,
 };
 
 console.assert(validateRecallQuery(validRecallQuery), 'Valid recall query should pass');
-console.assert(!validateRecallQuery({ session_id: 'session-456' }), 'Missing user_id should fail');
+console.assert(!validateRecallQuery({ session_id: 'session-456' }), 'Missing hashed_pseudonym should fail');
 console.log('✓ Test 6: Recall query validation works');
 
 // Test 7: Forget request validation
@@ -95,7 +95,7 @@ const validForgetRequest = {
 };
 
 console.assert(validateForgetRequest(validForgetRequest), 'Valid forget request should pass');
-console.assert(validateForgetRequest({ user_id: 'user-123' }), 'User ID only should pass');
+console.assert(validateForgetRequest({ hashed_pseudonym: 'hs_dXNlci0xMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0' }), 'Hashed pseudonym only should pass');
 console.assert(!validateForgetRequest({}), 'Empty forget request should fail');
 console.log('✓ Test 7: Forget request validation works');
 

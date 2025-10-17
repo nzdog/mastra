@@ -68,34 +68,37 @@ Consent families define data sharing boundaries and access rules.
 
 ### Consent Family Capability Matrix
 
-| Family       | PII Allowed | Operations Allowed              | Min K-Anonymity | DP Budget |
+| Family       | Identifiers | Operations Allowed              | Min K-Anonymity | DP Budget |
 |--------------|-------------|---------------------------------|-----------------|-----------|
-| **Personal** | Yes         | store, recall, forget, export   | N/A             | N/A       |
-| **Cohort**   | No          | store, recall, distill          | 5               | Per-cohort |
-| **Population** | No        | distill                         | 100             | Global    |
+| **Personal** | Hashed/pseudonymous only (e.g., sha256(email+salt)) | store, recall, forget, export   | N/A             | N/A       |
+| **Cohort**   | No direct identifiers | store, recall, distill          | 5               | Per-cohort |
+| **Population** | No direct identifiers | distill                         | 100             | Global    |
 
 ### Personal Family
 
-- **Access:** User-only, includes PII
+- **Access:** User-only, uses hashed/pseudonymous identifiers (e.g., sha256(email+salt))
 - **Use Cases:** User preferences, session history, personalized recommendations
 - **Operations:** Store, recall, forget, export
-- **Authorization:** User must own the data (user_id match)
+- **Authorization:** User must own the data (hashed_pseudonym match)
+- **Privacy Invariant:** NO raw emails, names, SSNs, or direct identifiers. Only hashed/pseudonymous values.
 
 ### Cohort Family
 
-- **Access:** Group-level aggregated data, no PII
+- **Access:** Group-level aggregated data, no direct identifiers
 - **Use Cases:** Cohort analytics, A/B testing, feature usage by segment
 - **Operations:** Store, recall, distill
 - **K-Anonymity:** Minimum 5 records required for aggregation
 - **Authorization:** User must be member of cohort
+- **Privacy Invariant:** Only hashed/pseudonymous identifiers, never raw PII
 
 ### Population Family
 
-- **Access:** System-wide aggregated data, no PII
+- **Access:** System-wide aggregated data, no direct identifiers
 - **Use Cases:** Global metrics, system-wide trends, population statistics
 - **Operations:** Distill only (no individual record access)
 - **K-Anonymity:** Minimum 100 records required for aggregation
 - **Authorization:** User must have population-level access
+- **Privacy Invariant:** Only hashed/pseudonymous identifiers, never raw PII
 
 ---
 

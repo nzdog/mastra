@@ -244,7 +244,7 @@ Phase 2 introduces consent-aware memory operations across three consent families
    - Validate k-anonymity enforcement under load
 
 4. **Consent family validation**
-   - Personal: Verify PII access controls
+   - Personal: Verify pseudonymous identifier enforcement (no raw PII)
    - Cohort: Verify k=5 enforcement
    - Population: Verify k=100 enforcement
 

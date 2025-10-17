@@ -36,8 +36,12 @@ export interface MemoryRecord {
   /** Unique identifier for the memory record (UUID) */
   id: string;
 
-  /** User identifier - required for personal consent family */
-  user_id: string;
+  /**
+   * MUST be hashed/pseudonymous identifier (e.g., sha256(email+salt)), never raw PII
+   * Format: 'hs_' prefix + base64url OR SHA-256 hex (64 chars)
+   * NEVER use raw emails, SSNs, or other identifiable information
+   */
+  hashed_pseudonym: string;
 
   /** Session identifier for grouping related memories */
   session_id?: string;
@@ -88,7 +92,7 @@ export function requiresAggregation(family: ConsentFamily): boolean {
  * Helper to create a new memory record with defaults
  */
 export function createMemoryRecord(
-  partial: Pick<MemoryRecord, 'user_id' | 'content' | 'consent_family' | 'consent_timestamp' | 'consent_version'>
+  partial: Pick<MemoryRecord, 'hashed_pseudonym' | 'content' | 'consent_family' | 'consent_timestamp' | 'consent_version'>
 ): Omit<MemoryRecord, 'id' | 'created_at' | 'updated_at' | 'audit_receipt_id'> {
   return {
     ...partial,

@@ -47,6 +47,45 @@ interface RequestWithConsent extends Request {
 }
 
 /**
+ * Sanitize response to ensure no raw PII in hashed_pseudonym field
+ * Validates format and checks for PII patterns before returning records
+ */
+function sanitizeResponse(record: MemoryRecord): MemoryRecord {
+  // Validate hashed_pseudonym matches expected pattern
+  const hashedPattern = /^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$/;
+  if (!hashedPattern.test(record.hashed_pseudonym)) {
+    throw new MemoryLayerError(
+      ErrorCode.INTERNAL_ERROR,
+      'Invalid hashed_pseudonym format detected in response'
+    );
+  }
+
+  // Check for PII patterns
+  if (record.hashed_pseudonym.includes('@')) {
+    throw new MemoryLayerError(
+      ErrorCode.INTERNAL_ERROR,
+      'Raw PII detected in response: hashed_pseudonym contains @ symbol'
+    );
+  }
+
+  if (/\s/.test(record.hashed_pseudonym)) {
+    throw new MemoryLayerError(
+      ErrorCode.INTERNAL_ERROR,
+      'Raw PII detected in response: hashed_pseudonym contains spaces'
+    );
+  }
+
+  if (/^\d{3}-\d{2}-\d{4}$/.test(record.hashed_pseudonym)) {
+    throw new MemoryLayerError(
+      ErrorCode.INTERNAL_ERROR,
+      'Raw PII detected in response: hashed_pseudonym matches SSN pattern'
+    );
+  }
+
+  return record;
+}
+
+/**
  * Store Operation Handler
  * POST /v1/{family}/store
  *
@@ -61,7 +100,7 @@ export const storeHandler = asyncHandler(async (req: Request, res: Response) => 
   if (!validateStoreRequest(body) || !body.metadata) {
     throw new MemoryLayerError(
       ErrorCode.VALIDATION_ERROR,
-      'Invalid store request. Missing required fields: content, metadata.user_id, metadata.consent_family',
+      'Invalid store request. Missing required fields: content, metadata.hashed_pseudonym, metadata.consent_family',
       { body }
     );
   }
@@ -75,12 +114,12 @@ export const storeHandler = asyncHandler(async (req: Request, res: Response) => 
     );
   }
 
-  // Validate user_id matches auth
-  if (body.metadata.user_id !== consentContext.user_id) {
+  // Validate hashed_pseudonym matches auth
+  if (body.metadata.hashed_pseudonym !== consentContext.hashed_pseudonym) {
     throw new MemoryLayerError(
       ErrorCode.FORBIDDEN,
-      'User ID mismatch. Cannot store memories for another user',
-      { auth_user: consentContext.user_id, request_user: body.metadata.user_id }
+      'Hashed pseudonym mismatch. Cannot store memories for another user',
+      { auth_user: consentContext.hashed_pseudonym, request_user: body.metadata.hashed_pseudonym }
     );
   }
 
@@ -98,7 +137,7 @@ export const storeHandler = asyncHandler(async (req: Request, res: Response) => 
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id,
+    consentContext.hashed_pseudonym,
     body.metadata.session_id
   );
 
@@ -109,7 +148,7 @@ export const storeHandler = asyncHandler(async (req: Request, res: Response) => 
   // Create memory record
   const memoryRecord: MemoryRecord = {
     id: recordId,
-    user_id: body.metadata.user_id,
+    hashed_pseudonym: body.metadata.hashed_pseudonym,
     session_id: body.metadata.session_id,
     content: body.content,
     consent_family: body.metadata.consent_family,
@@ -140,7 +179,7 @@ export const storeHandler = asyncHandler(async (req: Request, res: Response) => 
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id,
+    consentContext.hashed_pseudonym,
     body.metadata.session_id
   );
 
@@ -152,7 +191,7 @@ export const storeHandler = asyncHandler(async (req: Request, res: Response) => 
   const response: StoreResponse = {
     ...createBaseResponse(receipt.receipt_id),
     id: recordId,
-    user_id: body.metadata.user_id,
+    hashed_pseudonym: body.metadata.hashed_pseudonym,
     session_id: body.metadata.session_id,
     consent_family: body.metadata.consent_family,
     created_at: now,
@@ -188,7 +227,7 @@ export const recallHandler = asyncHandler(async (req: Request, res: Response) =>
 
   // Parse query parameters
   const query: RecallQuery = {
-    user_id: consentContext.user_id, // Always use authenticated user
+    hashed_pseudonym: consentContext.hashed_pseudonym, // Always use authenticated user
     session_id: req.query.session_id as string | undefined,
     since: req.query.since as string | undefined,
     until: req.query.until as string | undefined,
@@ -202,7 +241,7 @@ export const recallHandler = asyncHandler(async (req: Request, res: Response) =>
   if (!validateRecallQuery(query)) {
     throw new MemoryLayerError(
       ErrorCode.VALIDATION_ERROR,
-      'Invalid recall query. Missing required field: user_id',
+      'Invalid recall query. Missing required field: hashed_pseudonym',
       { query }
     );
   }
@@ -226,17 +265,20 @@ export const recallHandler = asyncHandler(async (req: Request, res: Response) =>
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id,
+    consentContext.hashed_pseudonym,
     query.session_id
   );
 
   // Query memory store
   const store = getMemoryStore();
-  const records = await store.recall(query);
+  let records = await store.recall(query);
+
+  // Sanitize all records before returning
+  records = records.map(sanitizeResponse);
 
   // Count total records matching query (without pagination)
   const totalCount = await store.count({
-    user_id: query.user_id,
+    hashed_pseudonym: query.hashed_pseudonym,
     session_id: query.session_id,
     since: query.since,
     until: query.until,
@@ -261,7 +303,7 @@ export const recallHandler = asyncHandler(async (req: Request, res: Response) =>
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id,
+    consentContext.hashed_pseudonym,
     query.session_id
   );
 
@@ -271,7 +313,7 @@ export const recallHandler = asyncHandler(async (req: Request, res: Response) =>
     records,
     pagination: createPaginationMetadata(totalCount, records.length, query.offset || 0, query.limit || 100),
     query: {
-      user_id: query.user_id,
+      hashed_pseudonym: query.hashed_pseudonym,
       session_id: query.session_id,
       since: query.since,
       until: query.until,
@@ -323,7 +365,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id
+    consentContext.hashed_pseudonym
   );
 
   // Build query filters based on consent family
@@ -333,7 +375,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
   if (consentContext.family === 'personal') {
     // Personal: aggregate only user's own data
     const query: RecallQuery = {
-      user_id: consentContext.user_id,
+      hashed_pseudonym: consentContext.hashed_pseudonym,
       since: body.filters?.since,
       until: body.filters?.until,
       type: body.filters?.content_type,
@@ -353,7 +395,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
 
     // For cohort queries, we need to query all records to aggregate
     const query: RecallQuery = {
-      user_id: consentContext.user_id, // Still filter by user for cohort membership
+      hashed_pseudonym: consentContext.hashed_pseudonym, // Still filter by user for cohort membership
       since: body.filters?.since,
       until: body.filters?.until,
       type: body.filters?.content_type,
@@ -374,7 +416,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
     // For population, we still need user context for auth
     // In production, this would query across all users
     const query: RecallQuery = {
-      user_id: consentContext.user_id,
+      hashed_pseudonym: consentContext.hashed_pseudonym,
       since: body.filters?.since,
       until: body.filters?.until,
       type: body.filters?.content_type,
@@ -414,7 +456,7 @@ export const distillHandler = asyncHandler(async (req: Request, res: Response) =
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id
+    consentContext.hashed_pseudonym
   );
 
   // Build response
@@ -472,7 +514,7 @@ export const forgetHandler = asyncHandler(async (req: Request, res: Response) =>
   // Parse query parameters (DELETE can have body or query params)
   const forgetRequest: ForgetRequest = {
     id: req.query.id as string | undefined,
-    user_id: req.query.user_id as string | undefined || consentContext.user_id,
+    hashed_pseudonym: req.query.hashed_pseudonym as string | undefined || consentContext.hashed_pseudonym,
     session_id: req.query.session_id as string | undefined,
     reason: req.query.reason as string | undefined,
     hard_delete: consentContext.family === 'personal', // Only personal can hard delete
@@ -482,17 +524,17 @@ export const forgetHandler = asyncHandler(async (req: Request, res: Response) =>
   if (!validateForgetRequest(forgetRequest)) {
     throw new MemoryLayerError(
       ErrorCode.VALIDATION_ERROR,
-      'Invalid forget request. Must provide at least one of: id, user_id, session_id',
+      'Invalid forget request. Must provide at least one of: id, hashed_pseudonym, session_id',
       { request: forgetRequest }
     );
   }
 
   // Validate user can only delete own records
-  if (forgetRequest.user_id && forgetRequest.user_id !== consentContext.user_id) {
+  if (forgetRequest.hashed_pseudonym && forgetRequest.hashed_pseudonym !== consentContext.hashed_pseudonym) {
     throw new MemoryLayerError(
       ErrorCode.FORBIDDEN,
       'Cannot delete records for another user',
-      { auth_user: consentContext.user_id, request_user: forgetRequest.user_id }
+      { auth_user: consentContext.hashed_pseudonym, request_user: forgetRequest.hashed_pseudonym }
     );
   }
 
@@ -504,7 +546,7 @@ export const forgetHandler = asyncHandler(async (req: Request, res: Response) =>
     {
       delete_params: {
         id: forgetRequest.id,
-        user_id: forgetRequest.user_id,
+        hashed_pseudonym: forgetRequest.hashed_pseudonym,
         session_id: forgetRequest.session_id,
       },
       hard_delete: forgetRequest.hard_delete,
@@ -514,7 +556,7 @@ export const forgetHandler = asyncHandler(async (req: Request, res: Response) =>
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id,
+    consentContext.hashed_pseudonym,
     forgetRequest.session_id
   );
 
@@ -536,7 +578,7 @@ export const forgetHandler = asyncHandler(async (req: Request, res: Response) =>
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id,
+    consentContext.hashed_pseudonym,
     forgetRequest.session_id
   );
 
@@ -547,7 +589,7 @@ export const forgetHandler = asyncHandler(async (req: Request, res: Response) =>
     deleted_ids: deletedIds,
     hard_delete: forgetRequest.hard_delete || false,
     metadata: {
-      user_id: forgetRequest.user_id,
+      hashed_pseudonym: forgetRequest.hashed_pseudonym,
       session_id: forgetRequest.session_id,
       reason: forgetRequest.reason,
     },
@@ -580,7 +622,7 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
 
   // Parse query parameters
   const exportRequest: ExportRequest = {
-    user_id: consentContext.user_id, // Always use authenticated user
+    hashed_pseudonym: consentContext.hashed_pseudonym, // Always use authenticated user
     format: (req.query.format as 'json' | 'csv' | 'jsonlines') || 'json',
     filters: {
       consent_families: req.query.consent_families
@@ -607,13 +649,13 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id
+    consentContext.hashed_pseudonym
   );
 
   // Query all records for user
   const store = getMemoryStore();
   const query: RecallQuery = {
-    user_id: consentContext.user_id,
+    hashed_pseudonym: consentContext.hashed_pseudonym,
     since: exportRequest.filters?.since,
     until: exportRequest.filters?.until,
     limit: 10000, // High limit for export
@@ -621,6 +663,9 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
   };
 
   let records = await store.recall(query);
+
+  // Sanitize all records before exporting
+  records = records.map(sanitizeResponse);
 
   // Filter by consent families if specified
   if (exportRequest.filters?.consent_families) {
@@ -633,7 +678,7 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
   if (consentContext.family === 'cohort') {
     records = records.map((r) => ({
       ...r,
-      user_id: 'anonymized',
+      hashed_pseudonym: 'anonymized',
       session_id: undefined,
     }));
   }
@@ -665,11 +710,11 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
       break;
     case 'csv':
       // Simple CSV export (flatten records)
-      const csvHeaders = 'id,user_id,consent_family,created_at,content_type,access_count\n';
+      const csvHeaders = 'id,hashed_pseudonym,consent_family,created_at,content_type,access_count\n';
       const csvRows = records
         .map(
           (r) =>
-            `${r.id},${r.user_id},${r.consent_family},${r.created_at},${r.content.type},${r.access_count}`
+            `${r.id},${r.hashed_pseudonym},${r.consent_family},${r.created_at},${r.content.type},${r.access_count}`
         )
         .join('\n');
       exportData = csvHeaders + csvRows;
@@ -698,7 +743,7 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
       consent_level: consentContext.family,
       scope: consentContext.scope,
     },
-    consentContext.user_id
+    consentContext.hashed_pseudonym
   );
 
   // Build response
@@ -706,7 +751,7 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
     ...createBaseResponse(receipt.receipt_id),
     data: exportData,
     metadata: {
-      user_id: consentContext.family === 'personal' ? consentContext.user_id : 'anonymized',
+      hashed_pseudonym: consentContext.family === 'personal' ? consentContext.hashed_pseudonym : 'anonymized',
       format: exportRequest.format,
       record_count: records.length,
       size_bytes: sizeBytes,
@@ -718,7 +763,7 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
   };
 
   // Set Content-Disposition header for download
-  const filename = `memory_export_${consentContext.user_id}_${Date.now()}.${exportRequest.format === 'jsonlines' ? 'jsonl' : exportRequest.format}`;
+  const filename = `memory_export_${consentContext.hashed_pseudonym}_${Date.now()}.${exportRequest.format === 'jsonlines' ? 'jsonl' : exportRequest.format}`;
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
   res.setHeader('Content-Type', contentType);
 

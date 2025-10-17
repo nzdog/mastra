@@ -26,9 +26,9 @@
 This guide helps diagnose and resolve issues related to consent family authorization, k-anonymity enforcement, and differential privacy budget management in the Memory Layer API.
 
 **Consent Families:**
-- **Personal:** User-only access, PII allowed
-- **Cohort:** Group-level, k-anonymity ≥ 5
-- **Population:** System-wide, k-anonymity ≥ 100
+- **Personal:** User-only access, hashed/pseudonymous identifiers only (e.g., sha256(email+salt))
+- **Cohort:** Group-level, k-anonymity ≥ 5, no direct identifiers
+- **Population:** System-wide, k-anonymity ≥ 100, no direct identifiers
 
 **Common Issues:**
 - 401 Unauthorized (missing/invalid auth)

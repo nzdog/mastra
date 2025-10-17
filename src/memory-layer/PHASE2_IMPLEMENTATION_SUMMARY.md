@@ -453,9 +453,9 @@ test/memory-layer/
 - SLO exceeded → 503
 
 **Privacy:**
-- Personal: Full access with PII
-- Cohort: Anonymized, no PII
-- Population: Aggregated only
+- Personal: Full access with hashed/pseudonymous identifiers only (e.g., sha256(email+salt))
+- Cohort: Anonymized, no direct identifiers
+- Population: Aggregated only, no direct identifiers
 
 **Audit:**
 - All consent resolutions logged

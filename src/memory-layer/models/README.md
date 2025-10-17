@@ -18,10 +18,11 @@ Defines the core `MemoryRecord` interface and related types:
 - **MemoryContent**: Content wrapper with type, data, and metadata
 
 **Key Features:**
-- PII allowed only in `personal` consent family
+- Hashed/pseudonymous identifiers only in `personal` consent family (e.g., sha256(email+salt))
 - All records include audit receipt IDs
 - Automatic expiration support via `expires_at`
 - Access tracking with `access_count`
+- **Privacy Invariant**: NO raw emails, names, SSNs, or direct identifiers
 
 **Helper Functions:**
 ```typescript
@@ -208,11 +209,12 @@ if (!allowsPII(storeReq.metadata.consent_family)) {
 ## Architecture Principles
 
 1. **Governance by Design**: Every response includes `audit_receipt_id` for traceability
-2. **Consent Boundaries**: PII only in `personal` family, aggregation required for `cohort`/`population`
+2. **Consent Boundaries**: Hashed/pseudonymous identifiers only in `personal` family, aggregation required for `cohort`/`population`
 3. **Type Safety**: Full TypeScript typing with runtime validators
 4. **Error Consistency**: Standardized error envelopes across all APIs
 5. **GDPR Compliance**: Built-in support for right to be forgotten and data portability
 6. **Privacy Thresholds**: Distillation includes `min_records` to prevent re-identification
+7. **Privacy Invariant**: Memory enriches but never controls. NO raw PII, ever.
 
 ## Testing
 

@@ -8,9 +8,9 @@ info:
 
     ## Consent Families
 
-    - **Personal**: User-only access with PII. Operations: store, recall, forget, export
-    - **Cohort**: Group-level aggregated data without PII. Operations: store, recall, distill
-    - **Population**: System-wide aggregated data without PII. Operations: distill
+    - **Personal**: User-only access with hashed/pseudonymous identifiers. Operations: store, recall, forget, export
+    - **Cohort**: Group-level aggregated data without direct identifiers. Operations: store, recall, distill
+    - **Population**: System-wide aggregated data without direct identifiers. Operations: distill
 
     ## Security
 
@@ -45,7 +45,7 @@ security:
 
 tags:
   - name: Personal
-    description: Personal consent family operations (user-specific data with PII)
+    description: Personal consent family operations (user-specific data with pseudonymous identifiers only)
   - name: Cohort
     description: Cohort consent family operations (group-level aggregated data)
   - name: Population
@@ -151,8 +151,8 @@ paths:
       summary: Recall Memories
       description: |
         Retrieves memory records with consent family enforcement.
-        Personal family: returns user's own memories.
-        Cohort family: returns aggregated memories (no PII).
+        Personal family: returns user's own memories (pseudonymous identifiers only).
+        Cohort family: returns aggregated memories (no direct identifiers).
       operationId: recallMemories
       tags:
         - Personal

@@ -363,6 +363,37 @@ jobs:
           kill $SERVER_PID
           echo "✅ Consent family enforcement verified"
 
+      - name: 'Gate: PII Denylist Validation (Phase 2 Privacy Invariant)'
+        run: |
+          echo "🔍 Checking for raw PII patterns in code..."
+
+          # Check for email patterns in actual code (not comments/strings)
+          if grep -rn '@[a-zA-Z0-9.-]\+\.\(com\|org\|net\)' src/memory-layer/api/ test/*.test.ts | \
+             grep -v 'example\.com' | grep -v 'test@example' | \
+             grep -v '^\s*//' | grep -v '^\s*\*' | grep -v 'DENYLIST' | \
+             grep -v 'description:' | grep -v 'comment:'; then
+            echo "❌ FAIL: Email-like patterns found in code (possible PII leak)"
+            echo "  Ensure all identifiers use hashed_pseudonym with hashed format"
+            exit 1
+          fi
+
+          # Check for SSN patterns
+          if grep -rn '[0-9]\{3\}-[0-9]\{2\}-[0-9]\{4\}' src/memory-layer/api/ test/*.test.ts | \
+             grep -v '^\s*//' | grep -v 'DENYLIST' | grep -v 'pattern:' | grep -v 'example'; then
+            echo "❌ FAIL: SSN-like patterns found in code"
+            exit 1
+          fi
+
+          # Verify hashed_pseudonym is used (not user_id with raw values)
+          if grep -rn 'user_id.*:.*@' src/memory-layer/ test/ --include="*.ts" | \
+             grep -v '^\s*//' | grep -v 'Old field' | grep -v 'deprecated'; then
+            echo "❌ FAIL: user_id field appears to contain email-like values"
+            echo "  All identifiers must use hashed_pseudonym with hashed format"
+            exit 1
+          fi
+
+          echo "✅ No raw PII patterns detected in code"
+
       # Branch Protection Validation
       - name: 'Gate: Branch protection check'
         if: github.ref == 'refs/heads/feature/memory-layer-spec'

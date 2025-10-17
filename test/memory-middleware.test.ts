@@ -14,7 +14,7 @@ import fetch from 'node-fetch';
 // Test configuration
 const BASE_URL = 'http://localhost:3000';
 const VALID_TOKEN = 'user_middleware_test_12345678';
-const USER_ID = 'user_user_middlew';
+const HASHED_PSEUDONYM = 'hs_bWlkZGxld2FyZV90ZXN0X2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA';
 
 // Helper: Wait
 function wait(ms: number): Promise<void> {
@@ -101,7 +101,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -129,7 +129,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -158,7 +158,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -183,7 +183,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -211,7 +211,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test personal' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -239,7 +239,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test cohort' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'cohort',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -267,7 +267,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test population' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'population',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -295,7 +295,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test trace' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -375,7 +375,7 @@ async function main(): Promise<void> {
 
     console.log('\n[ERROR HANDLER] Test 11: Error envelope structure (403)');
     try {
-      const response = await makeRequest('/v1/cohort/recall?user_id=' + USER_ID, {
+      const response = await makeRequest('/v1/cohort/recall?hashed_pseudonym=' + HASHED_PSEUDONYM, {
         method: 'GET',
         headers: { Authorization: `Bearer ${VALID_TOKEN}` },
       });
@@ -429,7 +429,7 @@ async function main(): Promise<void> {
             metadata: { test: true },
           },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             session_id: 'session_schema_001',
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
@@ -458,7 +458,7 @@ async function main(): Promise<void> {
         body: {
           // Missing content field
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -508,7 +508,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'slo test' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',

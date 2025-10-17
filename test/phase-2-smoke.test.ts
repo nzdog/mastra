@@ -23,8 +23,8 @@ const TIMEOUT_MS = 30000; // 30 seconds
 const SERVER_STARTUP_DELAY_MS = 3000; // Wait for server to initialize
 
 // Test user tokens
-const USER_TOKEN = 'user_test_alice_12345678';
-const USER_ID = 'user_user_test';
+const USER_TOKEN = 'hs_dGVzdHVzZXIxMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0'; // Valid hashed pseudonym format
+const HASHED_PSEUDONYM = 'hs_dGVzdHVzZXIxMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0';
 
 // Helper: Wait for specified milliseconds
 function wait(ms: number): Promise<void> {
@@ -130,7 +130,7 @@ async function main(): Promise<void> {
             metadata: { tags: ['test', 'first'] },
           },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             session_id: 'session_test_001',
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
@@ -169,7 +169,7 @@ async function main(): Promise<void> {
     console.log('\n📖 TEST 2: Recall memory (personal family)');
     try {
       const recallResponse = await authedRequest(
-        `/v1/personal/recall?user_id=${USER_ID}&session_id=session_test_001`,
+        `/v1/personal/recall?hashed_pseudonym=${HASHED_PSEUDONYM}&session_id=session_test_001`,
         { method: 'GET' }
       );
 
@@ -211,7 +211,7 @@ async function main(): Promise<void> {
                 data: { score: 50 + i * 5, category: 'test' },
               },
               metadata: {
-                user_id: USER_ID,
+                hashed_pseudonym: HASHED_PSEUDONYM,
                 session_id: `session_cohort_${i}`,
                 consent_family: 'cohort',
                 consent_timestamp: new Date().toISOString(),
@@ -399,7 +399,7 @@ async function main(): Promise<void> {
         body: JSON.stringify({
           content: { type: 'text', data: 'test' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -428,7 +428,7 @@ async function main(): Promise<void> {
     // ============================================================================
     console.log('\n🚫 TEST 9: Fail-closed - 403 Forbidden (cohort recall)');
     try {
-      const recallResponse = await authedRequest('/v1/cohort/recall?user_id=' + USER_ID, {
+      const recallResponse = await authedRequest('/v1/cohort/recall?hashed_pseudonym=' + HASHED_PSEUDONYM, {
         method: 'GET',
       });
 

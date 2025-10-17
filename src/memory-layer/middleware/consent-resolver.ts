@@ -16,7 +16,11 @@ import { getAuditEmitter } from '../governance/audit-emitter';
  */
 export interface ConsentContext {
   family: ConsentFamily;
-  user_id: string;
+  /**
+   * Hashed pseudonymous identifier extracted from auth token
+   * Token MUST contain hashed value, never raw PII
+   */
+  hashed_pseudonym: string;
   scope: string[];
   trace_id: string;
 }
@@ -57,8 +61,9 @@ function extractConsentFamily(path: string): ConsentFamily | null {
 /**
  * Mock user token validation
  * In production, this would validate JWT tokens and check user permissions
+ * Token should contain hashed pseudonym, not raw email/PII
  */
-function validateUserToken(authHeader: string | undefined): { valid: boolean; user_id?: string; error?: string } {
+function validateUserToken(authHeader: string | undefined): { valid: boolean; hashed_pseudonym?: string; error?: string } {
   if (!authHeader) {
     return { valid: false, error: 'Missing Authorization header' };
   }
@@ -76,11 +81,18 @@ function validateUserToken(authHeader: string | undefined): { valid: boolean; us
     return { valid: false, error: 'Invalid or expired token' };
   }
 
-  // Extract user_id from token (mock - in production, decode JWT payload)
-  // For dev/test, accept tokens like "user_<id>" or generate from token hash
-  const userId = token.startsWith('user_') ? token : `user_${token.substring(0, 8)}`;
+  // Extract hashed_pseudonym from token (mock - in production, decode JWT payload)
+  // Token should contain hashed value like 'hs_...' or SHA-256 hex
+  // For dev/test, accept tokens like "hs_<base64>" or generate hashed format
+  let hashedPseudonym: string;
+  if (token.startsWith('hs_')) {
+    hashedPseudonym = token;
+  } else {
+    // Generate a mock hashed pseudonym (hs_ prefix + base64-like string)
+    hashedPseudonym = `hs_${Buffer.from(token.substring(0, 32)).toString('base64url')}`;
+  }
 
-  return { valid: true, user_id: userId };
+  return { valid: true, hashed_pseudonym: hashedPseudonym };
 }
 
 /**
@@ -88,7 +100,7 @@ function validateUserToken(authHeader: string | undefined): { valid: boolean; us
  * In production, this would check user consent preferences and permissions
  */
 function checkFamilyAuthorization(
-  userId: string,
+  hashedPseudonym: string,
   family: ConsentFamily
 ): { authorized: boolean; scope: string[]; error?: string } {
   // Mock authorization - in production, check user consent preferences
@@ -172,17 +184,17 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
     return;
   }
 
-  const userId = tokenValidation.user_id!;
+  const hashedPseudonym = tokenValidation.hashed_pseudonym!;
 
   // Check family authorization
-  const authCheck = checkFamilyAuthorization(userId, family);
+  const authCheck = checkFamilyAuthorization(hashedPseudonym, family);
 
   if (!authCheck.authorized) {
     // Fail closed: 403 Forbidden
     const errorResponse = createErrorResponse(
       ErrorCode.FORBIDDEN,
       authCheck.error || `Access denied for consent family: ${family}`,
-      { family, user_id: userId, trace_id: traceId },
+      { family, hashed_pseudonym: hashedPseudonym, trace_id: traceId },
       req,
       traceId
     );
@@ -192,7 +204,7 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
       .emit('CONSENT_GRANT', 'consent_resolution_failed', {
         reason: 'forbidden',
         family,
-        user_id: userId,
+        hashed_pseudonym: hashedPseudonym,
         path: req.path,
         trace_id: traceId,
       })
@@ -205,7 +217,7 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
   // Success: Attach consent context to request
   req.consentContext = {
     family,
-    user_id: userId,
+    hashed_pseudonym: hashedPseudonym,
     scope: authCheck.scope,
     trace_id: traceId,
   };
@@ -217,7 +229,7 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
       'consent_resolution_success',
       {
         family,
-        user_id: userId,
+        hashed_pseudonym: hashedPseudonym,
         scope: authCheck.scope,
         path: req.path,
         method: req.method,
@@ -226,7 +238,7 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
         consent_level: family,
         scope: authCheck.scope,
       },
-      userId
+      hashedPseudonym
     )
     .catch((err) => console.error('Failed to emit audit event:', err));
 

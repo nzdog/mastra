@@ -28,8 +28,11 @@ export interface StoreResponse extends BaseResponse {
   /** ID of the newly created memory record */
   id: string;
 
-  /** User ID associated with the memory */
-  user_id: string;
+  /**
+   * Hashed pseudonymous identifier associated with the memory
+   * MUST be hashed/pseudonymous identifier, never raw PII
+   */
+  hashed_pseudonym: string;
 
   /** Session ID if provided */
   session_id?: string;
@@ -72,8 +75,11 @@ export interface RecallResponse extends BaseResponse {
 
   /** Query metadata */
   query: {
-    /** User ID used for the query */
-    user_id: string;
+    /**
+     * Hashed pseudonymous identifier used for the query
+     * MUST be hashed/pseudonymous identifier, never raw PII
+     */
+    hashed_pseudonym: string;
 
     /** Session ID filter if applied */
     session_id?: string;
@@ -156,8 +162,11 @@ export interface ForgetResponse extends BaseResponse {
 
   /** Deletion metadata */
   metadata: {
-    /** User ID if user-level deletion */
-    user_id?: string;
+    /**
+     * Hashed pseudonymous identifier if user-level deletion
+     * MUST be hashed/pseudonymous identifier, never raw PII
+     */
+    hashed_pseudonym?: string;
 
     /** Session ID if session-level deletion */
     session_id?: string;
@@ -171,8 +180,11 @@ export interface ForgetResponse extends BaseResponse {
  * Export format metadata
  */
 export interface ExportMetadata {
-  /** User ID for the export */
-  user_id: string;
+  /**
+   * Hashed pseudonymous identifier for the export
+   * MUST be hashed/pseudonymous identifier, never raw PII
+   */
+  hashed_pseudonym: string;
 
   /** Export format */
   format: 'json' | 'csv' | 'jsonlines';

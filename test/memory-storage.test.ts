@@ -20,7 +20,7 @@ function createTestRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord {
   const now = new Date().toISOString();
   return {
     id: `rec_${Math.random().toString(36).substring(2, 15)}`,
-    user_id: 'user_test_001',
+    hashed_pseudonym: 'hs_dGVzdF91c2VyXzAwMV9oYXNoZWRfcHNldWRvbnltX3Rlc3Q',
     session_id: 'session_001',
     content: {
       type: 'text',
@@ -54,7 +54,7 @@ async function main(): Promise<void> {
     const stored = await store.store(record);
 
     if (stored.id !== record.id) throw new Error('ID mismatch');
-    if (stored.user_id !== record.user_id) throw new Error('user_id mismatch');
+    if (stored.hashed_pseudonym !== record.hashed_pseudonym) throw new Error('hashed_pseudonym mismatch');
 
     console.log('✅ Store record passed');
     results.push({ test: 'Store record', passed: true });
@@ -137,39 +137,39 @@ async function main(): Promise<void> {
   // RECALL (QUERY) TESTS
   // ============================================================================
 
-  console.log('\n[RECALL] Test 6: Recall by user_id');
+  console.log('\n[RECALL] Test 6: Recall by hashed_pseudonym');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_recall_001';
+    const hashedPseudonym = 'hs_cmVjYWxsXzAwMV9oYXNoZWRfcHNldWRvbnltX3Rlc3Q';
 
     // Store multiple records for same user
     for (let i = 0; i < 3; i++) {
-      await store.store(createTestRecord({ user_id: userId, session_id: `session_${i}` }));
+      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: `session_${i}` }));
     }
 
-    const query: RecallQuery = { user_id: userId, limit: 100, offset: 0 };
+    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
     if (records.length !== 3) throw new Error(`Expected 3 records, got ${records.length}`);
 
-    console.log('✅ Recall by user_id passed');
-    results.push({ test: 'Recall by user_id', passed: true });
+    console.log('✅ Recall by hashed_pseudonym passed');
+    results.push({ test: 'Recall by hashed_pseudonym', passed: true });
   } catch (err) {
     console.error('❌ Failed:', err);
-    results.push({ test: 'Recall by user_id', passed: false, error: String(err) });
+    results.push({ test: 'Recall by hashed_pseudonym', passed: false, error: String(err) });
   }
 
   console.log('\n[RECALL] Test 7: Recall by session_id');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_recall_002';
+    const hashedPseudonym = 'hs_recall_002';
     const sessionId = 'session_specific';
 
     // Store records with different sessions
-    await store.store(createTestRecord({ user_id: userId, session_id: sessionId }));
-    await store.store(createTestRecord({ user_id: userId, session_id: 'other_session' }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: 'other_session' }));
 
-    const query: RecallQuery = { user_id: userId, session_id: sessionId, limit: 100, offset: 0 };
+    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, session_id: sessionId, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
     if (records.length !== 1) throw new Error(`Expected 1 record, got ${records.length}`);
@@ -185,15 +185,15 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 8: Recall with pagination');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_pagination';
+    const hashedPseudonym = 'hs_pagination';
 
     // Store 10 records
     for (let i = 0; i < 10; i++) {
-      await store.store(createTestRecord({ user_id: userId }));
+      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym }));
     }
 
     // Query with limit=3, offset=2
-    const query: RecallQuery = { user_id: userId, limit: 3, offset: 2 };
+    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 3, offset: 2 };
     const records = await store.recall(query);
 
     if (records.length !== 3) throw new Error(`Expected 3 records, got ${records.length}`);
@@ -208,25 +208,25 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 9: Recall with sort order');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_sort';
+    const hashedPseudonym = 'hs_sort';
 
     // Store records with different timestamps
     const now = Date.now();
     for (let i = 0; i < 3; i++) {
       await store.store(
         createTestRecord({
-          user_id: userId,
+          hashed_pseudonym: hashedPseudonym,
           created_at: new Date(now + i * 1000).toISOString(),
         })
       );
     }
 
     // Query with ascending sort
-    const ascQuery: RecallQuery = { user_id: userId, sort: 'asc', limit: 100, offset: 0 };
+    const ascQuery: RecallQuery = { hashed_pseudonym: hashedPseudonym, sort: 'asc', limit: 100, offset: 0 };
     const ascRecords = await store.recall(ascQuery);
 
     // Query with descending sort
-    const descQuery: RecallQuery = { user_id: userId, sort: 'desc', limit: 100, offset: 0 };
+    const descQuery: RecallQuery = { hashed_pseudonym: hashedPseudonym, sort: 'desc', limit: 100, offset: 0 };
     const descRecords = await store.recall(descQuery);
 
     // Verify order
@@ -247,17 +247,17 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 10: Recall with content type filter');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_filter';
+    const hashedPseudonym = 'hs_filter';
 
     // Store records with different content types
     await store.store(
-      createTestRecord({ user_id: userId, content: { type: 'text', data: 'text' } })
+      createTestRecord({ hashed_pseudonym: hashedPseudonym, content: { type: 'text', data: 'text' } })
     );
     await store.store(
-      createTestRecord({ user_id: userId, content: { type: 'structured', data: {} } })
+      createTestRecord({ hashed_pseudonym: hashedPseudonym, content: { type: 'structured', data: {} } })
     );
 
-    const query: RecallQuery = { user_id: userId, type: 'text', limit: 100, offset: 0 };
+    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, type: 'text', limit: 100, offset: 0 };
     const records = await store.recall(query);
 
     if (records.length !== 1) throw new Error(`Expected 1 record, got ${records.length}`);
@@ -273,7 +273,7 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 11: Recall with time range filters');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_time';
+    const hashedPseudonym = 'hs_time';
 
     const now = Date.now();
     const past = new Date(now - 3600000).toISOString(); // 1 hour ago
@@ -281,12 +281,12 @@ async function main(): Promise<void> {
     const future = new Date(now + 3600000).toISOString(); // 1 hour from now
 
     // Store records at different times
-    await store.store(createTestRecord({ user_id: userId, created_at: past }));
-    await store.store(createTestRecord({ user_id: userId, created_at: present }));
-    await store.store(createTestRecord({ user_id: userId, created_at: future }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, created_at: past }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, created_at: present }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, created_at: future }));
 
     // Query for records between past and present
-    const query: RecallQuery = { user_id: userId, since: past, until: present, limit: 100, offset: 0 };
+    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, since: past, until: present, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
     if (records.length !== 2) throw new Error(`Expected 2 records, got ${records.length}`);
@@ -327,14 +327,14 @@ async function main(): Promise<void> {
   console.log('\n[FORGET] Test 13: Forget by user_id');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_forget';
+    const hashedPseudonym = 'hs_forget';
 
     // Store multiple records
     for (let i = 0; i < 3; i++) {
-      await store.store(createTestRecord({ user_id: userId }));
+      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym }));
     }
 
-    const forgetRequest: ForgetRequest = { user_id: userId, hard_delete: true };
+    const forgetRequest: ForgetRequest = { hashed_pseudonym: hashedPseudonym, hard_delete: true };
     const deletedIds = await store.forget(forgetRequest);
 
     if (deletedIds.length !== 3) throw new Error(`Expected 3 deleted records, got ${deletedIds.length}`);
@@ -349,13 +349,13 @@ async function main(): Promise<void> {
   console.log('\n[FORGET] Test 14: Forget by session_id');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_forget_session';
+    const hashedPseudonym = 'hs_forget_session';
     const sessionId = 'session_forget';
 
     // Store records with different sessions
-    await store.store(createTestRecord({ user_id: userId, session_id: sessionId }));
-    await store.store(createTestRecord({ user_id: userId, session_id: sessionId }));
-    await store.store(createTestRecord({ user_id: userId, session_id: 'other_session' }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: sessionId }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, session_id: 'other_session' }));
 
     const forgetRequest: ForgetRequest = { session_id: sessionId, hard_delete: true };
     const deletedIds = await store.forget(forgetRequest);
@@ -373,27 +373,27 @@ async function main(): Promise<void> {
   // INDEX TESTS
   // ============================================================================
 
-  console.log('\n[INDEX] Test 15: byUserId index');
+  console.log('\n[INDEX] Test 15: byHashedPseudonym index');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_index';
+    const hashedPseudonym = 'hs_aW5kZXhfdGVzdF9oYXNoZWRfcHNldWRvbnltX3Rlc3Q';
 
     // Store records for this user
     for (let i = 0; i < 5; i++) {
-      await store.store(createTestRecord({ user_id: userId }));
+      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym }));
     }
 
     // Query should be fast (O(1) lookup via index)
-    const query: RecallQuery = { user_id: userId, limit: 100, offset: 0 };
+    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
     if (records.length !== 5) throw new Error('Index lookup failed');
 
-    console.log('✅ byUserId index passed');
-    results.push({ test: 'byUserId index', passed: true });
+    console.log('✅ byHashedPseudonym index passed');
+    results.push({ test: 'byHashedPseudonym index', passed: true });
   } catch (err) {
     console.error('❌ Failed:', err);
-    results.push({ test: 'byUserId index', passed: false, error: String(err) });
+    results.push({ test: 'byHashedPseudonym index', passed: false, error: String(err) });
   }
 
   console.log('\n[INDEX] Test 16: bySessionId index');
@@ -403,7 +403,7 @@ async function main(): Promise<void> {
 
     // Store records for this session
     for (let i = 0; i < 3; i++) {
-      await store.store(createTestRecord({ session_id: sessionId, user_id: `user_${i}` }));
+      await store.store(createTestRecord({ session_id: sessionId, hashed_pseudonym: `hs_${i}_aGFzaGVkX3BzZXVkb255bV90ZXN0` }));
     }
 
     // Count records for this session
@@ -426,7 +426,7 @@ async function main(): Promise<void> {
     const families: ConsentFamily[] = ['personal', 'cohort', 'population'];
     for (const family of families) {
       for (let i = 0; i < 2; i++) {
-        await store.store(createTestRecord({ consent_family: family, user_id: `user_${family}_${i}` }));
+        await store.store(createTestRecord({ consent_family: family, hashed_pseudonym: `hs_${family}_${i}_aGFzaGVkX3BzZXVkb255bV90ZXN0` }));
       }
     }
 
@@ -450,23 +450,23 @@ async function main(): Promise<void> {
   console.log('\n[TTL] Test 18: Clear expired records');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_ttl';
+    const hashedPseudonym = 'hs_ttl';
 
     const now = new Date();
     const past = new Date(now.getTime() - 3600000).toISOString(); // 1 hour ago
     const future = new Date(now.getTime() + 3600000).toISOString(); // 1 hour from now
 
     // Store expired and valid records
-    await store.store(createTestRecord({ user_id: userId, expires_at: past })); // Expired
-    await store.store(createTestRecord({ user_id: userId, expires_at: future })); // Valid
-    await store.store(createTestRecord({ user_id: userId })); // No expiry
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, expires_at: past })); // Expired
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, expires_at: future })); // Valid
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym })); // No expiry
 
     const deletedCount = await store.clearExpired();
 
     if (deletedCount !== 1) throw new Error(`Expected 1 expired record, got ${deletedCount}`);
 
     // Verify remaining records
-    const query: RecallQuery = { user_id: userId, limit: 100, offset: 0 };
+    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
     if (records.length !== 2) throw new Error('Expired record not removed');
@@ -481,16 +481,16 @@ async function main(): Promise<void> {
   console.log('\n[TTL] Test 19: Recall excludes expired records');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_ttl_recall';
+    const hashedPseudonym = 'hs_ttl_recall';
 
     const now = new Date();
     const past = new Date(now.getTime() - 1000).toISOString(); // 1 second ago
 
     // Store expired record
-    await store.store(createTestRecord({ user_id: userId, expires_at: past }));
+    await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, expires_at: past }));
 
     // Recall should exclude expired record
-    const query: RecallQuery = { user_id: userId, limit: 100, offset: 0 };
+    const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
     if (records.length !== 0) throw new Error('Expired record should not be recalled');
@@ -509,18 +509,18 @@ async function main(): Promise<void> {
   console.log('\n[COUNT] Test 20: Count records with filters');
   try {
     const store = new InMemoryStore();
-    const userId = 'user_count';
+    const hashedPseudonym = 'hs_count';
 
     // Store multiple records
     for (let i = 0; i < 5; i++) {
-      await store.store(createTestRecord({ user_id: userId, consent_family: 'personal' }));
+      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, consent_family: 'personal' }));
     }
     for (let i = 0; i < 3; i++) {
-      await store.store(createTestRecord({ user_id: userId, consent_family: 'cohort' }));
+      await store.store(createTestRecord({ hashed_pseudonym: hashedPseudonym, consent_family: 'cohort' }));
     }
 
-    const personalCount = await store.count({ user_id: userId, consent_family: 'personal' });
-    const cohortCount = await store.count({ user_id: userId, consent_family: 'cohort' });
+    const personalCount = await store.count({ hashed_pseudonym: hashedPseudonym, consent_family: 'personal' });
+    const cohortCount = await store.count({ hashed_pseudonym: hashedPseudonym, consent_family: 'cohort' });
 
     if (personalCount !== 5) throw new Error(`Expected 5 personal records, got ${personalCount}`);
     if (cohortCount !== 3) throw new Error(`Expected 3 cohort records, got ${cohortCount}`);
@@ -537,9 +537,9 @@ async function main(): Promise<void> {
     const store = new InMemoryStore();
 
     // Store records for each family
-    await store.store(createTestRecord({ consent_family: 'personal', user_id: 'user_1' }));
-    await store.store(createTestRecord({ consent_family: 'cohort', user_id: 'user_2' }));
-    await store.store(createTestRecord({ consent_family: 'population', user_id: 'user_3' }));
+    await store.store(createTestRecord({ consent_family: 'personal', hashed_pseudonym: 'hs_dXNlcl8xX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA' }));
+    await store.store(createTestRecord({ consent_family: 'cohort', hashed_pseudonym: 'hs_dXNlcl8yX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA' }));
+    await store.store(createTestRecord({ consent_family: 'population', hashed_pseudonym: 'hs_dXNlcl8zX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA' }));
 
     const stats = await store.getStats();
 
@@ -575,6 +575,29 @@ async function main(): Promise<void> {
   } catch (err) {
     console.error('❌ Failed:', err);
     results.push({ test: 'Clear all records', passed: false, error: String(err) });
+  }
+
+  console.log('\n[VALIDATION] Test 23: Reject invalid hashed_pseudonym format');
+  try {
+    const store = new InMemoryStore();
+    const record = createTestRecord({
+      hashed_pseudonym: 'invalid@email.com', // Invalid format
+    });
+
+    try {
+      await store.store(record);
+      throw new Error('Should have rejected invalid hashed_pseudonym');
+    } catch (validationError) {
+      if (String(validationError).includes('Invalid hashed_pseudonym')) {
+        console.log('✅ Invalid hashed_pseudonym rejection passed');
+        results.push({ test: 'Reject invalid hashed_pseudonym format', passed: true });
+      } else {
+        throw validationError;
+      }
+    }
+  } catch (err) {
+    console.error('❌ Failed:', err);
+    results.push({ test: 'Reject invalid hashed_pseudonym format', passed: false, error: String(err) });
   }
 
   // ============================================================================

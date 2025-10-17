@@ -14,7 +14,11 @@ import { ForgetRequest } from '../models/operation-requests';
  * Filter options for querying records
  */
 export interface QueryFilters {
-  user_id?: string;
+  /**
+   * Hashed pseudonymous identifier
+   * MUST be hashed/pseudonymous identifier, never raw PII
+   */
+  hashed_pseudonym?: string;
   session_id?: string;
   consent_family?: 'personal' | 'cohort' | 'population';
   since?: string; // ISO timestamp
@@ -113,7 +117,7 @@ export function isMemoryRecord(obj: unknown): obj is MemoryRecord {
   const record = obj as any;
   return (
     typeof record.id === 'string' &&
-    typeof record.user_id === 'string' &&
+    typeof record.hashed_pseudonym === 'string' &&
     typeof record.content === 'object' &&
     typeof record.consent_family === 'string' &&
     typeof record.consent_timestamp === 'string' &&

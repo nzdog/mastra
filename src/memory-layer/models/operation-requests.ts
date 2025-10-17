@@ -22,8 +22,11 @@ export interface StoreRequest {
 
   /** Additional metadata for the memory record */
   metadata?: {
-    /** User identifier (required for personal consent) */
-    user_id: string;
+    /**
+     * Hashed pseudonymous identifier (required for personal consent)
+     * MUST be hashed/pseudonymous identifier (e.g., sha256(email+salt)), never raw PII
+     */
+    hashed_pseudonym: string;
 
     /** Optional session identifier for grouping */
     session_id?: string;
@@ -50,8 +53,11 @@ export interface StoreRequest {
  * Used for GET /memory/recall
  */
 export interface RecallQuery {
-  /** User identifier (required for personal memories) */
-  user_id: string;
+  /**
+   * Hashed pseudonymous identifier (required for personal memories)
+   * MUST be hashed/pseudonymous identifier (e.g., sha256(email+salt)), never raw PII
+   */
+  hashed_pseudonym: string;
 
   /** Optional session filter */
   session_id?: string;
@@ -129,8 +135,11 @@ export interface ForgetRequest {
   /** Specific memory record ID to delete */
   id?: string;
 
-  /** Delete all memories for a user */
-  user_id?: string;
+  /**
+   * Delete all memories for a hashed pseudonymous identifier
+   * MUST be hashed/pseudonymous identifier (e.g., sha256(email+salt)), never raw PII
+   */
+  hashed_pseudonym?: string;
 
   /** Delete all memories for a session */
   session_id?: string;
@@ -148,8 +157,11 @@ export interface ForgetRequest {
  * Supports GDPR data portability
  */
 export interface ExportRequest {
-  /** User identifier for export */
-  user_id: string;
+  /**
+   * Hashed pseudonymous identifier for export
+   * MUST be hashed/pseudonymous identifier (e.g., sha256(email+salt)), never raw PII
+   */
+  hashed_pseudonym: string;
 
   /** Export format */
   format: 'json' | 'csv' | 'jsonlines';
@@ -182,7 +194,7 @@ export function validateStoreRequest(req: unknown): req is StoreRequest {
     typeof r.content === 'object' &&
     r.metadata !== undefined &&
     typeof r.metadata === 'object' &&
-    typeof r.metadata.user_id === 'string' &&
+    typeof r.metadata.hashed_pseudonym === 'string' &&
     typeof r.metadata.consent_family === 'string' &&
     typeof r.metadata.consent_timestamp === 'string' &&
     typeof r.metadata.consent_version === 'string'
@@ -195,7 +207,7 @@ export function validateStoreRequest(req: unknown): req is StoreRequest {
 export function validateRecallQuery(query: unknown): query is RecallQuery {
   if (typeof query !== 'object' || query === null) return false;
   const q = query as RecallQuery;
-  return typeof q.user_id === 'string';
+  return typeof q.hashed_pseudonym === 'string';
 }
 
 /**
@@ -205,5 +217,5 @@ export function validateForgetRequest(req: unknown): req is ForgetRequest {
   if (typeof req !== 'object' || req === null) return false;
   const r = req as ForgetRequest;
   // At least one identifier must be provided
-  return r.id !== undefined || r.user_id !== undefined || r.session_id !== undefined;
+  return r.id !== undefined || r.hashed_pseudonym !== undefined || r.session_id !== undefined;
 }

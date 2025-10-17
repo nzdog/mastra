@@ -24,7 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - OpenAPI 3.0 specification at `openapi/memory-layer-v1.yaml`
 
 - **Consent Family System**:
-  - Three consent families: Personal (PII allowed), Cohort (group aggregation), Population (system-wide aggregation)
+  - Three consent families: Personal (hashed/pseudonymous identifiers only), Cohort (group aggregation, no direct identifiers), Population (system-wide aggregation, no direct identifiers)
   - Consent resolver middleware with fail-closed authorization (401/403)
   - Bearer token authentication with user_id extraction
   - Scope-based authorization per family (read, write, delete, export, aggregate)

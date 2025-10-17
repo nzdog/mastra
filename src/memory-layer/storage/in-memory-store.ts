@@ -14,7 +14,7 @@ import { RecallQuery, ForgetRequest } from '../models/operation-requests';
  * Index structure for fast lookups
  */
 interface MemoryIndex {
-  byUserId: Map<string, Set<string>>; // user_id -> set of record IDs
+  byHashedPseudonym: Map<string, Set<string>>; // hashed_pseudonym -> set of record IDs
   bySessionId: Map<string, Set<string>>; // session_id -> set of record IDs
   byConsentFamily: Map<ConsentFamily, Set<string>>; // consent_family -> set of record IDs
 }
@@ -32,7 +32,7 @@ interface MemoryIndex {
 export class InMemoryStore implements MemoryStore {
   private records: Map<string, MemoryRecord> = new Map();
   private indexes: MemoryIndex = {
-    byUserId: new Map(),
+    byHashedPseudonym: new Map(),
     bySessionId: new Map(),
     byConsentFamily: new Map(),
   };
@@ -40,9 +40,41 @@ export class InMemoryStore implements MemoryStore {
   private readonly K_ANONYMITY_MIN = 5; // Minimum records for cohort/population queries
 
   /**
+   * Validate that hashed_pseudonym doesn't contain raw PII patterns
+   * Rejects: emails (@), spaces, SSN-like patterns
+   */
+  private validateHashedPseudonym(hashedPseudonym: string): void {
+    // Check for email pattern
+    if (hashedPseudonym.includes('@')) {
+      throw new Error('Invalid hashed_pseudonym: contains @ symbol (possible raw email). Must be hashed.');
+    }
+
+    // Check for spaces
+    if (/\s/.test(hashedPseudonym)) {
+      throw new Error('Invalid hashed_pseudonym: contains spaces. Must be hashed identifier.');
+    }
+
+    // Check for SSN pattern (XXX-XX-XXXX)
+    if (/^\d{3}-\d{2}-\d{4}$/.test(hashedPseudonym)) {
+      throw new Error('Invalid hashed_pseudonym: matches SSN pattern. Must be hashed.');
+    }
+
+    // Optional: Validate expected hash format (hs_ prefix or 64-char hex)
+    const hashedPattern = /^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$/;
+    if (!hashedPattern.test(hashedPseudonym)) {
+      throw new Error(
+        'Invalid hashed_pseudonym format. Expected: hs_<base64url> or SHA-256 hex (64 chars)'
+      );
+    }
+  }
+
+  /**
    * Store a new memory record
    */
   async store(record: MemoryRecord): Promise<MemoryRecord> {
+    // Validate hashed_pseudonym
+    this.validateHashedPseudonym(record.hashed_pseudonym);
+
     // Store record
     this.records.set(record.id, { ...record });
 
@@ -110,9 +142,9 @@ export class InMemoryStore implements MemoryStore {
       if (record) {
         recordsToDelete = [record];
       }
-    } else if (request.user_id) {
-      // Delete all records for user
-      const userRecordIds = this.indexes.byUserId.get(request.user_id) || new Set();
+    } else if (request.hashed_pseudonym) {
+      // Delete all records for hashed_pseudonym
+      const userRecordIds = this.indexes.byHashedPseudonym.get(request.hashed_pseudonym) || new Set();
       recordsToDelete = Array.from(userRecordIds)
         .map((id) => this.records.get(id))
         .filter((r): r is MemoryRecord => r !== undefined);
@@ -237,7 +269,7 @@ export class InMemoryStore implements MemoryStore {
    */
   async clear(): Promise<void> {
     this.records.clear();
-    this.indexes.byUserId.clear();
+    this.indexes.byHashedPseudonym.clear();
     this.indexes.bySessionId.clear();
     this.indexes.byConsentFamily.clear();
   }
@@ -246,11 +278,11 @@ export class InMemoryStore implements MemoryStore {
    * Add record to indexes
    */
   private addToIndex(record: MemoryRecord): void {
-    // Index by user_id
-    if (!this.indexes.byUserId.has(record.user_id)) {
-      this.indexes.byUserId.set(record.user_id, new Set());
+    // Index by hashed_pseudonym
+    if (!this.indexes.byHashedPseudonym.has(record.hashed_pseudonym)) {
+      this.indexes.byHashedPseudonym.set(record.hashed_pseudonym, new Set());
     }
-    this.indexes.byUserId.get(record.user_id)!.add(record.id);
+    this.indexes.byHashedPseudonym.get(record.hashed_pseudonym)!.add(record.id);
 
     // Index by session_id
     if (record.session_id) {
@@ -271,12 +303,12 @@ export class InMemoryStore implements MemoryStore {
    * Remove record from indexes
    */
   private removeFromIndex(record: MemoryRecord): void {
-    // Remove from user_id index
-    const userIndex = this.indexes.byUserId.get(record.user_id);
+    // Remove from hashed_pseudonym index
+    const userIndex = this.indexes.byHashedPseudonym.get(record.hashed_pseudonym);
     if (userIndex) {
       userIndex.delete(record.id);
       if (userIndex.size === 0) {
-        this.indexes.byUserId.delete(record.user_id);
+        this.indexes.byHashedPseudonym.delete(record.hashed_pseudonym);
       }
     }
 
@@ -305,8 +337,8 @@ export class InMemoryStore implements MemoryStore {
    * Get candidate record IDs from indexes based on query
    */
   private getCandidateIds(query: RecallQuery): Set<string> {
-    // Start with user_id index (required)
-    const userIds = this.indexes.byUserId.get(query.user_id) || new Set<string>();
+    // Start with hashed_pseudonym index (required)
+    const userIds = this.indexes.byHashedPseudonym.get(query.hashed_pseudonym) || new Set<string>();
 
     // If session_id specified, intersect with session index
     if (query.session_id) {
@@ -321,8 +353,8 @@ export class InMemoryStore implements MemoryStore {
    * Get candidate record IDs from filters
    */
   private getCandidateIdsFromFilters(filters: QueryFilters): Set<string> {
-    if (filters.user_id) {
-      return this.indexes.byUserId.get(filters.user_id) || new Set<string>();
+    if (filters.hashed_pseudonym) {
+      return this.indexes.byHashedPseudonym.get(filters.hashed_pseudonym) || new Set<string>();
     }
 
     if (filters.session_id) {
@@ -341,8 +373,8 @@ export class InMemoryStore implements MemoryStore {
    * Check if record matches query filters
    */
   private matchesQuery(record: MemoryRecord, query: RecallQuery): boolean {
-    // User ID must match
-    if (record.user_id !== query.user_id) {
+    // Hashed pseudonym must match
+    if (record.hashed_pseudonym !== query.hashed_pseudonym) {
       return false;
     }
 
@@ -376,7 +408,7 @@ export class InMemoryStore implements MemoryStore {
    * Check if record matches filters
    */
   private matchesFilters(record: MemoryRecord, filters: QueryFilters): boolean {
-    if (filters.user_id && record.user_id !== filters.user_id) {
+    if (filters.hashed_pseudonym && record.hashed_pseudonym !== filters.hashed_pseudonym) {
       return false;
     }
 

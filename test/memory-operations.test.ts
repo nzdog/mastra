@@ -17,7 +17,7 @@ import fetch from 'node-fetch';
 // Test configuration
 const BASE_URL = 'http://localhost:3000';
 const USER_TOKEN = 'user_test_operations_12345678';
-const USER_ID = 'user_user_test';
+const HASHED_PSEUDONYM = 'hs_dGVzdHVzZXIxMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0';
 
 // Helper: Wait
 function wait(ms: number): Promise<void> {
@@ -110,7 +110,7 @@ async function main(): Promise<void> {
             metadata: { source: 'test' },
           },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             session_id: 'session_store_001',
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
@@ -143,7 +143,7 @@ async function main(): Promise<void> {
             data: { score: 85, category: 'performance' },
           },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             session_id: 'session_cohort_001',
             consent_family: 'cohort',
             consent_timestamp: new Date().toISOString(),
@@ -169,7 +169,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'Expiring memory' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -217,7 +217,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            user_id: USER_ID,
+            hashed_pseudonym: HASHED_PSEUDONYM,
             consent_family: 'cohort', // Mismatch with URL
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
@@ -240,7 +240,7 @@ async function main(): Promise<void> {
 
     console.log('\n[RECALL] Test 6: Recall personal memories');
     try {
-      const response = await authedRequest(`/v1/personal/recall?user_id=${USER_ID}`, {
+      const response = await authedRequest(`/v1/personal/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`, {
         method: 'GET',
       });
 
@@ -258,7 +258,7 @@ async function main(): Promise<void> {
     console.log('\n[RECALL] Test 7: Recall with pagination');
     try {
       const response = await authedRequest(
-        `/v1/personal/recall?user_id=${USER_ID}&limit=1&offset=0`,
+        `/v1/personal/recall?hashed_pseudonym=${HASHED_PSEUDONYM}&limit=1&offset=0`,
         { method: 'GET' }
       );
 
@@ -276,7 +276,7 @@ async function main(): Promise<void> {
     console.log('\n[RECALL] Test 8: Recall with session filter');
     try {
       const response = await authedRequest(
-        `/v1/personal/recall?user_id=${USER_ID}&session_id=session_store_001`,
+        `/v1/personal/recall?hashed_pseudonym=${HASHED_PSEUDONYM}&session_id=session_store_001`,
         { method: 'GET' }
       );
 
@@ -291,7 +291,7 @@ async function main(): Promise<void> {
 
     console.log('\n[RECALL] Test 9: Recall forbidden for cohort family');
     try {
-      const response = await authedRequest(`/v1/cohort/recall?user_id=${USER_ID}`, {
+      const response = await authedRequest(`/v1/cohort/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`, {
         method: 'GET',
       });
 
@@ -307,7 +307,7 @@ async function main(): Promise<void> {
 
     console.log('\n[RECALL] Test 10: Recall forbidden for population family');
     try {
-      const response = await authedRequest(`/v1/population/recall?user_id=${USER_ID}`, {
+      const response = await authedRequest(`/v1/population/recall?hashed_pseudonym=${HASHED_PSEUDONYM}`, {
         method: 'GET',
       });
 
@@ -336,7 +336,7 @@ async function main(): Promise<void> {
               data: { value: 10 + i, category: 'distill_test' },
             },
             metadata: {
-              user_id: USER_ID,
+              hashed_pseudonym: HASHED_PSEUDONYM,
               session_id: `session_distill_${i}`,
               consent_family: 'cohort',
               consent_timestamp: new Date().toISOString(),
@@ -416,7 +416,7 @@ async function main(): Promise<void> {
     console.log('\n[DISTILL] Test 14: Distill k-anonymity failure');
     try {
       // Create new user with only 2 records (below threshold)
-      const lowUser = 'user_low_count';
+      const lowHashedPseudonym = 'hs_bG93X2NvdW50X3VzZXJfaGFzaGVkX3BzZXVkb255bV90ZXN0';
       const lowToken = 'user_low_count_token_12345678';
 
       // Store only 2 records
@@ -427,7 +427,7 @@ async function main(): Promise<void> {
           body: {
             content: { type: 'structured', data: { value: i } },
             metadata: {
-              user_id: lowUser,
+              hashed_pseudonym: lowHashedPseudonym,
               consent_family: 'cohort',
               consent_timestamp: new Date().toISOString(),
               consent_version: '1.0',
@@ -482,7 +482,7 @@ async function main(): Promise<void> {
     console.log('\n[FORGET] Test 16: Forget by session (personal)');
     try {
       const response = await authedRequest(
-        `/v1/personal/forget?session_id=session_store_001&user_id=${USER_ID}`,
+        `/v1/personal/forget?session_id=session_store_001&hashed_pseudonym=${HASHED_PSEUDONYM}`,
         { method: 'DELETE' }
       );
 
@@ -497,7 +497,7 @@ async function main(): Promise<void> {
 
     console.log('\n[FORGET] Test 17: Forget forbidden for population');
     try {
-      const response = await authedRequest(`/v1/population/forget?user_id=${USER_ID}`, {
+      const response = await authedRequest(`/v1/population/forget?hashed_pseudonym=${HASHED_PSEUDONYM}`, {
         method: 'DELETE',
       });
 
@@ -570,6 +570,88 @@ async function main(): Promise<void> {
     } catch (err) {
       console.error('❌ Failed:', err);
       results.push({ test: 'Population export forbidden', passed: false, error: String(err) });
+    }
+
+    // ============================================================================
+    // PII VALIDATION TESTS
+    // ============================================================================
+
+    console.log('\n[PII VALIDATION] Test 22: Reject raw email in hashed_pseudonym field');
+    try {
+      const response = await authedRequest('/v1/personal/store', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test_token' },
+        body: {
+          content: { type: 'text', data: 'test' },
+          metadata: {
+            hashed_pseudonym: 'user@example.com', // Raw email - should reject
+            consent_family: 'personal',
+            consent_timestamp: new Date().toISOString(),
+            consent_version: '1.0',
+          },
+        },
+      });
+
+      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.data.error.code !== 'VALIDATION_ERROR') {
+        throw new Error('Expected VALIDATION_ERROR');
+      }
+
+      console.log('✅ Raw email rejection test passed');
+      results.push({ test: 'PII Validation - reject email', passed: true });
+    } catch (err) {
+      console.error('❌ Failed:', err);
+      results.push({ test: 'PII Validation - reject email', passed: false, error: String(err) });
+    }
+
+    console.log('\n[PII VALIDATION] Test 23: Reject SSN pattern in hashed_pseudonym field');
+    try {
+      const response = await authedRequest('/v1/personal/store', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test_token' },
+        body: {
+          content: { type: 'text', data: 'test' },
+          metadata: {
+            hashed_pseudonym: '123-45-6789', // SSN pattern - should reject
+            consent_family: 'personal',
+            consent_timestamp: new Date().toISOString(),
+            consent_version: '1.0',
+          },
+        },
+      });
+
+      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+
+      console.log('✅ SSN pattern rejection test passed');
+      results.push({ test: 'PII Validation - reject SSN', passed: true });
+    } catch (err) {
+      console.error('❌ Failed:', err);
+      results.push({ test: 'PII Validation - reject SSN', passed: false, error: String(err) });
+    }
+
+    console.log('\n[PII VALIDATION] Test 24: Accept valid hashed pseudonym format');
+    try {
+      const response = await authedRequest('/v1/personal/store', {
+        method: 'POST',
+        headers: { Authorization: 'Bearer test_token' },
+        body: {
+          content: { type: 'text', data: 'test' },
+          metadata: {
+            hashed_pseudonym: 'hs_dGVzdHVzZXIxMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0',
+            consent_family: 'personal',
+            consent_timestamp: new Date().toISOString(),
+            consent_version: '1.0',
+          },
+        },
+      });
+
+      if (response.status !== 201) throw new Error(`Expected 201, got ${response.status}`);
+
+      console.log('✅ Valid hashed pseudonym acceptance test passed');
+      results.push({ test: 'PII Validation - accept valid hash', passed: true });
+    } catch (err) {
+      console.error('❌ Failed:', err);
+      results.push({ test: 'PII Validation - accept valid hash', passed: false, error: String(err) });
     }
 
     // ============================================================================
