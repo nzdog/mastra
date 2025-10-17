@@ -394,6 +394,20 @@ jobs:
 
           echo "✅ No raw PII patterns detected in code"
 
+      - name: 'Gate: No deprecated user_id field (Phase 2 Privacy Invariant)'
+        run: |
+          echo "🔍 Checking for deprecated user_id references..."
+
+          # Check for user_id in src, openapi, and docs (excluding comments)
+          if git grep -n "user_id" -- src openapi docs | grep .; then
+            echo "❌ FAIL: Found deprecated user_id references"
+            echo "  All references must use hashed_pseudonym instead"
+            echo "  Run: git grep -n 'user_id' -- src openapi docs"
+            exit 1
+          else
+            echo "✅ No deprecated user_id references found"
+          fi
+
       # Branch Protection Validation
       - name: 'Gate: Branch protection check'
         if: github.ref == 'refs/heads/feature/memory-layer-spec'
