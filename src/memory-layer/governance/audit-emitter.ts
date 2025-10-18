@@ -94,6 +94,33 @@ export class AuditEmitter {
     userId?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {
+    // Check if ledger is enabled
+    const ledgerEnabled = process.env.LEDGER_ENABLED !== 'false';
+
+    if (!ledgerEnabled) {
+      // Ledger disabled - return stub receipt without persisting
+      const stubEventId = this.generateEventId();
+      const stubReceiptId = `rcpt_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+
+      // Phase 1.2: Still emit audit events counter even when ledger is disabled
+      auditEventsTotal.labels(eventType, operation).inc();
+
+      console.log(
+        `📝 AUDIT: ${eventType} event logged (stub mode - ledger disabled) (event_id: ${stubEventId})`
+      );
+
+      // Return stub receipt
+      return {
+        receipt_id: stubReceiptId,
+        event_id: stubEventId,
+        timestamp: new Date().toISOString(),
+        signature: 'stub_signature_ledger_disabled',
+        merkle_root: 'stub_root',
+        merkle_proof: null,
+        ledger_height: 0,
+      };
+    }
+
     // Ensure initialized
     await this.initialize();
 

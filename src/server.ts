@@ -1238,10 +1238,15 @@ async function startServer() {
   try {
     console.log('🔧 Initializing server components...');
 
-    // Initialize ledger sink (Phase 3.2: Ensures audit logging is ready)
-    console.log('📚 Initializing ledger sink...');
-    const ledger = await getLedgerSink();
-    console.log(`✅ Ledger initialized (height: ${ledger.getLedgerHeight()})`);
+    // Initialize ledger sink conditionally (Phase 3.2: Ensures audit logging is ready)
+    const ledgerEnabled = process.env.LEDGER_ENABLED !== 'false';
+    if (ledgerEnabled) {
+      console.log('📚 Initializing ledger sink...');
+      const ledger = await getLedgerSink();
+      console.log(`✅ Ledger initialized (height: ${ledger.getLedgerHeight()})`);
+    } else {
+      console.log('⚠️  Ledger disabled (LEDGER_ENABLED=false) - audit events will not be persisted');
+    }
 
     // Mark server as ready (Phase 3.2: /readyz will return 200)
     isReady = true;
