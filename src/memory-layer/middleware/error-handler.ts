@@ -70,7 +70,14 @@ function logError(error: Error | MemoryLayerError, req: Request, traceId: string
   };
 
   // Use structured logging (in production, send to logging service)
-  console.error('ERROR:', JSON.stringify(logData, null, 2));
+  console.error('='.repeat(80));
+  console.error('ERROR CAUGHT:', error.name);
+  console.error('Message:', error.message);
+  console.error('Path:', req.method, req.path);
+  console.error('Stack trace:');
+  console.error(error.stack);
+  console.error('='.repeat(80));
+  console.error('Full error details:', JSON.stringify(logData, null, 2));
 }
 
 /**

@@ -162,8 +162,21 @@ export const storeHandler = asyncHandler(async (req: Request, res: Response) => 
   };
 
   // Store in memory store
+  console.log('[StoreHandler] Attempting to store record:', {
+    id: recordId,
+    hashed_pseudonym: body.metadata.hashed_pseudonym,
+    consent_family: body.metadata.consent_family,
+  });
   const store = getMemoryStore();
-  const storedRecord = await store.store(memoryRecord);
+  let storedRecord;
+  try {
+    storedRecord = await store.store(memoryRecord);
+    console.log('[StoreHandler] Record stored successfully:', storedRecord.id);
+  } catch (storeError) {
+    console.error('[StoreHandler] STORE OPERATION FAILED:', storeError);
+    console.error('[StoreHandler] Error stack:', (storeError as Error).stack);
+    throw storeError;
+  }
 
   // Emit audit event AFTER operation with success
   const receipt = await auditEmitter.emit(

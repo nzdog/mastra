@@ -200,23 +200,38 @@ export class LedgerSink {
    * Phase 1.1: With file locking for concurrent writes
    */
   async append(event: AuditEvent): Promise<SignedAuditReceipt> {
-    this.ensureInitialized('append');
+    console.log('[LedgerSink] Append called for event:', event.event_id);
 
+    try {
+      this.ensureInitialized('append');
+    } catch (initError) {
+      console.error('[LedgerSink] Initialization check failed:', initError);
+      throw initError;
+    }
+
+    console.log('[LedgerSink] Acquiring file lock...');
     // Acquire lock for concurrent write protection
     // Phase 1.1: Prevents race conditions in multi-process environments
     // Phase 1.2: Measure lock wait time
-    const release = await measureAsync(auditFileLockWaitDuration, undefined, async () => {
-      // Note: Lock contention metrics would require wrapping retry logic separately
-      // For Phase 1.2, we track lock wait time; contention tracking can be added in future phases
-      return await lockfile.lock(this.ledgerPath, {
-        stale: 10000, // 10 second stale timeout
-        retries: {
-          retries: 5,
-          minTimeout: 100,
-          maxTimeout: 1000,
-        },
+    let release;
+    try {
+      release = await measureAsync(auditFileLockWaitDuration, undefined, async () => {
+        // Note: Lock contention metrics would require wrapping retry logic separately
+        // For Phase 1.2, we track lock wait time; contention tracking can be added in future phases
+        return await lockfile.lock(this.ledgerPath, {
+          stale: 10000, // 10 second stale timeout
+          retries: {
+            retries: 5,
+            minTimeout: 100,
+            maxTimeout: 1000,
+          },
+        });
       });
-    });
+      console.log('[LedgerSink] File lock acquired');
+    } catch (lockError) {
+      console.error('[LedgerSink] FAILED TO ACQUIRE LOCK:', lockError);
+      throw lockError;
+    }
 
     try {
       // Serialize event for Merkle tree using canonical JSON
