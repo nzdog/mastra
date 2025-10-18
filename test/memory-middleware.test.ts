@@ -457,7 +457,6 @@ async function main(): Promise<void> {
           content: {
             type: 'text',
             data: 'Valid schema test',
-            metadata: { test: true },
           },
           metadata: {
             hashed_pseudonym: HASHED_PSEUDONYM,
