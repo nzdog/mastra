@@ -135,27 +135,29 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
   req.headers['x-trace-id'] = traceId;
 
   // Extract consent family from path
-  const family = extractConsentFamily(req.path);
+  // Use originalUrl for full path or params.family if mounted with :family parameter
+  const family = (req.params.family as ConsentFamily) || extractConsentFamily(req.originalUrl);
 
   // Skip consent resolution for non-family routes (health, metrics, etc.)
   if (!family) {
+    const url = req.originalUrl || req.path;
     // Allow these routes to pass through without consent context
     if (
-      req.path === '/v1/health' ||
-      req.path === '/metrics' ||
-      req.path.startsWith('/v1/ledger') ||
-      req.path.startsWith('/v1/keys') ||
-      req.path.startsWith('/v1/receipts')
+      url === '/v1/health' ||
+      url === '/metrics' ||
+      url.startsWith('/v1/ledger') ||
+      url.startsWith('/v1/keys') ||
+      url.startsWith('/v1/receipts')
     ) {
       return next();
     }
 
     // Unknown family in /v1/* path - reject
-    if (req.path.startsWith('/v1/')) {
+    if (url.startsWith('/v1/')) {
       const errorResponse = createErrorResponse(
         ErrorCode.VALIDATION_ERROR,
         `Invalid consent family in path. Must be one of: ${VALID_FAMILIES.join(', ')}`,
-        { path: req.path, valid_families: VALID_FAMILIES },
+        { path: url, valid_families: VALID_FAMILIES },
         req,
         traceId
       );
@@ -186,7 +188,7 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
       .emit('CONSENT_GRANT', 'consent_resolution_failed', {
         reason: 'unauthorized',
         family,
-        path: req.path,
+        path: req.originalUrl || req.path,
         trace_id: traceId,
       })
       .catch((err) => console.error('Failed to emit audit event:', err));
@@ -216,7 +218,7 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
         reason: 'forbidden',
         family,
         hashed_pseudonym: hashedPseudonym,
-        path: req.path,
+        path: req.originalUrl || req.path,
         trace_id: traceId,
       })
       .catch((err) => console.error('Failed to emit audit event:', err));
@@ -242,7 +244,7 @@ export function consentResolver(req: Request, res: Response, next: NextFunction)
         family,
         hashed_pseudonym: hashedPseudonym,
         scope: authCheck.scope,
-        path: req.path,
+        path: req.originalUrl || req.path,
         method: req.method,
       },
       {
