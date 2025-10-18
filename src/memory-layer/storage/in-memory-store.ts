@@ -62,7 +62,8 @@ export class InMemoryStore implements MemoryStore {
     }
 
     // Optional: Validate expected hash format (hs_ prefix or 64-char hex)
-    const hashedPattern = /^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$/;
+    // Accept 43+ characters for variable-length base64url encoding
+    const hashedPattern = /^(hs_[A-Za-z0-9_-]{43,}|[a-f0-9]{64})$/;
     if (!hashedPattern.test(hashedPseudonym)) {
       throw new Error(
         'Invalid hashed_pseudonym format. Expected: hs_<base64url> or SHA-256 hex (64 chars)'
