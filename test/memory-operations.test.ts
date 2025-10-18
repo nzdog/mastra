@@ -451,7 +451,7 @@ async function main(): Promise<void> {
       const response = await authedRequest('/v1/cohort/distill', {
         method: 'POST',
         body: {
-          aggregation: { type: 'avg', field: 'content.data.value' },
+          aggregation: { type: 'average', field: 'content.data.value' },
           min_records: 5,
         },
       });

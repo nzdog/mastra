@@ -824,7 +824,8 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
   // Set Content-Disposition header for download
   const filename = `memory_export_${consentContext.hashed_pseudonym}_${Date.now()}.${exportRequest.format === 'jsonlines' ? 'jsonl' : exportRequest.format}`;
   res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-  res.setHeader('Content-Type', contentType);
+  // Note: Always send JSON response (export data is in response.data field)
+  // Express will automatically set Content-Type: application/json
 
   res.status(200).json(response);
 });
