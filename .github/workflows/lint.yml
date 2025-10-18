@@ -1,0 +1,63 @@
+name: 💅 Lint & Format
+
+on:
+  pull_request:
+    branches:
+      - main
+      - master
+      - feature/**
+      - fix/**
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  eslint:
+    name: ESLint
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npx eslint . --max-warnings=0 --format=stylish
+
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check formatting
+        run: npx prettier --check . --ignore-unknown
+
+      - name: Format summary
+        if: failure()
+        run: |
+          echo "❌ Code formatting issues detected. Run 'npm run format' to fix."
+          echo "Files with issues:"
+          npx prettier --list-different . --ignore-unknown || true
