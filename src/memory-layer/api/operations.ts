@@ -10,12 +10,14 @@
  * - Proper error handling with asyncHandler
  */
 
-import { Request, Response } from 'express';
 import { randomUUID } from 'crypto';
+import { Request, Response } from 'express';
+import { aggregate, DEFAULT_K_ANONYMITY } from '../aggregation/simple-aggregator';
+import { getAuditEmitter } from '../governance/audit-emitter';
+import { ConsentContext } from '../middleware/consent-resolver';
 import { asyncHandler, MemoryLayerError } from '../middleware/error-handler';
 import { ErrorCode } from '../models/error-envelope';
-import { getMemoryStore } from '../storage/in-memory-store';
-import { getAuditEmitter } from '../governance/audit-emitter';
+import { MemoryRecord, ConsentFamily } from '../models/memory-record';
 import {
   StoreRequest,
   RecallQuery,
@@ -35,9 +37,7 @@ import {
   createBaseResponse,
   createPaginationMetadata,
 } from '../models/operation-responses';
-import { MemoryRecord, ConsentFamily } from '../models/memory-record';
-import { aggregate, DEFAULT_K_ANONYMITY } from '../aggregation/simple-aggregator';
-import { ConsentContext } from '../middleware/consent-resolver';
+import { getMemoryStore } from '../storage/in-memory-store';
 
 /**
  * Extend Express Request to include consent context

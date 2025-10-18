@@ -18,8 +18,8 @@ import {
   measureAsync,
 } from '../../observability/metrics';
 import { CryptoSigner, SignatureResult } from '../governance/crypto-signer';
-import { getSignerRegistry } from '../governance/signer-registry';
 import { MerkleTree, MerkleNode, MerkleProof } from '../governance/merkle-tree';
+import { getSignerRegistry } from '../governance/signer-registry';
 import { canonicalStringify } from '../utils/canonical-json';
 
 export interface AuditEvent {

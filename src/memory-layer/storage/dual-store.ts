@@ -8,14 +8,14 @@
  * - Records metrics for monitoring migration progress
  */
 
-import { MemoryStore, QueryFilters } from './memory-store-interface';
-import { MemoryRecord } from '../models/memory-record';
-import { RecallQuery, ForgetRequest } from '../models/operation-requests';
 import {
   dualWriteRecordsTotal,
   dualWriteFailuresTotal,
   dualWriteLagSeconds,
 } from '../../observability/metrics';
+import { MemoryRecord } from '../models/memory-record';
+import { RecallQuery, ForgetRequest } from '../models/operation-requests';
+import { MemoryStore, QueryFilters } from './memory-store-interface';
 
 /**
  * Dual-write configuration

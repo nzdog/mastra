@@ -8,18 +8,18 @@
  * Other methods stubbed with TODO Phase 3.
  */
 
-import { Pool, PoolClient } from 'pg';
-import { MemoryRecord } from '../models/memory-record';
-import { RecallQuery, ForgetRequest } from '../models/operation-requests';
-import { MemoryStore, QueryFilters } from './memory-store-interface';
-import { getEncryptionService } from '../security/encryption-service';
-import { isEncryptionEnabled } from './adapter-selector';
+import { Pool } from 'pg';
 import {
   cryptoEncryptFailuresTotal,
   cryptoDecryptFailuresTotal,
   cryptoOpsDuration,
   postgresPoolErrorsTotal,
 } from '../../observability/metrics';
+import { MemoryRecord } from '../models/memory-record';
+import { RecallQuery, ForgetRequest } from '../models/operation-requests';
+import { getEncryptionService } from '../security/encryption-service';
+import { isEncryptionEnabled } from './adapter-selector';
+import { MemoryStore, QueryFilters } from './memory-store-interface';
 
 // Query and performance constants
 const MAX_QUERY_LIMIT = 10000; // Maximum LIMIT for queries (prevent DoS)
@@ -328,7 +328,7 @@ export class PostgresStore implements MemoryStore {
           }
           values.push(cursorCreatedAt, cursorId);
           paramIndex += 2;
-        } catch (err) {
+        } catch {
           console.warn(`[PostgresStore] Invalid cursor format: ${query.cursor}`);
           // Continue without cursor - fall back to offset
         }
@@ -509,7 +509,7 @@ export class PostgresStore implements MemoryStore {
    * Increment access count - STUB for Phase 3
    * TODO: Implement proper access count tracking
    */
-  async incrementAccessCount(id: string): Promise<MemoryRecord | null> {
+  async incrementAccessCount(_id: string): Promise<MemoryRecord | null> {
     console.warn('[PostgresStore] incrementAccessCount() not yet implemented - returning null');
     return null;
   }
@@ -631,7 +631,7 @@ export class PostgresStore implements MemoryStore {
    * @returns Fully hydrated MemoryRecord with decrypted content
    */
   private async rowToRecord(row: PostgresRow): Promise<MemoryRecord> {
-    let content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+    const content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
 
     // Detect if content is encrypted using encryption_version field AND data_ciphertext presence
     // Both indicators must be present for data integrity (catches schema mismatches)

@@ -7,9 +7,9 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { ConsentFamily } from '../models/memory-record';
-import { createErrorResponse, ErrorCode, getStatusCode } from '../models/error-envelope';
 import { getAuditEmitter } from '../governance/audit-emitter';
+import { createErrorResponse, ErrorCode, getStatusCode } from '../models/error-envelope';
+import { ConsentFamily } from '../models/memory-record';
 
 /**
  * Consent context attached to request

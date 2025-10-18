@@ -6,9 +6,9 @@
  * Includes indexing, TTL enforcement, and consent family enforcement.
  */
 
-import { MemoryStore, QueryFilters } from './memory-store-interface';
 import { MemoryRecord, ConsentFamily } from '../models/memory-record';
 import { RecallQuery, ForgetRequest } from '../models/operation-requests';
+import { MemoryStore, QueryFilters } from './memory-store-interface';
 
 /**
  * Index structure for fast lookups
@@ -98,7 +98,9 @@ export class InMemoryStore implements MemoryStore {
 
     for (const id of candidateIds) {
       const record = this.records.get(id);
-      if (!record) continue;
+      if (!record) {
+        continue;
+      }
 
       // Check if record matches all query filters
       if (this.matchesQuery(record, query)) {
@@ -184,7 +186,9 @@ export class InMemoryStore implements MemoryStore {
 
     for (const id of candidateIds) {
       const record = this.records.get(id);
-      if (!record) continue;
+      if (!record) {
+        continue;
+      }
 
       if (this.matchesFilters(record, filters)) {
         count++;
