@@ -429,7 +429,7 @@ async function main(): Promise<void> {
       const response = await authedRequest('/v1/cohort/distill', {
         method: 'POST',
         body: {
-          aggregation: { type: 'sum', field: 'content.data.value' },
+          aggregation: { type: 'sum', field: 'value' },
           filters: { content_type: 'structured' },
           min_records: 5,
         },
@@ -451,7 +451,7 @@ async function main(): Promise<void> {
       const response = await authedRequest('/v1/cohort/distill', {
         method: 'POST',
         body: {
-          aggregation: { type: 'average', field: 'content.data.value' },
+          aggregation: { type: 'average', field: 'value' },
           min_records: 5,
         },
       });
@@ -612,6 +612,9 @@ async function main(): Promise<void> {
 
       if (response.status !== 200) {
         throw new Error(`Expected 200, got ${response.status}`);
+      }
+      if (!response.data.metadata) {
+        throw new Error('Missing metadata in response');
       }
       if (response.data.metadata.format !== 'csv') {
         throw new Error('Format mismatch');
