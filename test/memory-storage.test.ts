@@ -184,7 +184,7 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 7: Recall by session_id');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_recall_002';
+    const hashedPseudonym = 'hs_cmVjYWxsXzAwMl9oYXNoZWRfcHNldWRvbnltX3Rlc3Q';
     const sessionId = 'session_specific';
 
     // Store records with different sessions
@@ -220,7 +220,7 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 8: Recall with pagination');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_pagination';
+    const hashedPseudonym = 'hs_cGFnaW5hdGlvbl9oYXNoZWRfcHNldWRvbnltX3Rlc3Q';
 
     // Store 10 records
     for (let i = 0; i < 10; i++) {
@@ -245,7 +245,7 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 9: Recall with sort order');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_sort';
+    const hashedPseudonym = 'hs_c29ydF9oYXNoZWRfcHNldWRvbnltX3Rlc3RfdmFsaWQ';
 
     // Store records with different timestamps
     const now = Date.now();
@@ -294,7 +294,7 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 10: Recall with content type filter');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_filter';
+    const hashedPseudonym = 'hs_ZmlsdGVyX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF92YWxpZA';
 
     // Store records with different content types
     await store.store(
@@ -335,7 +335,7 @@ async function main(): Promise<void> {
   console.log('\n[RECALL] Test 11: Recall with time range filters');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_time';
+    const hashedPseudonym = 'hs_dGltZV9oYXNoZWRfcHNldWRvbnltX3Rlc3RfdmFsaWQ';
 
     const now = Date.now();
     const past = new Date(now - 3600000).toISOString(); // 1 hour ago
@@ -403,7 +403,7 @@ async function main(): Promise<void> {
   console.log('\n[FORGET] Test 13: Forget by user_id');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_forget';
+    const hashedPseudonym = 'hs_Zm9yZ2V0X2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF92YWxpZA';
 
     // Store multiple records
     for (let i = 0; i < 3; i++) {
@@ -427,7 +427,7 @@ async function main(): Promise<void> {
   console.log('\n[FORGET] Test 14: Forget by session_id');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_forget_session';
+    const hashedPseudonym = 'hs_Zm9yZ2V0X3Nlc3Npb25faGFzaGVkX3BzZXVkb255bV90ZXN0';
     const sessionId = 'session_forget';
 
     // Store records with different sessions
@@ -494,7 +494,7 @@ async function main(): Promise<void> {
       await store.store(
         createTestRecord({
           session_id: sessionId,
-          hashed_pseudonym: `hs_${i}_aGFzaGVkX3BzZXVkb255bV90ZXN0`,
+          hashed_pseudonym: `hs_aW5kZXhfdGVzdF91c2VyXyR7aX1faGFzaGVkX3BzZXVkb255bV90ZXN0`,
         })
       );
     }
@@ -524,7 +524,7 @@ async function main(): Promise<void> {
         await store.store(
           createTestRecord({
             consent_family: family,
-            hashed_pseudonym: `hs_${family}_${i}_aGFzaGVkX3BzZXVkb255bV90ZXN0`,
+            hashed_pseudonym: `hs_Y29uc2VudF9mYW1pbHlfdGVzdF8ke family}_aGFzaGVkX3BzZXVkb255bV90ZXN0`,
           })
         );
       }
@@ -552,7 +552,7 @@ async function main(): Promise<void> {
   console.log('\n[TTL] Test 18: Clear expired records');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_ttl';
+    const hashedPseudonym = 'hs_dHRsX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF92YWxpZF90dGw';
 
     const now = new Date();
     const past = new Date(now.getTime() - 3600000).toISOString(); // 1 hour ago
@@ -587,7 +587,7 @@ async function main(): Promise<void> {
   console.log('\n[TTL] Test 19: Recall excludes expired records');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_ttl_recall';
+    const hashedPseudonym = 'hs_dHRsX3JlY2FsbF9oYXNoZWRfcHNldWRvbnltX3Rlc3RfdmFs';
 
     const now = new Date();
     const past = new Date(now.getTime() - 1000).toISOString(); // 1 second ago
@@ -617,7 +617,7 @@ async function main(): Promise<void> {
   console.log('\n[COUNT] Test 20: Count records with filters');
   try {
     const store = new InMemoryStore();
-    const hashedPseudonym = 'hs_count';
+    const hashedPseudonym = 'hs_Y291bnRfaGFzaGVkX3BzZXVkb255bV90ZXN0X3ZhbGlk';
 
     // Store multiple records
     for (let i = 0; i < 5; i++) {
