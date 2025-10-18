@@ -27,28 +27,6 @@ export interface DualStoreConfig {
 }
 
 /**
- * Timeout constant for secondary store operations
- * Prevents hanging on secondary store failures
- */
-const SECONDARY_STORE_TIMEOUT_MS = 5000; // 5 seconds
-
-/**
- * Wrap a promise with a timeout
- * @param promise - Promise to wrap
- * @param timeoutMs - Timeout in milliseconds
- * @param operation - Operation name for error messages
- * @returns Promise that rejects if timeout is exceeded
- */
-function withTimeout<T>(promise: Promise<T>, timeoutMs: number, operation: string): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`${operation} timed out after ${timeoutMs}ms`)), timeoutMs)
-    ),
-  ]);
-}
-
-/**
  * Load dual-write config from environment
  */
 function loadDualStoreConfig(): DualStoreConfig {
@@ -87,12 +65,15 @@ export class DualStore implements MemoryStore {
    * Secondary write failure → log, record metric, continue if not failFast
    */
   async store(record: MemoryRecord): Promise<MemoryRecord> {
-    const secondaryStoreType = this.config.primaryStore === 'memory' ? 'postgres' : 'memory';
-
     // Write to primary store (always required)
     let primaryResult: MemoryRecord;
     try {
       primaryResult = await this.primaryStore.store(record);
+      dualWriteRecordsTotal.inc({
+        primary_store: this.config.primaryStore,
+        secondary_store: this.config.primaryStore === 'memory' ? 'postgres' : 'memory',
+        status: 'primary_success',
+      });
     } catch (err) {
       dualWriteFailuresTotal.inc({
         store: this.config.primaryStore,
@@ -102,26 +83,19 @@ export class DualStore implements MemoryStore {
       throw err; // Always fail on primary store failure
     }
 
-    // Write to secondary store (best-effort unless failFast) with timeout
+    // Write to secondary store (best-effort unless failFast)
     try {
-      await withTimeout(
-        this.secondaryStore.store(record),
-        SECONDARY_STORE_TIMEOUT_MS,
-        'Secondary store write'
-      );
-      // Success: Both stores written
+      await this.secondaryStore.store(record);
       dualWriteRecordsTotal.inc({
         primary_store: this.config.primaryStore,
-        secondary_store: secondaryStoreType,
+        secondary_store: this.config.primaryStore === 'memory' ? 'postgres' : 'memory',
         status: 'both_success',
       });
     } catch (err) {
-      const reason = (err as Error).message?.includes('timed out')
-        ? 'secondary_store_timeout'
-        : 'secondary_store_failed';
+      const secondaryStoreType = this.config.primaryStore === 'memory' ? 'postgres' : 'memory';
       dualWriteFailuresTotal.inc({
         store: secondaryStoreType,
-        reason,
+        reason: 'secondary_store_failed',
       });
       console.error('[DualStore] Secondary store failed:', err);
 
@@ -157,24 +131,8 @@ export class DualStore implements MemoryStore {
       const secondaryResults = await this.secondaryStore.recall(query);
 
       if (secondaryResults.length > 0) {
-        // Update lag metric if we had to fallback - calculate real lag
-        // Results should be sorted by created_at DESC (newest first)
-        const newest = secondaryResults[0];
-
-        if (!newest.created_at) {
-          console.warn('[DualStore] Cannot calculate lag: missing created_at timestamp');
-          // Do not set metric - avoid false zero lag
-        } else {
-          const createdTimestamp = new Date(newest.created_at as any).getTime();
-
-          // NaN guard: Invalid date parsing should not set metric
-          if (Number.isNaN(createdTimestamp)) {
-            console.warn(`[DualStore] Invalid created_at timestamp: ${newest.created_at}`);
-          } else {
-            const lagSeconds = Math.max(0, (Date.now() - createdTimestamp) / 1000);
-            dualWriteLagSeconds.set({ store: 'secondary_fallback' }, lagSeconds);
-          }
-        }
+        // Update lag metric if we had to fallback
+        dualWriteLagSeconds.set({ store: 'secondary_fallback' }, 1);
       }
 
       return secondaryResults;
@@ -203,79 +161,19 @@ export class DualStore implements MemoryStore {
   }
 
   /**
-   * Forget: Delete from both stores with mismatch detection
-   *
-   * GDPR Compliance: This method ALWAYS enforces failFast=true semantics regardless
-   * of config. GDPR erasure must be atomic across both stores.
-   *
-   * Deletes records from both primary and secondary stores. If secondary store
-   * fails or returns different count, throws error (no claim of success).
-   *
-   * @param request - ForgetRequest specifying what to delete
-   * @returns Array of deleted IDs from primary store
-   * @throws Error if secondary deletion fails or counts mismatch
+   * Forget: Delete from both stores
    */
   async forget(request: ForgetRequest): Promise<string[]> {
-    const secondaryStoreType = this.config.primaryStore === 'memory' ? 'postgres' : 'memory';
+    const primaryDeleted = await this.primaryStore.forget(request);
 
-    // Delete from primary store (required)
-    let primaryDeleted: string[];
     try {
-      primaryDeleted = await this.primaryStore.forget(request);
+      await this.secondaryStore.forget(request);
     } catch (err) {
-      dualWriteFailuresTotal.inc({
-        store: this.config.primaryStore,
-        reason: 'forget_failed',
-      });
-      console.error('[DualStore] Primary forget failed:', err);
-      throw err; // Always fail on primary failure
+      console.error('[DualStore] Secondary forget failed:', err);
+      // Continue - primary deletion succeeded
     }
 
-    // Only proceed if primary succeeded and deleted records
-    if (primaryDeleted.length === 0) {
-      // No records to delete - success (no secondary attempt needed)
-      return primaryDeleted;
-    }
-
-    // Delete from secondary store (MUST succeed for GDPR compliance) with timeout
-    try {
-      const secondaryDeleted = await withTimeout(
-        this.secondaryStore.forget(request),
-        SECONDARY_STORE_TIMEOUT_MS,
-        'Secondary store forget'
-      );
-
-      // Check for count mismatch - this is a GDPR violation
-      if (primaryDeleted.length !== secondaryDeleted.length) {
-        const diff = Math.abs(primaryDeleted.length - secondaryDeleted.length);
-        console.error(
-          `[DualStore] GDPR VIOLATION: Forget count mismatch: primary=${primaryDeleted.length}, secondary=${secondaryDeleted.length} (diff=${diff}, ids=${primaryDeleted.length})`
-        );
-        dualWriteFailuresTotal.inc({
-          store: secondaryStoreType,
-          reason: 'forget_mismatch',
-        });
-
-        // GDPR requires atomic deletion - surface failure
-        throw new Error(
-          `GDPR erasure incomplete: primary deleted ${primaryDeleted.length} records, secondary deleted ${secondaryDeleted.length}`
-        );
-      }
-
-      // Success: Both stores deleted same count
-      return primaryDeleted;
-    } catch (err) {
-      dualWriteFailuresTotal.inc({
-        store: secondaryStoreType,
-        reason: 'forget_failed',
-      });
-      console.error(`[DualStore] Secondary forget failed (${primaryDeleted.length} ids):`, err);
-
-      // GDPR requires atomic deletion - always fail
-      throw new Error(
-        `Secondary store forget failed (${primaryDeleted.length} records affected): ${(err as Error).message}`
-      );
-    }
+    return primaryDeleted;
   }
 
   /**

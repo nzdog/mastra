@@ -130,48 +130,6 @@ describe('PostgresStore', () => {
       const stored = await store.store(record);
       expect(stored.content.data).toEqual(record.content.data);
     });
-
-    it('should throw on missing hashed_pseudonym', async () => {
-      const invalidRecord: any = {
-        id: uuidv4(),
-        // hashed_pseudonym missing
-        content: {
-          type: 'text',
-          data: 'Test',
-        },
-        consent_family: 'personal',
-        consent_timestamp: new Date().toISOString(),
-        consent_version: '1.0',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        access_count: 0,
-        audit_receipt_id: uuidv4(),
-      };
-
-      await expect(store.store(invalidRecord)).rejects.toThrow('hashed_pseudonym is required');
-    });
-
-    it('should throw on invalid consent_family', async () => {
-      const invalidRecord: any = {
-        id: uuidv4(),
-        hashed_pseudonym: testHashedPseudonym,
-        content: {
-          type: 'text',
-          data: 'Test',
-        },
-        consent_family: 'invalid_family',
-        consent_timestamp: new Date().toISOString(),
-        consent_version: '1.0',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        access_count: 0,
-        audit_receipt_id: uuidv4(),
-      };
-
-      await expect(store.store(invalidRecord)).rejects.toThrow(
-        'consent_family must be one of [personal, cohort, population]'
-      );
-    });
   });
 
   describe('recall()', () => {

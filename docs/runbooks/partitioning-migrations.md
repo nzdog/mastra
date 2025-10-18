@@ -16,9 +16,9 @@ The memory_records table uses monthly partitioning by `created_at` timestamp for
 ### Production-Safe Migration (002_partitions.sql)
 
 **Use this for:**
-- **NEW INSTALLS ONLY** - Fresh database with no existing memory_records table
-- Setting up partitioned table infrastructure from scratch
-- Post-initial deployment (before any data exists)
+- Production environments with existing data
+- Environments where data preservation is critical
+- Post-backfill migration setup
 
 **What it does:**
 - Creates partition helper function (`create_monthly_partition`)
@@ -28,17 +28,14 @@ The memory_records table uses monthly partitioning by `created_at` timestamp for
 - Does NOT delete any data
 
 **Assumptions:**
-- `memory_records` table does NOT exist yet (or is partitioned already)
-- This is a brand new install OR
-- You have already converted to partitioned (see conversion runbook below)
+- `memory_records` table already exists (created in Phase 2)
+- Table is NOT partitioned yet (standard heap table)
+- Data has been backfilled from in-memory store
 
 **Limitations:**
-- **Cannot convert existing heap table to partitioned table**
-- If you have Phase 2 data in a heap table, you MUST use the conversion procedure (see below)
+- Cannot convert existing heap table to partitioned table
+- Table must be recreated as partitioned separately (see dev migration)
 - Only adds partition infrastructure and indexes
-
-**⚠️ Important:**
-If you have existing Phase 2 data in a non-partitioned memory_records table, DO NOT use this migration directly. Follow the "Heap-to-Partitioned Conversion Procedure" section below.
 
 ### Dev-Only Migration (002_partitions_dev.sql)
 
@@ -60,89 +57,9 @@ If you have existing Phase 2 data in a non-partitioned memory_records table, DO 
 - **MUST NOT** be run on production with existing data
 - CI gates will block this file on main/master branches
 
-## Heap-to-Partitioned Conversion Procedure
-
-**Use this section if:**
-- You have existing Phase 2 data in a non-partitioned memory_records table
-- You want to convert to partitioned table without data loss
-- You are upgrading from Phase 2 to Phase 3.1 with existing production data
-
-### Conversion Steps (Zero-Downtime)
-
-This procedure uses pg_dump/restore with table rename to convert from heap to partitioned:
-
-1. **Enable dual-write mode** (writes to both old and new tables):
-   ```bash
-   export PERSISTENCE=dual-write
-   export DUAL_WRITE_PRIMARY=memory
-   ```
-
-2. **Create new partitioned table** (using migration 002a_convert_to_partitioned.sql):
-   ```bash
-   # This creates memory_records_partitioned (new table)
-   psql -U postgres -d lichen_memory -f migrations/002a_convert_to_partitioned.sql
-   ```
-
-3. **Copy existing data** into new partitioned table:
-   ```bash
-   # Copies data from memory_records (heap) to memory_records_partitioned
-   psql -U postgres -d lichen_memory <<'EOF'
-   INSERT INTO memory_records_partitioned
-   SELECT * FROM memory_records
-   ON CONFLICT (id) DO NOTHING;
-   EOF
-   ```
-
-4. **Verify data parity**:
-   ```sql
-   SELECT COUNT(*) FROM memory_records;
-   SELECT COUNT(*) FROM memory_records_partitioned;
-   ```
-
-5. **Atomic table swap** (downtime < 1 second):
-   ```sql
-   BEGIN;
-   ALTER TABLE memory_records RENAME TO memory_records_old;
-   ALTER TABLE memory_records_partitioned RENAME TO memory_records;
-   COMMIT;
-   ```
-
-6. **Verify application** (writes now go to partitioned table):
-   ```bash
-   # Check recent writes
-   SELECT COUNT(*) FROM memory_records WHERE created_at > NOW() - INTERVAL '5 minutes';
-   ```
-
-7. **Drop old table** after verification (wait 24-48 hours):
-   ```sql
-   DROP TABLE memory_records_old;
-   ```
-
-**Note:** See `migrations/002a_convert_to_partitioned.sql` for the detailed SQL commands.
-
 ## Migration Strategy
 
-### For New Installs (No Existing Data)
-
-**Steps:**
-
-1. **Run production-safe migration:**
-   ```bash
-   psql -U postgres -d lichen_memory -f migrations/002_partitions.sql
-   ```
-
-2. **Verify partition setup:**
-   ```sql
-   SELECT tablename FROM pg_tables WHERE tablename LIKE 'memory_records_%' ORDER BY tablename;
-   ```
-
-3. **Start server:**
-   ```bash
-   export PERSISTENCE=postgres
-   npm run server
-   ```
-
-### For Production (With Existing Phase 2 Data)
+### For Production (With Existing Data)
 
 **Prerequisites:**
 1. Dual-write mode enabled and running
