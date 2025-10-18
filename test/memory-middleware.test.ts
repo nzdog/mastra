@@ -13,9 +13,10 @@ import fetch from 'node-fetch';
 
 // Test configuration
 const BASE_URL = 'http://localhost:3000';
-const VALID_TOKEN = 'user_middleware_test_12345678';
-// Hashed pseudonym must match what consent-resolver generates from VALID_TOKEN
-const HASHED_PSEUDONYM = 'hs_dXNlcl9taWRkbGV3YXJlX3Rlc3RfMTIzNDU2Nzg';
+// Use pre-hashed token (43+ chars after hs_ prefix to meet schema requirement)
+const VALID_TOKEN = 'hs_dXNlcl9taWRkbGV3YXJlX3Rlc3RfMTIzNDU2Nzg5MDEyMzQ1Ng';
+// Hashed pseudonym matches VALID_TOKEN (consent-resolver passes through hs_ tokens)
+const HASHED_PSEUDONYM = 'hs_dXNlcl9taWRkbGV3YXJlX3Rlc3RfMTIzNDU2Nzg5MDEyMzQ1Ng';
 
 // Helper: Wait
 function wait(ms: number): Promise<void> {
