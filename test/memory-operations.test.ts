@@ -667,7 +667,7 @@ async function main(): Promise<void> {
     try {
       const response = await authedRequest('/v1/personal/store', {
         method: 'POST',
-        headers: { Authorization: 'Bearer test_token' },
+        headers: { Authorization: `Bearer ${USER_TOKEN}` },
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
@@ -697,7 +697,7 @@ async function main(): Promise<void> {
     try {
       const response = await authedRequest('/v1/personal/store', {
         method: 'POST',
-        headers: { Authorization: 'Bearer test_token' },
+        headers: { Authorization: `Bearer ${USER_TOKEN}` },
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
@@ -724,7 +724,7 @@ async function main(): Promise<void> {
     try {
       const response = await authedRequest('/v1/personal/store', {
         method: 'POST',
-        headers: { Authorization: 'Bearer test_token' },
+        headers: { Authorization: `Bearer ${USER_TOKEN}` },
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
