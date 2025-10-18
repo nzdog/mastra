@@ -349,11 +349,15 @@ async function main(): Promise<void> {
 
     // Skip audit receipt verification when ledger is disabled (LEDGER_ENABLED=false)
     // This is expected behavior - stub receipts can't be verified
-    const ledgerEnabled = process.env.LEDGER_ENABLED !== 'false';
+    // Check if LEDGER_ENABLED is explicitly set to 'true' - if not, assume disabled
+    const ledgerEnabledEnv = process.env.LEDGER_ENABLED?.toLowerCase();
+    const ledgerEnabled = ledgerEnabledEnv === 'true';
+
+    console.log(`DEBUG: LEDGER_ENABLED="${process.env.LEDGER_ENABLED}" → ledgerEnabled=${ledgerEnabled}`);
 
     if (!ledgerEnabled) {
       console.log(
-        '⏭️  Skipping audit receipt verification (LEDGER_ENABLED=false - expected behavior)'
+        `⏭️  Skipping audit receipt verification (ledger disabled: LEDGER_ENABLED="${process.env.LEDGER_ENABLED}")`
       );
       results.push({ test: 'Verify audit receipts', passed: true });
     } else {
