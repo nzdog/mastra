@@ -9,10 +9,10 @@
  */
 
 import { describe, test, expect, beforeEach, afterEach } from 'vitest';
-import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
+import { MemoryRecord as _MemoryRecord } from '../src/memory-layer/models/memory-record';
 import { DualStore } from '../src/memory-layer/storage/dual-store';
 import { getMemoryStore } from '../src/memory-layer/storage/in-memory-store';
-import { MemoryRecord } from '../src/memory-layer/models/memory-record';
+import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 
 describe('KMS Provider Production Guards (CRITICAL-1 & 2)', () => {
   test('should block MemoryKMS in production', () => {
@@ -82,7 +82,7 @@ describe('Circuit Breaker Race Conditions (CRITICAL-5)', () => {
 });
 
 describe('Dual-Write Secondary Timeouts (HIGH-5)', () => {
-  let dualStore: DualStore;
+  let _dualStore: DualStore;
   let memoryStore: any;
   let postgresStore: any;
 

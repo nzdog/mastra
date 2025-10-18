@@ -137,8 +137,12 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 401) throw new Error(`Expected 401, got ${response.status}`);
-      if (!response.data.error) throw new Error('Missing error in response');
+      if (response.status !== 401) {
+        throw new Error(`Expected 401, got ${response.status}`);
+      }
+      if (!response.data.error) {
+        throw new Error('Missing error in response');
+      }
       if (response.data.error.code !== 'UNAUTHORIZED') {
         throw new Error('Expected UNAUTHORIZED error code');
       }
@@ -166,7 +170,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 401) throw new Error(`Expected 401, got ${response.status}`);
+      if (response.status !== 401) {
+        throw new Error(`Expected 401, got ${response.status}`);
+      }
 
       console.log('✅ Invalid token format test passed');
       results.push({ test: 'Invalid token format (401)', passed: true });
@@ -191,7 +197,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.status !== 400) {
+        throw new Error(`Expected 400, got ${response.status}`);
+      }
       if (response.data.error.code !== 'VALIDATION_ERROR') {
         throw new Error('Expected VALIDATION_ERROR');
       }
@@ -334,15 +342,29 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.status !== 400) {
+        throw new Error(`Expected 400, got ${response.status}`);
+      }
 
       // Check error envelope structure
-      if (!response.data.error) throw new Error('Missing error object');
-      if (!response.data.error.code) throw new Error('Missing error.code');
-      if (!response.data.error.message) throw new Error('Missing error.message');
-      if (!response.data.timestamp) throw new Error('Missing timestamp');
-      if (!response.data.path) throw new Error('Missing path');
-      if (!response.data.method) throw new Error('Missing method');
+      if (!response.data.error) {
+        throw new Error('Missing error object');
+      }
+      if (!response.data.error.code) {
+        throw new Error('Missing error.code');
+      }
+      if (!response.data.error.message) {
+        throw new Error('Missing error.message');
+      }
+      if (!response.data.timestamp) {
+        throw new Error('Missing timestamp');
+      }
+      if (!response.data.path) {
+        throw new Error('Missing path');
+      }
+      if (!response.data.method) {
+        throw new Error('Missing method');
+      }
 
       console.log('✅ Error envelope structure test passed');
       results.push({ test: 'Error envelope structure', passed: true });
@@ -359,7 +381,9 @@ async function main(): Promise<void> {
         body: { content: { type: 'text', data: 'test' } },
       });
 
-      if (response.status !== 401) throw new Error(`Expected 401, got ${response.status}`);
+      if (response.status !== 401) {
+        throw new Error(`Expected 401, got ${response.status}`);
+      }
 
       // Check error envelope
       if (response.data.error.code !== 'UNAUTHORIZED') {
@@ -380,7 +404,9 @@ async function main(): Promise<void> {
         headers: { Authorization: `Bearer ${VALID_TOKEN}` },
       });
 
-      if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
+      if (response.status !== 403) {
+        throw new Error(`Expected 403, got ${response.status}`);
+      }
 
       // Check error envelope
       if (response.data.error.code !== 'FORBIDDEN') {
@@ -401,10 +427,14 @@ async function main(): Promise<void> {
         headers: { Authorization: `Bearer ${VALID_TOKEN}` },
       });
 
-      if (response.status !== 404) throw new Error(`Expected 404, got ${response.status}`);
+      if (response.status !== 404) {
+        throw new Error(`Expected 404, got ${response.status}`);
+      }
 
       // Check error message
-      if (!response.data.error) throw new Error('Missing error object');
+      if (!response.data.error) {
+        throw new Error('Missing error object');
+      }
 
       console.log('✅ 404 error envelope test passed');
       results.push({ test: '404 error envelope', passed: true });
@@ -466,7 +496,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.status !== 400) {
+        throw new Error(`Expected 400, got ${response.status}`);
+      }
 
       console.log('✅ Missing content test passed');
       results.push({ test: 'Invalid schema (missing content)', passed: true });
@@ -486,7 +518,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.status !== 400) {
+        throw new Error(`Expected 400, got ${response.status}`);
+      }
 
       console.log('✅ Missing metadata test passed');
       results.push({ test: 'Invalid schema (missing metadata)', passed: true });

@@ -148,7 +148,26 @@
       "required": ["content", "metadata"],
       "properties": {
         "content": {
-          "$ref": "#/properties/content"
+          "type": "object",
+          "required": ["type", "data"],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": ["text", "structured", "embedding"]
+            },
+            "data": {
+              "oneOf": [
+                { "type": "string" },
+                { "type": "object" },
+                { "type": "array", "items": { "type": "number" } }
+              ]
+            },
+            "metadata": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "additionalProperties": false
         },
         "metadata": {
           "type": "object",

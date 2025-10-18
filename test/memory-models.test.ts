@@ -4,7 +4,7 @@
  */
 
 import {
-  MemoryRecord,
+  _MemoryRecord,
   ConsentFamily,
   ContentType,
   ErrorCode,

@@ -8,10 +8,10 @@
  * - Errors are handled gracefully
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
-import { MemoryRecord } from '../src/memory-layer/models/memory-record';
 import { v4 as uuidv4 } from 'uuid';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { MemoryRecord } from '../src/memory-layer/models/memory-record';
+import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 import { register } from '../src/observability/metrics';
 
 describe('Encryption Roundtrip', () => {
@@ -34,7 +34,7 @@ describe('Encryption Roundtrip', () => {
     // Cleanup test records
     try {
       await store.clear();
-    } catch (err) {
+    } catch {
       // clear() not implemented yet - OK
     }
 
@@ -120,7 +120,7 @@ describe('Encryption Roundtrip', () => {
 
   it('should emit crypto metrics', async () => {
     // Capture metrics before operation
-    const metricsBefore = await register.metrics();
+    const _metricsBefore = await register.metrics();
 
     const record: MemoryRecord = {
       id: uuidv4(),

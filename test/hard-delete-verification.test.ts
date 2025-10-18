@@ -12,8 +12,10 @@ async function waitForServer(maxAttempts = 30): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
       const res = await fetch(`${BASE_URL}/v1/health`);
-      if (res.ok) return;
-    } catch (e) {
+      if (res.ok) {
+        return;
+      }
+    } catch {
       // Server not ready
     }
     await new Promise((resolve) => setTimeout(resolve, 1000));

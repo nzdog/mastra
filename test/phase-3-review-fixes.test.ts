@@ -9,12 +9,12 @@
  * - Backfill checkpoint resumption
  */
 
+import { Pool as _Pool } from 'pg';
 import { describe, test, expect, beforeEach, afterEach, vi } from 'vitest';
-import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
+import { MemoryRecord as _MemoryRecord } from '../src/memory-layer/models/memory-record';
 import { DualStore } from '../src/memory-layer/storage/dual-store';
 import { getMemoryStore } from '../src/memory-layer/storage/in-memory-store';
-import { MemoryRecord } from '../src/memory-layer/models/memory-record';
-import { Pool } from 'pg';
+import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 
 describe('Circuit Breaker', () => {
   let store: PostgresStore;
@@ -341,7 +341,7 @@ describe('Tamper Detection', () => {
       audit_receipt_id: 'audit-tamper',
     };
 
-    const storedRecord = await store.store(record);
+    const _storedRecord = await store.store(record);
 
     // Directly modify the ciphertext in the database (simulating tampering)
     const Pool = require('pg').Pool;

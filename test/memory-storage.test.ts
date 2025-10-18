@@ -11,9 +11,9 @@
  * - Query filters
  */
 
-import { InMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { MemoryRecord, ConsentFamily } from '../src/memory-layer/models/memory-record';
 import { RecallQuery, ForgetRequest } from '../src/memory-layer/models/operation-requests';
+import { InMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 
 // Test helpers
 function createTestRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord {
@@ -53,9 +53,12 @@ async function main(): Promise<void> {
 
     const stored = await store.store(record);
 
-    if (stored.id !== record.id) throw new Error('ID mismatch');
-    if (stored.hashed_pseudonym !== record.hashed_pseudonym)
+    if (stored.id !== record.id) {
+      throw new Error('ID mismatch');
+    }
+    if (stored.hashed_pseudonym !== record.hashed_pseudonym) {
       throw new Error('hashed_pseudonym mismatch');
+    }
 
     console.log('✅ Store record passed');
     results.push({ test: 'Store record', passed: true });
@@ -72,8 +75,12 @@ async function main(): Promise<void> {
 
     const retrieved = await store.get(record.id);
 
-    if (!retrieved) throw new Error('Record not found');
-    if (retrieved.id !== record.id) throw new Error('ID mismatch');
+    if (!retrieved) {
+      throw new Error('Record not found');
+    }
+    if (retrieved.id !== record.id) {
+      throw new Error('ID mismatch');
+    }
 
     console.log('✅ Get record passed');
     results.push({ test: 'Get record by ID', passed: true });
@@ -87,7 +94,9 @@ async function main(): Promise<void> {
     const store = new InMemoryStore();
     const retrieved = await store.get('nonexistent_id');
 
-    if (retrieved !== null) throw new Error('Expected null for nonexistent record');
+    if (retrieved !== null) {
+      throw new Error('Expected null for nonexistent record');
+    }
 
     console.log('✅ Get nonexistent record passed');
     results.push({ test: 'Get nonexistent record', passed: true });
@@ -105,8 +114,12 @@ async function main(): Promise<void> {
     const exists = await store.exists(record.id);
     const notExists = await store.exists('nonexistent_id');
 
-    if (!exists) throw new Error('Record should exist');
-    if (notExists) throw new Error('Nonexistent record should not exist');
+    if (!exists) {
+      throw new Error('Record should exist');
+    }
+    if (notExists) {
+      throw new Error('Nonexistent record should not exist');
+    }
 
     console.log('✅ Exists check passed');
     results.push({ test: 'Check record exists', passed: true });
@@ -124,8 +137,12 @@ async function main(): Promise<void> {
     await store.incrementAccessCount(record.id);
     const updated = await store.get(record.id);
 
-    if (!updated) throw new Error('Record not found');
-    if (updated.access_count !== 1) throw new Error('Access count not incremented');
+    if (!updated) {
+      throw new Error('Record not found');
+    }
+    if (updated.access_count !== 1) {
+      throw new Error('Access count not incremented');
+    }
 
     console.log('✅ Increment access count passed');
     results.push({ test: 'Increment access count', passed: true });
@@ -153,7 +170,9 @@ async function main(): Promise<void> {
     const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
-    if (records.length !== 3) throw new Error(`Expected 3 records, got ${records.length}`);
+    if (records.length !== 3) {
+      throw new Error(`Expected 3 records, got ${records.length}`);
+    }
 
     console.log('✅ Recall by hashed_pseudonym passed');
     results.push({ test: 'Recall by hashed_pseudonym', passed: true });
@@ -184,8 +203,12 @@ async function main(): Promise<void> {
     };
     const records = await store.recall(query);
 
-    if (records.length !== 1) throw new Error(`Expected 1 record, got ${records.length}`);
-    if (records[0].session_id !== sessionId) throw new Error('Session ID mismatch');
+    if (records.length !== 1) {
+      throw new Error(`Expected 1 record, got ${records.length}`);
+    }
+    if (records[0].session_id !== sessionId) {
+      throw new Error('Session ID mismatch');
+    }
 
     console.log('✅ Recall by session_id passed');
     results.push({ test: 'Recall by session_id', passed: true });
@@ -208,7 +231,9 @@ async function main(): Promise<void> {
     const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 3, offset: 2 };
     const records = await store.recall(query);
 
-    if (records.length !== 3) throw new Error(`Expected 3 records, got ${records.length}`);
+    if (records.length !== 3) {
+      throw new Error(`Expected 3 records, got ${records.length}`);
+    }
 
     console.log('✅ Recall with pagination passed');
     results.push({ test: 'Recall with pagination', passed: true });
@@ -293,8 +318,12 @@ async function main(): Promise<void> {
     };
     const records = await store.recall(query);
 
-    if (records.length !== 1) throw new Error(`Expected 1 record, got ${records.length}`);
-    if (records[0].content.type !== 'text') throw new Error('Type filter failed');
+    if (records.length !== 1) {
+      throw new Error(`Expected 1 record, got ${records.length}`);
+    }
+    if (records[0].content.type !== 'text') {
+      throw new Error('Type filter failed');
+    }
 
     console.log('✅ Recall with content type filter passed');
     results.push({ test: 'Recall with type filter', passed: true });
@@ -328,7 +357,9 @@ async function main(): Promise<void> {
     };
     const records = await store.recall(query);
 
-    if (records.length !== 2) throw new Error(`Expected 2 records, got ${records.length}`);
+    if (records.length !== 2) {
+      throw new Error(`Expected 2 records, got ${records.length}`);
+    }
 
     console.log('✅ Recall with time range filters passed');
     results.push({ test: 'Recall with time range', passed: true });
@@ -350,11 +381,17 @@ async function main(): Promise<void> {
     const forgetRequest: ForgetRequest = { id: record.id, hard_delete: true };
     const deletedIds = await store.forget(forgetRequest);
 
-    if (deletedIds.length !== 1) throw new Error('Expected 1 deleted record');
-    if (deletedIds[0] !== record.id) throw new Error('ID mismatch');
+    if (deletedIds.length !== 1) {
+      throw new Error('Expected 1 deleted record');
+    }
+    if (deletedIds[0] !== record.id) {
+      throw new Error('ID mismatch');
+    }
 
     const exists = await store.exists(record.id);
-    if (exists) throw new Error('Record should be deleted');
+    if (exists) {
+      throw new Error('Record should be deleted');
+    }
 
     console.log('✅ Forget by ID passed');
     results.push({ test: 'Forget by ID', passed: true });
@@ -376,8 +413,9 @@ async function main(): Promise<void> {
     const forgetRequest: ForgetRequest = { hashed_pseudonym: hashedPseudonym, hard_delete: true };
     const deletedIds = await store.forget(forgetRequest);
 
-    if (deletedIds.length !== 3)
+    if (deletedIds.length !== 3) {
       throw new Error(`Expected 3 deleted records, got ${deletedIds.length}`);
+    }
 
     console.log('✅ Forget by user_id passed');
     results.push({ test: 'Forget by user_id', passed: true });
@@ -406,8 +444,9 @@ async function main(): Promise<void> {
     const forgetRequest: ForgetRequest = { session_id: sessionId, hard_delete: true };
     const deletedIds = await store.forget(forgetRequest);
 
-    if (deletedIds.length !== 2)
+    if (deletedIds.length !== 2) {
       throw new Error(`Expected 2 deleted records, got ${deletedIds.length}`);
+    }
 
     console.log('✅ Forget by session_id passed');
     results.push({ test: 'Forget by session_id', passed: true });
@@ -434,7 +473,9 @@ async function main(): Promise<void> {
     const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
-    if (records.length !== 5) throw new Error('Index lookup failed');
+    if (records.length !== 5) {
+      throw new Error('Index lookup failed');
+    }
 
     console.log('✅ byHashedPseudonym index passed');
     results.push({ test: 'byHashedPseudonym index', passed: true });
@@ -461,7 +502,9 @@ async function main(): Promise<void> {
     // Count records for this session
     const count = await store.count({ session_id: sessionId });
 
-    if (count !== 3) throw new Error('Index lookup failed');
+    if (count !== 3) {
+      throw new Error('Index lookup failed');
+    }
 
     console.log('✅ bySessionId index passed');
     results.push({ test: 'bySessionId index', passed: true });
@@ -490,7 +533,9 @@ async function main(): Promise<void> {
     // Count records per family
     for (const family of families) {
       const count = await store.count({ consent_family: family });
-      if (count !== 2) throw new Error(`Expected 2 records for ${family}, got ${count}`);
+      if (count !== 2) {
+        throw new Error(`Expected 2 records for ${family}, got ${count}`);
+      }
     }
 
     console.log('✅ byConsentFamily index passed');
@@ -520,13 +565,17 @@ async function main(): Promise<void> {
 
     const deletedCount = await store.clearExpired();
 
-    if (deletedCount !== 1) throw new Error(`Expected 1 expired record, got ${deletedCount}`);
+    if (deletedCount !== 1) {
+      throw new Error(`Expected 1 expired record, got ${deletedCount}`);
+    }
 
     // Verify remaining records
     const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
-    if (records.length !== 2) throw new Error('Expired record not removed');
+    if (records.length !== 2) {
+      throw new Error('Expired record not removed');
+    }
 
     console.log('✅ Clear expired records passed');
     results.push({ test: 'Clear expired records', passed: true });
@@ -550,7 +599,9 @@ async function main(): Promise<void> {
     const query: RecallQuery = { hashed_pseudonym: hashedPseudonym, limit: 100, offset: 0 };
     const records = await store.recall(query);
 
-    if (records.length !== 0) throw new Error('Expired record should not be recalled');
+    if (records.length !== 0) {
+      throw new Error('Expired record should not be recalled');
+    }
 
     console.log('✅ Recall excludes expired records passed');
     results.push({ test: 'Recall excludes expired', passed: true });
@@ -589,8 +640,12 @@ async function main(): Promise<void> {
       consent_family: 'cohort',
     });
 
-    if (personalCount !== 5) throw new Error(`Expected 5 personal records, got ${personalCount}`);
-    if (cohortCount !== 3) throw new Error(`Expected 3 cohort records, got ${cohortCount}`);
+    if (personalCount !== 5) {
+      throw new Error(`Expected 5 personal records, got ${personalCount}`);
+    }
+    if (cohortCount !== 3) {
+      throw new Error(`Expected 3 cohort records, got ${cohortCount}`);
+    }
 
     console.log('✅ Count with filters passed');
     results.push({ test: 'Count with filters', passed: true });
@@ -625,11 +680,21 @@ async function main(): Promise<void> {
 
     const stats = await store.getStats();
 
-    if (stats.total_records !== 3) throw new Error('Total records mismatch');
-    if (stats.records_by_family.personal !== 1) throw new Error('Personal count mismatch');
-    if (stats.records_by_family.cohort !== 1) throw new Error('Cohort count mismatch');
-    if (stats.records_by_family.population !== 1) throw new Error('Population count mismatch');
-    if (stats.storage_bytes === 0) throw new Error('Storage bytes not calculated');
+    if (stats.total_records !== 3) {
+      throw new Error('Total records mismatch');
+    }
+    if (stats.records_by_family.personal !== 1) {
+      throw new Error('Personal count mismatch');
+    }
+    if (stats.records_by_family.cohort !== 1) {
+      throw new Error('Cohort count mismatch');
+    }
+    if (stats.records_by_family.population !== 1) {
+      throw new Error('Population count mismatch');
+    }
+    if (stats.storage_bytes === 0) {
+      throw new Error('Storage bytes not calculated');
+    }
 
     console.log('✅ Storage statistics passed');
     results.push({ test: 'Storage statistics', passed: true });
@@ -650,7 +715,9 @@ async function main(): Promise<void> {
     await store.clear();
 
     const stats = await store.getStats();
-    if (stats.total_records !== 0) throw new Error('Store not cleared');
+    if (stats.total_records !== 0) {
+      throw new Error('Store not cleared');
+    }
 
     console.log('✅ Clear all records passed');
     results.push({ test: 'Clear all records', passed: true });

@@ -119,9 +119,15 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 201) throw new Error(`Expected 201, got ${response.status}`);
-      if (!response.data.id) throw new Error('Missing id in response');
-      if (!response.data.audit_receipt_id) throw new Error('Missing audit_receipt_id');
+      if (response.status !== 201) {
+        throw new Error(`Expected 201, got ${response.status}`);
+      }
+      if (!response.data.id) {
+        throw new Error('Missing id in response');
+      }
+      if (!response.data.audit_receipt_id) {
+        throw new Error('Missing audit_receipt_id');
+      }
 
       console.log('✅ Store text content passed');
       results.push({ test: 'Store text content', passed: true });
@@ -152,7 +158,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 201) throw new Error(`Expected 201, got ${response.status}`);
+      if (response.status !== 201) {
+        throw new Error(`Expected 201, got ${response.status}`);
+      }
 
       console.log('✅ Store structured content passed');
       results.push({ test: 'Store structured content', passed: true });
@@ -178,8 +186,12 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 201) throw new Error(`Expected 201, got ${response.status}`);
-      if (response.data.expires_at !== expiresAt) throw new Error('expires_at mismatch');
+      if (response.status !== 201) {
+        throw new Error(`Expected 201, got ${response.status}`);
+      }
+      if (response.data.expires_at !== expiresAt) {
+        throw new Error('expires_at mismatch');
+      }
 
       console.log('✅ Store with expiry passed');
       results.push({ test: 'Store with expiry', passed: true });
@@ -198,7 +210,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.status !== 400) {
+        throw new Error(`Expected 400, got ${response.status}`);
+      }
       if (response.data.error.code !== 'VALIDATION_ERROR') {
         throw new Error('Expected VALIDATION_ERROR');
       }
@@ -225,7 +239,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.status !== 400) {
+        throw new Error(`Expected 400, got ${response.status}`);
+      }
 
       console.log('✅ Consent family mismatch test passed');
       results.push({ test: 'Store consent mismatch', passed: true });
@@ -247,9 +263,15 @@ async function main(): Promise<void> {
         }
       );
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-      if (!Array.isArray(response.data.records)) throw new Error('Invalid records');
-      if (!response.data.pagination) throw new Error('Missing pagination');
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
+      if (!Array.isArray(response.data.records)) {
+        throw new Error('Invalid records');
+      }
+      if (!response.data.pagination) {
+        throw new Error('Missing pagination');
+      }
 
       console.log('✅ Recall personal memories passed');
       results.push({ test: 'Recall personal memories', passed: true });
@@ -265,9 +287,15 @@ async function main(): Promise<void> {
         { method: 'GET' }
       );
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-      if (!response.data.pagination) throw new Error('Missing pagination');
-      if (response.data.pagination.limit !== 1) throw new Error('Limit not applied');
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
+      if (!response.data.pagination) {
+        throw new Error('Missing pagination');
+      }
+      if (response.data.pagination.limit !== 1) {
+        throw new Error('Limit not applied');
+      }
 
       console.log('✅ Recall with pagination passed');
       results.push({ test: 'Recall with pagination', passed: true });
@@ -283,7 +311,9 @@ async function main(): Promise<void> {
         { method: 'GET' }
       );
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
 
       console.log('✅ Recall with session filter passed');
       results.push({ test: 'Recall with session filter', passed: true });
@@ -301,8 +331,12 @@ async function main(): Promise<void> {
         }
       );
 
-      if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
-      if (response.data.error.code !== 'FORBIDDEN') throw new Error('Expected FORBIDDEN');
+      if (response.status !== 403) {
+        throw new Error(`Expected 403, got ${response.status}`);
+      }
+      if (response.data.error.code !== 'FORBIDDEN') {
+        throw new Error('Expected FORBIDDEN');
+      }
 
       console.log('✅ Cohort recall forbidden test passed');
       results.push({ test: 'Cohort recall forbidden', passed: true });
@@ -320,7 +354,9 @@ async function main(): Promise<void> {
         }
       );
 
-      if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
+      if (response.status !== 403) {
+        throw new Error(`Expected 403, got ${response.status}`);
+      }
 
       console.log('✅ Population recall forbidden test passed');
       results.push({ test: 'Population recall forbidden', passed: true });
@@ -370,8 +406,12 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-      if (!response.data.results) throw new Error('Missing results');
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
+      if (!response.data.results) {
+        throw new Error('Missing results');
+      }
       if (!response.data.metadata.privacy_threshold_met) {
         throw new Error('Privacy threshold not met');
       }
@@ -394,7 +434,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
 
       console.log('✅ Distill sum aggregation passed');
       results.push({ test: 'Distill sum aggregation', passed: true });
@@ -413,7 +455,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
 
       console.log('✅ Distill avg aggregation passed');
       results.push({ test: 'Distill avg aggregation', passed: true });
@@ -455,8 +499,12 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
-      if (response.data.error.code !== 'FORBIDDEN') throw new Error('Expected FORBIDDEN');
+      if (response.status !== 403) {
+        throw new Error(`Expected 403, got ${response.status}`);
+      }
+      if (response.data.error.code !== 'FORBIDDEN') {
+        throw new Error('Expected FORBIDDEN');
+      }
 
       console.log('✅ k-anonymity failure test passed');
       results.push({ test: 'Distill k-anonymity failure', passed: true });
@@ -472,14 +520,20 @@ async function main(): Promise<void> {
     console.log('\n[FORGET] Test 15: Forget by ID (personal)');
     try {
       const storeId = (global as any).testStoreId;
-      if (!storeId) throw new Error('No test record ID available');
+      if (!storeId) {
+        throw new Error('No test record ID available');
+      }
 
       const response = await authedRequest(`/v1/personal/forget?id=${storeId}`, {
         method: 'DELETE',
       });
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-      if (response.data.deleted_count !== 1) throw new Error('Expected deleted_count=1');
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
+      if (response.data.deleted_count !== 1) {
+        throw new Error('Expected deleted_count=1');
+      }
 
       console.log('✅ Forget by ID passed');
       results.push({ test: 'Forget by ID', passed: true });
@@ -495,7 +549,9 @@ async function main(): Promise<void> {
         { method: 'DELETE' }
       );
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
 
       console.log('✅ Forget by session passed');
       results.push({ test: 'Forget by session', passed: true });
@@ -513,7 +569,9 @@ async function main(): Promise<void> {
         }
       );
 
-      if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
+      if (response.status !== 403) {
+        throw new Error(`Expected 403, got ${response.status}`);
+      }
 
       console.log('✅ Population forget forbidden test passed');
       results.push({ test: 'Population forget forbidden', passed: true });
@@ -530,9 +588,15 @@ async function main(): Promise<void> {
     try {
       const response = await authedRequest('/v1/personal/export?format=json', { method: 'GET' });
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-      if (!response.data.data) throw new Error('Missing data');
-      if (response.data.metadata.format !== 'json') throw new Error('Format mismatch');
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
+      if (!response.data.data) {
+        throw new Error('Missing data');
+      }
+      if (response.data.metadata.format !== 'json') {
+        throw new Error('Format mismatch');
+      }
 
       console.log('✅ Export JSON passed');
       results.push({ test: 'Export JSON', passed: true });
@@ -545,8 +609,12 @@ async function main(): Promise<void> {
     try {
       const response = await authedRequest('/v1/personal/export?format=csv', { method: 'GET' });
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-      if (response.data.metadata.format !== 'csv') throw new Error('Format mismatch');
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
+      if (response.data.metadata.format !== 'csv') {
+        throw new Error('Format mismatch');
+      }
 
       console.log('✅ Export CSV passed');
       results.push({ test: 'Export CSV', passed: true });
@@ -561,8 +629,12 @@ async function main(): Promise<void> {
         method: 'GET',
       });
 
-      if (response.status !== 200) throw new Error(`Expected 200, got ${response.status}`);
-      if (response.data.metadata.format !== 'jsonlines') throw new Error('Format mismatch');
+      if (response.status !== 200) {
+        throw new Error(`Expected 200, got ${response.status}`);
+      }
+      if (response.data.metadata.format !== 'jsonlines') {
+        throw new Error('Format mismatch');
+      }
 
       console.log('✅ Export JSONLines passed');
       results.push({ test: 'Export JSONLines', passed: true });
@@ -575,7 +647,9 @@ async function main(): Promise<void> {
     try {
       const response = await authedRequest('/v1/population/export', { method: 'GET' });
 
-      if (response.status !== 403) throw new Error(`Expected 403, got ${response.status}`);
+      if (response.status !== 403) {
+        throw new Error(`Expected 403, got ${response.status}`);
+      }
 
       console.log('✅ Population export forbidden test passed');
       results.push({ test: 'Population export forbidden', passed: true });
@@ -604,7 +678,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.status !== 400) {
+        throw new Error(`Expected 400, got ${response.status}`);
+      }
       if (response.data.error.code !== 'VALIDATION_ERROR') {
         throw new Error('Expected VALIDATION_ERROR');
       }
@@ -632,7 +708,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 400) throw new Error(`Expected 400, got ${response.status}`);
+      if (response.status !== 400) {
+        throw new Error(`Expected 400, got ${response.status}`);
+      }
 
       console.log('✅ SSN pattern rejection test passed');
       results.push({ test: 'PII Validation - reject SSN', passed: true });
@@ -657,7 +735,9 @@ async function main(): Promise<void> {
         },
       });
 
-      if (response.status !== 201) throw new Error(`Expected 201, got ${response.status}`);
+      if (response.status !== 201) {
+        throw new Error(`Expected 201, got ${response.status}`);
+      }
 
       console.log('✅ Valid hashed pseudonym acceptance test passed');
       results.push({ test: 'PII Validation - accept valid hash', passed: true });
