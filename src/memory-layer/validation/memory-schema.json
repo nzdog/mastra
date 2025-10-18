@@ -215,7 +215,7 @@
       "properties": {
         "hashed_pseudonym": {
           "type": "string",
-          "pattern": "^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$",
+          "pattern": "^(hs_[A-Za-z0-9_-]{43,}|[a-f0-9]{64})$",
           "description": "Hashed pseudonymous identifier (e.g., sha256(email+salt)), never raw PII"
         },
         "session_id": {
@@ -320,7 +320,7 @@
         },
         "hashed_pseudonym": {
           "type": "string",
-          "pattern": "^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$",
+          "pattern": "^(hs_[A-Za-z0-9_-]{43,}|[a-f0-9]{64})$",
           "description": "Hashed pseudonymous identifier (e.g., sha256(email+salt)), never raw PII"
         },
         "session_id": {
@@ -349,7 +349,7 @@
       "properties": {
         "hashed_pseudonym": {
           "type": "string",
-          "pattern": "^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$",
+          "pattern": "^(hs_[A-Za-z0-9_-]{43,}|[a-f0-9]{64})$",
           "description": "Hashed pseudonymous identifier (e.g., sha256(email+salt)), never raw PII"
         },
         "format": {

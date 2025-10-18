@@ -52,7 +52,8 @@ interface RequestWithConsent extends Request {
  */
 function sanitizeResponse(record: MemoryRecord): MemoryRecord {
   // Validate hashed_pseudonym matches expected pattern
-  const hashedPattern = /^(hs_[A-Za-z0-9_-]{43}|[a-f0-9]{64})$/;
+  // Accept 43+ characters for variable-length base64url encoding
+  const hashedPattern = /^(hs_[A-Za-z0-9_-]{43,}|[a-f0-9]{64})$/;
   if (!hashedPattern.test(record.hashed_pseudonym)) {
     throw new MemoryLayerError(
       ErrorCode.INTERNAL_ERROR,
