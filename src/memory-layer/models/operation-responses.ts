@@ -18,6 +18,9 @@ export interface BaseResponse {
 
   /** ISO timestamp of the operation */
   timestamp: string;
+
+  /** Trace ID for correlating logs and audit events */
+  trace_id: string;
 }
 
 /**
@@ -233,9 +236,13 @@ export interface ExportResponse extends BaseResponse {
  * Helper to create a base response with audit trail
  */
 export function createBaseResponse(audit_receipt_id: string): BaseResponse {
+  // Generate trace ID for request correlation
+  const trace_id = `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+
   return {
     audit_receipt_id,
     timestamp: new Date().toISOString(),
+    trace_id,
   };
 }
 

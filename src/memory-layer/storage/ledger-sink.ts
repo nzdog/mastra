@@ -17,11 +17,11 @@ import {
   measureSync,
   measureAsync,
 } from '../../observability/metrics';
+import { isLedgerEnabled, isLedgerOptional } from '../config/ledger-config';
 import { CryptoSigner, SignatureResult } from '../governance/crypto-signer';
 import { MerkleTree, MerkleNode, MerkleProof } from '../governance/merkle-tree';
 import { getSignerRegistry } from '../governance/signer-registry';
 import { canonicalStringify } from '../utils/canonical-json';
-import { isLedgerEnabled, isLedgerOptional } from '../config/ledger-config';
 
 export interface AuditEvent {
   event_id: string;
