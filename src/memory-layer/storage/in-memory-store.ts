@@ -6,9 +6,9 @@
  * Includes indexing, TTL enforcement, and consent family enforcement.
  */
 
-import { MemoryStore, QueryFilters } from './memory-store-interface';
 import { MemoryRecord, ConsentFamily } from '../models/memory-record';
 import { RecallQuery, ForgetRequest } from '../models/operation-requests';
+import { MemoryStore, QueryFilters } from './memory-store-interface';
 
 /**
  * Index structure for fast lookups
@@ -46,7 +46,9 @@ export class InMemoryStore implements MemoryStore {
   private validateHashedPseudonym(hashedPseudonym: string): void {
     // Check for email pattern
     if (hashedPseudonym.includes('@')) {
-      throw new Error('Invalid hashed_pseudonym: contains @ symbol (possible raw email). Must be hashed.');
+      throw new Error(
+        'Invalid hashed_pseudonym: contains @ symbol (possible raw email). Must be hashed.'
+      );
     }
 
     // Check for spaces
@@ -96,7 +98,9 @@ export class InMemoryStore implements MemoryStore {
 
     for (const id of candidateIds) {
       const record = this.records.get(id);
-      if (!record) continue;
+      if (!record) {
+        continue;
+      }
 
       // Check if record matches all query filters
       if (this.matchesQuery(record, query)) {
@@ -144,7 +148,8 @@ export class InMemoryStore implements MemoryStore {
       }
     } else if (request.hashed_pseudonym) {
       // Delete all records for hashed_pseudonym
-      const userRecordIds = this.indexes.byHashedPseudonym.get(request.hashed_pseudonym) || new Set();
+      const userRecordIds =
+        this.indexes.byHashedPseudonym.get(request.hashed_pseudonym) || new Set();
       recordsToDelete = Array.from(userRecordIds)
         .map((id) => this.records.get(id))
         .filter((r): r is MemoryRecord => r !== undefined);
@@ -181,7 +186,9 @@ export class InMemoryStore implements MemoryStore {
 
     for (const id of candidateIds) {
       const record = this.records.get(id);
-      if (!record) continue;
+      if (!record) {
+        continue;
+      }
 
       if (this.matchesFilters(record, filters)) {
         count++;
@@ -272,6 +279,16 @@ export class InMemoryStore implements MemoryStore {
     this.indexes.byHashedPseudonym.clear();
     this.indexes.bySessionId.clear();
     this.indexes.byConsentFamily.clear();
+  }
+
+  /**
+   * Iterate over all records (for backfill/migration)
+   * Returns an iterable of all memory records
+   */
+  *iterateAll(): Iterable<MemoryRecord> {
+    for (const record of this.records.values()) {
+      yield { ...record }; // Return copy to prevent mutation
+    }
   }
 
   /**

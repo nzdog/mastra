@@ -72,6 +72,13 @@ export interface MemoryRecord {
 
   /** Reference to audit receipt for governance trail */
   audit_receipt_id: string;
+
+  /**
+   * Encryption version identifier (e.g., "v1-aes256gcm")
+   * NULL/undefined indicates plaintext (unencrypted)
+   * Used to detect encrypted records when ENCRYPTION_ENABLED toggles
+   */
+  encryption_version?: string;
 }
 
 /**
@@ -92,7 +99,10 @@ export function requiresAggregation(family: ConsentFamily): boolean {
  * Helper to create a new memory record with defaults
  */
 export function createMemoryRecord(
-  partial: Pick<MemoryRecord, 'hashed_pseudonym' | 'content' | 'consent_family' | 'consent_timestamp' | 'consent_version'>
+  partial: Pick<
+    MemoryRecord,
+    'hashed_pseudonym' | 'content' | 'consent_family' | 'consent_timestamp' | 'consent_version'
+  >
 ): Omit<MemoryRecord, 'id' | 'created_at' | 'updated_at' | 'audit_receipt_id'> {
   return {
     ...partial,

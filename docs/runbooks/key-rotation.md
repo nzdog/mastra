@@ -1,646 +1,169 @@
-# Key Rotation Runbook - Phase 1.1
+# KEK Rotation Runbook
 
-**Version:** 1.0.0
-**Last Updated:** 2025-10-16
-**Cadence:** ≤90 days (routine), on-demand (emergency)
+**Phase 3 Week 3 - Encryption Key Management**
 
----
+This runbook describes how to rotate Key Encryption Keys (KEKs) safely in production without downtime or data loss.
 
 ## Overview
 
-This runbook defines operational procedures for Ed25519 signing key rotation in the Memory Layer audit system. Key rotation is critical for:
-- **Security hygiene**: Limit exposure window of any single key
-- **Compliance**: Meet regulatory requirements for key lifecycle management
-- **Resilience**: Enable recovery from key compromise scenarios
+Lichen uses **envelope encryption** with monthly KEK rotation:
+- **DEK (Data Encryption Key)**: Randomly generated per record, encrypted with KEK
+- **KEK (Key Encryption Key)**: Managed by KMS, rotated monthly
+- **KEK ID Format**: `kek-YYYYMM` (e.g., `kek-202501` for January 2025)
 
----
+### Key Concepts
 
-## Key Rotation Cadence
+1. **New writes** use the current KEK ID
+2. **Old records** can still be decrypted using their stored KEK ID
+3. **Rotation** does NOT require rewrapping existing data immediately
+4. **Rewrap jobs** can be run later to consolidate KEKs
 
-### Routine Rotation
-- **Frequency:** Every 90 days maximum
-- **Grace Period:** 7 days (both keys valid for verification)
-- **Announcement:** 7 days before rotation window
+## Monthly KEK Rotation Procedure
 
-### Compliance Rotation
-- **Frequency:** Every 365 days maximum (regulatory requirement)
-- **Aligns with:** Annual security audits
+### 1. Pre-Rotation Checklist
 
-### Emergency Rotation
-- **Trigger:** Suspected or confirmed key compromise
-- **Grace Period:** 0 days (immediate revocation)
-- **Response Time:** < 4 hours
+- [ ] Verify current KEK ID: `echo $KEK_ID` or check logs
+- [ ] Confirm KMS provider has new KEK provisioned
+- [ ] Test new KEK in staging environment
+- [ ] Schedule rotation during low-traffic window (optional)
 
----
+### 2. Rotation Steps
 
-## Pre-Rotation Checklist
+#### Option A: Automatic Rotation (Recommended)
 
-### 7 Days Before Rotation
-
-- [ ] **Announce rotation window**
-  ```bash
-  # Post announcement to operations channel
-  echo "Key rotation scheduled for YYYY-MM-DD"
-  echo "Old key (kid): <current_key_id>"
-  echo "Grace period: 7 days"
-  ```
-
-- [ ] **Verify backup integrity**
-  ```bash
-  # Check key backup exists and is accessible
-  ls -lh .keys/backup/key_*.pem
-
-  # Verify backup can be restored
-  openssl pkey -in .keys/backup/key_<timestamp>.pem -pubout -outform PEM
-  ```
-
-- [ ] **Test rotation in staging**
-  ```bash
-  # Run rotation procedure in staging environment
-  cd /path/to/staging
-  npm run key:rotate -- --dry-run
-
-  # Verify JWKS endpoint returns both keys
-  curl http://staging:3000/v1/keys/jwks | jq '.keys | length'
-  # Expected: 2 (old + new)
-  ```
-
-- [ ] **Document current key metadata**
-  ```bash
-  # Record current key details
-  curl http://localhost:3000/v1/keys/jwks | jq '.keys[] | {kid, crv, created_at}'
-
-  # Save to rotation log
-  echo "$(date): Current key <kid> scheduled for rotation" >> docs/key-rotation-log.md
-  ```
-
----
-
-## Rotation Procedure
-
-### Step 1: Generate New Key Pair
+The system auto-generates KEK IDs based on `YYYYMM` format. No manual intervention needed unless using custom KEK IDs.
 
 ```bash
-# Generate new Ed25519 key pair
-cd /path/to/project
-node -e "
-  const crypto = require('crypto');
-  const fs = require('fs');
-  const timestamp = Date.now();
-  const keyId = \`key_\${timestamp}_\${crypto.randomBytes(4).toString('hex')}\`;
-
-  const { publicKey, privateKey } = crypto.generateKeyPairSync('ed25519', {
-    publicKeyEncoding: { type: 'spki', format: 'pem' },
-    privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
-  });
-
-  fs.mkdirSync('.keys/active', { recursive: true });
-  fs.writeFileSync(\`.keys/active/\${keyId}.pem\`, privateKey);
-  fs.writeFileSync(\`.keys/active/\${keyId}.pub\`, publicKey);
-
-  console.log('Generated key:', keyId);
-"
+# Current KEK is derived from current month
+# New writes automatically use current month's KEK
+# No service restart required
 ```
 
-**Verify:**
-```bash
-# Check new key files exist
-ls -lh .keys/active/key_*.pem .keys/active/key_*.pub
+#### Option B: Manual KEK ID Override
 
-# Verify key type
-openssl pkey -in .keys/active/key_<new_kid>.pem -text -noout | grep "ED25519"
-```
-
----
-
-### Step 2: Publish New Key to JWKS
+If using custom KEK IDs (not recommended for production):
 
 ```bash
-# Restart server to load new key
-# Server will automatically publish both old and new keys to JWKS endpoint
-npm run server:restart
+# Set new KEK ID via environment variable
+export KEK_ID=kek-202502
 
-# Verify JWKS contains both keys
-curl http://localhost:3000/v1/keys/jwks | jq '.keys | length'
-# Expected: 2
+# Restart service to pick up new KEK ID
+systemctl restart lichen-memory-service
 
-# Verify new key is present
-curl http://localhost:3000/v1/keys/jwks | jq '.keys[] | select(.kid == "<new_kid>")'
+# Verify new KEK ID in use
+curl http://localhost:3000/metrics | grep -A5 "kek_id"
 ```
 
-**Expected JWKS format:**
-```json
-{
-  "keys": [
-    {
-      "kty": "OKP",
-      "use": "sig",
-      "kid": "key_<old_timestamp>_<old_hash>",
-      "alg": "EdDSA",
-      "crv": "Ed25519",
-      "x": "<old_public_key_base64url>"
-    },
-    {
-      "kty": "OKP",
-      "use": "sig",
-      "kid": "key_<new_timestamp>_<new_hash>",
-      "alg": "EdDSA",
-      "crv": "Ed25519",
-      "x": "<new_public_key_base64url>"
-    }
-  ]
-}
+#### Option C: Programmatic Rotation
+
+Use the EncryptionService API to rotate KEK mid-flight (advanced):
+
+```typescript
+import { getEncryptionService } from './encryption-service';
+
+const service = getEncryptionService();
+const newKekId = 'kek-202502';
+
+// Rotate to new KEK for future encryptions
+service.rotateKEK(newKekId);
+
+console.log(`Rotated to ${service.getCurrentKekId()}`);
 ```
 
----
-
-### Step 3: Grace Period - Both Keys Active
-
-**Duration:** 24 hours
-
-During this period:
-- ✅ New receipts signed with **new key**
-- ✅ Old receipts still verify with **old key** (from JWKS)
-- ✅ External verifiers can cache JWKS with both keys
+### 3. Post-Rotation Verification
 
 ```bash
-# Monitor new receipts are signed with new key
-curl http://localhost:3000/api/health
-curl http://localhost:3000/v1/receipts/<receipt_id> | jq '.receipt.signature.keyId'
-# Expected: key_<new_timestamp>_<new_hash>
+# Check metrics for new KEK ID
+curl http://localhost:3000/metrics | grep crypto_ops_duration_ms
 
-# Verify old receipts still validate
-curl http://localhost:3000/v1/receipts/<old_receipt_id> | jq '.verification.valid'
-# Expected: true
+# Verify new records use new KEK
+# (Check dek_kid field in encrypted content)
+
+# Monitor for decryption errors (should be zero)
+curl http://localhost:3000/metrics | grep crypto_decrypt_failures_total
 ```
 
----
+## KMS Provider Configuration
 
-### Step 4: Switch Default Signing Key
-
-**Timing:** After 24-hour grace period
-
-The server automatically uses the newest key for signing. No action required.
+### Memory KMS (Dev/Test Only)
 
 ```bash
-# Verify new key is default signer
-curl -X POST http://localhost:3000/api/walk/start \
-  -H "Content-Type: application/json" \
-  -d '{"user_input": "test"}' | jq '.receipt.signature.keyId'
-# Expected: key_<new_timestamp>_<new_hash>
+export KMS_PROVIDER=memory
+export DEV_KEK_BASE64=$(openssl rand -base64 32)  # Generate 256-bit key
 ```
 
----
+**WARNING**: Never use memory KMS in production! Keys are lost on restart.
 
-### Step 5: Deprecate Old Key
-
-**Timing:** 24 hours after switching default key
-
-Mark old key as deprecated in JWKS:
+### AWS KMS (Production)
 
 ```bash
-# Mark old key as deprecated (manual update to JWKS metadata)
-# TODO(ops): Add script to mark key as deprecated
-# For now, documented in key metadata file
-
-echo "deprecated: true" >> .keys/metadata/key_<old_kid>.json
+export KMS_PROVIDER=aws
+export AWS_KMS_KEY_ARN=arn:aws:kms:us-east-1:123456789012:key/UUID
+export AWS_REGION=us-east-1
+# AWS credentials via IAM role or env vars (AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 ```
 
-**JWKS should now indicate deprecation:**
-```json
-{
-  "keys": [
-    {
-      "kid": "key_<old_timestamp>_<old_hash>",
-      "deprecated": true,
-      "deprecated_at": "2025-10-23T12:00:00Z"
-    },
-    {
-      "kid": "key_<new_timestamp>_<new_hash>"
-    }
-  ]
-}
-```
-
----
-
-### Step 6: Extended Grace Period
-
-**Duration:** 7 days
-
-- ✅ Old key remains in JWKS for verification only
-- ✅ External verifiers can still validate old receipts
-- ❌ Old key no longer used for new signatures
+### GCP KMS (Production - Not Yet Implemented)
 
 ```bash
-# Monitor: All new receipts use new key
-for i in {1..10}; do
-  curl -s http://localhost:3000/api/health | jq -r '.receipt.signature.keyId'
-done
-# Expected: All output = key_<new_timestamp>_<new_hash>
+export KMS_PROVIDER=gcp
+export GCP_KMS_KEY_NAME=projects/PROJECT/locations/LOCATION/keyRings/RING/cryptoKeys/KEY
+export GCP_PROJECT_ID=your-project-id
+# GCP credentials via service account or ADC
 ```
 
----
+**TODO**: Implement GCP KMS provider (currently stub only).
 
-### Step 7: Remove Old Key from JWKS
+## Monitoring & Alerts
 
-**Timing:** After 7-day grace period
+### Key Metrics
 
-```bash
-# Move old key to archive
-mv .keys/active/key_<old_kid>.pem .keys/archive/
-mv .keys/active/key_<old_kid>.pub .keys/archive/
+```promql
+# KEK age (alert if > 45 days)
+(time() - kek_rotation_timestamp_seconds) / 86400 > 45
 
-# Restart server (automatically removes old key from JWKS)
-npm run server:restart
+# Decryption failures (alert if > 0)
+rate(crypto_decrypt_failures_total[5m]) > 0
 
-# Verify JWKS only contains new key
-curl http://localhost:3000/v1/keys/jwks | jq '.keys | length'
-# Expected: 1
+# Encryption operations
+rate(crypto_ops_duration_ms_count{op="encrypt"}[5m])
 ```
-
----
-
-## Post-Rotation Validation
-
-### Verify New Key Operation
-
-```bash
-# Test new receipts are signed and verifiable
-curl -X POST http://localhost:3000/api/walk/start \
-  -H "Content-Type: application/json" \
-  -d '{"user_input": "post-rotation test"}' \
-  > /tmp/new_receipt.json
-
-# Verify receipt
-curl -X POST http://localhost:3000/v1/receipts/verify \
-  -H "Content-Type: application/json" \
-  -d @/tmp/new_receipt.json | jq '.valid'
-# Expected: true
-```
-
-### Archive Old Key Securely
-
-```bash
-# Encrypt old key for long-term archive
-openssl enc -aes-256-cbc \
-  -in .keys/archive/key_<old_kid>.pem \
-  -out .keys/archive/key_<old_kid>.pem.enc \
-  -pass file:.keys/archive.password
-
-# Remove unencrypted key
-rm .keys/archive/key_<old_kid>.pem
-
-# Store encrypted key in secure backup location
-aws s3 cp .keys/archive/key_<old_kid>.pem.enc \
-  s3://lichen-key-archive/$(date +%Y)/
-```
-
-### Update Monitoring Alerts
-
-```bash
-# Update key age alert threshold
-# TODO(ops): Configure Prometheus/Grafana alert for key age > 85 days
-
-# Update JWKS cache TTL monitoring
-# TODO(ops): Monitor JWKS fetch rate from external verifiers
-```
-
-### Document Rotation
-
-```bash
-# Update rotation log
-cat >> docs/key-rotation-log.md <<EOF
-
-## Rotation - $(date +%Y-%m-%d)
-
-- **Old Key:** key_<old_kid>
-- **New Key:** key_<new_kid>
-- **Type:** Routine (90-day cadence)
-- **Grace Period:** 7 days
-- **Status:** ✅ Complete
-- **Verified By:** [operator name]
-
-EOF
-```
-
----
-
-## Emergency Rotation (Breach Response)
-
-### Trigger Conditions
-
-Emergency rotation required if:
-- ✅ Private key file compromised (unauthorized access)
-- ✅ Key material leaked (e.g., committed to git)
-- ✅ Unauthorized signatures detected
-- ✅ Security audit identifies key exposure
-
-### Emergency Procedure
-
-**Timeline:** < 4 hours from detection to completion
-
-#### 1. Immediately Generate New Key (< 30 min)
-
-```bash
-# Generate emergency key with timestamp
-EMERGENCY_TIMESTAMP=$(date +%s)
-node scripts/generate-emergency-key.js --timestamp $EMERGENCY_TIMESTAMP
-
-# Verify key generation
-ls -lh .keys/emergency/key_emergency_${EMERGENCY_TIMESTAMP}*
-```
-
-#### 2. Revoke Compromised Key (< 30 min)
-
-```bash
-# Mark compromised key as REVOKED in JWKS
-cat > .keys/revoked/key_<compromised_kid>.json <<EOF
-{
-  "kid": "key_<compromised_kid>",
-  "revoked": true,
-  "revoked_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "reason": "key_compromise",
-  "incident_id": "INC-$(date +%Y%m%d-%H%M)"
-}
-EOF
-
-# Remove compromised key from active directory
-mv .keys/active/key_<compromised_kid>.pem .keys/revoked/
-
-# Restart server (0-day grace period)
-npm run server:restart
-```
-
-#### 3. Re-sign Recent Receipts (< 2 hours)
-
-```bash
-# Re-sign receipts from last 24 hours with new key
-# TODO(ops): Implement receipt re-signing script
-
-node scripts/re-sign-receipts.js \
-  --since "24 hours ago" \
-  --new-key key_emergency_${EMERGENCY_TIMESTAMP}
-
-# Verify re-signed receipts
-curl http://localhost:3000/v1/ledger/integrity | jq '.valid'
-# Expected: true
-```
-
-#### 4. Notify Stakeholders (< 1 hour)
-
-```bash
-# Post security advisory
-cat > /tmp/security-advisory.md <<EOF
-# Security Advisory - Emergency Key Rotation
-
-**Date:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
-**Incident ID:** INC-$(date +%Y%m%d-%H%M)
-**Severity:** HIGH
-
-## Summary
-Emergency key rotation performed due to suspected key compromise.
-
-## Actions Taken
-- Revoked key: key_<compromised_kid>
-- Generated new key: key_emergency_${EMERGENCY_TIMESTAMP}
-- Re-signed receipts from last 24 hours
-
-## Impact
-- All receipts remain valid and verifiable
-- External verifiers should refresh JWKS cache immediately
-
-## Next Steps
-- Update JWKS cache (TTL: 0)
-- Re-verify all receipts if necessary
-- Contact security@lichen-protocol.org for questions
-
-EOF
-
-# Send to operations channel
-./scripts/notify-stakeholders.sh /tmp/security-advisory.md
-```
-
-#### 5. File Incident Report
-
-```bash
-# Create incident report
-cp /tmp/security-advisory.md docs/incidents/INC-$(date +%Y%m%d-%H%M).md
-
-# Update incident log
-echo "- $(date): Emergency rotation (key_<compromised_kid> → key_emergency_${EMERGENCY_TIMESTAMP})" \
-  >> docs/incident-log.md
-```
-
----
-
-## JWKS Rollover Procedure
-
-### Cache TTL Management
-
-```bash
-# Set JWKS cache TTL header (24 hours max)
-# Server should include: Cache-Control: max-age=86400
-
-# During rotation: reduce TTL to 1 hour
-# Server should include: Cache-Control: max-age=3600
-```
-
-### External Verifier Guidance
-
-External verifiers should:
-1. **Cache JWKS** with respect to `Cache-Control` header
-2. **Refresh cache** when signature verification fails with `kid not found`
-3. **Maintain key history** for at least 90 days (3 rotation cycles)
-
-### JWKS Version History
-
-```bash
-# Maintain JWKS snapshots for audit trail
-mkdir -p .keys/jwks-history
-curl http://localhost:3000/v1/keys/jwks > .keys/jwks-history/jwks_$(date +%s).json
-
-# Retention: 365 days
-find .keys/jwks-history -name "jwks_*.json" -mtime +365 -delete
-```
-
----
-
-## Verification Steps
-
-### Pre-Flight Checks
-
-```bash
-# 1. Verify new key type
-openssl pkey -in .keys/active/key_<new_kid>.pem -text -noout | grep "ED25519"
-
-# 2. Test signature creation
-node -e "
-  const crypto = require('crypto');
-  const fs = require('fs');
-  const key = fs.readFileSync('.keys/active/key_<new_kid>.pem');
-  const data = 'test';
-  const sig = crypto.sign(null, Buffer.from(data), key);
-  console.log('Signature:', sig.toString('base64'));
-"
-
-# 3. Test signature verification
-node -e "
-  const crypto = require('crypto');
-  const fs = require('fs');
-  const key = fs.readFileSync('.keys/active/key_<new_kid>.pub');
-  const data = 'test';
-  const sig = Buffer.from('<signature_from_above>', 'base64');
-  const valid = crypto.verify(null, Buffer.from(data), key, sig);
-  console.log('Valid:', valid); // Expected: true
-"
-```
-
-### Post-Rotation Checks
-
-```bash
-# 1. Verify JWKS contains correct keys
-curl http://localhost:3000/v1/keys/jwks | jq '.keys[] | {kid, crv, deprecated}'
-
-# 2. Test external verifier workflow
-curl http://localhost:3000/v1/keys/jwks > /tmp/jwks.json
-curl http://localhost:3000/v1/receipts/<receipt_id> > /tmp/receipt.json
-
-# Verify receipt using JWKS
-node scripts/verify-receipt-with-jwks.js \
-  --jwks /tmp/jwks.json \
-  --receipt /tmp/receipt.json
-# Expected: ✅ Receipt verified
-
-# 3. Verify ledger integrity
-curl http://localhost:3000/v1/ledger/integrity?full=true | jq '.valid'
-# Expected: true
-```
-
----
-
-## Rollback Procedure
-
-If rotation fails, rollback to previous key:
-
-```bash
-# 1. Restore old key to active directory
-mv .keys/backup/key_<old_kid>.pem .keys/active/
-
-# 2. Remove failed new key
-rm .keys/active/key_<failed_new_kid>.pem
-
-# 3. Restart server
-npm run server:restart
-
-# 4. Verify old key is active
-curl http://localhost:3000/v1/keys/jwks | jq '.keys[] | select(.kid == "key_<old_kid>")'
-
-# 5. Document rollback
-echo "$(date): Rotation rollback (key_<failed_new_kid> → key_<old_kid>)" \
-  >> docs/key-rotation-log.md
-```
-
----
 
 ## Troubleshooting
 
-### Issue: JWKS not updating after key rotation
+### Decryption Failures After Rotation
 
-```bash
-# Check server logs for key loading errors
-tail -f logs/server.log | grep "JWKS\|key"
+**Symptom**: `crypto_decrypt_failures_total` increasing after KEK rotation.
 
-# Verify key file permissions
-ls -l .keys/active/*.pem
-# Expected: -rw------- (600)
+**Cause**: Old KEK decommissioned before rewrap completed.
 
-# Force JWKS refresh
-curl -X POST http://localhost:3000/internal/jwks/refresh
-```
+**Fix**:
+1. Re-provision old KEK in KMS temporarily
+2. Complete rewrap job
+3. Decommission old KEK again
 
-### Issue: Old receipts fail verification
+### New Writes Fail After Rotation
 
-```bash
-# Verify old key still in JWKS during grace period
-curl http://localhost:3000/v1/keys/jwks | jq '.keys[] | select(.kid == "key_<old_kid>")'
+**Symptom**: `crypto_encrypt_failures_total` increasing.
 
-# Check receipt signature metadata
-curl http://localhost:3000/v1/receipts/<receipt_id> | jq '.receipt.signature'
+**Cause**: New KEK not provisioned in KMS or incorrect permissions.
 
-# Manual verification with old key
-node scripts/verify-with-kid.js \
-  --receipt-id <receipt_id> \
-  --kid key_<old_kid>
-```
+**Fix**:
+1. Verify KEK exists: `aws kms describe-key --key-id $AWS_KMS_KEY_ARN`
+2. Check IAM permissions for encrypt operation
+3. Test KEK manually: `aws kms encrypt --key-id $AWS_KMS_KEY_ARN --plaintext "test"`
 
-### Issue: External verifiers see stale JWKS
+## Security Best Practices
 
-```bash
-# Check cache headers
-curl -I http://localhost:3000/v1/keys/jwks
+1. **Never commit KEKs to version control**
+2. **Use KMS for production** (AWS KMS, GCP KMS, HashiCorp Vault)
+3. **Rotate KEKs monthly** (automated via `YYYYMM` format)
+4. **Monitor decryption failures** continuously
+5. **Test rotation in staging** before production
+6. **Keep old KEKs available** for 90 days after rotation
 
-# Force cache invalidation on CDN (if applicable)
-curl -X PURGE https://cdn.lichen-protocol.org/v1/keys/jwks
+## References
 
-# Notify verifiers to clear cache
-./scripts/notify-cache-clear.sh
-```
-
----
-
-## Compliance & Audit
-
-### Audit Trail
-
-All key rotations must be logged in:
-- `docs/key-rotation-log.md` - Human-readable rotation history
-- `.keys/metadata/*.json` - Machine-readable key metadata
-- `docs/incidents/*.md` - Incident reports (emergency rotations)
-
-### Regulatory Requirements
-
-- **SOC 2:** Key rotation every 365 days maximum
-- **HIPAA:** Key lifecycle documented with audit trail
-- **GDPR:** Key compromise response < 72 hours
-
-### External Audit Support
-
-```bash
-# Generate key lifecycle report
-node scripts/generate-key-report.js \
-  --start-date 2025-01-01 \
-  --end-date 2025-12-31 \
-  --format pdf \
-  --output reports/key-lifecycle-2025.pdf
-```
-
----
-
-## Appendix
-
-### Key Metadata Schema
-
-```json
-{
-  "kid": "key_1760576878187_dd08fda6",
-  "algorithm": "Ed25519",
-  "created_at": "2025-10-16T01:07:58.187Z",
-  "activated_at": "2025-10-16T01:07:58.187Z",
-  "deprecated_at": "2025-11-15T12:00:00Z",
-  "revoked_at": null,
-  "rotation_reason": "routine_90day",
-  "predecessor_kid": "key_1757900000000_abcd1234",
-  "successor_kid": "key_1763400000000_efgh5678"
-}
-```
-
-### Contact Information
-
-- **Security Team:** security@lichen-protocol.org
-- **Operations:** ops@lichen-protocol.org
-- **On-Call:** +1-555-LICHEN-1 (555-424-2436)
-
----
-
-**Invariant:** Memory enriches but never controls.
+- [NIST Key Management Guidelines](https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-57pt1r5.pdf)
+- [AWS KMS Best Practices](https://docs.aws.amazon.com/kms/latest/developerguide/best-practices.html)
+- [Envelope Encryption Pattern](https://cloud.google.com/kms/docs/envelope-encryption)

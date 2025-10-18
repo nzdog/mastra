@@ -37,7 +37,7 @@ export class JWKSManager {
     const signers = registry.getVerificationSigners();
 
     // Get JWKs from all verification signers (current + previous if in grace)
-    const keys = signers.map(signer => signer.getPublicKeyJWK());
+    const keys = signers.map((signer) => signer.getPublicKeyJWK());
 
     return {
       keys,

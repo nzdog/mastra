@@ -122,10 +122,8 @@ export class CryptoSigner {
     // Ed25519 uses crypto.sign directly (no createSign needed)
     // Phase 1.2: Measure signature duration
     const dataBuffer = Buffer.from(data, 'utf8');
-    const signatureBuffer = measureSync(
-      auditSignatureDuration,
-      { algorithm: this.algorithm },
-      () => crypto.sign(null, dataBuffer, this.privateKey!)
+    const signatureBuffer = measureSync(auditSignatureDuration, { algorithm: this.algorithm }, () =>
+      crypto.sign(null, dataBuffer, this.privateKey!)
     );
     const signature = signatureBuffer.toString('base64');
 
@@ -269,10 +267,7 @@ export class CryptoSigner {
     const hash = crypto.createHash('sha256').update(canonicalJson, 'utf8').digest();
 
     // Base64url encode (replace + with -, / with _, remove padding =)
-    return hash.toString('base64')
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
+    return hash.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
   }
 
   /**
