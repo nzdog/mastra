@@ -144,7 +144,7 @@ export class SignerRegistry {
    */
   getActiveKids(): string[] {
     const signers = this.getVerificationSigners();
-    return signers.map(s => s.getKeyId());
+    return signers.map((s) => s.getKeyId());
   }
 }
 
@@ -195,8 +195,5 @@ export function computeJwkThumbprint(jwk: Record<string, unknown>): string {
   const hash = crypto.createHash('sha256').update(canonicalJson, 'utf8').digest();
 
   // Base64url encode (replace + with -, / with _, remove padding =)
-  return hash.toString('base64')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '');
+  return hash.toString('base64').replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }

@@ -129,7 +129,9 @@ async function main() {
     }
     // We expect credentials to be false (not set) in this test
     if (credentialsHeader) {
-      console.log(`   ⚠️  Warning: Access-Control-Allow-Credentials is set to ${credentialsHeader}`);
+      console.log(
+        `   ⚠️  Warning: Access-Control-Allow-Credentials is set to ${credentialsHeader}`
+      );
     }
     console.log('   ✓ Credentials policy is safe (no wildcard with credentials)');
 
@@ -142,9 +144,7 @@ async function main() {
 
     const xContentTypeOptions = validOriginRes.headers.get('x-content-type-options');
     if (xContentTypeOptions !== 'nosniff') {
-      throw new Error(
-        `Expected X-Content-Type-Options: nosniff but got ${xContentTypeOptions}`
-      );
+      throw new Error(`Expected X-Content-Type-Options: nosniff but got ${xContentTypeOptions}`);
     }
 
     const permissionsPolicy = validOriginRes.headers.get('permissions-policy');
@@ -154,7 +154,9 @@ async function main() {
       );
     }
 
-    console.log('   ✓ Security headers present (Referrer-Policy, X-Content-Type-Options, Permissions-Policy)');
+    console.log(
+      '   ✓ Security headers present (Referrer-Policy, X-Content-Type-Options, Permissions-Policy)'
+    );
 
     // Test 6: Metrics endpoint reports CORS metrics
     console.log('✅ Test 6: Metrics endpoint reports CORS metrics');

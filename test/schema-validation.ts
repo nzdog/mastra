@@ -113,16 +113,15 @@ function testValidReceipt() {
       root_hash: 'a4573ca7237a39d1bc9d83227e176c7c2719cea4feb6cafee972361f57235a5b',
       proof: {
         leaf: 'a4573ca7237a39d1bc9d83227e176c7c2719cea4feb6cafee972361f57235a5b',
-        siblings: [
-          '6d276dcf6f19b12cb58df00fb768f4340ae91bf0d4c04354153996af80ddcb52',
-        ],
+        siblings: ['6d276dcf6f19b12cb58df00fb768f4340ae91bf0d4c04354153996af80ddcb52'],
         path: ['left'],
         root: 'a4573ca7237a39d1bc9d83227e176c7c2719cea4feb6cafee972361f57235a5b',
       },
       index: 4,
     },
     signature: {
-      signature: '79cubBcivBjAU5UJDDHfLf2CpR1k5n2AKlx/bdFBlTfuI7NtH1/VOjsjPk+aCyHM5dfO964JHaF7ptl/mKgpDQ==',
+      signature:
+        '79cubBcivBjAU5UJDDHfLf2CpR1k5n2AKlx/bdFBlTfuI7NtH1/VOjsjPk+aCyHM5dfO964JHaF7ptl/mKgpDQ==',
       algorithm: 'Ed25519',
       alg: 'EdDSA',
       keyId: 'key_1760576878187_dd08fda6',
@@ -157,7 +156,7 @@ function testInvalidMerkleHash() {
       consentScope: ['audit'],
     },
     merkle: {
-      leaf_hash: 'invalid_hash_format',  // Invalid: not 64 hex chars
+      leaf_hash: 'invalid_hash_format', // Invalid: not 64 hex chars
       root_hash: 'a4573ca7237a39d1bc9d83227e176c7c2719cea4feb6cafee972361f57235a5b',
       proof: {
         leaf: 'a4573ca7237a39d1bc9d83227e176c7c2719cea4feb6cafee972361f57235a5b',
@@ -168,7 +167,8 @@ function testInvalidMerkleHash() {
       index: 4,
     },
     signature: {
-      signature: '79cubBcivBjAU5UJDDHfLf2CpR1k5n2AKlx/bdFBlTfuI7NtH1/VOjsjPk+aCyHM5dfO964JHaF7ptl/mKgpDQ==',
+      signature:
+        '79cubBcivBjAU5UJDDHfLf2CpR1k5n2AKlx/bdFBlTfuI7NtH1/VOjsjPk+aCyHM5dfO964JHaF7ptl/mKgpDQ==',
       algorithm: 'Ed25519',
       alg: 'EdDSA',
       keyId: 'key_1760576878187_dd08fda6',

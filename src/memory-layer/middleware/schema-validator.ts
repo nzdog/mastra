@@ -5,9 +5,9 @@
  * Uses Ajv to validate request bodies against memory-schema.json
  */
 
-import { Request, Response, NextFunction } from 'express';
 import Ajv, { ErrorObject } from 'ajv';
 import addFormats from 'ajv-formats';
+import { Request, Response, NextFunction } from 'express';
 import { createErrorResponse, ErrorCode, getStatusCode } from '../models/error-envelope';
 import * as memorySchema from '../validation/memory-schema.json';
 

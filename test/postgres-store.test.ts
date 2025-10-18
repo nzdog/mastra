@@ -10,10 +10,10 @@
  * - Partitioning support
  */
 
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
-import { MemoryRecord } from '../src/memory-layer/models/memory-record';
 import { v4 as uuidv4 } from 'uuid';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { MemoryRecord } from '../src/memory-layer/models/memory-record';
+import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 
 describe('PostgresStore', () => {
   let store: PostgresStore;
@@ -32,7 +32,7 @@ describe('PostgresStore', () => {
     // Cleanup test records
     try {
       await store.clear();
-    } catch (err) {
+    } catch {
       // clear() not implemented yet - OK
     }
 
@@ -90,7 +90,11 @@ describe('PostgresStore', () => {
       await store.store(record);
 
       // Update with new content
-      const updated = { ...record, content: { type: 'text' as const, data: 'Updated content' }, access_count: 10 };
+      const updated = {
+        ...record,
+        content: { type: 'text' as const, data: 'Updated content' },
+        access_count: 10,
+      };
       const result = await store.store(updated);
 
       expect(result.content.data).toBe('Updated content');

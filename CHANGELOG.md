@@ -1,9 +1,10 @@
 # Changelog
 
-All notable changes to the Lichen Protocol Memory Layer implementation will be documented in this file.
+All notable changes to the Lichen Protocol Memory Layer implementation will be documented in this
+file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project
+adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
@@ -24,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - OpenAPI 3.0 specification at `openapi/memory-layer-v1.yaml`
 
 - **Consent Family System**:
-  - Three consent families: Personal (hashed/pseudonymous identifiers only), Cohort (group aggregation, no direct identifiers), Population (system-wide aggregation, no direct identifiers)
+  - Three consent families: Personal (hashed/pseudonymous identifiers only), Cohort (group
+    aggregation, no direct identifiers), Population (system-wide aggregation, no direct identifiers)
   - Consent resolver middleware with fail-closed authorization (401/403)
   - Bearer token authentication with user_id extraction
   - Scope-based authorization per family (read, write, delete, export, aggregate)
@@ -66,12 +68,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `MemoryRecord` - Core record structure with consent family, content, metadata
   - `MemoryContent` - Content wrapper with type (text/structured/embedding)
   - `ConsentFamily` - Type-safe consent family enum (personal, cohort, population)
-  - Request models: `StoreRequest`, `RecallQuery`, `DistillRequest`, `ForgetRequest`, `ExportRequest`
-  - Response models: `StoreResponse`, `RecallResponse`, `DistillResponse`, `ForgetResponse`, `ExportResponse`
+  - Request models: `StoreRequest`, `RecallQuery`, `DistillRequest`, `ForgetRequest`,
+    `ExportRequest`
+  - Response models: `StoreResponse`, `RecallResponse`, `DistillResponse`, `ForgetResponse`,
+    `ExportResponse`
   - `ErrorResponse` - Standardized error envelope with error codes
 
 - **Error Handling**:
-  - Error code enum: `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`, `SLO_VIOLATION`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE`
+  - Error code enum: `VALIDATION_ERROR`, `UNAUTHORIZED`, `FORBIDDEN`, `NOT_FOUND`, `CONFLICT`,
+    `SLO_VIOLATION`, `INTERNAL_ERROR`, `SERVICE_UNAVAILABLE`
   - HTTP status mapping for each error code
   - Detailed error responses with trace IDs and context
 
@@ -96,12 +101,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 **Server Integration** (`src/server.ts`):
+
 - Mounted memory router at `/v1/{family}/*` paths
 - Integrated memory layer middleware stack
 - Added error handling for memory operations
 - Version headers: `X-API-Version: 1.0.0`, `X-Spec-Version: 1.0`
 
 **Specification Index** (`docs/specs/README.md`):
+
 - Updated Phase 2 status to "Complete"
 - Added links to Phase 2 documentation
 - Marked Phase 2 implementation checklist items as complete
@@ -173,6 +180,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 **Server CORS Implementation** (`src/server.ts`):
+
 - Removed legacy `cors` package dependency
 - Replaced with custom CORS middleware using `parseCorsConfig()`
 - Added explicit OPTIONS handler for preflight requests
@@ -181,11 +189,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Metrics instrumentation for all CORS operations
 
 **Environment Configuration** (`.env.example`):
+
 - Added `CORS_ALLOWED_ORIGINS` (required in production)
 - Added `CORS_ALLOW_CREDENTIALS` (default: false)
 - Added `CORS_MAX_AGE` (default: 600 seconds)
 - Added `CORS_ALLOW_METHODS` (default: GET,POST,PUT,PATCH,DELETE,OPTIONS)
-- Added `CORS_ALLOW_HEADERS` (default: Content-Type,Authorization,X-Requested-With,X-API-Version,X-Trace-ID)
+- Added `CORS_ALLOW_HEADERS` (default:
+  Content-Type,Authorization,X-Requested-With,X-API-Version,X-Trace-ID)
 - Added `CORS_EXPOSE_HEADERS` (default: X-API-Version,X-Spec-Version)
 
 ### Security
@@ -204,17 +214,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 **CRITICAL: Unified CryptoSigner Usage (Signer Divergence Fix)**
-- **Issue**: LedgerSink created its own CryptoSigner instance instead of using the global singleton, causing signatures to use a different key than published in JWKS. This meant external verifiers could NOT verify signatures.
+
+- **Issue**: LedgerSink created its own CryptoSigner instance instead of using the global singleton,
+  causing signatures to use a different key than published in JWKS. This meant external verifiers
+  could NOT verify signatures.
 - **Solution**: Introduced `SignerRegistry` as the single source of truth for signing keys
   - All components (LedgerSink, JWKS Manager) now use the same signer instance
   - Ensures ledger signer kid === JWKS active kid
 
 **Implemented RFC 7638 JWK Thumbprint for Stable kid:**
+
 - kid is now derived from SHA-256 hash of canonical JWK representation (RFC 7638)
 - Ensures stable, deterministic kid across restarts
 - Example kid: `ZbwG6uXwdVXkcyrc2QC0ETqPd_k9KiZmd9U1m6vnnco` (base64url-encoded)
 
 **JWKS Rotation Grace Period:**
+
 - JWKS endpoint now returns both current AND previous keys during 48-hour grace period
 - Allows external verifiers to verify signatures during key rotation
 - Previous key automatically expires after grace period
@@ -222,6 +237,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 **SignerRegistry** (`src/memory-layer/governance/signer-registry.ts`):
+
 - Process-wide singleton managing CryptoSigner lifecycle
 - `getActiveSigner()` - Returns current signer for signing operations
 - `getVerificationSigners()` - Returns current + previous (if in grace period) for verification
@@ -229,6 +245,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tracks rotation timestamp and grace period (48 hours)
 
 **Kid Consistency Monitoring:**
+
 - Health check now verifies ledger signer kid matches JWKS active kid
 - Health endpoint fails if kids mismatch (critical alert)
 - New metrics:
@@ -237,12 +254,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - `audit_jwks_active_kid_info` - Info gauge for JWKS active kid
 
 **CI Test for JWKS Verification** (`test/jwks-verification.test.ts`):
+
 - End-to-end test: creates receipt, fetches JWKS, verifies signature using ONLY JWKS
 - Ensures LedgerSink and JWKS publish the same key
 - Validates JWKS structure (OKP/Ed25519/EdDSA)
 - Tests negative case (tampered data correctly rejected)
 
 **Governance Correction Event:**
+
 - Emitted `GOVERNANCE_OVERRIDE` event documenting the signer unification fix
 - Immutable audit trail of the correction in ledger
 - Script: `scripts/emit-signer-unification-event.ts`
@@ -250,20 +269,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 **LedgerSink** (`src/memory-layer/storage/ledger-sink.ts`):
+
 - No longer creates own CryptoSigner in constructor
 - Gets signer from `SignerRegistry.getActiveSigner()` during initialization
 - Added null checks where signer is used
 
 **JWKS Manager** (`src/memory-layer/governance/jwks-manager.ts`):
+
 - Uses `SignerRegistry.getVerificationSigners()` instead of `getCryptoSigner()`
 - Returns array of keys (current + previous if in grace)
 
 **CryptoSigner** (`src/memory-layer/governance/crypto-signer.ts`):
+
 - `generateKeys()` now computes RFC 7638 JWK thumbprint for kid
 - Added `computeJwkThumbprint()` method for SHA-256 hash of canonical JWK
 - Old timestamp-based `generateKeyId()` marked as deprecated
 
 **Server** (`src/server.ts`):
+
 - Imports `SignerRegistry` and kid metrics
 - Health endpoint verifies kid consistency and emits metrics
 
@@ -282,6 +305,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 **Metrics Instrumentation:**
+
 - Prometheus metrics for audit operations using `prom-client`
 - `/metrics` endpoint exposing all audit metrics in Prometheus format
 - 12 instrumented metrics covering events, performance, security, and operations:
@@ -301,11 +325,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Metrics module at `src/observability/metrics.ts` with dedicated registry
 
 **Schema Validation:**
+
 - Activated Ajv validation for `AuditEvent` and `SignedAuditReceipt`
 - JSON Schema validation tests in CI (Phase 1.1)
 - Test scaffolds passing with real audit data
 
 **CI Gates:**
+
 - Metrics endpoint health check in `policy-gates.yml`
 - Validates `/metrics` returns `audit_events_total` metric
 - Schema validation gate (Phase 1.1)
@@ -314,10 +340,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 **Audit Emitter:**
+
 - Now increments `audit_events_total` counter on each event emission
 - Tracks events by type (HEALTH, STORE, RECALL, etc.) and operation name
 
 **Ledger Sink:**
+
 - Tracks ledger height with `audit_ledger_height` gauge
 - Measures Merkle append time with `audit_merkle_append_duration_ms`
 - Measures file lock wait time with `audit_file_lock_wait_duration_ms`
@@ -325,16 +353,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Increments `audit_crash_recovery_temp_files_removed_total` during recovery
 
 **Crypto Signer:**
+
 - Tracks signature duration with `audit_signature_duration_ms` histogram
 - Emits key age with `audit_key_age_days` gauge
 
 **Server:**
+
 - Tracks JWKS fetch requests with `audit_jwks_fetch_requests_total`
 - Measures verification duration with `audit_verification_duration_ms`
 - Increments `audit_verification_failures_total` on failed verifications
 - Added `/metrics` endpoint with rate limiting (10 req/min)
 
 **Documentation:**
+
 - Updated `docs/specs/metrics.md` status to IMPLEMENTED
 - Added metrics documentation to README.md
 - All TODO markers replaced with Phase 1.2 implementation comments
@@ -359,13 +390,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Added
 
 **CI & Validation:**
+
 - JSON Schema validation for `AuditEvent` and `SignedAuditReceipt` structures
 - RFC-8785 canonical JSON test suite for deterministic serialization
-- CI gates for schema validation and canonical JSON compliance in `.github/workflows/policy-gates.yml`
+- CI gates for schema validation and canonical JSON compliance in
+  `.github/workflows/policy-gates.yml`
 - PII detection gate to prevent personal information leakage in audit logs
-- Test scaffolds for schema validation (`test/schema-validation.ts`) and canonical JSON (`test/canonical-json.test.ts`)
+- Test scaffolds for schema validation (`test/schema-validation.ts`) and canonical JSON
+  (`test/canonical-json.test.ts`)
 
 **Documentation:**
+
 - Key rotation runbook at `docs/runbooks/key-rotation.md` with procedures for:
   - Routine rotation (≤90 days)
   - Emergency rotation (breach response < 4 hours)
@@ -379,19 +414,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - GitHub issue template for Phase 1.1 hardening checklist
 
 **Code Instrumentation:**
+
 - TODO markers for metrics instrumentation at key points:
   - `src/memory-layer/governance/audit-emitter.ts` - Event emission counters
-  - `src/memory-layer/storage/ledger-sink.ts` - Ledger height gauge, Merkle append time, file lock metrics, crash recovery counters
+  - `src/memory-layer/storage/ledger-sink.ts` - Ledger height gauge, Merkle append time, file lock
+    metrics, crash recovery counters
   - `src/memory-layer/governance/crypto-signer.ts` - Signature time histogram, key age gauge
   - `src/server.ts` - Verification metrics, JWKS fetch counters
 
 **Schemas:**
+
 - `src/memory-layer/schemas/audit-event.schema.json` - JSON Schema for audit events
 - `src/memory-layer/schemas/audit-receipt.schema.json` - JSON Schema for signed audit receipts
 
 #### Changed
 
-- CI workflow now includes Phase 1.1 hardening gates (schema validation, canonical JSON, PII detection)
+- CI workflow now includes Phase 1.1 hardening gates (schema validation, canonical JSON, PII
+  detection)
 - Updated `package.json` with new test scripts:
   - `test:schema-validation` - Validate audit events/receipts against JSON Schema
   - `test:canonical-json` - Test RFC-8785 canonical JSON determinism
@@ -414,19 +453,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 **Cryptographic Foundation:**
+
 - Ed25519 digital signatures for audit receipts (`src/memory-layer/governance/crypto-signer.ts`)
-- Merkle tree implementation for tamper-evident audit chain (`src/memory-layer/governance/merkle-tree.ts`)
-- JWKS (JSON Web Key Set) manager for public key distribution (`src/memory-layer/governance/jwks-manager.ts`)
+- Merkle tree implementation for tamper-evident audit chain
+  (`src/memory-layer/governance/merkle-tree.ts`)
+- JWKS (JSON Web Key Set) manager for public key distribution
+  (`src/memory-layer/governance/jwks-manager.ts`)
 - Canonical JSON serialization utility (RFC-8785) (`src/memory-layer/utils/canonical-json.ts`)
 
 **Audit System:**
-- Audit emitter with support for multiple event types: STORE, RECALL, DISTILL, FORGET, EXPORT, HEALTH, CONSENT_GRANT, CONSENT_REVOKE, AMBIGUITY_EVENT, GOVERNANCE_OVERRIDE, ETHICAL_DEVIATION
+
+- Audit emitter with support for multiple event types: STORE, RECALL, DISTILL, FORGET, EXPORT,
+  HEALTH, CONSENT_GRANT, CONSENT_REVOKE, AMBIGUITY_EVENT, GOVERNANCE_OVERRIDE, ETHICAL_DEVIATION
 - Persistent ledger sink with file-based storage (`.ledger/` directory)
 - Atomic writes with `fsync` for crash recovery resilience
 - File locking (`proper-lockfile`) for concurrent write protection
 - Automatic crash recovery (removes incomplete `.tmp` files on startup)
 
 **Verification API (Phase 1.1):**
+
 - `GET /v1/ledger/root` - Get current Merkle root and ledger height
 - `GET /v1/receipts/:id` - Retrieve and verify specific audit receipt
 - `POST /v1/receipts/verify` - Verify receipt Merkle proof and signature
@@ -434,6 +479,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `GET /v1/ledger/integrity` - Verify complete Merkle chain integrity
 
 **Health & Monitoring:**
+
 - Spec-compliant `/v1/health` endpoint with audit system metrics
 - Ledger height tracking
 - Merkle chain integrity verification
@@ -459,6 +505,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 **Foundational Infrastructure:**
+
 - Long-lived feature branch `feature/memory-layer-spec` with branch protection
 - ADR 0001: Memory Layer Architecture Decision Record
 - Specification index at `docs/specs/README.md` tracking all phases (0-5)
@@ -466,6 +513,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Health endpoint contract at `src/memory-layer/api/health.ts`
 
 **CI/CD:**
+
 - Policy gates workflow (`.github/workflows/policy-gates.yml`) enforcing:
   - ADR completeness validation
   - Spec index tracking

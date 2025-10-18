@@ -6,10 +6,10 @@
  * Supports: memory (default), postgres, dual-write (Week 3)
  */
 
-import { MemoryStore } from './memory-store-interface';
-import { getMemoryStore } from './in-memory-store';
-import { getPostgresStore } from './postgres-store';
 import { getDualStore } from './dual-store';
+import { getMemoryStore } from './in-memory-store';
+import { MemoryStore } from './memory-store-interface';
+import { getPostgresStore } from './postgres-store';
 
 /**
  * Persistence modes
