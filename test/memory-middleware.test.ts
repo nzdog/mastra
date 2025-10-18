@@ -14,7 +14,8 @@ import fetch from 'node-fetch';
 // Test configuration
 const BASE_URL = 'http://localhost:3000';
 const VALID_TOKEN = 'user_middleware_test_12345678';
-const HASHED_PSEUDONYM = 'hs_bWlkZGxld2FyZV90ZXN0X2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA';
+// Hashed pseudonym must match what consent-resolver generates from VALID_TOKEN
+const HASHED_PSEUDONYM = 'hs_dXNlcl9taWRkbGV3YXJlX3Rlc3RfMTIzNDU2Nzg';
 
 // Helper: Wait
 function wait(ms: number): Promise<void> {
