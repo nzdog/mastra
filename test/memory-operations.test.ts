@@ -16,7 +16,8 @@ import fetch from 'node-fetch';
 
 // Test configuration
 const BASE_URL = 'http://localhost:3000';
-const USER_TOKEN = 'user_test_operations_12345678';
+// Use the same token format as phase-2-smoke.test.ts to avoid token conversion issues
+const USER_TOKEN = 'hs_dGVzdHVzZXIxMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0';
 const HASHED_PSEUDONYM = 'hs_dGVzdHVzZXIxMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0';
 
 // Helper: Wait
@@ -470,7 +471,7 @@ async function main(): Promise<void> {
     try {
       // Create new user with only 2 records (below threshold)
       const lowHashedPseudonym = 'hs_bG93X2NvdW50X3VzZXJfaGFzaGVkX3BzZXVkb255bV90ZXN0';
-      const lowToken = 'user_low_count_token_12345678';
+      const lowToken = 'hs_bG93X2NvdW50X3VzZXJfaGFzaGVkX3BzZXVkb255bV90ZXN0'; // Must match to avoid conversion
 
       // Store only 2 records
       for (let i = 0; i < 2; i++) {

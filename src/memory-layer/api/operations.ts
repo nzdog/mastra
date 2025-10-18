@@ -115,6 +115,33 @@ export const storeHandler = asyncHandler(async (req: Request, res: Response) => 
     );
   }
 
+  // Validate hashed_pseudonym format BEFORE checking mismatch (to catch PII violations)
+  const hashedPattern = /^(hs_[A-Za-z0-9_-]{43,}|[a-f0-9]{64})$/;
+  if (!hashedPattern.test(body.metadata.hashed_pseudonym)) {
+    throw new MemoryLayerError(
+      ErrorCode.VALIDATION_ERROR,
+      'Invalid hashed_pseudonym format. Expected: hs_<base64url> or SHA-256 hex (64 chars)',
+      { hashed_pseudonym: body.metadata.hashed_pseudonym }
+    );
+  }
+
+  // Check for PII patterns
+  if (body.metadata.hashed_pseudonym.includes('@')) {
+    throw new MemoryLayerError(
+      ErrorCode.VALIDATION_ERROR,
+      'Raw PII detected: hashed_pseudonym contains @ symbol (email addresses not allowed)',
+      { hashed_pseudonym: body.metadata.hashed_pseudonym }
+    );
+  }
+
+  if (/^\d{3}-\d{2}-\d{4}$/.test(body.metadata.hashed_pseudonym)) {
+    throw new MemoryLayerError(
+      ErrorCode.VALIDATION_ERROR,
+      'Raw PII detected: hashed_pseudonym matches SSN pattern',
+      { hashed_pseudonym: body.metadata.hashed_pseudonym }
+    );
+  }
+
   // Validate hashed_pseudonym matches auth
   if (body.metadata.hashed_pseudonym !== consentContext.hashed_pseudonym) {
     throw new MemoryLayerError(
