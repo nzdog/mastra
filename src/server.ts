@@ -469,6 +469,7 @@ app.use(
         objectSrc: ["'none'"],
         mediaSrc: ["'self'"],
         frameSrc: ["'none'"],
+        upgradeInsecureRequests: process.env.NODE_ENV === 'production' ? [] : null,
       },
     },
     // Strict Transport Security - forces HTTPS (disabled in dev)
@@ -491,7 +492,7 @@ app.use(
   })
 );
 
-// CORS Configuration - Hardened with explicit allowlist
+// CORS Configuration - Hardened with explicit allowlist (Phase 3.2)
 const corsConfig = parseCorsConfig();
 
 // CORS middleware - applies to all routes
@@ -1002,9 +1003,18 @@ app.post(
       res.json(response);
     } catch (error) {
       console.error('Error in /api/walk/start:', error);
+      console.error('Error stack:', error instanceof Error ? error.stack : 'No stack trace');
+      console.error('Protocol slug:', req.body.protocol_slug);
+      console.error('User input:', req.body.user_input);
       res.status(500).json({
         error: 'Internal server error',
         message: error instanceof Error ? error.message : String(error),
+        stack:
+          process.env.NODE_ENV === 'development'
+            ? error instanceof Error
+              ? error.stack
+              : undefined
+            : undefined,
       });
     }
   }
@@ -1196,6 +1206,30 @@ app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
     last_accessed: session.last_accessed,
     state,
   });
+});
+
+// Get current git branch (Railway-compatible endpoint from main)
+app.get('/api/branch', (_req: Request, res: Response) => {
+  // In production (Railway), use environment variable or return 'production'
+  // In development, try to use git
+  if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT) {
+    const branch = process.env.GIT_BRANCH || process.env.RAILWAY_GIT_BRANCH || 'production';
+    res.json({ branch });
+  } else {
+    const { execSync } = require('child_process');
+    try {
+      // Use project root directory (parent of src/) for git command
+      const projectRoot = path.join(__dirname, '..');
+      const branch = execSync('git rev-parse --abbrev-ref HEAD', {
+        encoding: 'utf-8',
+        cwd: projectRoot,
+      }).trim();
+      res.json({ branch });
+    } catch (error) {
+      console.error('Error fetching git branch:', error);
+      res.json({ branch: 'development' });
+    }
+  }
 });
 
 // ============================================================================
