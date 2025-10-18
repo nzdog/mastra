@@ -37,6 +37,10 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
 
+      # Phase 3.2: Ledger configuration for CI
+      LEDGER_ENABLED: "false"
+      LEDGER_OPTIONAL: "true"
+
     steps:
       - uses: actions/checkout@v4
 
@@ -162,10 +166,10 @@ jobs:
           npm run server &
           SERVER_PID=$!
 
-          # Wait for server to be ready (with retries)
-          echo "⏳ Waiting for server to start..."
+          # Wait for server to be ready (with retries) - Phase 3.2: Use /readyz
+          echo "⏳ Waiting for server to be ready..."
           for i in {1..30}; do
-            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
               echo "✅ Server ready after $i attempts"
               break
             fi
@@ -176,10 +180,6 @@ jobs:
             fi
             sleep 1
           done
-
-          # Additional wait for full initialization (audit emitter, CORS, etc.)
-          echo "⏳ Waiting for CORS middleware to initialize..."
-          sleep 3
 
           # Test 1: Valid origin receives CORS headers
           echo "🔍 Test 1: Valid origin receives CORS headers"
@@ -246,10 +246,10 @@ jobs:
           SKIP_API_KEY_CHECK=true npm run server &
           SERVER_PID=$!
 
-          # Wait for server to be ready
-          echo "⏳ Waiting for server to start..."
+          # Wait for server to be ready - Phase 3.2: Use /readyz
+          echo "⏳ Waiting for server to be ready..."
           for i in {1..30}; do
-            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
               echo "✅ Server ready after $i attempts"
               break
             fi
@@ -260,9 +260,6 @@ jobs:
             fi
             sleep 1
           done
-
-          # Additional wait for metrics initialization
-          sleep 3
 
           # Check for Phase 2 memory metrics
           METRICS=$(curl -sf http://localhost:3000/metrics)
@@ -279,11 +276,11 @@ jobs:
           SKIP_API_KEY_CHECK=true npm run server &
           SERVER_PID=$!
 
-          # Wait for server
-          echo "⏳ Waiting for server to start..."
+          # Wait for server - Phase 3.2: Use /readyz
+          echo "⏳ Waiting for server to be ready..."
           for i in {1..30}; do
-            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
-              echo "✅ Server ready"
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
               break
             fi
             if [ $i -eq 30 ]; then
@@ -293,8 +290,6 @@ jobs:
             fi
             sleep 1
           done
-
-          sleep 3
 
           # Test 1: 401 Unauthorized error envelope
           echo "🔍 Test 1: 401 error envelope"
@@ -329,11 +324,11 @@ jobs:
           SKIP_API_KEY_CHECK=true npm run server &
           SERVER_PID=$!
 
-          # Wait for server
-          echo "⏳ Waiting for server to start..."
+          # Wait for server - Phase 3.2: Use /readyz
+          echo "⏳ Waiting for server to be ready..."
           for i in {1..30}; do
-            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
-              echo "✅ Server ready"
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
               break
             fi
             if [ $i -eq 30 ]; then
@@ -343,8 +338,6 @@ jobs:
             fi
             sleep 1
           done
-
-          sleep 3
 
           # Test: Cohort recall should return 403
           echo "🔍 Testing cohort recall forbidden (403)"

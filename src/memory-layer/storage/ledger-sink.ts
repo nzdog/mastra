@@ -21,6 +21,7 @@ import { CryptoSigner, SignatureResult } from '../governance/crypto-signer';
 import { MerkleTree, MerkleNode, MerkleProof } from '../governance/merkle-tree';
 import { getSignerRegistry } from '../governance/signer-registry';
 import { canonicalStringify } from '../utils/canonical-json';
+import { isLedgerEnabled, isLedgerOptional } from '../config/ledger-config';
 
 export interface AuditEvent {
   event_id: string;
@@ -84,6 +85,7 @@ export class LedgerSink {
   private ledgerPath: string;
   private ledgerHeight: number = 0;
   private initialized: boolean = false;
+  private static warnedOnce: boolean = false; // Track if we've warned about optional ledger
 
   constructor(ledgerDir?: string) {
     this.merkleTree = new MerkleTree();
@@ -134,6 +136,27 @@ export class LedgerSink {
   }
 
   /**
+   * Ensure ledger is initialized before operations
+   * Supports graceful degradation in CI/test environments
+   */
+  private ensureInitialized(op: string): void {
+    if (this.initialized) {
+      return;
+    }
+
+    // Fail-closed: if ledger is required, throw error
+    if (isLedgerEnabled() && !isLedgerOptional()) {
+      throw new Error(`LedgerSink not initialized for operation: ${op}. Call initialize() first.`);
+    }
+
+    // Graceful degradation: if ledger is optional, warn once and continue
+    if (isLedgerOptional() && !LedgerSink.warnedOnce) {
+      console.warn(`⚠️  LedgerSink not initialized for operation: ${op}. LEDGER_OPTIONAL=true, continuing without audit logging.`);
+      LedgerSink.warnedOnce = true;
+    }
+  }
+
+  /**
    * Recover from crash by removing incomplete writes
    * Phase 1.1: Removes .tmp files left by crashed atomic writes
    */
@@ -177,9 +200,7 @@ export class LedgerSink {
    * Phase 1.1: With file locking for concurrent writes
    */
   async append(event: AuditEvent): Promise<SignedAuditReceipt> {
-    if (!this.initialized) {
-      throw new Error('LedgerSink not initialized. Call initialize() first.');
-    }
+    this.ensureInitialized('append');
 
     // Acquire lock for concurrent write protection
     // Phase 1.1: Prevents race conditions in multi-process environments
@@ -269,6 +290,8 @@ export class LedgerSink {
     signature_valid: boolean;
     message: string;
   } {
+    this.ensureInitialized('verifyReceipt');
+
     if (!this.signer) {
       throw new Error('Signer not initialized from SignerRegistry');
     }
@@ -317,6 +340,7 @@ export class LedgerSink {
     brokenAt?: number;
     message: string;
   } {
+    this.ensureInitialized('verifyChain');
     return this.merkleTree.verifyChain();
   }
 
@@ -324,6 +348,7 @@ export class LedgerSink {
    * Get ledger height (total events)
    */
   getLedgerHeight(): number {
+    this.ensureInitialized('getLedgerHeight');
     return this.ledgerHeight;
   }
 
@@ -331,6 +356,7 @@ export class LedgerSink {
    * Get Merkle root hash
    */
   getRootHash(): string {
+    this.ensureInitialized('getRootHash');
     return this.merkleTree.getRoot();
   }
 
@@ -338,6 +364,7 @@ export class LedgerSink {
    * Get key rotation status
    */
   getKeyRotationStatus() {
+    this.ensureInitialized('getKeyRotationStatus');
     if (!this.signer) {
       throw new Error('Signer not initialized from SignerRegistry');
     }
@@ -348,6 +375,7 @@ export class LedgerSink {
    * Load audit receipt by ID
    */
   async getReceipt(receiptId: string): Promise<SignedAuditReceipt | null> {
+    this.ensureInitialized('getReceipt');
     const receiptPath = path.join(this.ledgerPath, 'receipts', `${receiptId}.json`);
     if (!fs.existsSync(receiptPath)) {
       return null;
@@ -361,6 +389,7 @@ export class LedgerSink {
    * List recent receipts (last N)
    */
   async listReceipts(limit: number = 10): Promise<SignedAuditReceipt[]> {
+    this.ensureInitialized('listReceipts');
     const receiptsDir = path.join(this.ledgerPath, 'receipts');
     if (!fs.existsSync(receiptsDir)) {
       return [];
@@ -496,6 +525,7 @@ export class LedgerSink {
       publicKey: string;
     };
   }> {
+    this.ensureInitialized('exportLedger');
     if (!this.signer) {
       throw new Error('Signer not initialized from SignerRegistry');
     }

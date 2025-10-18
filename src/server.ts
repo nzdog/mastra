@@ -54,6 +54,9 @@ if (!API_KEY && process.env.NODE_ENV !== 'test' && process.env.SKIP_API_KEY_CHEC
   console.warn('⚠️  ANTHROPIC_API_KEY missing, continuing in permissive mode for tests/dev.');
 }
 
+// Server readiness flag
+let isReady = false;
+
 // Initialize session store (Redis if REDIS_URL provided, otherwise in-memory)
 let sessionStore: SessionStore;
 if (process.env.REDIS_URL) {
@@ -727,6 +730,15 @@ app.get('/v1/health', apiLimiter, async (_req: Request, res: Response) => {
   }
 });
 
+// Readiness check endpoint (Phase 3.2)
+app.get('/readyz', (_req: Request, res: Response) => {
+  if (isReady) {
+    res.status(200).json({ ready: true, message: 'Server is ready' });
+  } else {
+    res.status(503).json({ ready: false, message: 'Server is initializing...' });
+  }
+});
+
 // Phase 1.1: Verification API Endpoints
 
 // GET /v1/ledger/root - Get current Merkle root
@@ -1221,18 +1233,32 @@ app.use('/v1/:family', apiLimiter, memoryRouter);
  */
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  // Get current git branch
-  const { execSync } = require('child_process');
-  let branchName = 'unknown';
+// Async server startup with ledger initialization (Phase 3.2)
+async function startServer() {
   try {
-    branchName = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
-  } catch {
-    // If git command fails, use unknown
-  }
+    console.log('🔧 Initializing server components...');
 
-  console.log(`
+    // Initialize ledger sink (Phase 3.2: Ensures audit logging is ready)
+    console.log('📚 Initializing ledger sink...');
+    const ledger = await getLedgerSink();
+    console.log(`✅ Ledger initialized (height: ${ledger.getLedgerHeight()})`);
+
+    // Mark server as ready (Phase 3.2: /readyz will return 200)
+    isReady = true;
+    console.log('✅ Server initialization complete');
+
+    // Start listening
+    app.listen(PORT, () => {
+      // Get current git branch
+      const { execSync } = require('child_process');
+      let branchName = 'unknown';
+      try {
+        branchName = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+      } catch {
+        // If git command fails, use unknown
+      }
+
+      console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
 ║        Field Diagnostic Protocol - API Server                  ║
@@ -1252,6 +1278,7 @@ Protocol Walk Endpoints:
 Health & Monitoring:
   GET    /health              - Health check (legacy)
   GET    /v1/health           - Memory Layer health check (spec-compliant)
+  GET    /readyz              - Readiness check (Phase 3.2)
   GET    /api/metrics         - Performance metrics
   GET    /metrics             - Prometheus audit metrics (Phase 1.2)
 
@@ -1264,7 +1291,15 @@ Phase 1.1 Verification Endpoints:
 
 Ready to accept connections.
 `);
-});
+    });
+  } catch (error) {
+    console.error('❌ Failed to initialize server:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
 
 // ============================================================================
 // Graceful Shutdown Handlers (HIGH-4: Process Exit Handlers)
