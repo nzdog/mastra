@@ -161,18 +161,63 @@ export class DualStore implements MemoryStore {
   }
 
   /**
-   * Forget: Delete from both stores
+   * Forget: Delete from both stores with atomicity requirement
+   * Phase 3.2: GDPR compliance - secondary delete MUST succeed and match counts
+   *
+   * Ignores failFast setting for deletes (GDPR requirement)
    */
   async forget(request: ForgetRequest): Promise<string[]> {
-    const primaryDeleted = await this.primaryStore.forget(request);
-
+    // Step 1: Delete from primary store
+    let primaryDeleted: string[];
     try {
-      await this.secondaryStore.forget(request);
+      primaryDeleted = await this.primaryStore.forget(request);
+      console.log(`[DualStore] Primary delete succeeded: ${primaryDeleted.length} records`);
     } catch (err) {
-      console.error('[DualStore] Secondary forget failed:', err);
-      // Continue - primary deletion succeeded
+      dualWriteFailuresTotal.inc({
+        store: this.config.primaryStore,
+        reason: 'primary_forget_failed',
+      });
+      console.error('[DualStore] Primary forget failed:', err);
+      throw err; // Always fail on primary delete failure
     }
 
+    // Step 2: Delete from secondary store (REQUIRED for GDPR)
+    let secondaryDeleted: string[];
+    try {
+      secondaryDeleted = await this.secondaryStore.forget(request);
+      console.log(`[DualStore] Secondary delete succeeded: ${secondaryDeleted.length} records`);
+    } catch (err) {
+      const secondaryStoreType = this.config.primaryStore === 'memory' ? 'postgres' : 'memory';
+      dualWriteFailuresTotal.inc({
+        store: secondaryStoreType,
+        reason: 'secondary_forget_failed',
+      });
+      console.error('[DualStore] Secondary forget failed:', err);
+
+      // Phase 3.2: GDPR requirement - secondary delete failure is CRITICAL
+      throw new Error(
+        `[DualStore] Secondary delete failed (GDPR violation risk). ` +
+          `Primary deleted ${primaryDeleted.length} records but secondary failed: ${(err as Error).message}`
+      );
+    }
+
+    // Step 3: Verify delete counts match (Phase 3.2: atomicity check)
+    if (primaryDeleted.length !== secondaryDeleted.length) {
+      dualWriteFailuresTotal.inc({
+        store: 'dual-write',
+        reason: 'forget_count_mismatch',
+      });
+
+      const error = new Error(
+        `[DualStore] Delete count mismatch (GDPR consistency violation). ` +
+          `Primary deleted ${primaryDeleted.length} but secondary deleted ${secondaryDeleted.length}. ` +
+          `Request: ${JSON.stringify(request)}`
+      );
+      console.error(error.message);
+      throw error;
+    }
+
+    console.log(`[DualStore] Dual delete successful: ${primaryDeleted.length} records from both stores`);
     return primaryDeleted;
   }
 

@@ -150,17 +150,42 @@ export class SignerRegistry {
 
 // Process-wide singleton instance
 let registryInstance: SignerRegistry | null = null;
+let initPromise: Promise<SignerRegistry> | null = null;
 
 /**
- * Get the global signer registry
+ * Get the global signer registry (async-safe singleton)
  * All components MUST use this to get signers
+ *
+ * Phase 3.2: Ensures exactly one instance is constructed even with concurrent callers
  */
 export async function getSignerRegistry(): Promise<SignerRegistry> {
-  if (!registryInstance) {
-    registryInstance = new SignerRegistry();
-    await registryInstance.initialize();
+  // Fast path: instance already exists
+  if (registryInstance) {
+    return registryInstance;
   }
-  return registryInstance;
+
+  // If initialization is in progress, wait for it
+  if (initPromise) {
+    return await initPromise;
+  }
+
+  // Start initialization (only one caller will reach here due to single-threaded JS)
+  initPromise = (async () => {
+    const sr = new SignerRegistry();
+    await sr.initialize();
+    registryInstance = sr;
+    return sr;
+  })();
+
+  try {
+    return await initPromise;
+  } finally {
+    // Clear initPromise after successful initialization
+    // (keep it set if initialization failed, so next call retries)
+    if (registryInstance) {
+      initPromise = null;
+    }
+  }
 }
 
 /**

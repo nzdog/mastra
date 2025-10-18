@@ -61,6 +61,7 @@ interface KMSProvider {
  */
 class MemoryKMSProvider implements KMSProvider {
   private keys: Map<string, Buffer> = new Map();
+  private currentKekId: string;
 
   constructor() {
     // CRITICAL-2: Block MemoryKMS in production entirely
@@ -102,7 +103,36 @@ class MemoryKMSProvider implements KMSProvider {
       );
     }
 
+    // Phase 3.2: Support KEK_ID env var and store under both 'kek-default' and KEK_ID
+    this.currentKekId = process.env.KEK_ID || 'kek-default';
     this.keys.set('kek-default', devKEK);
+    if (this.currentKekId !== 'kek-default') {
+      this.keys.set(this.currentKekId, devKEK);
+      console.log(`[MemoryKMSProvider] KEK stored under both 'kek-default' and '${this.currentKekId}'`);
+    }
+  }
+
+  /**
+   * Rotate to a new KEK
+   * Phase 3.2: Creates and stores new KEK under newId
+   */
+  rotateKEK(newKekId: string): void {
+    console.log(`[MemoryKMSProvider] Rotating KEK to ${newKekId}`);
+
+    // Generate new KEK
+    const newKEK = crypto.randomBytes(KEK_BYTES);
+    this.keys.set(newKekId, newKEK);
+    this.currentKekId = newKekId;
+
+    console.log(`[MemoryKMSProvider] New KEK created and stored under '${newKekId}'`);
+    console.log(`[MemoryKMSProvider] To persist, set: DEV_KEK_BASE64=${newKEK.toString('base64')}`);
+  }
+
+  /**
+   * Get current KEK ID
+   */
+  getCurrentKekId(): string {
+    return this.currentKekId;
   }
 
   async encryptDEK(plainDek: Buffer, kekId: string): Promise<string> {
@@ -249,6 +279,7 @@ export class EncryptionService {
 
   /**
    * Rotate to a new KEK for future encryptions
+   * Phase 3.2: Creates new KEK in provider and updates currentKekId
    *
    * This does NOT re-encrypt existing data. Old KEKs remain valid for decryption.
    * To rewrap existing data with the new KEK, run a separate rewrap job.
@@ -257,6 +288,12 @@ export class EncryptionService {
    */
   rotateKEK(newKekId: string): void {
     console.log(`[EncryptionService] Rotating KEK from ${this.currentKekId} to ${newKekId}`);
+
+    // Phase 3.2: Delegate to KMS provider to create and store new KEK
+    if (this.kmsProvider instanceof MemoryKMSProvider) {
+      (this.kmsProvider as any).rotateKEK(newKekId);
+    }
+
     this.currentKekId = newKekId;
   }
 
@@ -269,17 +306,35 @@ export class EncryptionService {
 
   /**
    * Select KMS provider based on KMS_PROVIDER env var
+   * Phase 3.2: Enhanced production guards
    */
   private selectKMSProvider(): KMSProvider {
     const provider = process.env.KMS_PROVIDER || 'memory';
 
-    // Production guard: fail early if AWS provider selected
-    if (process.env.NODE_ENV === 'production' && provider === 'aws') {
-      throw new Error(
-        'FATAL: AWS KMS Provider not implemented. ' +
-          'Set KMS_PROVIDER=memory (non-prod only) or KMS_PROVIDER=gcp (testing only). ' +
-          'Production deployments require full KMS integration.'
-      );
+    // Phase 3.2: CRITICAL production guards
+    if (process.env.NODE_ENV === 'production') {
+      if (provider === 'memory') {
+        throw new Error(
+          'FATAL: MemoryKMSProvider cannot be used in production (NODE_ENV=production). ' +
+            'Set KMS_PROVIDER=aws or KMS_PROVIDER=gcp with proper cloud KMS integration.'
+        );
+      }
+
+      if (provider === 'aws') {
+        throw new Error(
+          'FATAL: AWS KMS Provider not implemented. ' +
+            'Production deployments require full AWS KMS integration. ' +
+            'See AWSKMSProvider class docstring for implementation steps.'
+        );
+      }
+
+      if (provider === 'gcp') {
+        throw new Error(
+          'FATAL: GCP KMS Provider not implemented. ' +
+            'Production deployments require full GCP KMS integration. ' +
+            'See GCPKMSProvider class docstring for implementation steps.'
+        );
+      }
     }
 
     switch (provider) {
@@ -290,8 +345,9 @@ export class EncryptionService {
       case 'gcp':
         return new GCPKMSProvider();
       default:
-        console.warn(`Unknown KMS_PROVIDER: ${provider}. Using memory provider.`);
-        return new MemoryKMSProvider();
+        throw new Error(
+          `Unknown KMS_PROVIDER: ${provider}. Valid options: memory (dev only), aws, gcp`
+        );
     }
   }
 

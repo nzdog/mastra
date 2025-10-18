@@ -43,22 +43,25 @@
           "description": "Content type classification"
         },
         "data": {
-          "description": "The actual content data - type depends on content.type",
+          "description": "The actual content data - type depends on content.type (Phase 3.2: rejects missing/empty)",
           "oneOf": [
             {
               "type": "string",
-              "description": "Plain text content"
+              "minLength": 1,
+              "description": "Plain text content (must not be empty)"
             },
             {
               "type": "object",
-              "description": "Structured JSON data"
+              "minProperties": 1,
+              "description": "Structured JSON data (must not be empty)"
             },
             {
               "type": "array",
               "items": {
                 "type": "number"
               },
-              "description": "Vector embedding array"
+              "minItems": 1,
+              "description": "Vector embedding array (must not be empty)"
             }
           ]
         },

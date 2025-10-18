@@ -20,8 +20,11 @@ export interface StoreRequest {
   /** Memory content with type and data */
   content: MemoryContent;
 
-  /** Additional metadata for the memory record */
-  metadata?: {
+  /**
+   * Metadata for the memory record (REQUIRED)
+   * Phase 3.2: Made required to align with schema
+   */
+  metadata: {
     /**
      * Hashed pseudonymous identifier (required for personal consent)
      * MUST be hashed/pseudonymous identifier (e.g., sha256(email+salt)), never raw PII
@@ -31,8 +34,11 @@ export interface StoreRequest {
     /** Optional session identifier for grouping */
     session_id?: string;
 
-    /** Consent family for this memory */
-    consent_family: ConsentFamily;
+    /**
+     * Consent family for this memory
+     * Phase 3.2: Restricted to enum values only
+     */
+    consent_family: 'personal' | 'cohort' | 'population';
 
     /** ISO timestamp when consent was granted */
     consent_timestamp: string;

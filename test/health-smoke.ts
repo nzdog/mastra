@@ -14,9 +14,33 @@ async function main() {
   });
 
   try {
-    // Wait for server to boot
-    await wait(1500);
+    // Phase 3.2: Poll /readyz endpoint with exponential backoff
+    let retries = 0;
+    const maxRetries = 30;
+    let delay = 100;
+    let ready = false;
 
+    while (retries < maxRetries && !ready) {
+      try {
+        const res = await fetch('http://localhost:3000/readyz');
+        if (res.status === 200) {
+          ready = true;
+          break;
+        }
+      } catch (err) {
+        // Server not yet accepting connections
+      }
+
+      await wait(delay);
+      retries++;
+      delay = Math.min(delay * 1.5, 2000); // Exponential backoff, max 2s
+    }
+
+    if (!ready) {
+      throw new Error(`Server did not become ready after ${maxRetries} retries`);
+    }
+
+    // Now test /v1/health endpoint
     const res = await fetch('http://localhost:3000/v1/health');
     if (res.status !== 200) {
       throw new Error(`Expected 200 but got ${res.status}`);

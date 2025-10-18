@@ -3,9 +3,11 @@
  *
  * Provides cryptographic verification of audit event integrity
  * Phase 1: Production-ready Merkle chain with cryptographic hashing
+ * Phase 3.2: Canonical JSON for deterministic hashing
  */
 
 import * as crypto from 'crypto';
+import { canonicalStringify } from '../utils/canonical-json';
 
 export interface MerkleNode {
   hash: string;
@@ -35,14 +37,15 @@ export class MerkleTree {
   /**
    * Append a new node to the Merkle chain
    * Returns the new node and its Merkle proof
+   * Phase 3.2: Uses canonical JSON for deterministic hashing
    */
   append(data: string): { node: MerkleNode; proof: MerkleProof } {
     const index = this.nodes.length;
     const previousHash = index > 0 ? this.nodes[index - 1].hash : null;
     const timestamp = new Date().toISOString();
 
-    // Compute hash of node data + previous hash
-    const nodeData = JSON.stringify({
+    // Compute hash of node data + previous hash (using canonical JSON)
+    const nodeData = canonicalStringify({
       index,
       timestamp,
       data,
@@ -157,9 +160,9 @@ export class MerkleTree {
         };
       }
 
-      // Verify node hash integrity
+      // Verify node hash integrity (using canonical JSON)
       const recomputedHash = this.computeHash(
-        JSON.stringify({
+        canonicalStringify({
           index: node.index,
           timestamp: node.timestamp,
           data: node.data,
