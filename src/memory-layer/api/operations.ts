@@ -754,16 +754,13 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
 
   // Format export data based on format
   let exportData: unknown;
-  let contentType: string;
 
   switch (exportRequest.format) {
     case 'json':
       exportData = records;
-      contentType = 'application/json';
       break;
     case 'jsonlines':
       exportData = records.map((r) => JSON.stringify(r)).join('\n');
-      contentType = 'application/jsonlines';
       break;
     case 'csv':
       // Simple CSV export (flatten records)
@@ -776,11 +773,9 @@ export const exportHandler = asyncHandler(async (req: Request, res: Response) =>
         )
         .join('\n');
       exportData = csvHeaders + csvRows;
-      contentType = 'text/csv';
       break;
     default:
       exportData = records;
-      contentType = 'application/json';
   }
 
   // Calculate export size
