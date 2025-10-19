@@ -293,7 +293,7 @@ jobs:
 
           # Test 1: 401 Unauthorized error envelope
           echo "🔍 Test 1: 401 error envelope"
-          RESPONSE_401=$(curl -sf -i -X POST http://localhost:3000/v1/personal/store \
+          RESPONSE_401=$(curl -s -i -X POST http://localhost:3000/v1/personal/store \
             -H "Content-Type: application/json" \
             -d '{"content":{"type":"text","data":"test"}}' || true)
 
@@ -306,7 +306,7 @@ jobs:
 
           # Test 2: 400 Validation error envelope
           echo "🔍 Test 2: 400 error envelope"
-          RESPONSE_400=$(curl -sf -i -X POST http://localhost:3000/v1/personal/store \
+          RESPONSE_400=$(curl -s -i -X POST http://localhost:3000/v1/personal/store \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer test_token_12345678" \
             -d '{"content":{"type":"text","data":"test"}}' || true)
