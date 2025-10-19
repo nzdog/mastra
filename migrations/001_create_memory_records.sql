@@ -1,6 +1,7 @@
 -- Migration 001: Create memory_records table
 -- Phase 3: Privacy, Security & Governance
 -- Week 1: Base table with indexes (no partitioning yet)
+-- LOCKED_AT: 2025-10-19 (Phase 3.3 - Memory Layer Freeze)
 
 -- Create memory_records table
 CREATE TABLE IF NOT EXISTS memory_records (

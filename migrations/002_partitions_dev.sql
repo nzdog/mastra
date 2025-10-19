@@ -3,6 +3,7 @@
 -- ============================================================================
 -- PostgreSQL Partitioning Migration (DESTRUCTIVE)
 -- Phase 3 Week 3: Postgres Hardening
+-- LOCKED_AT: 2025-10-19 (Phase 3.3 - Memory Layer Freeze)
 --
 -- ⚠️  THIS MIGRATION DROPS ALL DATA IN memory_records TABLE
 -- ⚠️  Run ONLY on brand-new environments or AFTER verified backfill + cutover

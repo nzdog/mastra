@@ -1,6 +1,7 @@
 -- =====================================================================
 -- SAFE PRODUCTION MIGRATION
 -- Migration 003: Add encryption_version column
+-- LOCKED_AT: 2025-10-19 (Phase 3.3 - Memory Layer Freeze)
 -- =====================================================================
 --
 -- Purpose: Track which records are encrypted to prevent data loss when
