@@ -14,7 +14,10 @@ import { MemoryRecord } from '../src/memory-layer/models/memory-record';
 import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 import { register } from '../src/observability/metrics';
 
-describe('Encryption Roundtrip', () => {
+// Skip when Postgres is not available
+const skipIfNoPostgres = process.env.PERSISTENCE === 'memory';
+
+describe.skipIf(skipIfNoPostgres)('Encryption Roundtrip', () => {
   let store: PostgresStore;
   const testHashedPseudonym = 'hs_test_encryption_' + uuidv4();
 

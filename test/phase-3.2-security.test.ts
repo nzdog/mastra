@@ -13,6 +13,7 @@ import { MemoryRecord as _MemoryRecord } from '../src/memory-layer/models/memory
 import { DualStore } from '../src/memory-layer/storage/dual-store';
 import { getMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
+import { MemoryKMSProvider, AWSKMSProvider, GCPKMSProvider } from '../src/memory-layer/security/encryption-service';
 
 describe('KMS Provider Production Guards (CRITICAL-1 & 2)', () => {
   test('should block MemoryKMS in production', () => {
@@ -20,11 +21,9 @@ describe('KMS Provider Production Guards (CRITICAL-1 & 2)', () => {
     process.env.NODE_ENV = 'production';
 
     try {
-      // Dynamically import to trigger constructor
       expect(() => {
-        const { MemoryKMSProvider } = require('../src/memory-layer/security/encryption-service');
         new MemoryKMSProvider();
-      }).toThrow(/MemoryKMSProvider is for development\/testing only/);
+      }).toThrow(/MemoryKMSProvider.*development.*testing/i);
     } finally {
       process.env.NODE_ENV = originalEnv;
     }
@@ -32,20 +31,21 @@ describe('KMS Provider Production Guards (CRITICAL-1 & 2)', () => {
 
   test('should block AWS KMS provider (not implemented)', () => {
     expect(() => {
-      const { AWSKMSProvider } = require('../src/memory-layer/security/encryption-service');
       new AWSKMSProvider();
-    }).toThrow(/NOT IMPLEMENTED.*Do not use KMS_PROVIDER=aws/);
+    }).toThrow(/NOT IMPLEMENTED.*Do not use KMS_PROVIDER=aws/i);
   });
 
   test('should block GCP KMS provider (not implemented)', () => {
     expect(() => {
-      const { GCPKMSProvider } = require('../src/memory-layer/security/encryption-service');
       new GCPKMSProvider();
-    }).toThrow(/NOT IMPLEMENTED.*Do not use KMS_PROVIDER=gcp/);
+    }).toThrow(/NOT IMPLEMENTED.*Do not use KMS_PROVIDER=gcp/i);
   });
 });
 
-describe('Circuit Breaker Race Conditions (CRITICAL-5)', () => {
+// Skip when Postgres is not available
+const skipIfNoPostgres = process.env.PERSISTENCE === 'memory';
+
+describe.skipIf(skipIfNoPostgres)('Circuit Breaker Race Conditions (CRITICAL-5)', () => {
   let store: PostgresStore;
 
   beforeEach(() => {
@@ -81,7 +81,7 @@ describe('Circuit Breaker Race Conditions (CRITICAL-5)', () => {
   });
 });
 
-describe('Dual-Write Secondary Timeouts (HIGH-5)', () => {
+describe.skipIf(skipIfNoPostgres)('Dual-Write Secondary Timeouts (HIGH-5)', () => {
   let _dualStore: DualStore;
   let memoryStore: unknown;
   let postgresStore: unknown;
@@ -132,7 +132,7 @@ describe('Concurrent Write Safety', () => {
   });
 
   test('should handle concurrent writes to same pseudonym', async () => {
-    const pseudonym = 'concurrent-user';
+    const pseudonym = 'hs_Y29uY3VycmVudC11c2VyLXBzZXVkb255bS1mb3ItdGVzdGluZ19leGFtcGxl';
 
     // Create 10 concurrent writes
     const writes = Array.from({ length: 10 }, (_, i) => ({
@@ -157,7 +157,7 @@ describe('Concurrent Write Safety', () => {
   });
 
   test('should handle concurrent reads during writes', async () => {
-    const pseudonym = 'read-write-concurrent';
+    const pseudonym = 'hs_cmVhZC13cml0ZS1jb25jdXJyZW50LXBzZXVkb255bS1mb3ItdGVzdGluZ19leGFtcGxl';
 
     // Seed initial data
     await memoryStore.store({

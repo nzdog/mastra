@@ -16,7 +16,7 @@ import { DualStore } from '../src/memory-layer/storage/dual-store';
 import { getMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 
-describe('Circuit Breaker', () => {
+describe.skipIf(process.env.PERSISTENCE === 'memory')('Circuit Breaker', () => {
   let store: PostgresStore;
 
   beforeEach(() => {
@@ -206,7 +206,7 @@ describe.skipIf(skipIfNoPostgres)('GDPR-Safe Forget', () => {
   });
 });
 
-describe('Encryption Detection', () => {
+describe.skipIf(process.env.PERSISTENCE === 'memory')('Encryption Detection', () => {
   let store: PostgresStore;
 
   beforeEach(() => {
@@ -376,7 +376,7 @@ describe('Tamper Detection', () => {
   });
 });
 
-describe('Performance & Correctness', () => {
+describe.skipIf(process.env.PERSISTENCE === 'memory')('Performance & Correctness', () => {
   let store: PostgresStore;
 
   beforeEach(() => {

@@ -65,7 +65,7 @@ interface KMSProvider {
  * In-Memory KMS Provider (DEV/TEST ONLY)
  * Stores KEKs in memory - NOT SUITABLE FOR PRODUCTION
  */
-class MemoryKMSProvider implements KMSProvider {
+export class MemoryKMSProvider implements KMSProvider {
   private keys: Map<string, Buffer> = new Map();
   private currentKekId: string;
 
@@ -206,7 +206,7 @@ class MemoryKMSProvider implements KMSProvider {
  *
  * For development/testing: Use KMS_PROVIDER=memory (not for production)
  */
-class AWSKMSProvider implements KMSProvider {
+export class AWSKMSProvider implements KMSProvider {
   constructor() {
     // CRITICAL-1: Explicit startup guard
     throw new Error(
@@ -238,7 +238,7 @@ class AWSKMSProvider implements KMSProvider {
  *
  * For development/testing: Use KMS_PROVIDER=memory (not for production)
  */
-class GCPKMSProvider implements KMSProvider {
+export class GCPKMSProvider implements KMSProvider {
   constructor() {
     // CRITICAL-1: Explicit startup guard (all environments)
     throw new Error(
@@ -510,6 +510,13 @@ export function getEncryptionService(): EncryptionService {
     encryptionServiceInstance = new EncryptionService();
   }
   return encryptionServiceInstance;
+}
+
+/**
+ * Reset the singleton EncryptionService instance (for testing)
+ */
+export function resetEncryptionService(): void {
+  encryptionServiceInstance = null;
 }
 
 /**
