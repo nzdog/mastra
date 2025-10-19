@@ -37,6 +37,9 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
 
+      #API KEY
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
     steps:
       - uses: actions/checkout@v4
 
