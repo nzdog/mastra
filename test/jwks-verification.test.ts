@@ -10,11 +10,15 @@
  */
 
 import * as crypto from 'crypto';
+import { describe, it, expect } from 'vitest';
 import { getAuditEmitter } from '../src/memory-layer/governance/audit-emitter';
 import { getJWKSManager } from '../src/memory-layer/governance/jwks-manager';
 import { canonicalStringify } from '../src/memory-layer/utils/canonical-json';
 
-describe('JWKS Verification - End-to-End', () => {
+// Skip when ledger is disabled (test requires actual signatures)
+const skipIfLedgerDisabled = process.env.LEDGER_ENABLED !== 'true';
+
+describe.skipIf(skipIfLedgerDisabled)('JWKS Verification - End-to-End', () => {
   it('should verify receipt signature using JWKS public key', async () => {
     // Step 1: Create a real audit receipt
     console.log('📝 Step 1: Creating audit event...');

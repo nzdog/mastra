@@ -18,7 +18,7 @@ describe('Schema Alignment', () => {
     const validRequest = {
       content: { type: 'text', data: 'Test' },
       metadata: {
-        hashed_pseudonym: 'hs_dGVzdF91c2VyX2hhc2hlZF9wc2V1ZG9ueW0',
+        hashed_pseudonym: 'hs_dGVzdF91c2VyX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF9wYWRkaW5nXzEyMzQ1Njc4OTA',
         consent_family: 'personal',
         consent_timestamp: '2025-01-15T12:00:00Z',
         consent_version: '1.0',
