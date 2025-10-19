@@ -1271,12 +1271,28 @@ async function startServer() {
   try {
     console.log('🔧 Initializing server components...');
 
-    // Initialize ledger sink conditionally (Phase 3.2: Ensures audit logging is ready)
+    // Initialize ledger sink conditionally (Phase 3.2: Graceful degradation)
     const ledgerEnabled = process.env.LEDGER_ENABLED !== 'false';
+    const ledgerOptional = process.env.LEDGER_OPTIONAL === 'true';
+
     if (ledgerEnabled) {
       console.log('📚 Initializing ledger sink...');
-      const ledger = await getLedgerSink();
-      console.log(`✅ Ledger initialized (height: ${ledger.getLedgerHeight()})`);
+      try {
+        const ledger = await getLedgerSink();
+        console.log(`✅ Ledger initialized (height: ${ledger.getLedgerHeight()})`);
+      } catch (ledgerError) {
+        if (ledgerOptional) {
+          // Graceful degradation: log warning and continue
+          console.warn('⚠️  Ledger initialization failed (LEDGER_OPTIONAL=true):');
+          console.warn(`   ${ledgerError instanceof Error ? ledgerError.message : String(ledgerError)}`);
+          console.warn('   Server will continue without audit logging persistence.');
+        } else {
+          // Fail-closed: ledger is required in production
+          console.error('❌ Ledger initialization failed (required for production):');
+          console.error(`   ${ledgerError instanceof Error ? ledgerError.message : String(ledgerError)}`);
+          throw ledgerError;
+        }
+      }
     } else {
       console.log('⚠️  Ledger disabled (LEDGER_ENABLED=false) - audit events will not be persisted');
     }

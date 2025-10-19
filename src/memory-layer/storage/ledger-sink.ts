@@ -157,6 +157,40 @@ export class LedgerSink {
   }
 
   /**
+   * Create a stub receipt for graceful degradation
+   * Phase 3.2: Returns safe default when LEDGER_OPTIONAL=true and uninitialized
+   */
+  private createStubReceipt(event: AuditEvent): SignedAuditReceipt {
+    const stubReceiptId = `stub_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    return {
+      event,
+      merkle: {
+        leaf_hash: 'stub_leaf_hash',
+        root_hash: 'stub_root_hash',
+        proof: {
+          leaf: 'stub_leaf',
+          root: 'stub_root',
+          siblings: [],
+          path: [], // Empty path for stub
+        },
+        index: 0,
+      },
+      signature: {
+        signature: 'stub_signature',
+        algorithm: 'EdDSA',
+        keyId: 'stub_key_id',
+        alg: 'EdDSA',
+        timestamp: new Date().toISOString(),
+      },
+      ledger_height: 0,
+      receipt_id: stubReceiptId,
+      schemaVersion: event.schemaVersion || '1.0.0',
+      policyVersion: event.policyVersion || '2025-10-phase2',
+      consentScope: event.consentScope || [],
+    };
+  }
+
+  /**
    * Recover from crash by removing incomplete writes
    * Phase 1.1: Removes .tmp files left by crashed atomic writes
    */
@@ -198,9 +232,20 @@ export class LedgerSink {
    * Append audit event to ledger
    * Returns signed audit receipt with Merkle proof
    * Phase 1.1: With file locking for concurrent writes
+   * Phase 3.2: Graceful degradation when LEDGER_OPTIONAL=true
    */
   async append(event: AuditEvent): Promise<SignedAuditReceipt> {
     console.log('[LedgerSink] Append called for event:', event.event_id);
+
+    // Phase 3.2: Short-circuit when optional and uninitialized
+    if (!this.initialized && isLedgerOptional()) {
+      if (!LedgerSink.warnedOnce) {
+        console.warn('⚠️  LedgerSink.append() called but ledger not initialized (LEDGER_OPTIONAL=true). Returning stub receipt.');
+        LedgerSink.warnedOnce = true;
+      }
+      // Return safe stub receipt
+      return this.createStubReceipt(event);
+    }
 
     try {
       this.ensureInitialized('append');
@@ -298,6 +343,7 @@ export class LedgerSink {
   /**
    * Verify audit receipt
    * Checks Merkle proof and cryptographic signature
+   * Phase 3.2: Returns stub verification when optional and uninitialized
    */
   verifyReceipt(receipt: SignedAuditReceipt): {
     valid: boolean;
@@ -305,6 +351,15 @@ export class LedgerSink {
     signature_valid: boolean;
     message: string;
   } {
+    if (!this.initialized && isLedgerOptional()) {
+      return {
+        valid: true,
+        merkle_valid: true,
+        signature_valid: true,
+        message: 'Ledger not initialized (optional mode) - verification skipped',
+      };
+    }
+
     this.ensureInitialized('verifyReceipt');
 
     if (!this.signer) {
@@ -349,36 +404,58 @@ export class LedgerSink {
 
   /**
    * Verify entire ledger chain integrity
+   * Phase 3.2: Returns safe default when optional and uninitialized
    */
   verifyChain(): {
     valid: boolean;
     brokenAt?: number;
     message: string;
   } {
+    if (!this.initialized && isLedgerOptional()) {
+      return { valid: true, message: 'Ledger not initialized (optional mode)' };
+    }
     this.ensureInitialized('verifyChain');
     return this.merkleTree.verifyChain();
   }
 
   /**
    * Get ledger height (total events)
+   * Phase 3.2: Returns 0 when optional and uninitialized
    */
   getLedgerHeight(): number {
+    if (!this.initialized && isLedgerOptional()) {
+      return 0;
+    }
     this.ensureInitialized('getLedgerHeight');
     return this.ledgerHeight;
   }
 
   /**
    * Get Merkle root hash
+   * Phase 3.2: Returns stub when optional and uninitialized
    */
   getRootHash(): string {
+    if (!this.initialized && isLedgerOptional()) {
+      return 'stub_root_hash';
+    }
     this.ensureInitialized('getRootHash');
     return this.merkleTree.getRoot();
   }
 
   /**
    * Get key rotation status
+   * Phase 3.2: Returns stub when optional and uninitialized
    */
   getKeyRotationStatus() {
+    if (!this.initialized && isLedgerOptional()) {
+      return {
+        keyId: 'stub_key_id',
+        createdAt: new Date().toISOString(),
+        ageDays: 0,
+        needsRotation: false,
+        maxAgeDays: 90,
+      };
+    }
     this.ensureInitialized('getKeyRotationStatus');
     if (!this.signer) {
       throw new Error('Signer not initialized from SignerRegistry');
@@ -388,8 +465,12 @@ export class LedgerSink {
 
   /**
    * Load audit receipt by ID
+   * Phase 3.2: Returns null when optional and uninitialized
    */
   async getReceipt(receiptId: string): Promise<SignedAuditReceipt | null> {
+    if (!this.initialized && isLedgerOptional()) {
+      return null;
+    }
     this.ensureInitialized('getReceipt');
     const receiptPath = path.join(this.ledgerPath, 'receipts', `${receiptId}.json`);
     if (!fs.existsSync(receiptPath)) {
@@ -402,8 +483,12 @@ export class LedgerSink {
 
   /**
    * List recent receipts (last N)
+   * Phase 3.2: Returns empty array when optional and uninitialized
    */
   async listReceipts(limit: number = 10): Promise<SignedAuditReceipt[]> {
+    if (!this.initialized && isLedgerOptional()) {
+      return [];
+    }
     this.ensureInitialized('listReceipts');
     const receiptsDir = path.join(this.ledgerPath, 'receipts');
     if (!fs.existsSync(receiptsDir)) {
