@@ -40,8 +40,8 @@ async function main() {
       throw new Error(`Server did not become ready after ${maxRetries} retries`);
     }
 
-    // Now test /v1/health endpoint
-    const res = await fetch('http://localhost:3000/v1/health');
+    // Now test /readyz endpoint
+    const res = await fetch('http://localhost:3000/readyz');
     if (res.status !== 200) {
       throw new Error(`Expected 200 but got ${res.status}`);
     }

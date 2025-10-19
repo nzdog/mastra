@@ -55,6 +55,10 @@ jobs:
       KMS_PROVIDER: memory
       DEV_KEK_BASE64: dGVzdC1rZWstZm9yLWNpLXRlc3Rpbmctb25seS0zMi1ieXRlcw==  # test-only KEK
 
+      # Phase 3.2: Ledger configuration for graceful degradation
+      LEDGER_ENABLED: false
+      LEDGER_OPTIONAL: true
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

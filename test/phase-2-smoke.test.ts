@@ -83,12 +83,12 @@ function startServer(): ChildProcess {
   return server;
 }
 
-// Helper: Wait for server to be ready
+// Helper: Wait for server to be ready (Phase 3.2: Use /readyz)
 async function waitForServer(maxAttempts: number = 30): Promise<void> {
   console.log('⏳ Waiting for server to start...');
   for (let i = 0; i < maxAttempts; i++) {
     try {
-      const response = await fetch(`${BASE_URL}/v1/health`, { method: 'GET' });
+      const response = await fetch(`${BASE_URL}/readyz`, { method: 'GET' });
       if (response.status === 200) {
         console.log(`✅ Server ready after ${i + 1} attempts`);
         return;

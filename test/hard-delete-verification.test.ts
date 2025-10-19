@@ -11,7 +11,7 @@ const VALID_HASHED_PSEUDONYM = 'hs_dGVzdHVzZXIxMjNfaGFzaGVkX3BzZXVkb255bV90ZXN0'
 async function waitForServer(maxAttempts = 30): Promise<void> {
   for (let i = 0; i < maxAttempts; i++) {
     try {
-      const res = await fetch(`${BASE_URL}/v1/health`);
+      const res = await fetch(`${BASE_URL}/readyz`);
       if (res.ok) {
         return;
       }

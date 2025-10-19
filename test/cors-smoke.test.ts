@@ -42,7 +42,7 @@ async function main() {
 
     // Test 1: Valid origin receives CORS headers
     console.log('✅ Test 1: Valid origin receives CORS headers');
-    const validOriginRes = await fetch('http://localhost:3000/v1/health', {
+    const validOriginRes = await fetch('http://localhost:3000/readyz', {
       headers: {
         Origin: 'http://localhost:3000',
       },
@@ -68,7 +68,7 @@ async function main() {
 
     // Test 2: Invalid origin is rejected (no CORS headers)
     console.log('✅ Test 2: Invalid origin is rejected (no CORS headers)');
-    const invalidOriginRes = await fetch('http://localhost:3000/v1/health', {
+    const invalidOriginRes = await fetch('http://localhost:3000/readyz', {
       headers: {
         Origin: 'https://evil.com',
       },
@@ -89,7 +89,7 @@ async function main() {
 
     // Test 3: Preflight OPTIONS request works with valid origin
     console.log('✅ Test 3: Preflight OPTIONS request works with valid origin');
-    const preflightRes = await fetch('http://localhost:3000/v1/health', {
+    const preflightRes = await fetch('http://localhost:3000/readyz', {
       method: 'OPTIONS',
       headers: {
         Origin: 'http://localhost:3000',

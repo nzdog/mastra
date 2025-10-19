@@ -60,7 +60,7 @@ jobs:
       - name: 'Gate: Spec index exists'
         run: test -f docs/specs/README.md
 
-      - name: 'Gate: /v1/health contract exists'
+      - name: 'Gate: /readyz contract exists'
         run: test -f src/memory-layer/api/health.ts
 
       - name: 'Gate: Audit emitter stub exists'
@@ -183,23 +183,23 @@ jobs:
 
           # Test 1: Valid origin receives CORS headers
           echo "🔍 Test 1: Valid origin receives CORS headers"
-          RESPONSE=$(curl -sf -H "Origin: http://localhost:3000" -i http://localhost:3000/v1/health)
+          RESPONSE=$(curl -sf -H "Origin: http://localhost:3000" -i http://localhost:3000/readyz)
           echo "$RESPONSE" | grep -qi "access-control-allow-origin: http://localhost:3000" || (echo "❌ Valid origin CORS failed"; kill $SERVER_PID; exit 1)
 
           # Test 2: Invalid origin is rejected (no CORS headers)
           echo "🔍 Test 2: Invalid origin is rejected (no CORS headers)"
-          RESPONSE_INVALID=$(curl -sf -H "Origin: https://evil.com" -i http://localhost:3000/v1/health)
+          RESPONSE_INVALID=$(curl -sf -H "Origin: https://evil.com" -i http://localhost:3000/readyz)
           echo "$RESPONSE_INVALID" | grep -qi "access-control-allow-origin" && (echo "❌ Invalid origin NOT rejected"; kill $SERVER_PID; exit 1) || true
 
           # Test 3: Preflight OPTIONS works
           echo "🔍 Test 3: Preflight OPTIONS request works"
-          curl -sf -X OPTIONS -H "Origin: http://localhost:3000" -H "Access-Control-Request-Method: GET" -i http://localhost:3000/v1/health | grep -qi "access-control-allow-origin" || (echo "❌ Preflight failed"; kill $SERVER_PID; exit 1)
+          curl -sf -X OPTIONS -H "Origin: http://localhost:3000" -H "Access-Control-Request-Method: GET" -i http://localhost:3000/readyz | grep -qi "access-control-allow-origin" || (echo "❌ Preflight failed"; kill $SERVER_PID; exit 1)
 
           # Test 4: Security headers present
           echo "🔍 Test 4: Security headers present"
-          curl -sf -i http://localhost:3000/v1/health | grep -qi "referrer-policy: no-referrer" || (echo "❌ Referrer-Policy missing"; kill $SERVER_PID; exit 1)
-          curl -sf -i http://localhost:3000/v1/health | grep -qi "x-content-type-options: nosniff" || (echo "❌ X-Content-Type-Options missing"; kill $SERVER_PID; exit 1)
-          curl -sf -i http://localhost:3000/v1/health | grep -qi "permissions-policy" || (echo "❌ Permissions-Policy missing"; kill $SERVER_PID; exit 1)
+          curl -sf -i http://localhost:3000/readyz | grep -qi "referrer-policy: no-referrer" || (echo "❌ Referrer-Policy missing"; kill $SERVER_PID; exit 1)
+          curl -sf -i http://localhost:3000/readyz | grep -qi "x-content-type-options: nosniff" || (echo "❌ X-Content-Type-Options missing"; kill $SERVER_PID; exit 1)
+          curl -sf -i http://localhost:3000/readyz | grep -qi "permissions-policy" || (echo "❌ Permissions-Policy missing"; kill $SERVER_PID; exit 1)
 
           # Test 5: CORS metrics in /metrics endpoint
           echo "🔍 Test 5: CORS metrics in /metrics endpoint"
@@ -502,7 +502,7 @@ jobs:
           # Wait for server
           echo "⏳ Waiting for server to start..."
           for i in {1..30}; do
-            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
               echo "✅ Server ready after $i attempts"
               break
             fi
@@ -572,7 +572,7 @@ jobs:
           # Wait for server
           echo "⏳ Waiting for server to start..."
           for i in {1..30}; do
-            if curl -sf http://localhost:3000/v1/health > /dev/null 2>&1; then
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
               echo "✅ Server ready after $i attempts"
               break
             fi
@@ -687,7 +687,7 @@ jobs:
           echo "- [x] Long-lived branch created and protected" >> compliance-report.md
           echo "- [x] ADR 0001 documented" >> compliance-report.md
           echo "- [x] Spec index created" >> compliance-report.md
-          echo "- [x] /v1/health contract seeded" >> compliance-report.md
+          echo "- [x] /readyz contract seeded" >> compliance-report.md
           echo "- [x] Audit emitter stub implemented" >> compliance-report.md
           echo "- [x] CI policy gates configured" >> compliance-report.md
           echo "" >> compliance-report.md

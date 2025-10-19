@@ -71,7 +71,7 @@ async function waitForServer(maxAttempts: number = 30): Promise<void> {
   console.log('⏳ Waiting for server to start...');
   for (let i = 0; i < maxAttempts; i++) {
     try {
-      const response = await fetch(`${BASE_URL}/v1/health`);
+      const response = await fetch(`${BASE_URL}/readyz`);
       if (response.status === 200) {
         console.log(`✅ Server ready after ${i + 1} attempts`);
         return;

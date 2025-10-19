@@ -50,8 +50,8 @@ jobs:
           test -f docs/specs/README.md || (echo "❌ Missing spec index"; exit 1)
           echo "✅ Spec index exists"
 
-          test -f src/memory-layer/api/health.ts || (echo "❌ Missing /v1/health contract"; exit 1)
-          echo "✅ /v1/health contract exists"
+          test -f src/memory-layer/api/health.ts || (echo "❌ Missing /readyz contract"; exit 1)
+          echo "✅ /readyz contract exists"
 
           test -f src/memory-layer/governance/audit-emitter.ts || (echo "❌ Missing audit emitter stub"; exit 1)
           echo "✅ Audit emitter stub exists"
@@ -92,10 +92,10 @@ jobs:
           curl -f "$HEALTH_URL" || echo "⚠️ Health check failed (may need to wait longer)"
         continue-on-error: true
 
-      - name: Health check (/v1/health - Memory Layer spec)
+      - name: Health check (/readyz - Memory Layer spec)
         run: |
           # Check Memory Layer spec-compliant health endpoint
-          HEALTH_V1_URL="${{ steps.deploy.outputs.url }}/v1/health"
+          HEALTH_V1_URL="${{ steps.deploy.outputs.url }}/readyz"
           echo "Checking Memory Layer health at: $HEALTH_V1_URL"
 
           RESPONSE=$(curl -f "$HEALTH_V1_URL" | jq '.')
@@ -118,7 +118,7 @@ jobs:
 
       - name: Verify audit emitter
         run: |
-          HEALTH_V1_URL="${{ steps.deploy.outputs.url }}/v1/health"
+          HEALTH_V1_URL="${{ steps.deploy.outputs.url }}/readyz"
           RESPONSE=$(curl -f "$HEALTH_V1_URL" | jq '.')
 
           AUDIT_STATUS=$(echo "$RESPONSE" | jq -r '.components.audit.status')
@@ -147,14 +147,14 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### 🔍 Available Endpoints" >> $GITHUB_STEP_SUMMARY
           echo "- **Legacy Health**: ${{ steps.deploy.outputs.url }}/health" >> $GITHUB_STEP_SUMMARY
-          echo "- **Memory Layer Health**: ${{ steps.deploy.outputs.url }}/v1/health" >> $GITHUB_STEP_SUMMARY
+          echo "- **Memory Layer Health**: ${{ steps.deploy.outputs.url }}/readyz" >> $GITHUB_STEP_SUMMARY
           echo "- **Protocols**: ${{ steps.deploy.outputs.url }}/api/protocols" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### ✅ Phase 0 - Foundations Status" >> $GITHUB_STEP_SUMMARY
           echo "- [x] Long-lived branch protected" >> $GITHUB_STEP_SUMMARY
           echo "- [x] ADR 0001 documented" >> $GITHUB_STEP_SUMMARY
           echo "- [x] Spec index created" >> $GITHUB_STEP_SUMMARY
-          echo "- [x] /v1/health contract deployed" >> $GITHUB_STEP_SUMMARY
+          echo "- [x] /readyz contract deployed" >> $GITHUB_STEP_SUMMARY
           echo "- [x] Audit emitter stub deployed" >> $GITHUB_STEP_SUMMARY
           echo "- [x] CI policy gates passed" >> $GITHUB_STEP_SUMMARY
           echo "- [x] spec-sandbox environment configured" >> $GITHUB_STEP_SUMMARY
