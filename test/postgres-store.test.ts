@@ -15,7 +15,10 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { MemoryRecord } from '../src/memory-layer/models/memory-record';
 import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 
-describe('PostgresStore', () => {
+// Skip when Postgres is not available
+const skipIfNoPostgres = process.env.PERSISTENCE === 'memory' || !process.env.PGHOST;
+
+describe.skipIf(skipIfNoPostgres)('PostgresStore', () => {
   let store: PostgresStore;
   const testHashedPseudonym = 'hs_test_postgres_' + uuidv4();
   const testRecords: MemoryRecord[] = [];

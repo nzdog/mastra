@@ -70,7 +70,10 @@ describe('Circuit Breaker', () => {
   });
 });
 
-describe('GDPR-Safe Forget', () => {
+// Skip GDPR-Safe Forget tests when Postgres is not available
+const skipIfNoPostgres = process.env.PERSISTENCE === 'memory';
+
+describe.skipIf(skipIfNoPostgres)('GDPR-Safe Forget', () => {
   let dualStore: DualStore;
   let memoryStore: unknown;
   let postgresStore: unknown;

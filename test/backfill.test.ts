@@ -14,7 +14,10 @@ import { MemoryRecord } from '../src/memory-layer/models/memory-record';
 import { InMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 
-describe('Backfill', () => {
+// Skip when Postgres is not available
+const skipIfNoPostgres = process.env.PERSISTENCE === 'memory';
+
+describe.skipIf(skipIfNoPostgres)('Backfill', () => {
   let memoryStore: InMemoryStore;
   let postgresStore: PostgresStore;
   const testHashedPseudonym = 'hs_test_backfill_' + uuidv4();

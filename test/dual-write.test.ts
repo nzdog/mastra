@@ -16,7 +16,10 @@ import { InMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
 import { register } from '../src/observability/metrics';
 
-describe('DualStore', () => {
+// Skip these tests when Postgres is not available (PERSISTENCE=memory in CI/test env)
+const skipIfNoPostgres = process.env.PERSISTENCE === 'memory';
+
+describe.skipIf(skipIfNoPostgres)('DualStore', () => {
   let memoryStore: InMemoryStore;
   let postgresStore: PostgresStore;
   let dualStore: DualStore;
