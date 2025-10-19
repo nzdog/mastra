@@ -50,7 +50,7 @@ CORS (Cross-Origin Resource Sharing) configuration changes can break frontend ac
   CORS_ALLOWED_ORIGINS="http://localhost:3000,https://staging.yourdomain.com" npm run server
 
   # Test with curl
-  curl -H "Origin: https://staging.yourdomain.com" -i http://localhost:3000/v1/health
+  curl -H "Origin: https://staging.yourdomain.com" -i http://localhost:3000/readyz
   ```
 
 - [ ] **Check current CORS metrics baseline**
@@ -86,19 +86,19 @@ CORS (Cross-Origin Resource Sharing) configuration changes can break frontend ac
 
 - [ ] **Verify health endpoint**
   ```bash
-  curl -i https://your-deployment-url.railway.app/v1/health
+  curl -i https://your-deployment-url.railway.app/readyz
   # Should return 200 OK
   ```
 
 - [ ] **Test valid origin (should work)**
   ```bash
-  curl -H "Origin: https://yourdomain.com" -i https://your-deployment-url.railway.app/v1/health
+  curl -H "Origin: https://yourdomain.com" -i https://your-deployment-url.railway.app/readyz
   # Should return: access-control-allow-origin: https://yourdomain.com
   ```
 
 - [ ] **Test invalid origin (should be rejected)**
   ```bash
-  curl -H "Origin: https://evil.com" -i https://your-deployment-url.railway.app/v1/health
+  curl -H "Origin: https://evil.com" -i https://your-deployment-url.railway.app/readyz
   # Should NOT return: access-control-allow-origin header
   ```
 
@@ -107,15 +107,15 @@ CORS (Cross-Origin Resource Sharing) configuration changes can break frontend ac
   curl -X OPTIONS \
     -H "Origin: https://yourdomain.com" \
     -H "Access-Control-Request-Method: GET" \
-    -i https://your-deployment-url.railway.app/v1/health
+    -i https://your-deployment-url.railway.app/readyz
   # Should return: access-control-max-age, access-control-allow-methods
   ```
 
 - [ ] **Verify security headers**
   ```bash
-  curl -i https://your-deployment-url.railway.app/v1/health | grep -i "referrer-policy"
-  curl -i https://your-deployment-url.railway.app/v1/health | grep -i "x-content-type-options"
-  curl -i https://your-deployment-url.railway.app/v1/health | grep -i "permissions-policy"
+  curl -i https://your-deployment-url.railway.app/readyz | grep -i "referrer-policy"
+  curl -i https://your-deployment-url.railway.app/readyz | grep -i "x-content-type-options"
+  curl -i https://your-deployment-url.railway.app/readyz | grep -i "permissions-policy"
   ```
 
 - [ ] **Check CORS metrics**
@@ -175,7 +175,7 @@ If issues are detected:
 
 - [ ] **Verify rollback successful**
   ```bash
-  curl -H "Origin: <expected-origin>" -i https://your-deployment-url.railway.app/v1/health
+  curl -H "Origin: <expected-origin>" -i https://your-deployment-url.railway.app/readyz
   # Should work again
   ```
 
@@ -189,7 +189,7 @@ If issues are detected:
 
 **Symptom:**
 ```
-Access to fetch at 'https://api.yourdomain.com/v1/health' from origin 'https://yourdomain.com'
+Access to fetch at 'https://api.yourdomain.com/readyz' from origin 'https://yourdomain.com'
 has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present.
 ```
 
@@ -218,7 +218,7 @@ request doesn't pass access control check.
 
 **Diagnosis:**
 ```bash
-curl -X OPTIONS -H "Origin: https://yourdomain.com" -i https://your-deployment-url.railway.app/v1/health
+curl -X OPTIONS -H "Origin: https://yourdomain.com" -i https://your-deployment-url.railway.app/readyz
 # Check for Access-Control-Allow-Methods, Access-Control-Max-Age headers
 ```
 
@@ -237,7 +237,7 @@ when the request's credentials mode is 'include'.
 
 **Diagnosis:**
 ```bash
-curl -H "Origin: https://yourdomain.com" -i https://your-deployment-url.railway.app/v1/health | grep -i credentials
+curl -H "Origin: https://yourdomain.com" -i https://your-deployment-url.railway.app/readyz | grep -i credentials
 ```
 
 **Fix:**

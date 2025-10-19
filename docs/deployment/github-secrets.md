@@ -32,7 +32,7 @@ Configure these in GitHub Settings → Secrets and variables → Actions:
 Create a new environment in GitHub Settings → Environments → New environment:
 
 - **Name**: `spec-sandbox`
-- **Deployment branches**: Selected branches → `feature/memory-layer-spec`
+- **Deployment branches**: Selected branches → `feature/memory-layer-phase-3.2`
 - **Required reviewers**: (Optional) Add reviewers if you want approval before deployment
 - **Wait timer**: (Optional) Set delay before deployment
 
@@ -50,7 +50,7 @@ These should be set in Railway dashboard for the spec-sandbox environment:
 ```bash
 NODE_ENV=staging
 ENVIRONMENT_NAME=spec-sandbox
-BRANCH_NAME=feature/memory-layer-spec
+BRANCH_NAME=feature/memory-layer-phase-3.2
 ENABLE_AUDIT_LOGGING=true
 ENABLE_MEMORY_LAYER_SPEC=true
 ENABLE_POLICY_GATES=true
@@ -81,7 +81,7 @@ railway status
 
 After setup, verify the deployment workflow by:
 
-1. Push to `feature/memory-layer-spec` branch
+1. Push to `feature/memory-layer-phase-3.2` branch
 2. Check GitHub Actions workflow run
 3. Verify deployment in Railway dashboard
 4. Test the deployed endpoint: `curl https://your-spec-sandbox-url.railway.app/health`

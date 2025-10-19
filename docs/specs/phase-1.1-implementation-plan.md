@@ -1,7 +1,7 @@
 # Phase 1.1 Implementation Plan: Audit Hardening & Verification Endpoints
 
 **Status:** Planning
-**Branch:** `feature/memory-layer-spec`
+**Branch:** `feature/memory-layer-phase-3.2`
 **GitHub Issue:** #16
 
 ## Implementation Summary
@@ -286,7 +286,7 @@ export class LedgerSink {
 }
 ```
 
-#### Update /v1/health:
+#### Update /readyz:
 ```typescript
 // Use fast incremental check
 const incrementalCheck = await ledger.verifyIncremental();

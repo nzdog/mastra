@@ -1,6 +1,6 @@
 # Deployment Guide: spec-sandbox Environment
 
-This guide explains how to deploy and manage the `feature/memory-layer-spec` branch in a separate deployment environment.
+This guide explains how to deploy and manage the `feature/memory-layer-phase-3.2` branch in a separate deployment environment.
 
 ## Overview
 
@@ -12,7 +12,7 @@ The spec-sandbox environment is a dedicated deployment for testing the Memory La
 ┌─────────────────────────────────────────┐
 │  GitHub Repository                       │
 │  ├── main branch → production (Railway) │
-│  └── feature/memory-layer-spec          │
+│  └── feature/memory-layer-phase-3.2          │
 │      └── spec-sandbox (Railway)         │
 └─────────────────────────────────────────┘
 ```
@@ -54,7 +54,7 @@ See [github-secrets.md](./github-secrets.md) for detailed instructions.
 
 1. Go to Settings → Environments → New environment
 2. Name: `spec-sandbox`
-3. Deployment branches: Select `feature/memory-layer-spec`
+3. Deployment branches: Select `feature/memory-layer-phase-3.2`
 4. (Optional) Add required reviewers
 5. Save
 
@@ -62,10 +62,10 @@ See [github-secrets.md](./github-secrets.md) for detailed instructions.
 
 ### Automatic Deployment
 
-Deployments happen automatically on every push to `feature/memory-layer-spec`:
+Deployments happen automatically on every push to `feature/memory-layer-phase-3.2`:
 
 ```bash
-git push origin feature/memory-layer-spec
+git push origin feature/memory-layer-phase-3.2
 ```
 
 The GitHub Actions workflow will:
@@ -100,7 +100,7 @@ Trigger a manual deployment from GitHub:
 
 1. Go to Actions → Deploy Feature Branch
 2. Click "Run workflow"
-3. Select branch: `feature/memory-layer-spec`
+3. Select branch: `feature/memory-layer-phase-3.2`
 4. Click "Run workflow"
 
 ## Environment Configuration
@@ -112,7 +112,7 @@ Set these in Railway dashboard for spec-sandbox:
 ```bash
 NODE_ENV=staging
 ENVIRONMENT_NAME=spec-sandbox
-BRANCH_NAME=feature/memory-layer-spec
+BRANCH_NAME=feature/memory-layer-phase-3.2
 ENABLE_AUDIT_LOGGING=true
 ENABLE_MEMORY_LAYER_SPEC=true
 ENABLE_POLICY_GATES=true

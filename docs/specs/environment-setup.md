@@ -1,6 +1,6 @@
 # spec-sandbox Environment Configuration
 
-**Environment:** `spec-sandbox` **Platform:** Railway **Branch:** `feature/memory-layer-spec`
+**Environment:** `spec-sandbox` **Platform:** Railway **Branch:** `feature/memory-layer-phase-3.2`
 **Purpose:** Isolated deployment for Memory Layer Specification validation
 
 ## Required Secrets
@@ -65,10 +65,10 @@ gh secret set ANTHROPIC_API_KEY --body "sk-ant-api03-..."
 
 ### 3. Deploy to spec-sandbox
 
-Push to `feature/memory-layer-spec` branch to trigger automatic deployment:
+Push to `feature/memory-layer-phase-3.2` branch to trigger automatic deployment:
 
 ```bash
-git push origin feature/memory-layer-spec
+git push origin feature/memory-layer-phase-3.2
 ```
 
 Or trigger manual deployment via GitHub Actions:
@@ -86,7 +86,7 @@ After deployment completes, verify the endpoints:
 curl https://YOUR_DEPLOYMENT_URL/health
 
 # Memory Layer spec-compliant health check
-curl https://YOUR_DEPLOYMENT_URL/v1/health | jq '.'
+curl https://YOUR_DEPLOYMENT_URL/readyz | jq '.'
 
 # List available protocols
 curl https://YOUR_DEPLOYMENT_URL/api/protocols | jq '.'
@@ -96,7 +96,7 @@ curl https://YOUR_DEPLOYMENT_URL/api/protocols | jq '.'
 
 ### Health Check Response
 
-The `/v1/health` endpoint returns comprehensive status:
+The `/readyz` endpoint returns comprehensive status:
 
 ```json
 {
@@ -134,8 +134,8 @@ The `/v1/health` endpoint returns comprehensive status:
 Check audit emitter status:
 
 ```bash
-curl https://YOUR_DEPLOYMENT_URL/v1/health | jq '.components.audit'
-curl https://YOUR_DEPLOYMENT_URL/v1/health | jq '.metrics.audit_ledger_height'
+curl https://YOUR_DEPLOYMENT_URL/readyz | jq '.components.audit'
+curl https://YOUR_DEPLOYMENT_URL/readyz | jq '.metrics.audit_ledger_height'
 ```
 
 ### Troubleshooting

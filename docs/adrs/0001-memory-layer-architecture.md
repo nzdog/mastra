@@ -22,7 +22,7 @@ We will implement the Memory Layer with the following architectural decisions:
 
 ### 1. Deployment Model
 
-- **Long-lived branch:** `feature/memory-layer-spec`
+- **Long-lived branch:** `feature/memory-layer-phase-3.2`
 - **Isolated environment:** `spec-sandbox` deployment separate from production
 - **Phased rollout:** Shadow → Canary → Graduated → Regional → Full
 - **Rollback capability:** Dual-write migration with snapshot-based rollback

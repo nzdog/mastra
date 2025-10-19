@@ -59,7 +59,7 @@ Phase 2 introduces consent-aware memory operations across three consent families
 - [ ] Audit ledger initialized (`.ledger/` directory)
 - [ ] Metrics endpoint accessible (`/metrics`)
 - [ ] JWKS endpoint accessible (`/v1/keys/jwks`)
-- [ ] Health endpoint includes memory layer status (`/v1/health`)
+- [ ] Health endpoint includes memory layer status (`/readyz`)
 
 ### 3. Configuration
 

@@ -735,10 +735,10 @@ decode_jwt "eyJhbGc..."
 
 ```bash
 # Check memory layer health
-curl http://localhost:4099/v1/health | jq .
+curl http://localhost:4099/readyz | jq .
 
 # Check consent family health
-curl http://localhost:4099/v1/health | jq '.consent_families'
+curl http://localhost:4099/readyz | jq '.consent_families'
 ```
 
 ---

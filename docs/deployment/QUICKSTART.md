@@ -20,7 +20,7 @@ npm install -g @railway/cli
 # 4. Create GitHub Environment
 # Settings → Environments → New environment
 # Name: spec-sandbox
-# Deployment branch: feature/memory-layer-spec
+# Deployment branch: feature/memory-layer-phase-3.2
 ```
 
 ## Daily Usage
@@ -29,7 +29,7 @@ npm install -g @railway/cli
 
 ```bash
 # Automatic (just push)
-git push origin feature/memory-layer-spec
+git push origin feature/memory-layer-phase-3.2
 
 # Manual via Railway
 railway up --environment spec-sandbox

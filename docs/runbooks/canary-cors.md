@@ -104,7 +104,7 @@ When making significant CORS changes (e.g., adding multiple new origins, changin
 
 - [ ] **Verify canary health**
   ```bash
-  curl -i https://canary.yourdomain.com/v1/health
+  curl -i https://canary.yourdomain.com/readyz
   # Should return 200 OK
   ```
 
@@ -113,13 +113,13 @@ When making significant CORS changes (e.g., adding multiple new origins, changin
   # Test each origin individually
   for origin in "https://yourdomain.com" "https://www.yourdomain.com" "https://new-domain.com"; do
     echo "Testing origin: $origin"
-    curl -H "Origin: $origin" -i https://canary.yourdomain.com/v1/health | grep -i access-control
+    curl -H "Origin: $origin" -i https://canary.yourdomain.com/readyz | grep -i access-control
   done
   ```
 
 - [ ] **Test invalid origin (should reject)**
   ```bash
-  curl -H "Origin: https://evil.com" -i https://canary.yourdomain.com/v1/health | grep -i access-control
+  curl -H "Origin: https://evil.com" -i https://canary.yourdomain.com/readyz | grep -i access-control
   # Should NOT have access-control-allow-origin header
   ```
 
@@ -131,7 +131,7 @@ When making significant CORS changes (e.g., adding multiple new origins, changin
       -H "Origin: $origin" \
       -H "Access-Control-Request-Method: POST" \
       -H "Access-Control-Request-Headers: Content-Type,Authorization" \
-      -i https://canary.yourdomain.com/v1/health
+      -i https://canary.yourdomain.com/readyz
   done
   ```
 
@@ -242,7 +242,7 @@ When making significant CORS changes (e.g., adding multiple new origins, changin
 
 - [ ] **Verify rollback successful**
   ```bash
-  curl -H "Origin: <expected-origin>" -i https://prod.yourdomain.com/v1/health
+  curl -H "Origin: <expected-origin>" -i https://prod.yourdomain.com/readyz
   # Should work again
   ```
 
@@ -328,7 +328,7 @@ railway variables set \
 railway deploy --service memory-layer-canary
 
 # Test new origin
-curl -H "Origin: https://app.newdomain.com" -i https://canary.yourdomain.com/v1/health
+curl -H "Origin: https://app.newdomain.com" -i https://canary.yourdomain.com/readyz
 # Should return: access-control-allow-origin: https://app.newdomain.com
 
 # Monitor for 1 hour

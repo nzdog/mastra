@@ -1,7 +1,7 @@
 # Phase 2 Implementation Plan: APIs & Consent Families
 
 **Status:** Planning
-**Branch:** `feature/memory-layer-spec` → `phase-2-apis-consent`
+**Branch:** `feature/memory-layer-phase-3.2` → `phase-2-apis-consent`
 **Version:** 0.2.0-alpha
 **Owner:** Core Team
 **Created:** 2025-10-16
@@ -61,7 +61,7 @@ Phase 2 builds on the governance and audit foundation established in Phase 1 to 
 - `POST /v1/{family}/distill` - Aggregate/summarize memories
 - `DELETE /v1/{family}/forget` - Delete specific memories
 - `GET /v1/{family}/export` - Export user data (GDPR compliance)
-- `GET /v1/health` - System health (existing, family-agnostic)
+- `GET /readyz` - System health (existing, family-agnostic)
 
 ### Data Model
 
@@ -482,7 +482,7 @@ slo_violation_total{operation="store", slo="p99"}
 - [x] Defaults to latest version if not specified
 - [x] Returns 400 if unsupported version requested
 - [x] Deprecation warnings for old versions
-- [x] Version reported in /v1/health endpoint
+- [x] Version reported in /readyz endpoint
 - [x] E2E tests for version negotiation
 
 ---

@@ -106,7 +106,7 @@ Consent families define data sharing boundaries and access rules.
 
 ### Health Check
 
-**GET** `/v1/health`
+**GET** `/readyz`
 
 Returns service health status and audit system metrics.
 

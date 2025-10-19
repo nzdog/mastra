@@ -30,7 +30,7 @@ Protocol system.
 
 - [x] Create long-lived branch and protect it
 - [x] Add ADR 0001 and spec index
-- [ ] Seed `/v1/health` contract and audit-emitter stub
+- [ ] Seed `/readyz` contract and audit-emitter stub
 - [ ] Add CI policy gates (lint/tests/audit stub)
 - [ ] Configure `spec-sandbox` environment & secrets
 
