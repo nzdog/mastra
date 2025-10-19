@@ -151,7 +151,9 @@ export class LedgerSink {
 
     // Graceful degradation: if ledger is optional, warn once and continue
     if (isLedgerOptional() && !LedgerSink.warnedOnce) {
-      console.warn(`⚠️  LedgerSink not initialized for operation: ${op}. LEDGER_OPTIONAL=true, continuing without audit logging.`);
+      console.warn(
+        `⚠️  LedgerSink not initialized for operation: ${op}. LEDGER_OPTIONAL=true, continuing without audit logging.`
+      );
       LedgerSink.warnedOnce = true;
     }
   }
@@ -240,7 +242,9 @@ export class LedgerSink {
     // Phase 3.2: Short-circuit when optional and uninitialized
     if (!this.initialized && isLedgerOptional()) {
       if (!LedgerSink.warnedOnce) {
-        console.warn('⚠️  LedgerSink.append() called but ledger not initialized (LEDGER_OPTIONAL=true). Returning stub receipt.');
+        console.warn(
+          '⚠️  LedgerSink.append() called but ledger not initialized (LEDGER_OPTIONAL=true). Returning stub receipt.'
+        );
         LedgerSink.warnedOnce = true;
       }
       // Return safe stub receipt

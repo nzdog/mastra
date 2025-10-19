@@ -217,7 +217,9 @@ export class DualStore implements MemoryStore {
       throw error;
     }
 
-    console.log(`[DualStore] Dual delete successful: ${primaryDeleted.length} records from both stores`);
+    console.log(
+      `[DualStore] Dual delete successful: ${primaryDeleted.length} records from both stores`
+    );
     return primaryDeleted;
   }
 

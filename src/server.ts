@@ -1284,17 +1284,23 @@ async function startServer() {
         if (ledgerOptional) {
           // Graceful degradation: log warning and continue
           console.warn('⚠️  Ledger initialization failed (LEDGER_OPTIONAL=true):');
-          console.warn(`   ${ledgerError instanceof Error ? ledgerError.message : String(ledgerError)}`);
+          console.warn(
+            `   ${ledgerError instanceof Error ? ledgerError.message : String(ledgerError)}`
+          );
           console.warn('   Server will continue without audit logging persistence.');
         } else {
           // Fail-closed: ledger is required in production
           console.error('❌ Ledger initialization failed (required for production):');
-          console.error(`   ${ledgerError instanceof Error ? ledgerError.message : String(ledgerError)}`);
+          console.error(
+            `   ${ledgerError instanceof Error ? ledgerError.message : String(ledgerError)}`
+          );
           throw ledgerError;
         }
       }
     } else {
-      console.log('⚠️  Ledger disabled (LEDGER_ENABLED=false) - audit events will not be persisted');
+      console.log(
+        '⚠️  Ledger disabled (LEDGER_ENABLED=false) - audit events will not be persisted'
+      );
     }
 
     // Phase 3.2: KMS health check (encryption enabled)
@@ -1305,7 +1311,9 @@ async function startServer() {
       await assertKmsUsable();
       console.log('✅ KMS health check passed');
     } else {
-      console.log('⚠️  Encryption disabled (ENCRYPTION_ENABLED=false) - data will not be encrypted at rest');
+      console.log(
+        '⚠️  Encryption disabled (ENCRYPTION_ENABLED=false) - data will not be encrypted at rest'
+      );
     }
 
     // Mark server as ready (Phase 3.2: /readyz will return 200)

@@ -28,8 +28,7 @@ let compatLegacyStoreRequestsTotal = 0;
  */
 export function getCompatMetrics(): Record<string, number> {
   return {
-    'compat_legacy_store_requests_total{reason="missing_metadata"}':
-      compatLegacyStoreRequestsTotal,
+    'compat_legacy_store_requests_total{reason="missing_metadata"}': compatLegacyStoreRequestsTotal,
     'compat_legacy_store_requests_total{reason="legacy_family"}': compatLegacyStoreRequestsTotal,
   };
 }
@@ -121,8 +120,7 @@ function synthesizeMetadata(body: any, consentContext?: any): any {
   }
 
   // Extract legacy fields (could be at top level or in other locations)
-  const hashedPseudonym =
-    body.hashed_pseudonym || consentContext?.hashed_pseudonym || 'unknown';
+  const hashedPseudonym = body.hashed_pseudonym || consentContext?.hashed_pseudonym || 'unknown';
   const consentFamily = body.consent_family || consentContext?.family || 'personal';
   const consentTimestamp = body.consent_timestamp || new Date().toISOString();
   const consentVersion = body.consent_version || 'legacy-compat';
@@ -197,5 +195,7 @@ export function compatShim(req: Request, res: Response, next: NextFunction): voi
  */
 export function incrementCompatMetric(reason: 'missing_metadata' | 'legacy_family'): void {
   compatLegacyStoreRequestsTotal++;
-  console.log(`[CompatShim] Metric incremented: compat_legacy_store_requests_total{reason="${reason}"}`);
+  console.log(
+    `[CompatShim] Metric incremented: compat_legacy_store_requests_total{reason="${reason}"}`
+  );
 }

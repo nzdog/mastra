@@ -108,7 +108,9 @@ class MemoryKMSProvider implements KMSProvider {
     this.keys.set('kek-default', devKEK);
     if (this.currentKekId !== 'kek-default') {
       this.keys.set(this.currentKekId, devKEK);
-      console.log(`[MemoryKMSProvider] KEK stored under both 'kek-default' and '${this.currentKekId}'`);
+      console.log(
+        `[MemoryKMSProvider] KEK stored under both 'kek-default' and '${this.currentKekId}'`
+      );
     }
   }
 
@@ -166,8 +168,8 @@ class MemoryKMSProvider implements KMSProvider {
 
       throw new Error(
         `KEK not found: ${kekId}. This encrypted data was encrypted with a KEK that is no longer available. ` +
-        `Available KEKs: ${availableKeks}. ` +
-        `To recover: restore the missing KEK or re-encrypt data with current KEK.`
+          `Available KEKs: ${availableKeks}. ` +
+          `To recover: restore the missing KEK or re-encrypt data with current KEK.`
       );
     }
 
@@ -459,9 +461,14 @@ export class EncryptionService {
         try {
           const metrics = require('../../observability/metrics');
           metrics.cryptoDecryptFailuresTotal.inc({ reason: 'unknown_kek' });
-          console.error(`[EncryptionService] crypto_decrypt_failures_total{reason="unknown_kek"} incremented`);
+          console.error(
+            `[EncryptionService] crypto_decrypt_failures_total{reason="unknown_kek"} incremented`
+          );
         } catch (metricsErr) {
-          console.warn('[EncryptionService] Failed to increment crypto_decrypt_failures_total:', metricsErr);
+          console.warn(
+            '[EncryptionService] Failed to increment crypto_decrypt_failures_total:',
+            metricsErr
+          );
         }
       }
       throw err; // Re-throw original error
