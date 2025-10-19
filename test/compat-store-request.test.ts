@@ -34,7 +34,7 @@ describe('Backward Compatibility - StoreRequest', () => {
     body: Record<string, unknown>,
     consentContext?: Record<string, unknown>
   ): { req: Partial<Request>; res: Partial<Response>; next: NextFunction } {
-    const req: Partial<Request> = {
+    const req: Partial<Request> & { consentContext?: Record<string, unknown> } = {
       method,
       path,
       body,
@@ -42,7 +42,7 @@ describe('Backward Compatibility - StoreRequest', () => {
 
     // Add consent context if provided
     if (consentContext) {
-      (req as any).consentContext = consentContext;
+      req.consentContext = consentContext;
     }
 
     const res: Partial<Response> = {

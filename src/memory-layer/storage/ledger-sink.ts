@@ -285,7 +285,7 @@ export class LedgerSink {
     try {
       // Serialize event for Merkle tree using canonical JSON
       // Phase 1.1: Ensures deterministic serialization for verification
-      const eventData = canonicalStringify(event);
+      const eventData = canonicalStringify(event as unknown as never);
 
       // Append to Merkle tree
       // Phase 1.2: Measure Merkle append time
@@ -372,7 +372,7 @@ export class LedgerSink {
 
     // Verify Merkle proof using canonical JSON
     // Phase 1.1: Must use same serialization as during signing
-    const eventData = canonicalStringify(receipt.event);
+    const eventData = canonicalStringify(receipt.event as unknown as never);
     const merkleValid = this.merkleTree.verifyProof(receipt.merkle.proof, eventData);
 
     // Verify signature using canonical JSON

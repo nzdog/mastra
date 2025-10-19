@@ -1,0 +1,12 @@
+node_modules/
+dist/
+coverage/
+.mturk/
+docs/
+migrations/
+**/*.d.ts
+# build artifacts
+*.log
+# editor junk
+.vscode/
+.DS_Store

@@ -42,7 +42,9 @@ describe('Circuit Breaker', () => {
     // In production, you'd use dependency injection or expose a health check method
 
     // For now, we verify that circuit breaker guard exists and throws
-    const privateStore = store as any;
+    const privateStore = store as unknown as {
+      circuitBreakerTripped: boolean;
+    };
 
     // Manually trip the breaker to test guard behavior
     privateStore.circuitBreakerTripped = true;
@@ -54,7 +56,9 @@ describe('Circuit Breaker', () => {
   });
 
   test('should reset breaker on successful connection', async () => {
-    const privateStore = store as any;
+    const privateStore = store as unknown as {
+      consecutivePoolErrors: number;
+    };
 
     // Verify error counter resets work
     privateStore.consecutivePoolErrors = 3;
@@ -435,7 +439,7 @@ describe('NaN Guards', () => {
       created_at: 'invalid-date',
     };
 
-    const timestamp = new Date(mockRecord.created_at as any).getTime();
+    const timestamp = new Date(mockRecord.created_at).getTime();
     expect(Number.isNaN(timestamp)).toBe(true);
 
     // Verify NaN guard would prevent metric update

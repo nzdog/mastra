@@ -117,7 +117,12 @@ export class AuditEmitter {
         timestamp: new Date().toISOString(),
         signature: 'stub_signature_ledger_disabled',
         merkle_root: 'stub_root',
-        merkle_proof: null,
+        merkle_proof: {
+          leaf: 'stub_leaf',
+          siblings: [],
+          path: [],
+          root: 'stub_root',
+        },
         ledger_height: 0,
       };
     }

@@ -327,8 +327,8 @@ export class DualStore implements MemoryStore {
    */
   async close(): Promise<void> {
     // Type-safe check for optional close method (not all stores implement close)
-    const primaryStoreWithClose = this.primaryStore as Record<string, unknown>;
-    const secondaryStoreWithClose = this.secondaryStore as Record<string, unknown>;
+    const primaryStoreWithClose = this.primaryStore as unknown as Record<string, unknown>;
+    const secondaryStoreWithClose = this.secondaryStore as unknown as Record<string, unknown>;
 
     const primaryClose = typeof primaryStoreWithClose.close === 'function'
       ? primaryStoreWithClose.close.bind(this.primaryStore)

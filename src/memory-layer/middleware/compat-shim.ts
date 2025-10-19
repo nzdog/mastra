@@ -124,7 +124,7 @@ function synthesizeMetadata(
 
   // Extract legacy fields (could be at top level or in other locations)
   const hashedPseudonym = body.hashed_pseudonym || consentContext?.hashed_pseudonym || 'unknown';
-  const consentFamily = body.consent_family || consentContext?.family || 'personal';
+  const consentFamily = String(body.consent_family || consentContext?.family || 'personal');
   const consentTimestamp = body.consent_timestamp || new Date().toISOString();
   const consentVersion = body.consent_version || 'legacy-compat';
 
@@ -174,8 +174,9 @@ export function compatShim(req: Request, res: Response, next: NextFunction): voi
   }
 
   // Step 2: Map legacy consent_family in metadata (if it exists now)
-  if (body.metadata?.consent_family) {
-    const originalFamily = body.metadata.consent_family;
+  const metadata = body.metadata as Record<string, unknown> | undefined;
+  if (metadata && typeof metadata.consent_family === 'string') {
+    const originalFamily = metadata.consent_family;
     const mappedFamily = mapLegacyConsentFamily(originalFamily);
 
     if (mappedFamily === null) {
@@ -186,7 +187,7 @@ export function compatShim(req: Request, res: Response, next: NextFunction): voi
       // Let schema validator reject it
     } else if (mappedFamily !== originalFamily) {
       // Legacy alias detected, map to canonical
-      body.metadata.consent_family = mappedFamily;
+      metadata.consent_family = mappedFamily;
     }
   }
 

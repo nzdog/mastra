@@ -14,7 +14,7 @@ import {
   cryptoDecryptFailuresTotal,
   cryptoOpsDuration,
 } from '../../observability/metrics';
-import { MemoryRecord } from '../models/memory-record';
+import { MemoryRecord, ConsentFamily } from '../models/memory-record';
 import { RecallQuery, ForgetRequest } from '../models/operation-requests';
 import { getEncryptionService } from '../security/encryption-service';
 import { isEncryptionEnabled } from './adapter-selector';
@@ -359,14 +359,14 @@ export class PostgresStore implements MemoryStore {
     return {
       id: row.id,
       hashed_pseudonym: row.hashed_pseudonym,
-      session_id: row.session_id,
+      session_id: row.session_id ?? undefined,
       content,
-      consent_family: row.consent_family,
+      consent_family: row.consent_family as ConsentFamily,
       consent_timestamp: row.consent_timestamp,
       consent_version: row.consent_version,
       created_at: row.created_at,
       updated_at: row.updated_at,
-      expires_at: row.expires_at,
+      expires_at: row.expires_at ?? undefined,
       access_count: row.access_count,
       audit_receipt_id: row.audit_receipt_id,
     };

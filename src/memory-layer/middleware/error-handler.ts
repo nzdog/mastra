@@ -106,8 +106,7 @@ export function errorHandler(
 
   // Check if error is already an ErrorResponse
   if (isErrorResponse(err)) {
-    const errorResp = err as { error: { code: string } };
-    res.status(getStatusCode(errorResp.error.code)).json(err);
+    res.status(getStatusCode(err.error.code)).json(err);
     return;
   }
 

@@ -17,6 +17,14 @@
 import { spawn, ChildProcess } from 'child_process';
 import fetch from 'node-fetch';
 
+// Extend global namespace for test state sharing
+declare global {
+   
+  var testRecordId: string | undefined;
+   
+  var testReceiptIds: string[];
+}
+
 // Test configuration
 const BASE_URL = 'http://localhost:3000';
 const TIMEOUT_MS = 30000; // 30 seconds
@@ -156,8 +164,8 @@ async function main(): Promise<void> {
       results.push({ test: 'Store memory (personal)', passed: true });
 
       // Store recordId and receiptId for later tests
-      (global as any).testRecordId = recordId;
-      (global as any).testReceiptIds = [receiptId];
+      global.testRecordId = recordId;
+      global.testReceiptIds = [receiptId];
     } catch (err) {
       console.error('❌ Store test failed:', err);
       results.push({ test: 'Store memory (personal)', passed: false, error: String(err) });
@@ -189,7 +197,7 @@ async function main(): Promise<void> {
       results.push({ test: 'Recall memory (personal)', passed: true });
 
       // Save receipt ID
-      (global as any).testReceiptIds.push(recallResponse.data.audit_receipt_id);
+      global.testReceiptIds.push(recallResponse.data.audit_receipt_id);
     } catch (err) {
       console.error('❌ Recall test failed:', err);
       results.push({ test: 'Recall memory (personal)', passed: false, error: String(err) });
@@ -235,7 +243,7 @@ async function main(): Promise<void> {
       // Save receipt IDs
       storeResponses.forEach((r) => {
         if (r.data.audit_receipt_id) {
-          (global as any).testReceiptIds.push(r.data.audit_receipt_id);
+          global.testReceiptIds.push(r.data.audit_receipt_id);
         }
       });
     } catch (err) {
@@ -279,7 +287,7 @@ async function main(): Promise<void> {
       results.push({ test: 'Distill memories (cohort)', passed: true });
 
       // Save receipt ID
-      (global as any).testReceiptIds.push(distillResponse.data.audit_receipt_id);
+      global.testReceiptIds.push(distillResponse.data.audit_receipt_id);
     } catch (err) {
       console.error('❌ Distill test failed:', err);
       results.push({ test: 'Distill memories (cohort)', passed: false, error: String(err) });
@@ -290,7 +298,7 @@ async function main(): Promise<void> {
     // ============================================================================
     console.log('\n🗑️  TEST 5: Forget memory (personal family)');
     try {
-      const recordId = (global as any).testRecordId;
+      const recordId = global.testRecordId;
       const forgetResponse = await authedRequest(
         `/v1/personal/forget?id=${recordId}&reason=test_cleanup`,
         { method: 'DELETE' }
@@ -308,7 +316,7 @@ async function main(): Promise<void> {
       results.push({ test: 'Forget memory (personal)', passed: true });
 
       // Save receipt ID
-      (global as any).testReceiptIds.push(forgetResponse.data.audit_receipt_id);
+      global.testReceiptIds.push(forgetResponse.data.audit_receipt_id);
     } catch (err) {
       console.error('❌ Forget test failed:', err);
       results.push({ test: 'Forget memory (personal)', passed: false, error: String(err) });
@@ -336,7 +344,7 @@ async function main(): Promise<void> {
       results.push({ test: 'Export memories (personal)', passed: true });
 
       // Save receipt ID
-      (global as any).testReceiptIds.push(exportResponse.data.audit_receipt_id);
+      global.testReceiptIds.push(exportResponse.data.audit_receipt_id);
     } catch (err) {
       console.error('❌ Export test failed:', err);
       results.push({ test: 'Export memories (personal)', passed: false, error: String(err) });
@@ -362,7 +370,7 @@ async function main(): Promise<void> {
       results.push({ test: 'Verify audit receipts', passed: true });
     } else {
       try {
-        const receiptIds = (global as any).testReceiptIds || [];
+        const receiptIds = global.testReceiptIds || [];
         if (receiptIds.length === 0) {
           throw new Error('No receipt IDs to verify');
         }

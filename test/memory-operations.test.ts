@@ -14,6 +14,12 @@
 import { spawn, ChildProcess } from 'child_process';
 import fetch from 'node-fetch';
 
+// Extend global namespace for test state sharing
+declare global {
+   
+  var testStoreId: string | undefined;
+}
+
 // Test configuration
 const BASE_URL = 'http://localhost:3000';
 // Use the same token format as phase-2-smoke.test.ts to avoid token conversion issues
@@ -134,7 +140,7 @@ async function main(): Promise<void> {
       results.push({ test: 'Store text content', passed: true });
 
       // Save for recall test
-      (global as any).testStoreId = response.data.id;
+      global.testStoreId = response.data.id;
     } catch (err) {
       console.error('❌ Failed:', err);
       results.push({ test: 'Store text content', passed: false, error: String(err) });
@@ -520,7 +526,7 @@ async function main(): Promise<void> {
 
     console.log('\n[FORGET] Test 15: Forget by ID (personal)');
     try {
-      const storeId = (global as any).testStoreId;
+      const storeId = global.testStoreId;
       if (!storeId) {
         throw new Error('No test record ID available');
       }
