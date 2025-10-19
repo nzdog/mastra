@@ -106,7 +106,7 @@ describe('GDPR-Safe Forget', () => {
     // Store a test record in both stores
     const record: MemoryRecord = {
       id: 'test-forget-1',
-      hashed_pseudonym: 'pseudonym-123',
+      hashed_pseudonym: 'hs_cHNldWRvbnltLTEyMw',
       content: { type: 'test', data: { message: 'test' } },
       consent_family: 'personal',
       consent_timestamp: new Date().toISOString(),
@@ -134,7 +134,7 @@ describe('GDPR-Safe Forget', () => {
   test('should succeed when both stores delete same count', async () => {
     const record: MemoryRecord = {
       id: 'test-forget-2',
-      hashed_pseudonym: 'pseudonym-456',
+      hashed_pseudonym: 'hs_cHNldWRvbnltLTQ1Ng',
       content: { type: 'test', data: { message: 'test2' } },
       consent_family: 'personal',
       consent_timestamp: new Date().toISOString(),
@@ -162,7 +162,7 @@ describe('GDPR-Safe Forget', () => {
   test('should throw on count mismatch', async () => {
     const record1: MemoryRecord = {
       id: 'test-forget-3a',
-      hashed_pseudonym: 'pseudonym-789',
+      hashed_pseudonym: 'hs_cHNldWRvbnltLTc4OQ',
       content: { type: 'test', data: { message: 'test3a' } },
       consent_family: 'personal',
       consent_timestamp: new Date().toISOString(),
@@ -175,7 +175,7 @@ describe('GDPR-Safe Forget', () => {
 
     const record2: MemoryRecord = {
       id: 'test-forget-3b',
-      hashed_pseudonym: 'pseudonym-789',
+      hashed_pseudonym: 'hs_cHNldWRvbnltLTc4OQ',
       content: { type: 'test', data: { message: 'test3b' } },
       consent_family: 'personal',
       consent_timestamp: new Date().toISOString(),
@@ -195,7 +195,7 @@ describe('GDPR-Safe Forget', () => {
     secondaryForgetSpy.mockResolvedValueOnce(['test-forget-3a']); // Only 1 instead of 2
 
     // Should throw due to mismatch
-    await expect(dualStore.forget({ hashed_pseudonym: 'pseudonym-789' })).rejects.toThrow(
+    await expect(dualStore.forget({ hashed_pseudonym: 'hs_cHNldWRvbnltLTc4OQ' })).rejects.toThrow(
       'GDPR erasure incomplete'
     );
 

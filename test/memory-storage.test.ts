@@ -662,19 +662,19 @@ async function main(): Promise<void> {
     await store.store(
       createTestRecord({
         consent_family: 'personal',
-        hashed_pseudonym: 'hs_dXNlcl8xX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+        hashed_pseudonym: 'hs_dXNlcl8xX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF9wYWRkaW5nXzEyMzQ1',
       })
     );
     await store.store(
       createTestRecord({
         consent_family: 'cohort',
-        hashed_pseudonym: 'hs_dXNlcl8yX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+        hashed_pseudonym: 'hs_dXNlcl8yX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF9wYWRkaW5nXzEyMzQ1',
       })
     );
     await store.store(
       createTestRecord({
         consent_family: 'population',
-        hashed_pseudonym: 'hs_dXNlcl8zX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+        hashed_pseudonym: 'hs_dXNlcl8zX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF9wYWRkaW5nXzEyMzQ1',
       })
     );
 
@@ -777,15 +777,14 @@ async function main(): Promise<void> {
 
   if (passedCount < totalCount) {
     console.error('❌ Memory storage test FAILED');
-    process.exit(1);
+    throw new Error(`Memory storage test failed: ${passedCount}/${totalCount} tests passed`);
   } else {
     console.log('✅ Memory storage test PASSED');
-    process.exit(0);
   }
 }
 
 // Run test
 main().catch((error) => {
   console.error('❌ Test failed with error:', error);
-  process.exit(1);
+  throw error;
 });
