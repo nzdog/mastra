@@ -12,6 +12,32 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
+**Phase 3.3 - Memory Layer Freeze & Production Readiness (2025-10-19):**
+
+- **Ledger Graceful Degradation** (`src/server.ts`, `src/memory-layer/storage/ledger-sink.ts`):
+  - Server startup honors `LEDGER_OPTIONAL` environment variable
+  - When `LEDGER_OPTIONAL=true` and ledger init fails: logs warning, continues serving
+  - When `LEDGER_OPTIONAL=false` (production default): fails closed, exits process
+  - LedgerSink short-circuits all operations when uninitialized in optional mode:
+    - Write ops return stub receipts via `createStubReceipt()`
+    - Read ops return safe defaults (height=0, empty arrays, stub status)
+    - Prevents null pointer dereferences on `this.signer` and `this.merkleTree`
+  - CI/test environments can run without ledger: `LEDGER_ENABLED=false, LEDGER_OPTIONAL=true`
+
+- **Readiness Endpoint Enhancements** (`/readyz`):
+  - Returns JSON body: `{ ready: boolean, message: string, ledger_initialized: boolean, ledger_optional: boolean }`
+  - Message includes ledger state: "(ledger disabled)" or "(ledger optional mode)"
+  - All tests migrated from `/v1/health` to `/readyz` with polling + backoff
+  - Workflows updated to use `/readyz` in CI checks
+
+- **API & Schema Freeze**:
+  - `StoreRequest.metadata` locked as required field in `memory-schema.json`
+  - `consent_family` enum frozen: `['personal', 'cohort', 'population']`
+  - Database migrations frozen with `LOCKED_AT: 2025-10-19` headers:
+    - `001_create_memory_records.sql`
+    - `002_partitions_dev.sql`
+    - `003_add_encryption_version.sql`
+
 **Phase 3.2 - Security & Operational Hardening:**
 
 - **Backward Compatibility for StoreRequest** (`src/memory-layer/middleware/compat-shim.ts`):

@@ -733,9 +733,29 @@ app.get('/v1/health', apiLimiter, async (_req: Request, res: Response) => {
 // Readiness check endpoint (Phase 3.2)
 app.get('/readyz', (_req: Request, res: Response) => {
   if (isReady) {
-    res.status(200).json({ ready: true, message: 'Server is ready' });
+    const ledgerEnabled = process.env.LEDGER_ENABLED !== 'false';
+    const ledgerOptional = process.env.LEDGER_OPTIONAL === 'true';
+
+    let message = 'Server is ready';
+    if (!ledgerEnabled) {
+      message += ' (ledger disabled)';
+    } else if (ledgerOptional) {
+      message += ' (ledger optional mode)';
+    }
+
+    res.status(200).json({
+      ready: true,
+      message,
+      ledger_initialized: ledgerEnabled && !ledgerOptional,
+      ledger_optional: ledgerOptional,
+    });
   } else {
-    res.status(503).json({ ready: false, message: 'Server is initializing...' });
+    res.status(503).json({
+      ready: false,
+      message: 'Server is initializing...',
+      ledger_initialized: false,
+      ledger_optional: process.env.LEDGER_OPTIONAL === 'true',
+    });
   }
 });
 
