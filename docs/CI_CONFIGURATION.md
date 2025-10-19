@@ -124,7 +124,7 @@ env:
 ### Policy Gates (`policy-gates.yml`)
 
 **Key Checks:**
-- ✅ No `user_id` references (must use `hashed_pseudonym`)
+- ✅ All user identifiers must be pseudonymized (using `hashed_pseudonym`, not deprecated raw identifiers)
 - ✅ No email or SSN patterns in code
 - ✅ `AUTH_PROVIDER=mock` only allowed on feature branches
 - ✅ Error envelope compliance
