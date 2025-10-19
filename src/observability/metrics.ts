@@ -311,6 +311,14 @@ export const cryptoOpsDuration = new promClient.Histogram({
   registers: [register],
 });
 
+/** Total number of KEK rotations (Phase 3.2) */
+export const kmsRotationsTotal = new promClient.Counter({
+  name: 'kms_rotations_total',
+  help: 'Total number of KEK rotations',
+  labelNames: ['new_id'],
+  registers: [register],
+});
+
 // =============================================================================
 // PHASE 3 WEEK 3: DUAL-WRITE MIGRATION METRICS
 // =============================================================================

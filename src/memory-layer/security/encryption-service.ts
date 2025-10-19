@@ -156,7 +156,19 @@ class MemoryKMSProvider implements KMSProvider {
   async decryptDEK(encryptedDek: string, kekId: string): Promise<Buffer> {
     const kek = this.keys.get(kekId);
     if (!kek) {
-      throw new Error(`KEK not found: ${kekId}`);
+      // Phase 3.2: Proper error handling for unknown KEK ID
+      const availableKeks = Array.from(this.keys.keys()).join(', ');
+      console.error(`[MemoryKMSProvider] KEK not found: ${kekId}`);
+      console.error(`[MemoryKMSProvider] Available KEKs: ${availableKeks}`);
+
+      // Increment crypto_decrypt_failures_total metric (if metrics are available)
+      // Note: Metrics integration done in decrypt() caller
+
+      throw new Error(
+        `KEK not found: ${kekId}. This encrypted data was encrypted with a KEK that is no longer available. ` +
+        `Available KEKs: ${availableKeks}. ` +
+        `To recover: restore the missing KEK or re-encrypt data with current KEK.`
+      );
     }
 
     // Parse base64: iv || authTag || ciphertext
@@ -294,7 +306,19 @@ export class EncryptionService {
       (this.kmsProvider as any).rotateKEK(newKekId);
     }
 
+    // Update current KEK ID
+    const oldKekId = this.currentKekId;
     this.currentKekId = newKekId;
+
+    // Emit metric for KEK rotation (Phase 3.2)
+    try {
+      // Dynamic import to avoid circular dependency
+      const metrics = require('../../observability/metrics');
+      metrics.kmsRotationsTotal.inc({ new_id: newKekId });
+      console.log(`[EncryptionService] KEK rotated: ${oldKekId} → ${newKekId}, metric incremented`);
+    } catch (err) {
+      console.warn('[EncryptionService] Failed to increment kms_rotations_total metric:', err);
+    }
   }
 
   /**
@@ -424,7 +448,24 @@ export class EncryptionService {
     }
 
     // Step 1: Decrypt DEK using KEK via KMS (uses envelope's dek_kid, not current)
-    const dek = await this.kmsProvider.decryptDEK(envelope.dek_ciphertext, envelope.dek_kid);
+    // Phase 3.2: Track metrics for unknown KEK failures
+    let dek: Buffer;
+    try {
+      dek = await this.kmsProvider.decryptDEK(envelope.dek_ciphertext, envelope.dek_kid);
+    } catch (err) {
+      const errorMsg = (err as Error).message;
+      if (errorMsg.includes('KEK not found')) {
+        // Increment crypto_decrypt_failures_total metric (Phase 3.2)
+        try {
+          const metrics = require('../../observability/metrics');
+          metrics.cryptoDecryptFailuresTotal.inc({ reason: 'unknown_kek' });
+          console.error(`[EncryptionService] crypto_decrypt_failures_total{reason="unknown_kek"} incremented`);
+        } catch (metricsErr) {
+          console.warn('[EncryptionService] Failed to increment crypto_decrypt_failures_total:', metricsErr);
+        }
+      }
+      throw err; // Re-throw original error
+    }
 
     try {
       // Step 2: Decrypt data using DEK

@@ -494,7 +494,7 @@ async function main(): Promise<void> {
       await store.store(
         createTestRecord({
           session_id: sessionId,
-          hashed_pseudonym: `hs_aW5kZXhfdGVzdF91c2VyXyR7aX1faGFzaGVkX3BzZXVkb255bV90ZXN0`,
+          hashed_pseudonym: `hs_aW5kZXhfdGVzdF91c2VyXyR7aX1faGFzaGVkX3BzZXVkb255bV90ZXN0_${i}`,
         })
       );
     }

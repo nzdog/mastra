@@ -1282,6 +1282,17 @@ async function startServer() {
       console.log('⚠️  Ledger disabled (LEDGER_ENABLED=false) - audit events will not be persisted');
     }
 
+    // Phase 3.2: KMS health check (encryption enabled)
+    const encryptionEnabled = process.env.ENCRYPTION_ENABLED === 'true';
+    if (encryptionEnabled) {
+      console.log('🔐 Verifying KMS provider health...');
+      const { assertKmsUsable } = require('./memory-layer/security/encryption-service');
+      await assertKmsUsable();
+      console.log('✅ KMS health check passed');
+    } else {
+      console.log('⚠️  Encryption disabled (ENCRYPTION_ENABLED=false) - data will not be encrypted at rest');
+    }
+
     // Mark server as ready (Phase 3.2: /readyz will return 200)
     isReady = true;
     console.log('✅ Server initialization complete');

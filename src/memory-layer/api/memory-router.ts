@@ -8,6 +8,7 @@
 
 import { Router } from 'express';
 import { consentResolver } from '../middleware/consent-resolver';
+import { compatShim } from '../middleware/compat-shim';
 import { schemaValidator } from '../middleware/schema-validator';
 import { sloMiddleware } from '../middleware/slo-middleware';
 import {
@@ -23,15 +24,17 @@ import {
  *
  * Middleware order:
  * 1. Consent resolver - extracts family, validates auth
- * 2. Schema validator - validates request schemas
- * 3. SLO middleware - tracks latency, enforces SLO
- * 4. Operation handlers - execute memory operations
+ * 2. Compat shim - transforms legacy requests (Phase 3.2)
+ * 3. Schema validator - validates request schemas
+ * 4. SLO middleware - tracks latency, enforces SLO
+ * 5. Operation handlers - execute memory operations
  */
 export function createMemoryRouter(): Router {
   const router = Router({ mergeParams: true });
 
   // Apply middleware stack to all routes
   router.use(consentResolver);
+  router.use(compatShim); // Phase 3.2: Backward compatibility
   router.use(schemaValidator);
   router.use(sloMiddleware);
 

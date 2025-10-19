@@ -105,15 +105,6 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Run Postgres-specific tests
-        run: npx vitest run test/postgres-store.test.ts --reporter=verbose
-
-      - name: Run encryption tests
-        run: npx vitest run test/encryption-roundtrip.test.ts --reporter=verbose
-
-      - name: Run dual-write tests
-        run: npx vitest run test/dual-write.test.ts --reporter=verbose
-
       - name: Generate coverage summary
         if: always()
         run: |

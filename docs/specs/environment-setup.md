@@ -34,6 +34,9 @@ Set these in Railway dashboard for the `spec-sandbox` environment:
 | `CORS_ALLOW_METHODS`       | Allowed HTTP methods                             | `GET,POST,PUT,PATCH,DELETE,OPTIONS`        | No              |
 | `CORS_ALLOW_HEADERS`       | Allowed request headers                          | `Content-Type,Authorization`               | No              |
 | `CORS_EXPOSE_HEADERS`      | Headers exposed to client                        | `X-API-Version,X-Spec-Version`             | No              |
+| **Backward Compatibility (Phase 3.2 - TEMPORARY)**                                                                     |
+| `COMPAT_ALLOW_LEGACY_METADATA` | Accept StoreRequest without metadata field   | `true` (dev/staging only)                  | No              |
+| `COMPAT_ALLOW_LEGACY_FAMILY`   | Accept legacy consent_family aliases         | `true` (dev/staging only)                  | No              |
 
 ## Setup Instructions
 
@@ -159,6 +162,21 @@ curl https://YOUR_DEPLOYMENT_URL/v1/health | jq '.metrics.audit_ledger_height'
 - **Credentials:** If you need cookies/auth headers, set `CORS_ALLOW_CREDENTIALS=true` (but never with wildcard origin)
 - **Monitoring:** Check `/metrics` endpoint for `cors_preflight_total` and `cors_reject_total` counters
 - **Validation:** Server logs will show `🚫 CORS: Rejected origin="https://evil.com"` for disallowed origins
+
+**Backward Compatibility Flags (Phase 3.2):**
+
+- **Deprecation Window:** 3-6 months from Phase 3.2 release
+- **COMPAT_ALLOW_LEGACY_METADATA:** Temporarily accept requests without `metadata` field
+  - Server will synthesize metadata from legacy top-level fields
+  - Logs: `[CompatShim] Synthesizing metadata for legacy request`
+  - Metrics: `compat_legacy_store_requests_total{reason="missing_metadata"}`
+  - **Action Required:** Update clients to include `metadata` field in StoreRequest
+- **COMPAT_ALLOW_LEGACY_FAMILY:** Temporarily accept legacy consent_family aliases
+  - Maps: `individual` → `personal`, `group` → `cohort`, `aggregate` → `population`
+  - Logs: `[CompatShim] Mapped legacy consent_family '...' -> '...'`
+  - Metrics: `compat_legacy_store_requests_total{reason="legacy_family"}`
+  - **Action Required:** Update clients to use canonical values: `personal`, `cohort`, `population`
+- **Production:** These flags should ONLY be enabled during migration period, then disabled
 
 ## Security Notes
 

@@ -10,6 +10,62 @@ adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+**Phase 3.2 - Security & Operational Hardening:**
+
+- **Backward Compatibility for StoreRequest** (`src/memory-layer/middleware/compat-shim.ts`):
+  - Compat shim middleware for gradual client migration
+  - Environment flags for controlled backward compatibility:
+    - `COMPAT_ALLOW_LEGACY_METADATA=true`: Accept requests without metadata field (synthesizes from legacy format)
+    - `COMPAT_ALLOW_LEGACY_FAMILY=true`: Accept legacy consent_family aliases (e.g., "individual" → "personal", "group" → "cohort")
+  - Prometheus metrics: `compat_legacy_store_requests_total{reason="missing_metadata|legacy_family"}`
+  - Structured logging for all compat transformations
+  - **Deprecation Notice**: These flags will be removed in 3-6 months. All clients must migrate to canonical StoreRequest format.
+
+- **KEK Rotation with Data Preservation** (`src/memory-layer/security/encryption-service.ts`):
+  - Multi-KEK support: maintains map of KEKs by ID (e.g., `kek-202501`, `kek-202502`)
+  - `rotateKEK(newId)`: Generates new KEK without deleting old ones
+  - `decrypt()`: Selects KEK by envelope's `dek_kid` (works with any historical KEK)
+  - Error handling: `crypto_decrypt_failures_total{reason="unknown_kek"}` metric for missing KEK IDs
+  - Audit events: `kms_rotations_total{new_id=...}` counter
+
+- **Unified KMS Provider Guard + Readiness Integration**:
+  - Centralized provider selection in `selectKMSProvider()` with explicit production guards
+  - Fail-fast with actionable error messages for unimplemented providers (AWS/GCP)
+  - `assertKmsUsable()`: Round-trip encrypt/decrypt health check on startup
+  - `/readyz` endpoint integration: Returns 503 if KMS health check fails
+  - Production enforcement: Blocks `memory` provider in `NODE_ENV=production`
+
+- **Schema ↔ TypeScript Alignment CI Gate**:
+  - CI script `scripts/validate-schema-vs-types.ts`: Validates JSON Schema matches TypeScript models
+  - Tests canonical fixtures against both JSON Schema (AJV) and TypeScript runtime validators
+  - Prevents schema drift by failing CI on mismatch
+  - Integrated into `policy-gates.yml` workflow
+
+- **Canonical JSON Hashing Documentation**:
+  - Documented ledger hashing change in `docs/runbooks/ledger.md`
+  - Version tag field: `hash_format: "canon-v1"` for new ledger records
+  - Historical proof compatibility: No re-hash required for pre-change records
+  - Test suite: `test/merkle-canonical-json.test.ts` validates property-order independence
+
+### Fixed
+
+- **Test Data Template String Issues** (`test/memory-storage.test.ts`):
+  - Line 497: Fixed non-interpolated template string in `hashed_pseudonym`
+  - Line 527: Corrected template literal for `consent_family` test fixture
+
+- **CI Duplicate Test Runs** (`.github/workflows/test.yml`):
+  - Removed duplicate test executions (tests were running in both `npm test` and individual `vitest run` commands)
+  - Single authoritative test run with `npm test`
+  - Removed `continue-on-error: true` from core test suites (Postgres, encryption, dual-write)
+
+### Documentation
+
+- **CHANGELOG.md**: Added Phase 3.2 backward compatibility and security hardening notes
+- **docs/specs/environment-setup.md**: Added `COMPAT_ALLOW_LEGACY_METADATA` and `COMPAT_ALLOW_LEGACY_FAMILY` flags
+- **docs/runbooks/ledger.md**: Documented canonical JSON hashing version and historical compatibility
+
 ---
 
 ## [Phase 2.0] - 2025-10-17
