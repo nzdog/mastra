@@ -32,6 +32,7 @@ CREATE TABLE memory_records (
   expires_at TIMESTAMPTZ,
   access_count INTEGER NOT NULL DEFAULT 0,
   audit_receipt_id UUID NOT NULL,
+  encryption_version TEXT,  -- Phase 3.2: Track encryption version (NULL = plaintext)
   PRIMARY KEY (id, created_at)
 ) PARTITION BY RANGE (created_at);
 
@@ -55,8 +56,13 @@ CREATE INDEX idx_memory_records_audit
   ON memory_records (audit_receipt_id);
 
 -- ============================================================================
--- Create monthly partitions for 2025
+-- Create monthly partitions for current/future months
+-- Phase 3.2: Updated to include current month (October 2025) onwards
 -- ============================================================================
+
+-- October 2025 (current)
+CREATE TABLE memory_records_2025_10 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-10-01') TO ('2025-11-01');
 
 -- November 2025
 CREATE TABLE memory_records_2025_11 PARTITION OF memory_records

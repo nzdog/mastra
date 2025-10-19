@@ -494,7 +494,7 @@ async function main(): Promise<void> {
       await store.store(
         createTestRecord({
           session_id: sessionId,
-          hashed_pseudonym: `hs_aW5kZXhfdGVzdF91c2VyXyR7aX1faGFzaGVkX3BzZXVkb255bV90ZXN0_${i}`,
+          hashed_pseudonym: `hs_${Buffer.from(`index_test_user_${i}_hashed_pseudonym_test`).toString('base64url')}`,
         })
       );
     }
@@ -524,7 +524,7 @@ async function main(): Promise<void> {
         await store.store(
           createTestRecord({
             consent_family: family,
-            hashed_pseudonym: `hs_Y29uc2VudF9mYW1pbHlfdGVzdF8ke family}_aGFzaGVkX3BzZXVkb255bV90ZXN0`,
+            hashed_pseudonym: `hs_${Buffer.from(`consent_family_test_${family}_hashed_pseudonym_test`).toString('base64url')}`,
           })
         );
       }
