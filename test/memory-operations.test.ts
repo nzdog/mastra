@@ -672,7 +672,7 @@ async function main(): Promise<void> {
     // PII VALIDATION TESTS
     // ============================================================================
 
-    console.log('\n[PII VALIDATION] Test 22: Reject raw email in hashed_pseudonym field');
+    console.log('\n[PII VALIDATION] Test 22: Reject invalid hashed_pseudonym format');
     try {
       const response = await authedRequest('/v1/personal/store', {
         method: 'POST',
@@ -680,7 +680,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            hashed_pseudonym: 'user@example.com', // Raw email - should reject
+            hashed_pseudonym: 'hs_short', // Invalid format (too short) - should reject
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',

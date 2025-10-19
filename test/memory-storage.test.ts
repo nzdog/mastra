@@ -730,7 +730,7 @@ async function main(): Promise<void> {
   try {
     const store = new InMemoryStore();
     const record = createTestRecord({
-      hashed_pseudonym: 'invalid@email.com', // Invalid format
+      hashed_pseudonym: 'hs_short', // Intentionally invalid (too short for hs_ pattern, non-email)
     });
 
     try {

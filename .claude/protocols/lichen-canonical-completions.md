@@ -258,7 +258,7 @@ restoration protocol: "If trust breaks here, reconciliation looks like..."
 **2. What input normalization and output encoding are required?**
 
 I attune defensive energy to human context, not threat level. At 3am, normalization becomes gentler:
-accepting common typos in email domains (@gmial.com→@gmail.com), relaxing phone format requirements,
+accepting common typos in email domains (e.g., transposed letters), relaxing phone format requirements,
 auto-correcting timezone confusion. During crisis (detected by error rate spike), validation
 messages become more supportive: "Let's try that again" instead of "Invalid format". For elderly
 users (detected by accessibility settings), normalization patience increases: accepting dates like
