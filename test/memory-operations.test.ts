@@ -13,6 +13,7 @@
 
 import { spawn, ChildProcess } from 'child_process';
 import fetch from 'node-fetch';
+import { INVALID_PSEUDONYM } from './_helpers';
 
 // Extend global namespace for test state sharing
 declare global {
@@ -702,7 +703,7 @@ async function main(): Promise<void> {
       results.push({ test: 'PII Validation - reject email', passed: false, error: String(err) });
     }
 
-    console.log('\n[PII VALIDATION] Test 23: Reject SSN pattern in hashed_pseudonym field');
+    console.log('\n[PII VALIDATION] Test 23: Reject invalid hashed_pseudonym format');
     try {
       const response = await authedRequest('/v1/personal/store', {
         method: 'POST',
@@ -710,7 +711,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            hashed_pseudonym: '123-45-6789', // SSN pattern - should reject
+            hashed_pseudonym: INVALID_PSEUDONYM, // Invalid format (non-SSN, non-email, too short)
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
