@@ -1,4 +1,3 @@
-/* eslint-disable import/order */
 import { randomUUID } from 'crypto';
 import * as path from 'path';
 import * as dotenv from 'dotenv';

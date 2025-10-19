@@ -16,7 +16,6 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { ConsentFamily } from '../models/memory-record';
-import { StoreRequest } from '../models/operation-requests';
 
 /**
  * Prometheus counter for legacy request tracking

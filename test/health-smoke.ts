@@ -27,7 +27,7 @@ async function main() {
           ready = true;
           break;
         }
-      } catch (err) {
+      } catch (_err) {
         // Server not yet accepting connections
       }
 

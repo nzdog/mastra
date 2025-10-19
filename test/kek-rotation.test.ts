@@ -9,7 +9,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { EncryptionService, getEncryptionService } from '../src/memory-layer/security/encryption-service';
+import { EncryptionService } from '../src/memory-layer/security/encryption-service';
 import * as crypto from 'crypto';
 
 describe('KEK Rotation - Data Preservation', () => {
@@ -135,7 +135,7 @@ describe('KEK Rotation - Data Preservation', () => {
     const service = new EncryptionService();
 
     // Get initial KEK ID
-    const originalKekId = service.getCurrentKekId();
+    const _originalKekId = service.getCurrentKekId();
 
     // Encrypt with original KEK
     const plaintext = Buffer.from('Original data');

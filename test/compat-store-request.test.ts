@@ -50,9 +50,9 @@ describe('Backward Compatibility - StoreRequest', () => {
       json: () => res as Response,
     };
 
-    let nextCalled = false;
+    let _nextCalled = false;
     const next: NextFunction = () => {
-      nextCalled = true;
+      _nextCalled = true;
     };
 
     return { req, res, next };
