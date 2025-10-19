@@ -59,6 +59,9 @@ jobs:
       LEDGER_ENABLED: false
       LEDGER_OPTIONAL: true
 
+      # API key configuration for CI
+      SKIP_API_KEY_CHECK: true  # Allow tests to run without ANTHROPIC_API_KEY
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4

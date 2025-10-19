@@ -429,13 +429,18 @@ jobs:
         run: |
           echo "🔍 Checking AUTH_PROVIDER configuration..."
 
-          # On main branch, fail if AUTH_PROVIDER=mock
+          # On main branch, fail if AUTH_PROVIDER=mock in actual .env files (not examples)
           if [ "${{ github.ref }}" == "refs/heads/main" ] || [ "${{ github.ref }}" == "refs/heads/master" ]; then
-            if grep -q "AUTH_PROVIDER=mock" .env* 2>/dev/null; then
-              echo "❌ FAIL: AUTH_PROVIDER=mock detected on production branch"
+            # Check actual .env files only (exclude .example files)
+            if ls .env .env.production .env.local 2>/dev/null | xargs grep -q "AUTH_PROVIDER=mock" 2>/dev/null; then
+              echo "❌ FAIL: AUTH_PROVIDER=mock detected in production .env files"
               echo "  Production must use AUTH_PROVIDER=jwks with valid JWKS_URL"
+              echo "  (.env.example files are OK, but not actual .env files)"
               exit 1
             fi
+            echo "✅ No AUTH_PROVIDER=mock in production .env files"
+          else
+            echo "ℹ️  Feature branch - AUTH_PROVIDER=mock is allowed"
           fi
 
           echo "✅ Auth provider configuration check passed"
