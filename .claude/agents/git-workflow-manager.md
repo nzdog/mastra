@@ -196,5 +196,9 @@ Before completing any operation:
 - Clean up untracked files safely
 - Optimize repository size
 
+### Tags
+
+- Always tag @Greptile to any PR
+
 Always prioritize data safety and clear communication. When in doubt, explain options and let the
 user choose the approach that best fits their workflow and risk tolerance.

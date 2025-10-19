@@ -9,7 +9,15 @@
     "build": "tsc",
     "start": "npm run build && node dist/server.js",
     "test": "tsx test/scenarios.ts",
+    "test:schema-validation": "tsx test/schema-validation.ts",
+    "test:canonical-json": "tsx test/canonical-json.test.ts",
     "lint": "eslint src/ test/",
+    "test:smoke": "SKIP_API_KEY_CHECK=true tsx test/health-smoke.ts",
+    "test:phase-2-smoke": "SKIP_API_KEY_CHECK=true tsx test/phase-2-smoke.test.ts",
+    "test:memory-operations": "SKIP_API_KEY_CHECK=true tsx test/memory-operations.test.ts",
+    "test:memory-middleware": "SKIP_API_KEY_CHECK=true tsx test/memory-middleware.test.ts",
+    "test:memory-storage": "SKIP_API_KEY_CHECK=true tsx test/memory-storage.test.ts",
+    "test:hard-delete": "SKIP_API_KEY_CHECK=true tsx test/hard-delete-verification.test.ts",
     "lint:fix": "eslint src/ test/ --fix",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\" \"*.md\"",
     "format:check": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\" \"*.md\"",
@@ -29,29 +37,42 @@
     "@mastra/core": "^0.19.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "argon2": "^0.44.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "glob": "^11.0.3",
     "gray-matter": "^4.0.3",
-    "helmet": "^8.1.0"
+    "helmet": "^8.1.0",
+    "jose": "^6.1.0",
+    "pg": "^8.16.3",
+    "prom-client": "^15.1.3",
+    "proper-lockfile": "^4.1.2",
+    "rate-limiter-flexible": "^8.1.0"
   },
   "devDependencies": {
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
-    "@types/node": "^24.6.2",
+    "@types/ioredis": "^4.28.10",
+    "@types/node": "^24.7.2",
+    "@types/pg": "^8.15.5",
+    "@types/proper-lockfile": "^4.1.4",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "eslint": "^9.37.0",
-    "eslint-plugin-import": "^2.32.0",
     "husky": "^9.1.7",
     "lint-staged": "^16.2.4",
+    "node-fetch": "^2.7.0",
     "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
   },
   "optionalDependencies": {
-    "ioredis": "^5.3.2"
+    "ioredis": "^5.8.1"
   }
 }

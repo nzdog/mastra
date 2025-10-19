@@ -1,28 +1,60 @@
-/* eslint-disable import/order */
 import { randomUUID } from 'crypto';
 import * as path from 'path';
-import cors from 'cors';
 import * as dotenv from 'dotenv';
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import {
+  parseCorsConfig,
+  getPreflightHeaders,
+  getCorsHeaders,
+  isOriginAllowed,
+} from './config/cors';
 import { FieldDiagnosticAgent } from './agent';
+import { healthCheck } from './memory-layer/api/health';
+import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
+import { getLedgerSink } from './memory-layer/storage/ledger-sink';
+import { getJWKSManager } from './memory-layer/governance/jwks-manager';
 import { performanceMonitor, CacheStats } from './performance';
 import { ProtocolLoader } from './protocol/loader';
 import { ProtocolParser } from './protocol/parser';
 import { Session, SessionStore, createSessionStore } from './session-store';
 import { ProtocolRegistry } from './tools/registry';
 import { SessionState } from './types';
+import {
+  auditJwksFetchRequests,
+  auditVerificationDuration,
+  auditVerificationFailures,
+  auditJwksMismatchTotal,
+  auditLedgerSignerKid,
+  auditJwksActiveKid,
+  corsPreflightTotal,
+  corsRejectTotal,
+  corsPreflightDuration,
+  getMetrics,
+  getContentType,
+  measureAsync,
+} from './observability/metrics';
+import { getSignerRegistry } from './memory-layer/governance/signer-registry';
+import memoryRouter from './memory-layer/api/memory-router';
+import { getMemoryStore } from './memory-layer/storage/in-memory-store';
+import { errorHandler } from './memory-layer/middleware/error-handler';
 
 // Load environment variables
 dotenv.config();
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 
-if (!API_KEY) {
+// Allow skipping the strict API key check in CI/test/dev for Phase 0.
+if (!API_KEY && process.env.NODE_ENV !== 'test' && process.env.SKIP_API_KEY_CHECK !== 'true') {
   console.error('Error: ANTHROPIC_API_KEY not found in environment variables.');
   process.exit(1);
+} else if (!API_KEY) {
+  console.warn('⚠️  ANTHROPIC_API_KEY missing, continuing in permissive mode for tests/dev.');
 }
+
+// Server readiness flag
+let isReady = false;
 
 // Initialize session store (Redis if REDIS_URL provided, otherwise in-memory)
 let sessionStore: SessionStore;
@@ -196,6 +228,24 @@ setInterval(
     await sessionStore.cleanup();
   },
   10 * 60 * 1000
+);
+
+// Initialize memory store (singleton)
+const memoryStore = getMemoryStore();
+
+// Cleanup expired memory records every 60 seconds (TTL enforcement)
+setInterval(
+  async () => {
+    try {
+      const deletedCount = await memoryStore.clearExpired();
+      if (deletedCount > 0) {
+        console.log(`🧹 MEMORY: Cleared ${deletedCount} expired memory records`);
+      }
+    } catch (error) {
+      console.error('❌ MEMORY: Error clearing expired records:', error);
+    }
+  },
+  60 * 1000 // Run every 60 seconds
 );
 
 // Helper: Get session (async wrapper for SessionStore)
@@ -441,41 +491,80 @@ app.use(
   })
 );
 
-// CORS Configuration - Secure origin validation
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map((origin) => origin.trim())
-  : [
-      'http://localhost:3000',
-      'http://localhost:5001',
-      'http://localhost:5173', // Vite dev server
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:5001',
-      'http://127.0.0.1:5173',
-    ];
+// CORS Configuration - Hardened with explicit allowlist (Phase 3.2)
+const corsConfig = parseCorsConfig();
 
-const corsOptions = {
-  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) {
-      return callback(null, true);
+// CORS middleware - applies to all routes
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.get('Origin');
+
+  if (isOriginAllowed(origin, corsConfig)) {
+    const corsHeaders = getCorsHeaders(origin, corsConfig);
+    if (corsHeaders) {
+      Object.entries(corsHeaders).forEach(([key, value]) => {
+        res.setHeader(key, value);
+      });
     }
+  } else if (origin) {
+    // Log rejection with route info (no PII)
+    console.warn(`🚫 CORS: Rejected origin="${origin}" on route="${req.path}"`);
+    corsRejectTotal.labels(req.path).inc();
+  }
 
-    // Allow Railway domains (*.railway.app and *.up.railway.app)
-    const isRailwayDomain = origin.endsWith('.railway.app') || origin.endsWith('.up.railway.app');
+  next();
+});
 
-    if (allowedOrigins.includes(origin) || isRailwayDomain) {
-      callback(null, true);
+// Enhanced CORS middleware - handles preflight (OPTIONS) requests
+app.use((req: Request, res: Response, next: NextFunction) => {
+  if (req.method === 'OPTIONS') {
+    const start = Date.now();
+    const origin = req.get('Origin');
+    const route = req.path;
+
+    const preflightHeaders = getPreflightHeaders(origin, corsConfig);
+
+    if (preflightHeaders) {
+      // Origin allowed
+      Object.entries(preflightHeaders).forEach(([key, value]) => {
+        res.setHeader(key, value);
+      });
+      corsPreflightTotal.labels(route, 'true').inc();
     } else {
-      console.warn(`🚫 CORS: Blocked request from unauthorized origin: ${origin}`);
-      callback(new Error('Not allowed by CORS'));
+      // Origin rejected - no CORS headers (but still return 200)
+      corsPreflightTotal.labels(route, 'false').inc();
     }
-  },
-  credentials: true,
-  optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-};
-app.use(cors(corsOptions));
+
+    // Measure preflight duration
+    const duration = Date.now() - start;
+    corsPreflightDuration.observe(duration);
+
+    // End OPTIONS request
+    res.status(200).end();
+    return;
+  }
+
+  next();
+});
+
+// Additional Security Headers (Phase 1.2: CORS Hardening)
+// Helmet provides most headers, but we add explicit ones per spec
+app.use((_req: Request, res: Response, next: NextFunction) => {
+  // Referrer-Policy: no-referrer (privacy hardening)
+  res.setHeader('Referrer-Policy', 'no-referrer');
+
+  // X-Content-Type-Options: nosniff (already set by Helmet, but explicit)
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+
+  // Permissions-Policy: minimal (disable unnecessary features)
+  // Disable geolocation, microphone, camera, payment, USB, etc.
+  res.setHeader(
+    'Permissions-Policy',
+    'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=()'
+  );
+
+  next();
+});
+
 app.use(express.json({ limit: '1mb' })); // Add request size limit for security
 
 // Test route
@@ -535,7 +624,7 @@ app.get('/test', (_req: Request, res: Response) => {
   }
 });
 
-// Health check
+// Health check (legacy endpoint)
 app.get('/health', async (_req: Request, res: Response) => {
   const sessionCount = await sessionStore.size();
   const memory = performanceMonitor.getMemoryUsage();
@@ -548,6 +637,269 @@ app.get('/health', async (_req: Request, res: Response) => {
       heap_used_mb: Math.round(memory.heap_used_mb * 100) / 100,
       heap_total_mb: Math.round(memory.heap_total_mb * 100) / 100,
     },
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Memory Layer v1 Health Check (spec-compliant)
+app.get('/v1/health', apiLimiter, async (_req: Request, res: Response) => {
+  try {
+    const healthResponse = await healthCheck();
+
+    // Enrich with actual session metrics
+    const sessionCount = await sessionStore.size();
+    healthResponse.metrics.active_sessions = sessionCount;
+
+    // Enrich with audit ledger metrics (Phase 1)
+    const auditEmitter = getAuditEmitter();
+    const ledgerHeight = await auditEmitter.getLedgerHeight();
+    healthResponse.metrics.audit_ledger_height = ledgerHeight;
+
+    // Get recent receipts to find last timestamp
+    if (ledgerHeight > 0) {
+      const recentReceipts = await auditEmitter.getRecentReceipts(1);
+      if (recentReceipts.length > 0) {
+        healthResponse.metrics.last_audit_receipt_timestamp = recentReceipts[0].event.timestamp;
+      }
+    }
+
+    // Verify audit chain integrity (Phase 1 - Merkle chain verification)
+    const chainVerification = await auditEmitter.verifyChainIntegrity();
+    if (!chainVerification.valid) {
+      healthResponse.components.audit.status = 'unhealthy';
+      healthResponse.components.audit.message = chainVerification.message;
+      healthResponse.status = 'unhealthy';
+    } else {
+      healthResponse.components.audit.message = `Merkle chain verified (${ledgerHeight} events)`;
+    }
+
+    // Get key rotation status (Phase 1)
+    const keyStatus = await auditEmitter.getKeyRotationStatus();
+    healthResponse.compliance.key_rotation_status = keyStatus.needsRotation
+      ? keyStatus.ageDays >= 90
+        ? 'expired'
+        : 'expiring_soon'
+      : 'current';
+    healthResponse.compliance.last_key_rotation = keyStatus.createdAt;
+
+    // Phase 1.2: Verify ledger signer kid matches JWKS active kid
+    try {
+      const registry = await getSignerRegistry();
+      const ledgerSignerKid = registry.getCurrentKid();
+      const jwksManager = await getJWKSManager();
+      const jwks = await jwksManager.getJWKS();
+      const jwksActiveKid = jwks.keys[0]?.kid; // First key is active key
+
+      // Emit info gauges for monitoring
+      auditLedgerSignerKid.labels(ledgerSignerKid).set(1);
+      if (jwksActiveKid) {
+        auditJwksActiveKid.labels(jwksActiveKid).set(1);
+      }
+
+      // Critical check: kids MUST match
+      if (ledgerSignerKid !== jwksActiveKid) {
+        console.error(
+          `❌ CRITICAL: Ledger signer kid (${ledgerSignerKid}) !== JWKS active kid (${jwksActiveKid})`
+        );
+        auditJwksMismatchTotal.inc();
+        healthResponse.status = 'unhealthy';
+        healthResponse.components.audit.status = 'unhealthy';
+        healthResponse.components.audit.message = `KEY MISMATCH: Ledger signer (${ledgerSignerKid}) != JWKS (${jwksActiveKid})`;
+      }
+    } catch (error) {
+      console.error('⚠️ Failed to verify kid consistency:', error);
+      healthResponse.components.audit.status = 'degraded';
+      healthResponse.components.audit.message = 'Failed to verify kid consistency';
+    }
+
+    // Emit HEALTH audit event (Phase 1)
+    await auditEmitter.emit('HEALTH', 'health_check', {
+      status: healthResponse.status,
+      session_count: sessionCount,
+      ledger_height: ledgerHeight,
+    });
+
+    res.json(healthResponse);
+  } catch (error) {
+    console.error('Error in /v1/health:', error);
+    res.status(500).json({
+      status: 'unhealthy',
+      error: 'Health check failed',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// Readiness check endpoint (Phase 3.2)
+app.get('/readyz', (_req: Request, res: Response) => {
+  if (isReady) {
+    res.status(200).json({ ready: true, message: 'Server is ready' });
+  } else {
+    res.status(503).json({ ready: false, message: 'Server is initializing...' });
+  }
+});
+
+// Phase 1.1: Verification API Endpoints
+
+// GET /v1/ledger/root - Get current Merkle root
+app.get('/v1/ledger/root', apiLimiter, async (_req: Request, res: Response) => {
+  try {
+    const ledger = await getLedgerSink();
+    const signer = ledger.getKeyRotationStatus();
+
+    res.json({
+      root: ledger.getRootHash(),
+      height: ledger.getLedgerHeight(),
+      timestamp: new Date().toISOString(),
+      kid: signer.keyId,
+      algorithm: 'Ed25519',
+    });
+  } catch (error) {
+    console.error('Error in /v1/ledger/root:', error);
+    res.status(500).json({
+      error: 'Failed to get ledger root',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// GET /v1/receipts/:id - Get and verify specific receipt
+app.get('/v1/receipts/:id', apiLimiter, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const ledger = await getLedgerSink();
+
+    const receipt = await ledger.getReceipt(id);
+    if (!receipt) {
+      return res.status(404).json({ error: 'Receipt not found' });
+    }
+
+    // Verify receipt
+    const verification = ledger.verifyReceipt(receipt);
+
+    res.json({
+      receipt,
+      verification: {
+        valid: verification.valid,
+        merkle_valid: verification.merkle_valid,
+        signature_valid: verification.signature_valid,
+        message: verification.message,
+      },
+    });
+  } catch (error) {
+    console.error('Error in /v1/receipts/:id:', error);
+    res.status(500).json({
+      error: 'Failed to get receipt',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// GET /v1/keys/jwks - Get public keys for verification
+app.get('/v1/keys/jwks', apiLimiter, async (_req: Request, res: Response) => {
+  try {
+    // Phase 1.2: Emit JWKS fetch metric
+    auditJwksFetchRequests.labels('success').inc();
+    const jwksManager = await getJWKSManager();
+    const jwks = await jwksManager.getJWKS();
+
+    res.json(jwks);
+  } catch (error) {
+    // Phase 1.2: Emit JWKS fetch error metric
+    auditJwksFetchRequests.labels('error').inc();
+    console.error('Error in /v1/keys/jwks:', error);
+    res.status(500).json({
+      error: 'Failed to get JWKS',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// POST /v1/receipts/verify - Verify a receipt
+app.post('/v1/receipts/verify', apiLimiter, async (req: Request, res: Response) => {
+  try {
+    const { receipt } = req.body;
+
+    if (!receipt) {
+      return res.status(400).json({ error: 'Missing receipt' });
+    }
+
+    const ledger = await getLedgerSink();
+
+    // Phase 1.2: Measure verification duration
+    const verification = await measureAsync(
+      auditVerificationDuration,
+      { verification_type: 'full' },
+      async () => ledger.verifyReceipt(receipt)
+    );
+
+    // Phase 1.2: Emit verification failure metric
+    if (!verification.valid) {
+      const reason = !verification.merkle_valid ? 'merkle_invalid' : 'signature_invalid';
+      auditVerificationFailures.labels(reason).inc();
+    }
+
+    res.json({
+      valid: verification.valid,
+      details: {
+        merkle_valid: verification.merkle_valid,
+        signature_valid: verification.signature_valid,
+        message: verification.message,
+      },
+    });
+  } catch (error) {
+    console.error('Error in /v1/receipts/verify:', error);
+    res.status(500).json({
+      error: 'Failed to verify receipt',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// GET /v1/ledger/integrity - Verify ledger integrity
+app.get('/v1/ledger/integrity', apiLimiter, async (req: Request, res: Response) => {
+  try {
+    const { full } = req.query;
+    const ledger = await getLedgerSink();
+
+    // Phase 1.1: Full chain verification (for now, will add incremental later)
+    const result = ledger.verifyChain();
+
+    res.json({
+      valid: result.valid,
+      message: result.message,
+      brokenAt: result.brokenAt,
+      height: ledger.getLedgerHeight(),
+      timestamp: new Date().toISOString(),
+      verificationType: full === 'true' ? 'full' : 'incremental',
+    });
+  } catch (error) {
+    console.error('Error in /v1/ledger/integrity:', error);
+    res.status(500).json({
+      error: 'Failed to verify integrity',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
+// Prometheus metrics endpoint (Phase 1.2)
+app.get('/metrics', metricsLimiter, async (_req: Request, res: Response) => {
+  res.set('Content-Type', getContentType());
+  res.end(await getMetrics());
+});
+
+// Git branch info endpoint (for UI display)
+app.get('/api/git/branch', apiLimiter, (_req: Request, res: Response) => {
+  const { execSync } = require('child_process');
+  let branchName = 'unknown';
+  try {
+    branchName = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+  } catch {
+    // If git command fails, use unknown
+  }
+
+  res.json({
+    branch: branchName,
     timestamp: new Date().toISOString(),
   });
 });
@@ -855,7 +1207,7 @@ app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
   });
 });
 
-// Get current git branch
+// Get current git branch (Railway-compatible endpoint from main)
 app.get('/api/branch', (_req: Request, res: Response) => {
   // In production (Railway), use environment variable or return 'production'
   // In development, try to use git
@@ -879,25 +1231,192 @@ app.get('/api/branch', (_req: Request, res: Response) => {
   }
 });
 
-// Start server
-app.listen(PORT, () => {
-  console.log(`
+// ============================================================================
+// Phase 2: Memory Layer Routes
+// ============================================================================
+
+/**
+ * Memory Layer API Routes
+ *
+ * All memory operations follow the pattern: /v1/{family}/{operation}
+ * Where {family} is one of: personal, cohort, population
+ *
+ * Operations:
+ * - POST /v1/{family}/store - Store new memory record
+ * - GET /v1/{family}/recall - Retrieve memory records
+ * - POST /v1/{family}/distill - Aggregate data with k-anonymity
+ * - DELETE /v1/{family}/forget - Delete memory records (GDPR)
+ * - GET /v1/{family}/export - Export user data (GDPR)
+ *
+ * Middleware stack (applied in memory-router):
+ * 1. Consent resolver - validates auth and extracts consent family
+ * 2. Schema validator - validates request against JSON schema
+ * 3. SLO middleware - tracks latency and enforces SLO
+ * 4. Operation handlers - execute memory operations with audit
+ */
+app.use('/v1/:family', apiLimiter, memoryRouter);
+
+// ============================================================================
+// Error Handling (must be last)
+// ============================================================================
+
+/**
+ * Global error handler for memory layer operations
+ * Converts all errors to ErrorResponse format with trace IDs
+ */
+app.use(errorHandler);
+
+// Async server startup with ledger initialization (Phase 3.2)
+async function startServer() {
+  try {
+    console.log('🔧 Initializing server components...');
+
+    // Initialize ledger sink conditionally (Phase 3.2: Graceful degradation)
+    const ledgerEnabled = process.env.LEDGER_ENABLED !== 'false';
+    const ledgerOptional = process.env.LEDGER_OPTIONAL === 'true';
+
+    if (ledgerEnabled) {
+      console.log('📚 Initializing ledger sink...');
+      try {
+        const ledger = await getLedgerSink();
+        console.log(`✅ Ledger initialized (height: ${ledger.getLedgerHeight()})`);
+      } catch (ledgerError) {
+        if (ledgerOptional) {
+          // Graceful degradation: log warning and continue
+          console.warn('⚠️  Ledger initialization failed (LEDGER_OPTIONAL=true):');
+          console.warn(
+            `   ${ledgerError instanceof Error ? ledgerError.message : String(ledgerError)}`
+          );
+          console.warn('   Server will continue without audit logging persistence.');
+        } else {
+          // Fail-closed: ledger is required in production
+          console.error('❌ Ledger initialization failed (required for production):');
+          console.error(
+            `   ${ledgerError instanceof Error ? ledgerError.message : String(ledgerError)}`
+          );
+          throw ledgerError;
+        }
+      }
+    } else {
+      console.log(
+        '⚠️  Ledger disabled (LEDGER_ENABLED=false) - audit events will not be persisted'
+      );
+    }
+
+    // Phase 3.2: KMS health check (encryption enabled)
+    const encryptionEnabled = process.env.ENCRYPTION_ENABLED === 'true';
+    if (encryptionEnabled) {
+      console.log('🔐 Verifying KMS provider health...');
+      const { assertKmsUsable } = require('./memory-layer/security/encryption-service');
+      await assertKmsUsable();
+      console.log('✅ KMS health check passed');
+    } else {
+      console.log(
+        '⚠️  Encryption disabled (ENCRYPTION_ENABLED=false) - data will not be encrypted at rest'
+      );
+    }
+
+    // Mark server as ready (Phase 3.2: /readyz will return 200)
+    isReady = true;
+    console.log('✅ Server initialization complete');
+
+    // Start listening
+    app.listen(PORT, () => {
+      // Get current git branch
+      const { execSync } = require('child_process');
+      let branchName = 'unknown';
+      try {
+        branchName = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
+      } catch {
+        // If git command fails, use unknown
+      }
+
+      console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
 ║        Field Diagnostic Protocol - API Server                  ║
+║        Branch: ${branchName.padEnd(47)}║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
 
 🚀 Server running on http://localhost:${PORT}
 
-Endpoints:
+Protocol Walk Endpoints:
   GET    /api/protocols       - List available protocols
   POST   /api/walk/start      - Start new protocol walk
   POST   /api/walk/continue   - Continue protocol walk
   POST   /api/walk/complete   - Complete protocol
   GET    /api/session/:id     - Get session state (debug)
-  GET    /health              - Health check
+
+Health & Monitoring:
+  GET    /health              - Health check (legacy)
+  GET    /v1/health           - Memory Layer health check (spec-compliant)
+  GET    /readyz              - Readiness check (Phase 3.2)
+  GET    /api/metrics         - Performance metrics
+  GET    /metrics             - Prometheus audit metrics (Phase 1.2)
+
+Phase 1.1 Verification Endpoints:
+  GET    /v1/ledger/root      - Get current Merkle root
+  GET    /v1/receipts/:id     - Get and verify audit receipt
+  POST   /v1/receipts/verify  - Verify a receipt
+  GET    /v1/keys/jwks        - Get public keys (JWKS)
+  GET    /v1/ledger/integrity - Verify ledger chain integrity
 
 Ready to accept connections.
 `);
-});
+    });
+  } catch (error) {
+    console.error('❌ Failed to initialize server:', error);
+    process.exit(1);
+  }
+}
+
+// Start the server
+startServer();
+
+// ============================================================================
+// Graceful Shutdown Handlers (HIGH-4: Process Exit Handlers)
+// ============================================================================
+
+/**
+ * Graceful shutdown handler for SIGTERM/SIGINT
+ * Ensures clean shutdown of database connections and active sessions
+ */
+async function gracefulShutdown(signal: string): Promise<void> {
+  console.log(`\n⚠️  Received ${signal} - starting graceful shutdown...`);
+
+  try {
+    // 1. Close PostgreSQL pool if using Postgres persistence
+    if (process.env.PERSISTENCE === 'postgres') {
+      const { getPostgresStore } = require('./memory-layer/storage/postgres-store');
+      const postgresStore = getPostgresStore();
+      console.log('🔌 Closing PostgreSQL connection pool...');
+      await postgresStore.close();
+      console.log('✅ PostgreSQL pool closed');
+    }
+
+    // 2. Close Redis connection if using Redis for sessions
+    if (process.env.REDIS_URL && sessionStore) {
+      console.log('🔌 Closing Redis connection...');
+      const redisClient = (sessionStore as any).redis;
+      if (redisClient && typeof redisClient.quit === 'function') {
+        await redisClient.quit();
+        console.log('✅ Redis connection closed');
+      }
+    }
+
+    // 3. Log shutdown metrics
+    const sessionCount = await sessionStore.size();
+    console.log(`📊 Shutdown stats: ${sessionCount} active sessions`);
+
+    console.log('✅ Graceful shutdown complete');
+    process.exit(0);
+  } catch (error) {
+    console.error('❌ Error during graceful shutdown:', error);
+    process.exit(1);
+  }
+}
+
+// Register signal handlers
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
