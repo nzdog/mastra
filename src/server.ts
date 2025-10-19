@@ -1418,7 +1418,8 @@ async function gracefulShutdown(signal: string): Promise<void> {
     // 2. Close Redis connection if using Redis for sessions
     if (process.env.REDIS_URL && sessionStore) {
       console.log('🔌 Closing Redis connection...');
-      const redisClient = (sessionStore as any).redis;
+      const storeWithRedis = sessionStore as { redis?: { quit?: () => Promise<void> } };
+      const redisClient = storeWithRedis.redis;
       if (redisClient && typeof redisClient.quit === 'function') {
         await redisClient.quit();
         console.log('✅ Redis connection closed');
