@@ -24,7 +24,7 @@ interface MemoryIndex {
  *
  * Features:
  * - Fast CRUD operations with O(1) lookups
- * - Indexing by user_id, session_id, consent_family
+ * - Indexing by hashed_pseudonym, session_id, consent_family
  * - TTL enforcement with expires_at
  * - Consent family privacy enforcement
  * - k-anonymity for cohort/population queries

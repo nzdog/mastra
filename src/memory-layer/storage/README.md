@@ -53,8 +53,9 @@ interface MemoryStore {
 Production-ready in-memory implementation of MemoryStore interface.
 
 **Features:**
+
 - Fast CRUD operations with O(1) lookups
-- Indexing by `user_id`, `session_id`, `consent_family`
+- Indexing by `hashed_pseudonym`, `session_id`, `consent_family`
 - TTL enforcement with `expires_at`
 - Consent family privacy enforcement
 - K-anonymity support (minimum 5 records for cohort/population)
@@ -71,7 +72,7 @@ const store = getMemoryStore();
 // Store a record
 const record = await store.store({
   id: uuid(),
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   content: {
     type: 'text',
     data: 'User preferences for dark mode',
@@ -87,14 +88,14 @@ const record = await store.store({
 
 // Recall records
 const records = await store.recall({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   limit: 10,
   sort: 'desc',
 });
 
 // Forget records
 const deletedIds = await store.forget({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
 });
 
 // Get stats
@@ -115,7 +116,7 @@ console.log(stats);
 
 The in-memory store uses three indexes for fast queries:
 
-1. **User ID Index:** `Map<user_id, Set<record_id>>`
+1. **User ID Index:** `Map<hashed_pseudonym, Set<record_id>>`
    - Fast lookup of all records for a user
    - Used by `recall` and `forget` operations
 
@@ -130,18 +131,21 @@ The in-memory store uses three indexes for fast queries:
 ## Privacy Enforcement
 
 ### Personal Family
+
 - Full CRUD access
 - All fields visible
 - No restrictions
 
 ### Cohort Family
+
 - Store: Allowed (anonymized on write)
 - Recall: Denied (returns empty array)
 - Distill: Allowed (aggregates only)
 - Forget: Anonymization (content deleted, metadata retained)
-- Export: Anonymized (no `user_id`, `session_id`)
+- Export: Anonymized (no `hashed_pseudonym`, `session_id`)
 
 ### Population Family
+
 - Store: Allowed (aggregated on write)
 - Recall: Denied (returns empty array)
 - Distill: Allowed (population-level aggregates)
@@ -170,12 +174,15 @@ const deletedCount = await store.clearExpired();
 **Recommended:** Run `clearExpired()` periodically (e.g., every 1 hour):
 
 ```typescript
-setInterval(async () => {
-  const count = await store.clearExpired();
-  if (count > 0) {
-    console.log(`Cleared ${count} expired records`);
-  }
-}, 60 * 60 * 1000); // Every hour
+setInterval(
+  async () => {
+    const count = await store.clearExpired();
+    if (count > 0) {
+      console.log(`Cleared ${count} expired records`);
+    }
+  },
+  60 * 60 * 1000
+); // Every hour
 ```
 
 ## Query Filters
@@ -184,14 +191,14 @@ The `recall` method supports comprehensive filtering:
 
 ```typescript
 interface RecallQuery {
-  user_id: string;          // Required: user to query
-  session_id?: string;      // Optional: filter by session
-  since?: string;           // Optional: created_at >= timestamp
-  until?: string;           // Optional: created_at <= timestamp
-  type?: ContentType;       // Optional: filter by content type
-  limit?: number;           // Optional: max results (default: 100)
-  offset?: number;          // Optional: pagination offset (default: 0)
-  sort?: 'asc' | 'desc';   // Optional: sort order (default: 'desc')
+  hashed_pseudonym: string; // Required: user to query
+  session_id?: string; // Optional: filter by session
+  since?: string; // Optional: created_at >= timestamp
+  until?: string; // Optional: created_at <= timestamp
+  type?: ContentType; // Optional: filter by content type
+  limit?: number; // Optional: max results (default: 100)
+  offset?: number; // Optional: pagination offset (default: 0)
+  sort?: 'asc' | 'desc'; // Optional: sort order (default: 'desc')
 }
 ```
 
@@ -200,7 +207,7 @@ interface RecallQuery {
 ```typescript
 // Get latest 10 text memories
 const recent = await store.recall({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   type: 'text',
   limit: 10,
   sort: 'desc',
@@ -208,26 +215,26 @@ const recent = await store.recall({
 
 // Get memories from specific session
 const session = await store.recall({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   session_id: 'sess_abc',
 });
 
 // Get memories in date range
 const range = await store.recall({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   since: '2025-10-01T00:00:00Z',
   until: '2025-10-31T23:59:59Z',
 });
 
 // Pagination
 const page1 = await store.recall({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   limit: 20,
   offset: 0,
 });
 
 const page2 = await store.recall({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   limit: 20,
   offset: 20,
 });
@@ -236,6 +243,7 @@ const page2 = await store.recall({
 ## Performance Characteristics
 
 **Time Complexity:**
+
 - `store`: O(1) - Map insertion + index updates
 - `recall`: O(n) where n = matching records (indexed lookups)
 - `forget`: O(m) where m = records to delete
@@ -244,11 +252,13 @@ const page2 = await store.recall({
 - `count`: O(n) where n = matching records
 
 **Space Complexity:**
+
 - Main storage: O(n) where n = total records
-- Indexes: O(n * 3) = O(n) - Three indexes
+- Indexes: O(n \* 3) = O(n) - Three indexes
 
 **Optimization Tips:**
-- Use specific filters (user_id, session_id) to leverage indexes
+
+- Use specific filters (hashed_pseudonym, session_id) to leverage indexes
 - Avoid large `limit` values for pagination
 - Run `clearExpired()` regularly to prevent memory bloat
 
@@ -257,18 +267,20 @@ const page2 = await store.recall({
 The `MemoryStore` interface supports multiple backends:
 
 1. **PostgreSQL** (Phase 3):
+
    ```typescript
    class PostgresStore implements MemoryStore {
      // Use pg library with connection pool
-     // SQL indexes on user_id, session_id, created_at
+     // SQL indexes on hashed_pseudonym, session_id, created_at
    }
    ```
 
 2. **DynamoDB** (Phase 3):
+
    ```typescript
    class DynamoDBStore implements MemoryStore {
      // Use AWS SDK v3
-     // Partition key: user_id
+     // Partition key: hashed_pseudonym
      // Sort key: created_at
      // GSI: consent_family, session_id
    }
@@ -278,7 +290,7 @@ The `MemoryStore` interface supports multiple backends:
    ```typescript
    class RedisStore implements MemoryStore {
      // Use ioredis
-     // Hash per user_id
+     // Hash per hashed_pseudonym
      // Sorted sets for time-range queries
    }
    ```
@@ -306,7 +318,7 @@ describe('InMemoryStore', () => {
     await store.store(record);
 
     const results = await store.recall({
-      user_id: record.user_id,
+      hashed_pseudonym: record.hashed_pseudonym,
     });
 
     expect(results).toHaveLength(1);
@@ -323,7 +335,7 @@ describe('InMemoryStore', () => {
     expect(deleted).toBe(1);
 
     const results = await store.recall({
-      user_id: expired.user_id,
+      hashed_pseudonym: expired.hashed_pseudonym,
     });
     expect(results).toHaveLength(0);
   });
@@ -350,10 +362,7 @@ class HybridStore implements MemoryStore {
 
   async store(record: MemoryRecord): Promise<MemoryRecord> {
     // Write to both
-    await Promise.all([
-      this.primary.store(record),
-      this.secondary.store(record),
-    ]);
+    await Promise.all([this.primary.store(record), this.secondary.store(record)]);
     return record;
   }
 

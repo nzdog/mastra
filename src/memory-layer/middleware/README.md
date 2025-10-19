@@ -9,6 +9,7 @@ Phase 2 middleware components for the Memory Layer API.
 Extracts consent family from URL path and validates user authorization.
 
 **Features:**
+
 - Extracts consent family from path: `/v1/{family}/{operation}`
 - Validates Bearer token authentication
 - Checks user authorization for consent family
@@ -17,6 +18,7 @@ Extracts consent family from URL path and validates user authorization.
 - Fail-closed security: 401 if no auth, 403 if not authorized
 
 **Usage:**
+
 ```typescript
 import { consentResolver } from './middleware/consent-resolver';
 
@@ -24,10 +26,11 @@ app.use(consentResolver);
 ```
 
 **Request Enhancement:**
+
 ```typescript
 req.consentContext = {
   family: 'personal' | 'cohort' | 'population',
-  user_id: 'user_abc123',
+  hashed_pseudonym: 'user_abc123',
   scope: ['read', 'write', 'delete'],
   trace_id: 'trace_...',
 };
@@ -38,6 +41,7 @@ req.consentContext = {
 Tracks request latency and enforces Service Level Objectives with circuit breaker.
 
 **Features:**
+
 - Tracks latency per operation
 - Emits Prometheus histogram: `memory_operation_latency_ms`
 - Checks against SLO targets (p99 thresholds)
@@ -46,6 +50,7 @@ Tracks request latency and enforces Service Level Objectives with circuit breake
 - Circuit breaker: 503 if violation rate > 50% in last 10 requests
 
 **SLO Targets (p99):**
+
 - `store`: 500ms
 - `recall`: 1000ms
 - `distill`: 5000ms
@@ -53,6 +58,7 @@ Tracks request latency and enforces Service Level Objectives with circuit breake
 - `export`: 10000ms
 
 **Usage:**
+
 ```typescript
 import { sloMiddleware } from './middleware/slo-middleware';
 
@@ -64,12 +70,14 @@ app.use(sloMiddleware);
 Validates request bodies against memory-schema.json using Ajv.
 
 **Features:**
+
 - Validates POST body and GET query params
 - Uses Ajv with format validators (date-time, uuid)
 - Returns 400 with detailed validation errors
 - Supports all operation schemas: store, recall, distill, forget, export
 
 **Usage:**
+
 ```typescript
 import { schemaValidator } from './middleware/schema-validator';
 
@@ -77,6 +85,7 @@ app.use(schemaValidator);
 ```
 
 **Error Response:**
+
 ```json
 {
   "error": {
@@ -85,7 +94,7 @@ app.use(schemaValidator);
     "details": {
       "validation_errors": [
         {
-          "field": "user_id",
+          "field": "hashed_pseudonym",
           "message": "must be string",
           "params": {}
         }
@@ -100,6 +109,7 @@ app.use(schemaValidator);
 Global error handler that converts all errors to ErrorResponse format.
 
 **Features:**
+
 - Catches all uncaught errors
 - Converts to ErrorResponse envelope
 - Structured error logging
@@ -109,13 +119,17 @@ Global error handler that converts all errors to ErrorResponse format.
 - Includes `asyncHandler` wrapper for async route handlers
 
 **Usage:**
+
 ```typescript
 import { errorHandler, notFoundHandler, asyncHandler } from './middleware/error-handler';
 
 // Register routes
-app.get('/v1/personal/recall', asyncHandler(async (req, res) => {
-  // Your async route logic
-}));
+app.get(
+  '/v1/personal/recall',
+  asyncHandler(async (req, res) => {
+    // Your async route logic
+  })
+);
 
 // 404 handler (after all routes)
 app.use(notFoundHandler);
@@ -125,15 +139,12 @@ app.use(errorHandler);
 ```
 
 **MemoryLayerError Usage:**
+
 ```typescript
 import { MemoryLayerError } from './middleware/error-handler';
 import { ErrorCode } from '../models/error-envelope';
 
-throw new MemoryLayerError(
-  ErrorCode.NOT_FOUND,
-  'Memory record not found',
-  { id: 'abc123' }
-);
+throw new MemoryLayerError(ErrorCode.NOT_FOUND, 'Memory record not found', { id: 'abc123' });
 ```
 
 ## Middleware Stack Order
@@ -146,7 +157,7 @@ import {
   sloMiddleware,
   schemaValidator,
   errorHandler,
-  notFoundHandler
+  notFoundHandler,
 } from './memory-layer/middleware';
 
 // 1. SLO tracking (first, to measure all requests)
@@ -186,15 +197,10 @@ app.get('/v1/personal/test', (req, res) => {
 });
 
 // Test unauthorized access
-await request(app)
-  .get('/v1/personal/test')
-  .expect(401);
+await request(app).get('/v1/personal/test').expect(401);
 
 // Test authorized access
-await request(app)
-  .get('/v1/personal/test')
-  .set('Authorization', 'Bearer valid_token')
-  .expect(200);
+await request(app).get('/v1/personal/test').set('Authorization', 'Bearer valid_token').expect(200);
 ```
 
 ## Metrics
@@ -202,10 +208,12 @@ await request(app)
 All middleware emits Prometheus metrics:
 
 **SLO Middleware:**
+
 - `memory_operation_latency_ms` - Histogram of operation latencies
 - `slo_violation_total` - Counter of SLO violations
 
 **Consent Resolver:**
+
 - Emits audit events via `AuditEmitter` (tracked in `audit_events_total`)
 
 ## Security

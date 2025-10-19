@@ -99,7 +99,7 @@ This guide helps diagnose and resolve issues related to consent family authoriza
    ```bash
    # Capture request headers
    curl -v -H "Authorization: Bearer user_token123" \
-     http://localhost:4099/v1/personal/recall?user_id=user_123
+     http://localhost:4099/v1/personal/recall?hashed_pseudonym=user_123
    ```
 
 2. **Verify Authorization header**
@@ -212,7 +212,7 @@ This guide helps diagnose and resolve issues related to consent family authoriza
    ```bash
    # Extract from error response
    curl -H "Authorization: Bearer token" \
-     http://localhost:4099/v1/population/recall?user_id=user_123
+     http://localhost:4099/v1/population/recall?hashed_pseudonym=user_123
 
    # Response will show:
    # "error": {
@@ -220,7 +220,7 @@ This guide helps diagnose and resolve issues related to consent family authoriza
    #   "message": "Access denied for consent family: population",
    #   "details": {
    #     "family": "population",
-   #     "user_id": "user_123"
+   #     "hashed_pseudonym": "user_123"
    #   }
    # }
    ```
@@ -254,16 +254,16 @@ This guide helps diagnose and resolve issues related to consent family authoriza
 ```bash
 # Wrong: population/recall (not allowed)
 curl -H "Authorization: Bearer token" \
-  http://localhost:4099/v1/population/recall?user_id=user_123
+  http://localhost:4099/v1/population/recall?hashed_pseudonym=user_123
 
 # Correct: cohort/recall or personal/recall
 curl -H "Authorization: Bearer token" \
-  http://localhost:4099/v1/personal/recall?user_id=user_123
+  http://localhost:4099/v1/personal/recall?hashed_pseudonym=user_123
 ```
 
 **Fix:** Update client to use correct family
-- Personal recall: `/v1/personal/recall?user_id={user_id}`
-- Cohort recall: `/v1/cohort/recall?user_id={user_id}`
+- Personal recall: `/v1/personal/recall?hashed_pseudonym={hashed_pseudonym}`
+- Cohort recall: `/v1/cohort/recall?hashed_pseudonym={hashed_pseudonym}`
 - Population distill: `/v1/population/distill`
 
 #### User Lacks Permission
@@ -273,13 +273,13 @@ curl -H "Authorization: Bearer token" \
 ```bash
 # Alice trying to access Bob's data
 curl -H "Authorization: Bearer alice_token" \
-  http://localhost:4099/v1/personal/recall?user_id=bob_123
+  http://localhost:4099/v1/personal/recall?hashed_pseudonym=bob_123
 # Returns 403 Forbidden
 ```
 
 **Fix:** Update authorization logic
 
-1. **Server-side:** Enforce user_id match
+1. **Server-side:** Enforce hashed_pseudonym match
    ```typescript
    // In consent-resolver.ts
    if (family === 'personal' && tokenUserId !== requestUserId) {
@@ -287,11 +287,11 @@ curl -H "Authorization: Bearer alice_token" \
    }
    ```
 
-2. **Client-side:** Use correct user_id
+2. **Client-side:** Use correct hashed_pseudonym
    ```javascript
    // Use authenticated user's ID
    const userId = getCurrentUserId();
-   fetch(`/v1/personal/recall?user_id=${userId}`);
+   fetch(`/v1/personal/recall?hashed_pseudonym=${userId}`);
    ```
 
 #### Scope Mismatch
@@ -629,16 +629,16 @@ curl -X POST -H "Authorization: Bearer admin_token" \
 
 **Diagnosis:**
 ```bash
-# Check token user_id vs request user_id
+# Check token hashed_pseudonym vs request hashed_pseudonym
 curl -v -H "Authorization: Bearer user_alice_token" \
-  "http://localhost:4099/v1/personal/recall?user_id=alice_123"
+  "http://localhost:4099/v1/personal/recall?hashed_pseudonym=alice_123"
 
-# Decode token to verify user_id
-echo $TOKEN | jwt decode | jq '.user_id'
+# Decode token to verify hashed_pseudonym
+echo $TOKEN | jwt decode | jq '.hashed_pseudonym'
 ```
 
 **Resolution:**
-- Ensure token `user_id` matches request `user_id`
+- Ensure token `hashed_pseudonym` matches request `hashed_pseudonym`
 - Check for typos in user IDs
 - Verify user exists in auth system
 
@@ -651,7 +651,7 @@ echo $TOKEN | jwt decode | jq '.user_id'
 # Verify user is member of cohort
 curl -H "Authorization: Bearer admin_token" \
   http://localhost:4099/v1/cohorts/cohort_premium/members \
-  | jq '.members[] | select(.user_id == "alice_123")'
+  | jq '.members[] | select(.hashed_pseudonym == "alice_123")'
 ```
 
 **Resolution:**
@@ -667,7 +667,7 @@ curl -H "Authorization: Bearer admin_token" \
 ```bash
 # Check consent revocation events
 grep "CONSENT_REVOKE" /var/log/audit-ledger.log | \
-  jq 'select(.data.user_id == "alice_123")'
+  jq 'select(.data.hashed_pseudonym == "alice_123")'
 ```
 
 **Resolution:**
@@ -724,7 +724,7 @@ decode_jwt "eyJhbGc..."
 
 # Output:
 # {
-#   "user_id": "alice_123",
+#   "hashed_pseudonym": "alice_123",
 #   "scope": ["read", "write"],
 #   "exp": 1729180800,
 #   "iat": 1729166400

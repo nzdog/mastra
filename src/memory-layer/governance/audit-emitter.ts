@@ -31,7 +31,7 @@ export interface AuditEvent {
   event_type: AuditEventType;
   timestamp: string;
   operation: string;
-  user_id?: string; // Pseudonymized
+  hashed_pseudonym?: string; // Pseudonymized
   session_id?: string;
   consent_context?: {
     consent_level: 'personal' | 'cohort' | 'population';
@@ -138,7 +138,7 @@ export class AuditEmitter {
       timestamp: new Date().toISOString(),
       event_type: eventType,
       operation,
-      user_id: userId,
+      hashed_pseudonym: userId,
       session_id: sessionId,
       consent_context: consentContext
         ? {

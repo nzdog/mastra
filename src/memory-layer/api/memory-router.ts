@@ -53,7 +53,7 @@ export function createMemoryRouter(): Router {
    * GET /v1/{family}/recall
    *
    * Retrieves memory records with consent family enforcement.
-   * Query params: RecallQuery (user_id, session_id, since, until, type, limit, offset, sort)
+   * Query params: RecallQuery (hashed_pseudonym, session_id, since, until, type, limit, offset, sort)
    * Response: RecallResponse (200 OK)
    */
   router.get('/recall', recallHandler);
@@ -73,7 +73,7 @@ export function createMemoryRouter(): Router {
    * DELETE /v1/{family}/forget
    *
    * Deletes memory records with consent family enforcement.
-   * Query params: ForgetRequest (id, user_id, session_id, reason, hard_delete)
+   * Query params: ForgetRequest (id, hashed_pseudonym, session_id, reason, hard_delete)
    * Response: ForgetResponse (200 OK)
    */
   router.delete('/forget', forgetHandler);
@@ -83,7 +83,7 @@ export function createMemoryRouter(): Router {
    * GET /v1/{family}/export
    *
    * Exports user data with consent family enforcement.
-   * Query params: ExportRequest (user_id, format, filters, include_audit)
+   * Query params: ExportRequest (hashed_pseudonym, format, filters, include_audit)
    * Response: ExportResponse (200 OK)
    */
   router.get('/export', exportHandler);
