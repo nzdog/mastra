@@ -452,6 +452,30 @@ const metricsLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// API Key validation middleware
+// Validates X-API-Key header against X_API_KEY environment variable
+// Returns 401 if key is missing or incorrect (when X_API_KEY is set)
+function validateApiKey(req: Request, res: Response, next: NextFunction): void {
+  const expectedKey = process.env.X_API_KEY;
+
+  // If X_API_KEY not configured, skip validation (dev/test mode)
+  if (!expectedKey) {
+    return next();
+  }
+
+  const providedKey = req.headers['x-api-key'];
+
+  // Fail closed: reject if key is missing or incorrect
+  if (!providedKey || providedKey !== expectedKey) {
+    return res.status(401).json({
+      error: 'Unauthorized',
+      message: 'Valid X-API-Key header required',
+    });
+  }
+
+  next();
+}
+
 // Middleware
 // Security Headers - Helmet configuration
 app.use(
@@ -958,6 +982,7 @@ app.get('/api/protocols', apiLimiter, (_req: Request, res: Response) => {
 // Start protocol walk (strictly rate-limited - creates sessions and uses AI)
 app.post(
   '/api/walk/start',
+  validateApiKey,
   sessionCreationLimiter,
   aiEndpointLimiter,
   async (req: Request, res: Response) => {
@@ -1020,7 +1045,7 @@ app.post(
 );
 
 // Continue protocol walk (rate-limited AI endpoint)
-app.post('/api/walk/continue', aiEndpointLimiter, async (req: Request, res: Response) => {
+app.post('/api/walk/continue', validateApiKey, aiEndpointLimiter, async (req: Request, res: Response) => {
   try {
     const { session_id, user_response } = req.body as ContinueRequest;
 
@@ -1087,7 +1112,7 @@ app.post('/api/walk/continue', aiEndpointLimiter, async (req: Request, res: Resp
 });
 
 // Complete protocol (rate-limited AI endpoint)
-app.post('/api/walk/complete', aiEndpointLimiter, async (req: Request, res: Response) => {
+app.post('/api/walk/complete', validateApiKey, aiEndpointLimiter, async (req: Request, res: Response) => {
   try {
     const { session_id, generate_summary } = req.body as CompleteRequest;
 

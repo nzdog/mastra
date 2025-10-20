@@ -1945,14 +1945,30 @@
 
     <script type="module">
         // API Integration - automatically detects environment
-        const API_BASE = window.location.hostname === 'localhost' 
+        const API_BASE = window.location.hostname === 'localhost'
             ? 'http://localhost:5001'
             : 'https://web-production-b6320.up.railway.app'; // Railway backend URL
-        
+
+        // API Key for authentication (set to null for local dev if X_API_KEY not required)
+        const API_KEY = window.location.hostname === 'localhost'
+            ? null // Set to your local key if needed, or null to skip validation
+            : 'lichen-field-2025-secret'; // Replace with your Railway X_API_KEY
+
         let sessionId = null;
         let currentMode = 'ENTRY';
         let protocolData = null;
         let selectedProtocol = null; // Store selected protocol
+
+        // Helper function to build headers with API key
+        function getHeaders() {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (API_KEY) {
+                headers['X-API-Key'] = API_KEY;
+            }
+            return headers;
+        }
 
         // DOM Elements - Intro Flow
         const introFlowView = document.getElementById('intro-flow-view');
@@ -2690,7 +2706,7 @@
             try {
                 const response = await fetch(`${API_BASE}/api/walk/start`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getHeaders(),
                     body: JSON.stringify({
                         user_input: 'begin',
                         protocol_slug: selectedProtocol?.slug
@@ -2753,7 +2769,7 @@
                 try {
                     const response = await fetch(`${API_BASE}/api/walk/continue`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getHeaders(),
                         body: JSON.stringify({
                             session_id: sessionId,
                             user_response: userResponse
@@ -2787,7 +2803,7 @@
                 try {
                     const response = await fetch(`${API_BASE}/api/walk/complete`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getHeaders(),
                         body: JSON.stringify({
                             session_id: sessionId,
                             generate_summary: true
@@ -2832,7 +2848,7 @@
             try {
                 const response = await fetch(`${API_BASE}/api/walk/continue`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: getHeaders(),
                     body: JSON.stringify({
                         session_id: sessionId,
                         user_response: userResponse
@@ -2883,7 +2899,7 @@
                     // Trigger CLOSE mode by sending "yes" to continue
                     const response = await fetch(`${API_BASE}/api/walk/continue`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getHeaders(),
                         body: JSON.stringify({
                             session_id: sessionId,
                             user_response: 'generate field diagnosis'
@@ -3257,7 +3273,7 @@
                     try {
                         const response = await fetch(`${API_BASE}/api/walk/continue`, {
                             method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
+                            headers: getHeaders(),
                             body: JSON.stringify({
                                 session_id: sessionId,
                                 user_response: 'yes'
@@ -3901,7 +3917,7 @@
                     // Call complete endpoint
                     await fetch(`${API_BASE}/api/walk/complete`, {
                         method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
+                        headers: getHeaders(),
                         body: JSON.stringify({
                             session_id: sessionId,
                             generate_summary: false
