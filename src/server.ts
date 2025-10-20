@@ -486,7 +486,7 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"], // Allow inline scripts for frontend
+        scriptSrc: ["'self'", "'unsafe-inline'", 'https://cdnjs.cloudflare.com'], // Allow inline scripts and jsPDF CDN
         styleSrc: ["'self'", "'unsafe-inline'"], // Allow inline styles for frontend
         imgSrc: ["'self'", 'data:', 'https:'],
         connectSrc: ["'self'"], // API calls only to same origin
