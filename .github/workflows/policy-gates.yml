@@ -132,10 +132,15 @@
         - name: 'Gate: No hardcoded secrets'
           run: |
             set -euo pipefail
-            ! grep -R --exclude-dir=node_modules -n "sk-ant-" src/ || (echo 
-  "❌ Potential API key detected"; exit 1)
-            ! grep -R --exclude-dir=node_modules -nE "password\s*=" src/ || 
-  (echo "⚠️ Potential password detected"; exit 0)
+            if grep -R --exclude-dir=node_modules -n "sk-ant-" src/; then
+              echo "❌ Potential API key detected" 
+              exit 1
+            fi
+            
+            if grep -R --exclude-dir=node_modules -nE "password\s*=" src/; then 
+              echo "⚠️ Potential password detected" 
+            fi
+            
             echo "✅ No obvious hardcoded secrets found"
 
         # ---------- Phase 1.1 – Audit Hardening ----------
