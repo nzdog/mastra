@@ -68,15 +68,12 @@
 
         - name: Validate required secrets on protected branches
           if: |
-            github.ref == 'refs/heads/main' ||
-            github.ref == 'refs/heads/master'
+            github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
           run: |
             set -euo pipefail
             missing=0
-            [ -z "${ANTHROPIC_API_KEY:-}" ] && echo "❌ Missing 
-  ANTHROPIC_API_KEY" && missing=1
-            [ -z "${DEV_KEK_BASE64:-}" ] && echo "❌ Missing DEV_KEK_BASE64"
-   && missing=1
+            [ -z "${ANTHROPIC_API_KEY:-}" ] && echo "❌ Missing ANTHROPIC_API_KEY" && missing=1
+            [ -z "${DEV_KEK_BASE64:-}" ] && echo "❌ Missing DEV_KEK_BASE64" && missing=1
             if [ "$missing" -ne 0 ]; then
               echo "One or more required secrets are missing."
               exit 1
