@@ -402,6 +402,7 @@ export class EncryptionService {
    */
   async encrypt(plaintext: Buffer, kekId?: string): Promise<EncryptedEnvelope> {
     const useKekId = kekId || this.currentKekId;
+    const startTime = Date.now();
 
     // Step 1: Generate random DEK
     const dek = crypto.randomBytes(DEK_BYTES);
@@ -417,7 +418,16 @@ export class EncryptionService {
       // Step 3: Encrypt DEK with KEK via KMS
       const dekCiphertext = await this.kmsProvider.encryptDEK(dek, useKekId);
 
-      // Step 4: Return envelope
+      // Step 4: Track successful encryption metrics
+      try {
+        const metrics = require('../../observability/metrics');
+        const duration = Date.now() - startTime;
+        metrics.cryptoOpsDuration.observe({ op: 'encrypt' }, duration);
+      } catch (err) {
+        console.warn('[EncryptionService] Failed to observe crypto_ops_duration_ms:', err);
+      }
+
+      // Step 5: Return envelope
       return {
         data_ciphertext: dataCiphertext.toString('base64'),
         dek_ciphertext: dekCiphertext,
@@ -426,6 +436,24 @@ export class EncryptionService {
         auth_tag: authTag.toString('base64'),
         iv: iv.toString('base64'),
       };
+    } catch (err) {
+      // Track encryption failure metrics
+      try {
+        const metrics = require('../../observability/metrics');
+        const reason = (err as Error).message.includes('KEK')
+          ? 'kek_error'
+          : 'encryption_error';
+        metrics.cryptoEncryptFailuresTotal.inc({ reason });
+        console.error(
+          `[EncryptionService] crypto_encrypt_failures_total{reason="${reason}"} incremented`
+        );
+      } catch (metricsErr) {
+        console.warn(
+          '[EncryptionService] Failed to increment crypto_encrypt_failures_total:',
+          metricsErr
+        );
+      }
+      throw err;
     } finally {
       // Security: Zeroize DEK buffer to prevent memory exposure
       dek.fill(0);
@@ -448,6 +476,8 @@ export class EncryptionService {
    * const data = JSON.parse(plaintext.toString());
    */
   async decrypt(envelope: EncryptedEnvelope): Promise<Buffer> {
+    const startTime = Date.now();
+
     // Validate encryption version
     if (envelope.encryption_version !== this.ENCRYPTION_VERSION) {
       throw new Error(
@@ -476,6 +506,23 @@ export class EncryptionService {
             metricsErr
           );
         }
+      } else {
+        // Track other decryption failures
+        try {
+          const metrics = require('../../observability/metrics');
+          const reason = errorMsg.includes('auth')
+            ? 'auth_tag_mismatch'
+            : 'decryption_error';
+          metrics.cryptoDecryptFailuresTotal.inc({ reason });
+          console.error(
+            `[EncryptionService] crypto_decrypt_failures_total{reason="${reason}"} incremented`
+          );
+        } catch (metricsErr) {
+          console.warn(
+            '[EncryptionService] Failed to increment crypto_decrypt_failures_total:',
+            metricsErr
+          );
+        }
       }
       throw err; // Re-throw original error
     }
@@ -489,7 +536,37 @@ export class EncryptionService {
       const decipher = crypto.createDecipheriv('aes-256-gcm', dek, iv);
       decipher.setAuthTag(authTag);
 
-      return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+      const result = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+
+      // Track successful decryption metrics
+      try {
+        const metrics = require('../../observability/metrics');
+        const duration = Date.now() - startTime;
+        metrics.cryptoOpsDuration.observe({ op: 'decrypt' }, duration);
+      } catch (err) {
+        console.warn('[EncryptionService] Failed to observe crypto_ops_duration_ms:', err);
+      }
+
+      return result;
+    } catch (err) {
+      // Track decryption failures (auth tag mismatch, etc.)
+      try {
+        const metrics = require('../../observability/metrics');
+        const errorMsg = (err as Error).message;
+        const reason = errorMsg.includes('auth')
+          ? 'auth_tag_mismatch'
+          : 'decryption_error';
+        metrics.cryptoDecryptFailuresTotal.inc({ reason });
+        console.error(
+          `[EncryptionService] crypto_decrypt_failures_total{reason="${reason}"} incremented`
+        );
+      } catch (metricsErr) {
+        console.warn(
+          '[EncryptionService] Failed to increment crypto_decrypt_failures_total:',
+          metricsErr
+        );
+      }
+      throw err;
     } finally {
       // Security: Zeroize DEK buffer to prevent memory exposure
       dek.fill(0);
@@ -552,6 +629,18 @@ export async function assertKmsUsable(): Promise<void> {
           'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
       );
     }
+  }
+
+  // Phase 3.2: Initialize encryption metrics to ensure they appear in /metrics
+  // even before any actual operations occur (required for CI validation)
+  try {
+    const metrics = require('../../observability/metrics');
+    // Initialize counters with 0 so they appear in /metrics endpoint immediately
+    metrics.cryptoEncryptFailuresTotal.inc({ reason: 'init' }, 0);
+    metrics.cryptoDecryptFailuresTotal.inc({ reason: 'init' }, 0);
+    console.log('[EncryptionService] Encryption metrics initialized');
+  } catch (err) {
+    console.warn('[EncryptionService] Failed to initialize encryption metrics:', err);
   }
 
   try {
