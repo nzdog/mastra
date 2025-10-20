@@ -40,14 +40,17 @@ export function parseCorsConfig(): CorsConfig {
   // If no origins specified, use safe defaults for development
   if (allowedOrigins.size === 0) {
     if (env === 'production') {
-      throw new Error('CORS_ALLOWED_ORIGINS must be set in production');
+      // Railway production fallback
+      allowedOrigins.add('https://web-production-b6320.up.railway.app');
+      console.warn('⚠️  CORS: Using Railway production default origin');
+    } else {
+      // Development defaults
+      allowedOrigins.add('http://localhost:3000');
+      allowedOrigins.add('http://localhost:5173'); // Vite dev server
+      allowedOrigins.add('http://127.0.0.1:3000');
+      allowedOrigins.add('http://127.0.0.1:5173');
+      console.warn('⚠️  CORS: Using default development origins');
     }
-    // Development defaults
-    allowedOrigins.add('http://localhost:3000');
-    allowedOrigins.add('http://localhost:5173'); // Vite dev server
-    allowedOrigins.add('http://127.0.0.1:3000');
-    allowedOrigins.add('http://127.0.0.1:5173');
-    console.warn('⚠️  CORS: Using default development origins');
   }
 
   // Parse credentials flag
@@ -77,6 +80,7 @@ export function parseCorsConfig(): CorsConfig {
     'X-Requested-With',
     'X-API-Version',
     'X-Trace-ID',
+    'X-API-Key',
   ];
   const allowHeaders = process.env.CORS_ALLOW_HEADERS
     ? process.env.CORS_ALLOW_HEADERS.split(',')
