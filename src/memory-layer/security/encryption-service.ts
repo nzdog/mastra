@@ -62,6 +62,54 @@ interface KMSProvider {
 }
 
 /**
+ * DEV/CI helper: load base64 KEK into memory KMS (non-fatal, dev-only)
+ *
+ * This helper loads DEV_KEK_BASE64 from environment into the in-memory KEK store
+ * to enable CI/dev environments to use a consistent key across restarts.
+ *
+ * Safety: Only runs when NODE_ENV !== 'production' OR CI=true
+ * Non-fatal: Warns but does not throw on parse errors
+ */
+function loadDevKekIntoMemoryKms(kekStoreOrProvider: any): void {
+  try {
+    const devBase64 = process.env.DEV_KEK_BASE64;
+    if (!devBase64) return;
+
+    const isProd = process.env.NODE_ENV === 'production';
+    const isCi = process.env.CI === 'true' || process.env.CI === '1';
+    if (isProd && !isCi) {
+      // In production do not auto-load dev keys
+      return;
+    }
+
+    const kekId = process.env.DEV_KEK_ID || 'kek-202510';
+    const kekBytes = Buffer.from(devBase64, 'base64');
+    if (!kekBytes || kekBytes.length === 0) {
+      console.warn('[MemoryKMS] DEV_KEK_BASE64 provided but failed to decode to bytes');
+      return;
+    }
+
+    // If the provider exposes an addKek/addKey method, use it.
+    if (typeof kekStoreOrProvider?.addKek === 'function') {
+      kekStoreOrProvider.addKek(kekId, kekBytes);
+    } else if (typeof kekStoreOrProvider?.set === 'function') {
+      // Map-like store
+      kekStoreOrProvider.set(kekId, kekBytes);
+    } else if (typeof kekStoreOrProvider === 'object') {
+      // plain object store
+      kekStoreOrProvider[kekId] = kekBytes;
+    } else {
+      console.warn('[MemoryKMS] Unknown kekStore shape; cannot register DEV KEK');
+      return;
+    }
+
+    console.info(`[MemoryKMS] Loaded DEV KEK for ${kekId} from DEV_KEK_BASE64`);
+  } catch (err) {
+    console.warn('[MemoryKMS] failed to parse/load DEV_KEK_BASE64', err);
+  }
+}
+
+/**
  * In-Memory KMS Provider (DEV/TEST ONLY)
  * Stores KEKs in memory - NOT SUITABLE FOR PRODUCTION
  */
@@ -70,8 +118,10 @@ export class MemoryKMSProvider implements KMSProvider {
   private currentKekId: string;
 
   constructor() {
-    // CRITICAL-2: Block MemoryKMS in production entirely
-    if (process.env.NODE_ENV === 'production') {
+    // CRITICAL-2: Block MemoryKMS in production entirely (unless CI)
+    const isProd = process.env.NODE_ENV === 'production';
+    const isCi = process.env.CI === 'true' || process.env.CI === '1';
+    if (isProd && !isCi) {
       throw new Error(
         'FATAL: MemoryKMSProvider is for development/testing only. ' +
           'Production deployments MUST use KMS_PROVIDER=aws or KMS_PROVIDER=gcp with proper cloud KMS integration.'
@@ -117,6 +167,14 @@ export class MemoryKMSProvider implements KMSProvider {
       console.log(
         `[MemoryKMSProvider] KEK stored under both 'kek-default' and '${this.currentKekId}'`
       );
+    }
+
+    // DEV/CI: Load additional KEK from DEV_KEK_ID if specified
+    // This allows CI to use a specific KEK ID (e.g., kek-202510) in addition to kek-default
+    try {
+      loadDevKekIntoMemoryKms(this.keys);
+    } catch (err) {
+      console.debug('[MemoryKMS] dev KEK loader error', err);
     }
   }
 

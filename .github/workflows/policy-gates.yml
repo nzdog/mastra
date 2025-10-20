@@ -51,6 +51,7 @@ jobs:
       # API / Crypto (safe if unset)
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       DEV_KEK_BASE64: ${{ secrets.DEV_KEK_BASE64 || 'D4VJvKxVpBJb8pspC9mhs6eC6VaF/AtdQipzl/gplTE=' }}
+      DEV_KEK_ID: 'kek-202510'
       SKIP_API_KEY_CHECK: 'true'
 
       CI: 'true'
@@ -75,6 +76,17 @@ jobs:
           if [ -n "${SECRET_DB_PASSWORD:-}" ]; then
             echo "PGPASSWORD=$SECRET_DB_PASSWORD" >> "$GITHUB_ENV"
           fi
+
+      - name: Confirm DEV_KEK_BASE64 present (masked)
+        run: |
+          set -euo pipefail
+          if [ -z "${DEV_KEK_BASE64:-}" ]; then
+            echo "⚠️ DEV_KEK_BASE64 not set"
+            exit 1
+          fi
+          echo "✅ DEV_KEK_BASE64 is present"
+          echo "Secret hash (sha256):"
+          echo -n "$DEV_KEK_BASE64" | sha256sum || echo -n "$DEV_KEK_BASE64" | shasum -a 256
 
       - name: Validate required secrets on protected branches
         if: |
