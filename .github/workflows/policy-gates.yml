@@ -43,8 +43,7 @@
         PGDATABASE: lichen_memory_test
         PGUSER: ${{ secrets.DB_USER != '' && secrets.DB_USER || 'postgres'
   }}
-        PGPASSWORD: ${{ secrets.DB_PASSWORD != '' && secrets.DB_PASSWORD ||
-  'postgres' }}
+        PGPASSWORD: ${{ secrets.DB_PASSWORD != '' && secrets.DB_PASSWORD || 'postgres' }}
 
         # Phase 3.2: Ledger configuration for CI
         LEDGER_ENABLED: 'false'
