@@ -41,10 +41,10 @@
         PGHOST: localhost
         PGPORT: 5432
         PGDATABASE: lichen_memory_test
-        PGUSER: ${{ secrets.DB_USER != '' && secrets.DB_USER || 'postgres'
-  }}
-        PGPASSWORD: ${{ secrets.DB_PASSWORD != '' && secrets.DB_PASSWORD || 'postgres' }}
+        PGUSER: ${{ secrets.DB_USER || 'postgres' }}
+        PGPASSWORD: ${{ secrets.DB_PASSWORD || 'postgres' }}
 
+        # Pha
         # Phase 3.2: Ledger configuration for CI
         LEDGER_ENABLED: 'false'
         LEDGER_OPTIONAL: 'true'
