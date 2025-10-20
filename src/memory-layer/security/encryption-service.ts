@@ -635,9 +635,11 @@ export async function assertKmsUsable(): Promise<void> {
   // even before any actual operations occur (required for CI validation)
   try {
     const metrics = require('../../observability/metrics');
-    // Initialize counters with 0 so they appear in /metrics endpoint immediately
-    metrics.cryptoEncryptFailuresTotal.inc({ reason: 'init' }, 0);
-    metrics.cryptoDecryptFailuresTotal.inc({ reason: 'init' }, 0);
+    // Initialize counters by creating label combinations with 0 values
+    // This ensures the metrics appear in /metrics endpoint immediately
+    metrics.cryptoEncryptFailuresTotal.labels({ reason: 'initialization' }).inc(0);
+    metrics.cryptoDecryptFailuresTotal.labels({ reason: 'initialization' }).inc(0);
+    // The histogram (crypto_ops_duration_ms) will be auto-created on first observe()
     console.log('[EncryptionService] Encryption metrics initialized');
   } catch (err) {
     console.warn('[EncryptionService] Failed to initialize encryption metrics:', err);
