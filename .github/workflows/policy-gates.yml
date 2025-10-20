@@ -50,7 +50,7 @@ jobs:
 
       # API / Crypto (safe if unset)
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      DEV_KEK_BASE64: ${{ secrets.DEV_KEK_BASE64 }}
+      DEV_KEK_BASE64: "<D4VJvKxVpBJb8pspC9mhs6eC6VaF/AtdQipzl/gplTE=>"
       SKIP_API_KEY_CHECK: 'true'
 
       CI: 'true'
