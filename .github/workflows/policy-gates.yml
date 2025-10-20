@@ -97,19 +97,15 @@
         - name: 'Gate: Audit emitter stub validation'
           run: |
             set -euo pipefail
-            grep -q "export class AuditEmitter" 
-  src/memory-layer/governance/audit-emitter.ts
-            grep -q "export function getAuditEmitter" 
-  src/memory-layer/governance/audit-emitter.ts
+            grep -q "export class AuditEmitter" src/memory-layer/governance/audit-emitter.ts
+            grep -q "export function getAuditEmitter" src/memory-layer/governance/audit-emitter.ts
             echo "✅ Audit emitter stub validation passed"
 
         - name: 'Gate: Health endpoint validation'
           run: |
             set -euo pipefail
-            grep -q "export async function healthCheck" 
-  src/memory-layer/api/health.ts
-            grep -q "export interface HealthCheckResponse" 
-  src/memory-layer/api/health.ts
+            grep -q "export async function healthCheck" src/memory-layer/api/health.ts
+            grep -q "export interface HealthCheckResponse" src/memory-layer/api/health.ts
             echo "✅ Health endpoint validation passed"
 
         # ---------- Documentation Gates ----------
@@ -117,10 +113,8 @@
           run: |
             set -euo pipefail
             grep -q "## Context" docs/adrs/0001-memory-layer-architecture.md
-            grep -q "## Decision" 
-  docs/adrs/0001-memory-layer-architecture.md
-            grep -q "## Consequences" 
-  docs/adrs/0001-memory-layer-architecture.md
+            grep -q "## Decision" docs/adrs/0001-memory-layer-architecture.md
+            grep -q "## Consequences" docs/adrs/0001-memory-layer-architecture.md
             echo "✅ ADR completeness validated"
 
         - name: 'Gate: Spec index completeness'
