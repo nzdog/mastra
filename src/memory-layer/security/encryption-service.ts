@@ -73,8 +73,9 @@ interface KMSProvider {
 function loadDevKekIntoMemoryKms(kekStoreOrProvider: any): void {
   try {
     const devBase64 = process.env.DEV_KEK_BASE64;
-    if (!devBase64) return;
-
+    if (!devBase64) {
+      return;
+    }
     const isProd = process.env.NODE_ENV === 'production';
     const isCi = process.env.CI === 'true' || process.env.CI === '1';
     if (isProd && !isCi) {
