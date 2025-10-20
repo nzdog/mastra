@@ -157,11 +157,15 @@
         - name: 'Gate: No PII in audit logs (Phase 1.1)'
           run: |
             set -euo pipefail
-            if [ -d ".ledger/" ]; then
-              ! grep -R "email.*@" .ledger/ || (echo "❌ Potential PII 
-  detected in ledger"; exit 1)
-              ! grep -R -E "ssn.*[0-9]" .ledger/ || (echo "❌ Potential PII 
-  detected in ledger"; exit 1)
+              if [ -d ".ledger/" ]; then
+                if grep -R "email.*@" .ledger/; then 
+                  echo "❌ Potential PII detected in ledger"
+                exit 1
+                fi
+                if grep -R -E "ssn.*[0-9]" .ledger/; then
+                  echo "❌ Potential PII detected in ledger" 
+                  exit 1
+                fi
               echo "✅ No PII detected in audit logs"
             else
               echo "⏩ No ledger directory found (skipping PII check)"
