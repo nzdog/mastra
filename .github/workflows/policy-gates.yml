@@ -1,711 +1,638 @@
-  name: Policy Gates (Phase 3.2)
+name: Policy Gates (Phase 3.2)
 
-  on:
-    push:
-      branches:
-        - main
-        - master
-        - 'feature/**'
-    pull_request:
+on:
+  push:
+    branches:
+      - main
+      - master
+      - 'feature/**'
+  pull_request:
 
-  permissions:
-    contents: read
+permissions:
+  contents: read
 
-  concurrency:
-    group: policy-gates-${{ github.ref }}
-    cancel-in-progress: false
+concurrency:
+  group: policy-gates-${{ github.ref }}
+  cancel-in-progress: false
 
-  jobs:
-    policy-gates:
-      name: Policy & Security Gates (Phase 3.2)
-      runs-on: ubuntu-latest
-      timeout-minutes: 60
+jobs:
+  policy-gates:
+    name: Policy & Security Gates (Phase 3.2)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
 
-      services:
-        postgres:
-          image: postgres:16
-          ports:
-            - 5432:5432
-          env:
-            POSTGRES_DB: lichen_memory_test
-            POSTGRES_USER: postgres
-            POSTGRES_PASSWORD: postgres
-          options: >-
-            --health-cmd="pg_isready -U postgres"
-            --health-interval=10s
-            --health-timeout=5s
-            --health-retries=10
+    services:
+      postgres:
+        image: postgres:16
+        ports:
+          - 5432:5432
+        env:
+          POSTGRES_DB: lichen_memory_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd="pg_isready -U postgres"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
-      env:
-        # Database defaults for CI
-        PGHOST: localhost
-        PGPORT: 5432
-        PGDATABASE: lichen_memory_test
-        PGUSER: ${{ secrets.DB_USER || 'postgres' }}
-        PGPASSWORD: ${{ secrets.DB_PASSWORD || 'postgres' }}
+    # CI defaults; steps below will override from secrets if present
+    env:
+      PGHOST: localhost
+      PGPORT: 5432
+      PGDATABASE: lichen_memory_test
+      PGUSER: postgres
+      PGPASSWORD: postgres
 
-        # Pha
-        # Phase 3.2: Ledger configuration for CI
-        LEDGER_ENABLED: 'false'
-        LEDGER_OPTIONAL: 'true'
+      # Phase 3.2: Ledger configuration for CI
+      LEDGER_ENABLED: 'false'
+      LEDGER_OPTIONAL: 'true'
 
-        # API / Crypto
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        DEV_KEK_BASE64: ${{ secrets.DEV_KEK_BASE64 || '' }}
-        SKIP_API_KEY_CHECK: 'true'
+      # API / Crypto (safe if unset)
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      DEV_KEK_BASE64: ${{ secrets.DEV_KEK_BASE64 }}
+      SKIP_API_KEY_CHECK: 'true'
 
-        # Ensure non-interactive
-        CI: 'true'
+      CI: 'true'
 
-      steps:
-        - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-        - name: Use Node.js 20.x
-          uses: actions/setup-node@v4
-          with:
-            node-version: '20'
-            cache: 'npm'
+      - name: Use Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
 
-        - name: Validate required secrets on protected branches
-          if: |
-            github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-          run: |
-            set -euo pipefail
-            missing=0
-            [ -z "${ANTHROPIC_API_KEY:-}" ] && echo "❌ Missing ANTHROPIC_API_KEY" && missing=1
-            [ -z "${DEV_KEK_BASE64:-}" ] && echo "❌ Missing DEV_KEK_BASE64" && missing=1
-            if [ "$missing" -ne 0 ]; then
-              echo "One or more required secrets are missing."
+      - name: Override DB credentials from secrets (if provided)
+        env:
+          SECRET_DB_USER: ${{ secrets.DB_USER }}
+          SECRET_DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+        run: |
+          if [ -n "${SECRET_DB_USER:-}" ]; then
+            echo "PGUSER=$SECRET_DB_USER" >> "$GITHUB_ENV"
+          fi
+          if [ -n "${SECRET_DB_PASSWORD:-}" ]; then
+            echo "PGPASSWORD=$SECRET_DB_PASSWORD" >> "$GITHUB_ENV"
+          fi
+
+      - name: Validate required secrets on protected branches
+        if: |
+          github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        run: |
+          set -euo pipefail
+          missing=0
+          [ -z "${ANTHROPIC_API_KEY:-}" ] && echo "❌ Missing ANTHROPIC_API_KEY" && missing=1
+          [ -z "${DEV_KEK_BASE64:-}" ] && echo "❌ Missing DEV_KEK_BASE64" && missing=1
+          if [ "$missing" -ne 0 ]; then
+            echo "One or more required secrets are missing."
+            exit 1
+          fi
+          echo "✅ Required secrets present"
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ---------- Core Quality Gates ----------
+      - name: 'Gate: TypeScript lint'
+        run: npm run lint
+
+      - name: 'Gate: TypeScript build'
+        run: npm run build
+
+      - name: 'Gate: Run unit & integration tests'
+        run: npm test
+
+      # ---------- Stubs & API surface validation ----------
+      - name: 'Gate: Audit emitter stub validation'
+        run: |
+          set -euo pipefail
+          grep -q "export class AuditEmitter" src/memory-layer/governance/audit-emitter.ts
+          grep -q "export function getAuditEmitter" src/memory-layer/governance/audit-emitter.ts
+          echo "✅ Audit emitter stub validation passed"
+
+      - name: 'Gate: Health endpoint validation'
+        run: |
+          set -euo pipefail
+          grep -q "export async function healthCheck" src/memory-layer/api/health.ts
+          grep -q "export interface HealthCheckResponse" src/memory-layer/api/health.ts
+          echo "✅ Health endpoint validation passed"
+
+      # ---------- Documentation Gates ----------
+      - name: 'Gate: ADR completeness'
+        run: |
+          set -euo pipefail
+          grep -q "## Context" docs/adrs/0001-memory-layer-architecture.md
+          grep -q "## Decision" docs/adrs/0001-memory-layer-architecture.md
+          grep -q "## Consequences" docs/adrs/0001-memory-layer-architecture.md
+          echo "✅ ADR completeness validated"
+
+      - name: 'Gate: Spec index completeness'
+        run: |
+          set -euo pipefail
+          grep -q "Phase 0" docs/specs/README.md
+          grep -q "Phase 1" docs/specs/README.md
+          grep -q "Phase 2" docs/specs/README.md
+          grep -q "Phase 3" docs/specs/README.md
+          grep -q "Phase 4" docs/specs/README.md
+          grep -q "Phase 5" docs/specs/README.md
+          echo "✅ Spec index completeness validated"
+
+      # ---------- Security Gates ----------
+      - name: 'Gate: No hardcoded secrets'
+        run: |
+          set -euo pipefail
+          if grep -R --exclude-dir=node_modules -n "sk-ant-" src/; then
+            echo "❌ Potential API key detected"
+            exit 1
+          fi
+          if grep -R --exclude-dir=node_modules -nE "password\s*=" src/; then
+            echo "⚠️ Potential password detected"
+          fi
+          echo "✅ No obvious hardcoded secrets found"
+
+      # ---------- Phase 1.1 – Audit Hardening ----------
+      - name: 'Gate: Schema validation (Phase 1.1)'
+        run: |
+          npm run test:schema-validation
+          echo "✅ Schema validation passed"
+
+      - name: 'Gate: RFC-8785 Canonical JSON (Phase 1.1)'
+        run: |
+          npm run test:canonical-json
+          echo "✅ Canonical JSON determinism verified"
+
+      - name: 'Gate: No PII in audit logs (Phase 1.1)'
+        run: |
+          set -euo pipefail
+          if [ -d ".ledger/" ]; then
+            if grep -R "email.*@" .ledger/; then
+              echo "❌ Potential PII detected in ledger (email pattern)"
               exit 1
             fi
-            echo "✅ Required secrets present"
-
-        - name: Install dependencies
-          run: npm ci
-
-        # ---------- Core Quality Gates ----------
-        - name: 'Gate: TypeScript lint'
-          run: npm run lint
-
-        - name: 'Gate: TypeScript build'
-          run: npm run build
-
-        - name: 'Gate: Run unit & integration tests'
-          run: npm test
-
-        # ---------- Stubs & API surface validation ----------
-        - name: 'Gate: Audit emitter stub validation'
-          run: |
-            set -euo pipefail
-            grep -q "export class AuditEmitter" src/memory-layer/governance/audit-emitter.ts
-            grep -q "export function getAuditEmitter" src/memory-layer/governance/audit-emitter.ts
-            echo "✅ Audit emitter stub validation passed"
-
-        - name: 'Gate: Health endpoint validation'
-          run: |
-            set -euo pipefail
-            grep -q "export async function healthCheck" src/memory-layer/api/health.ts
-            grep -q "export interface HealthCheckResponse" src/memory-layer/api/health.ts
-            echo "✅ Health endpoint validation passed"
-
-        # ---------- Documentation Gates ----------
-        - name: 'Gate: ADR completeness'
-          run: |
-            set -euo pipefail
-            grep -q "## Context" docs/adrs/0001-memory-layer-architecture.md
-            grep -q "## Decision" docs/adrs/0001-memory-layer-architecture.md
-            grep -q "## Consequences" docs/adrs/0001-memory-layer-architecture.md
-            echo "✅ ADR completeness validated"
-
-        - name: 'Gate: Spec index completeness'
-          run: |
-            set -euo pipefail
-            grep -q "Phase 0" docs/specs/README.md
-            grep -q "Phase 1" docs/specs/README.md
-            grep -q "Phase 2" docs/specs/README.md
-            grep -q "Phase 3" docs/specs/README.md
-            grep -q "Phase 4" docs/specs/README.md
-            grep -q "Phase 5" docs/specs/README.md
-            echo "✅ Spec index completeness validated"
-
-        # ---------- Security Gates ----------
-        - name: 'Gate: No hardcoded secrets'
-          run: |
-            set -euo pipefail
-            if grep -R --exclude-dir=node_modules -n "sk-ant-" src/; then
-              echo "❌ Potential API key detected" 
+            if grep -R -E "ssn.*[0-9]" .ledger/; then
+              echo "❌ Potential PII detected in ledger (SSN pattern)"
               exit 1
             fi
-            
-            if grep -R --exclude-dir=node_modules -nE "password\s*=" src/; then 
-              echo "⚠️ Potential password detected" 
+            echo "✅ No PII detected in audit logs"
+          else
+            echo "⏩ No ledger directory found (skipping PII check)"
+          fi
+
+      # ---------- Phase 1.2 – Metrics, CORS & Verification ----------
+      - name: 'Gate: Metrics endpoint check (Phase 1.2)'
+        run: |
+          set -euo pipefail
+          SKIP_API_KEY_CHECK=true npm run server &
+          SERVER_PID=$!
+          sleep 5
+          if ! curl -sf http://localhost:3000/metrics | grep -q "audit_events_total"; then
+            echo "❌ Metrics endpoint failed"
+            kill $SERVER_PID || true
+            exit 1
+          fi
+          kill $SERVER_PID || true
+          echo "✅ Metrics endpoint operational"
+
+      - name: 'Gate: CORS configuration validation (Phase 1.2)'
+        run: |
+          set -euo pipefail
+          SKIP_API_KEY_CHECK=true \
+          CORS_ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5173" \
+          CORS_ALLOW_CREDENTIALS="false" \
+          npm run server &
+          SERVER_PID=$!
+
+          echo "⏳ Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
             fi
-            
-            echo "✅ No obvious hardcoded secrets found"
-
-        # ---------- Phase 1.1 – Audit Hardening ----------
-        - name: 'Gate: Schema validation (Phase 1.1)'
-          run: |
-            npm run test:schema-validation
-            echo "✅ Schema validation passed"
-
-        - name: 'Gate: RFC-8785 Canonical JSON (Phase 1.1)'
-          run: |
-            npm run test:canonical-json
-            echo "✅ Canonical JSON determinism verified"
-
-        - name: 'Gate: No PII in audit logs (Phase 1.1)'
-          run: |
-            set -euo pipefail
-              if [ -d ".ledger/" ]; then
-                if grep -R "email.*@" .ledger/; then 
-                  echo "❌ Potential PII detected in ledger"
-                exit 1
-                fi
-                if grep -R -E "ssn.*[0-9]" .ledger/; then
-                  echo "❌ Potential PII detected in ledger" 
-                  exit 1
-                fi
-              echo "✅ No PII detected in audit logs"
-            else
-              echo "⏩ No ledger directory found (skipping PII check)"
-            fi
-
-        # ---------- Phase 1.2 – Metrics, CORS & Verification ----------
-        - name: 'Gate: Metrics endpoint check (Phase 1.2)'
-          run: |
-            set -euo pipefail
-            SKIP_API_KEY_CHECK=true npm run server &
-            SERVER_PID=$!
-            sleep 5
-            curl -sf http://localhost:3000/metrics | grep -q 
-  "audit_events_total" || (echo "❌ Metrics endpoint failed"; kill 
-  $SERVER_PID; exit 1)
-            kill $SERVER_PID
-            echo "✅ Metrics endpoint operational"
-
-        - name: 'Gate: CORS configuration validation (Phase 1.2)'
-          run: |
-            set -euo pipefail
-            SKIP_API_KEY_CHECK=true \
-            
-  CORS_ALLOWED_ORIGINS="http://localhost:3000,http://localhost:5173" \
-            CORS_ALLOW_CREDENTIALS="false" \
-            npm run server &
-            SERVER_PID=$!
-
-            echo "⏳ Waiting for server to be ready..."
-            for i in {1..30}; do
-              if curl -sf http://localhost:3000/readyz > /dev/null 2>&1;
-  then
-                echo "✅ Server ready after $i attempts"
-                break
-              fi
-              if [ $i -eq 30 ]; then
-                echo "❌ Server failed to start after 30 attempts"
-                kill $SERVER_PID
-                exit 1
-              fi
-              sleep 1
-            done
-
-            echo "🔍 Test 1: Valid origin receives CORS headers"
-            RESPONSE=$(curl -sf -H "Origin: http://localhost:3000" -i
-  http://localhost:3000/readyz)
-            echo "$RESPONSE" | grep -qi "access-control-allow-origin: 
-  http://localhost:3000" || (echo "❌ Valid origin CORS failed"; kill
-  $SERVER_PID; exit 1)
-
-            echo "🔍 Test 2: Invalid origin is rejected (no CORS headers)"
-            RESPONSE_INVALID=$(curl -sf -H "Origin: https://evil.com" -i
-  http://localhost:3000/readyz)
-            echo "$RESPONSE_INVALID" | grep -qi
-  "access-control-allow-origin" && (echo "❌ Invalid origin NOT rejected";
-  kill $SERVER_PID; exit 1) || true
-
-            echo "🔍 Test 3: Preflight OPTIONS request works"
-            curl -sf -X OPTIONS -H "Origin: http://localhost:3000" -H
-  "Access-Control-Request-Method: GET" -i http://localhost:3000/readyz |
-  grep -qi "access-control-allow-origin" || (echo "❌ Preflight failed";
-  kill $SERVER_PID; exit 1)
-
-            echo "🔍 Test 4: Security headers present"
-            curl -sf -i http://localhost:3000/readyz | grep -qi
-  "referrer-policy: no-referrer" || (echo "❌ Referrer-Policy missing"; kill
-   $SERVER_PID; exit 1)
-            curl -sf -i http://localhost:3000/readyz | grep -qi
-  "x-content-type-options: nosniff" || (echo "❌ X-Content-Type-Options 
-  missing"; kill $SERVER_PID; exit 1)
-            curl -sf -i http://localhost:3000/readyz | grep -qi
-  "permissions-policy" || (echo "❌ Permissions-Policy missing"; kill
-  $SERVER_PID; exit 1)
-
-            echo "🔍 Test 5: CORS metrics in /metrics endpoint"
-            curl -sf http://localhost:3000/metrics | grep -q
-  "cors_preflight_total" || (echo "❌ CORS metrics missing"; kill
-  $SERVER_PID; exit 1)
-            curl -sf http://localhost:3000/metrics | grep -q
-  "cors_reject_total" || (echo "❌ CORS metrics missing"; kill $SERVER_PID;
-  exit 1)
-
-            kill $SERVER_PID
-            echo "✅ CORS configuration validation passed"
-
-        # ---------- Phase 2 – Memory Layer ----------
-        - name: 'Gate: Phase 2 smoke test'
-          run: |
-            npm run test:phase-2-smoke
-            echo "✅ Phase 2 smoke test passed"
-
-        - name: 'Gate: Memory operations test'
-          run: |
-            npm run test:memory-operations
-            echo "✅ Memory operations test passed"
-
-        - name: 'Gate: Memory middleware test'
-          run: |
-            npm run test:memory-middleware
-            echo "✅ Memory middleware test passed"
-
-        - name: 'Gate: Memory storage test'
-          run: |
-            npm run test:memory-storage
-            echo "✅ Memory storage test passed"
-
-        - name: 'Gate: No PII in logs (Phase 2)'
-          run: |
-            set -euo pipefail
-            if [ -d ".ledger/" ]; then
-              ! grep -R "email.*@" .ledger/ || (echo "❌ Potential PII 
-  detected in ledger"; exit 1)
-              ! grep -R -E "ssn.*[0-9]" .ledger/ || (echo "❌ Potential PII 
-  detected in ledger"; exit 1)
-              echo "✅ No PII detected in audit logs"
-            else
-              echo "⏩ No ledger directory found (skipping PII check)"
-            fi
-
-        - name: 'Gate: Metrics instrumentation (Phase 2)'
-          run: |
-            set -euo pipefail
-            SKIP_API_KEY_CHECK=true npm run server &
-            SERVER_PID=$!
-
-            echo "⏳ Waiting for server to be ready..."
-            for i in {1..30}; do
-              if curl -sf http://localhost:3000/readyz > /dev/null 2>&1;
-  then
-                echo "✅ Server ready after $i attempts"
-                break
-              fi
-              if [ $i -eq 30 ]; then
-                echo "❌ Server failed to start"
-                kill $SERVER_PID
-                exit 1
-              fi
-              sleep 1
-            done
-
-            METRICS=$(curl -sf http://localhost:3000/metrics)
-            echo "$METRICS" | grep -q "memory_operation_duration_seconds" ||
-   (echo "❌ Missing memory_operation_duration_seconds metric"; kill
-  $SERVER_PID; exit 1)
-            echo "$METRICS" | grep -q "memory_operation_total" || (echo "❌ 
-  Missing memory_operation_total metric"; kill $SERVER_PID; exit 1)
-            echo "$METRICS" | grep -q "memory_store_records_total" || (echo
-  "❌ Missing memory_store_records_total metric"; kill $SERVER_PID; exit 1)
-            echo "$METRICS" | grep -q "memory_recall_records_total" || (echo
-   "❌ Missing memory_recall_records_total metric"; kill $SERVER_PID; exit
-  1)
-
-            kill $SERVER_PID
-            echo "✅ Memory metrics instrumentation verified"
-
-        - name: 'Gate: Error envelope compliance (Phase 2)'
-          run: |
-            set -euo pipefail
-            SKIP_API_KEY_CHECK=true npm run server &
-            SERVER_PID=$!
-
-            echo "⏳ Waiting for server to be ready..."
-            for i in {1..30}; do
-              if curl -sf http://localhost:3000/readyz > /dev/null 2>&1;
-  then
-                echo "✅ Server ready after $i attempts"
-                break
-              fi
-              if [ $i -eq 30 ]; then
-                echo "❌ Server failed to start"
-                kill $SERVER_PID
-                exit 1
-              fi
-              sleep 1
-            done
-
-            echo "🔍 Test 1: 401 error envelope"
-            RESPONSE_401=$(curl -s -i -X POST
-  http://localhost:3000/v1/personal/store \
-              -H "Content-Type: application/json" \
-              -d '{"content":{"type":"text","data":"test"}}' || true)
-            echo "$RESPONSE_401" | grep -qi "HTTP/1.1 401" || (echo "❌ 
-  Expected 401 status"; kill $SERVER_PID; exit 1)
-            BODY_401=$(echo "$RESPONSE_401" | sed -n '/^{/,$p')
-            echo "$BODY_401" | grep -q '"code":"UNAUTHORIZED"' || (echo "❌ 
-  Missing UNAUTHORIZED code"; kill $SERVER_PID; exit 1)
-            echo "$BODY_401" | grep -q '"timestamp"' || (echo "❌ Missing 
-  timestamp"; kill $SERVER_PID; exit 1)
-            echo "$BODY_401" | grep -q '"path"' || (echo "❌ Missing path";
-  kill $SERVER_PID; exit 1)
-
-            echo "🔍 Test 2: 400 error envelope"
-            RESPONSE_400=$(curl -s -i -X POST
-  http://localhost:3000/v1/personal/store \
-              -H "Content-Type: application/json" \
-              -H "Authorization: Bearer test_token_12345678" \
-              -d '{"content":{"type":"text","data":"test"}}' || true)
-            echo "$RESPONSE_400" | grep -qi "HTTP/1.1 400" || (echo "❌ 
-  Expected 400 status"; kill $SERVER_PID; exit 1)
-            BODY_400=$(echo "$RESPONSE_400" | sed -n '/^{/,$p')
-            echo "$BODY_400" | grep -q '"code":"VALIDATION_ERROR"' || (echo
-  "❌ Missing VALIDATION_ERROR code"; kill $SERVER_PID; exit 1)
-
-            kill $SERVER_PID
-            echo "✅ Error envelope compliance verified"
-
-        - name: 'Gate: Consent family enforcement (Phase 2)'
-          run: |
-            set -euo pipefail
-            SKIP_API_KEY_CHECK=true npm run server &
-            SERVER_PID=$!
-
-            echo "⏳ Waiting for server to be ready..."
-            for i in {1..30}; do
-              if curl -sf http://localhost:3000/readyz > /dev/null 2>&1;
-  then
-                echo "✅ Server ready after $i attempts"
-                break
-              fi
-              if [ $i -eq 30 ]; then
-                echo "❌ Server failed to start"
-                kill $SERVER_PID
-                exit 1
-              fi
-              sleep 1
-            done
-
-            echo "🔍 Testing cohort recall forbidden (403)"
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-              -H "Authorization: Bearer test_user_12345678" \
-
-  http://localhost:3000/v1/cohort/recall?hashed_pseudonym=test_user)
-            [ "$RESPONSE" = "403" ] || (echo "❌ Expected 403 for cohort 
-  recall, got $RESPONSE"; kill $SERVER_PID; exit 1)
-
-            echo "🔍 Testing population recall forbidden (403)"
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-              -H "Authorization: Bearer test_user_12345678" \
-
-  http://localhost:3000/v1/population/recall?hashed_pseudonym=test_user)
-            [ "$RESPONSE" = "403" ] || (echo "❌ Expected 403 for population
-   recall, got $RESPONSE"; kill $SERVER_PID; exit 1)
-
-            echo "🔍 Testing population forget forbidden (403)"
-            RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
-              -X DELETE \
-              -H "Authorization: Bearer test_user_12345678" \
-
-  http://localhost:3000/v1/population/forget?hashed_pseudonym=test_user)
-            [ "$RESPONSE" = "403" ] || (echo "❌ Expected 403 for population
-   forget, got $RESPONSE"; kill $SERVER_PID; exit 1)
-
-            kill $SERVER_PID
-            echo "✅ Consent family enforcement verified"
-
-        - name: 'Gate: PII Denylist Validation (Phase 2 Privacy Invariant)'
-          run: |
-            set -euo pipefail
-            echo "🔍 Checking for raw PII patterns in code..."
-
-            # Email patterns in code (not comments). Use -E for extended 
-  regex
-            if grep -REn '@[a-zA-Z0-9._%+-]+\.(com|org|net)'
-  src/memory-layer/api/ test/*.test.ts | \
-               grep -v 'example\.com' | grep -v 'test@example' | \
-               grep -v '^\s*//' | grep -v '^\s*\*' | grep -v 'DENYLIST' | \
-               grep -v 'description:' | grep -v 'comment:'; then
-              echo "❌ FAIL: Email-like patterns found in code (possible PII
-   leak)"
-              echo "  Ensure all identifiers use hashed_pseudonym with 
-  hashed format"
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start after 30 attempts"
+              kill $SERVER_PID || true
               exit 1
             fi
+            sleep 1
+          done
 
-            # SSN-like patterns
-            if grep -REn '[0-9]{3}-[0-9]{2}-[0-9]{4}' src/memory-layer/api/
-  test/*.test.ts | \
-               grep -v '^\s*//' | grep -v 'DENYLIST' | grep -v 'pattern:' |
-  grep -v 'example'; then
-              echo "❌ FAIL: SSN-like patterns found in code"
+          echo "🔍 Test 1: Valid origin receives CORS headers"
+          RESPONSE=$(curl -sf -H "Origin: http://localhost:3000" -i http://localhost:3000/readyz)
+          echo "$RESPONSE" | grep -qi "access-control-allow-origin: http://localhost:3000" || (echo "❌ Valid origin CORS failed"; kill $SERVER_PID || true; exit 1)
+
+          echo "🔍 Test 2: Invalid origin is rejected (no CORS headers)"
+          RESPONSE_INVALID=$(curl -sf -H "Origin: https://evil.com" -i http://localhost:3000/readyz)
+          if echo "$RESPONSE_INVALID" | grep -qi "access-control-allow-origin"; then
+            echo "❌ Invalid origin NOT rejected"
+            kill $SERVER_PID || true
+            exit 1
+          fi
+
+          echo "🔍 Test 3: Preflight OPTIONS request works"
+          curl -sf -X OPTIONS -H "Origin: http://localhost:3000" -H "Access-Control-Request-Method: GET" -i http://localhost:3000/readyz | grep -qi "access-control-allow-origin" || (echo "❌ Preflight failed"; kill $SERVER_PID || true; exit 1)
+
+          echo "🔍 Test 4: Security headers present"
+          curl -sf -i http://localhost:3000/readyz | grep -qi "referrer-policy: no-referrer" || (echo "❌ Referrer-Policy missing"; kill $SERVER_PID || true; exit 1)
+          curl -sf -i http://localhost:3000/readyz | grep -qi "x-content-type-options: nosniff" || (echo "❌ X-Content-Type-Options missing"; kill $SERVER_PID || true; exit 1)
+          curl -sf -i http://localhost:3000/readyz | grep -qi "permissions-policy" || (echo "❌ Permissions-Policy missing"; kill $SERVER_PID || true; exit 1)
+
+          echo "🔍 Test 5: CORS metrics in /metrics endpoint"
+          curl -sf http://localhost:3000/metrics | grep -q "cors_preflight_total" || (echo "❌ CORS metrics missing"; kill $SERVER_PID || true; exit 1)
+          curl -sf http://localhost:3000/metrics | grep -q "cors_reject_total" || (echo "❌ CORS metrics missing"; kill $SERVER_PID || true; exit 1)
+
+          kill $SERVER_PID || true
+          echo "✅ CORS configuration validation passed"
+
+      # ---------- Phase 2 – Memory Layer ----------
+      - name: 'Gate: Phase 2 smoke test'
+        run: |
+          npm run test:phase-2-smoke
+          echo "✅ Phase 2 smoke test passed"
+
+      - name: 'Gate: Memory operations test'
+        run: |
+          npm run test:memory-operations
+          echo "✅ Memory operations test passed"
+
+      - name: 'Gate: Memory middleware test'
+        run: |
+          npm run test:memory-middleware
+          echo "✅ Memory middleware test passed"
+
+      - name: 'Gate: Memory storage test'
+        run: |
+          npm run test:memory-storage
+          echo "✅ Memory storage test passed"
+
+      - name: 'Gate: No PII in logs (Phase 2)'
+        run: |
+          set -euo pipefail
+          if [ -d ".ledger/" ]; then
+            if grep -R "email.*@" .ledger/; then
+              echo "❌ Potential PII detected in ledger"
               exit 1
             fi
-
-            # user_id holding email-like values
-            if grep -REn 'user_id.*:.*@' src/memory-layer/ test/
-  --include="*.ts" | \
-               grep -v '^\s*//' | grep -v 'Old field' | grep -v
-  'deprecated'; then
-              echo "❌ FAIL: user_id field appears to contain email-like 
-  values"
-              echo "  All identifiers must use hashed_pseudonym with hashed 
-  format"
+            if grep -R -E "ssn.*[0-9]" .ledger/; then
+              echo "❌ Potential PII detected in ledger"
               exit 1
             fi
+            echo "✅ No PII detected in audit logs"
+          else
+            echo "⏩ No ledger directory found (skipping PII check)"
+          fi
 
-            echo "✅ No raw PII patterns detected in code"
+      - name: 'Gate: Metrics instrumentation (Phase 2)'
+        run: |
+          set -euo pipefail
+          SKIP_API_KEY_CHECK=true npm run server &
+          SERVER_PID=$!
 
-        - name: 'Gate: No deprecated user_id field (Phase 2 Privacy 
-  Invariant)'
-          run: |
-            set -euo pipefail
-            echo "🔍 Checking for deprecated user_id references..."
-            if git grep -n "user_id" -- src openapi docs | grep .; then
-              echo "❌ FAIL: Found deprecated user_id references"
-              echo "  All references must use hashed_pseudonym instead"
-              echo "  Run: git grep -n 'user_id' -- src openapi docs"
-              exit 1
-            else
-              echo "✅ No deprecated user_id references found"
+          echo "⏳ Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
             fi
-
-        # ---------- Phase 3 Week 1–2 – Access Control & Pseudonym Rotation 
-  ----------
-        - name: 'Gate: Auth verifier tests (Phase 3 Week 2)'
-          run: |
-            npm run test -- auth-verifier.test.ts
-            echo "✅ Auth verifier tests passed"
-
-        - name: 'Gate: Access control tests (Phase 3 Week 2)'
-          run: |
-            npm run test -- access-control.test.ts
-            echo "✅ Access control tests passed"
-
-        - name: 'Gate: Pseudonym rotation tests (Phase 3 Week 2)'
-          run: |
-            npm run test -- pseudonym-rotation.test.ts
-            echo "✅ Pseudonym rotation tests passed"
-
-        - name: 'Gate: No hardcoded salts in production (Phase 3)'
-          run: |
-            set -euo pipefail
-            echo "🔍 Checking for default pseudonym salt..."
-            if grep -R "default-dev-salt-change-in-prod" src/ 
-  --include="*.ts"; then
-              echo "⚠️ WARNING: Default pseudonym salt found in source code"
-              echo "  Ensure PSEUDONYM_PERIOD_SALT is set via environment 
-  variable in production"
-              # Not failing - salt should come from env, not code
-            fi
-            echo "✅ Salt configuration check passed"
-
-        # ---------- Phase 3 Week 3 – Encryption & Postgres Hardening 
-  ----------
-        - name: 'Gate: Encryption roundtrip tests (Phase 3 Week 3)'
-          run: |
-            npm run test -- encryption-roundtrip.test.ts
-            echo "✅ Encryption roundtrip tests passed"
-
-        - name: 'Gate: Postgres store tests (Phase 3 Week 3)'
-          env:
-            PGHOST: localhost
-            PGPORT: 5432
-            PGDATABASE: lichen_memory_test
-            PGUSER: ${{ env.PGUSER }}
-            PGPASSWORD: ${{ env.PGPASSWORD }}
-          run: |
-            npm run test -- postgres-store.test.ts
-            echo "✅ Postgres store tests passed"
-
-        - name: 'Gate: Encryption metrics available (Phase 3 Week 3)'
-          run: |
-            set -euo pipefail
-            SKIP_API_KEY_CHECK=true ENCRYPTION_ENABLED=true npm run server &
-            SERVER_PID=$!
-
-            echo "⏳ Waiting for server to start..."
-            for i in {1..30}; do
-              if curl -sf http://localhost:3000/readyz > /dev/null 2>&1;
-  then
-                echo "✅ Server ready after $i attempts"
-                break
-              fi
-              if [ $i -eq 30 ]; then
-                echo "❌ Server failed to start"
-                kill $SERVER_PID
-                exit 1
-              fi
-              sleep 1
-            done
-
-            sleep 3
-
-            METRICS=$(curl -sf http://localhost:3000/metrics)
-            echo "$METRICS" | grep -q "crypto_encrypt_failures_total" ||
-  (echo "❌ Missing crypto_encrypt_failures_total metric"; kill $SERVER_PID;
-   exit 1)
-            echo "$METRICS" | grep -q "crypto_decrypt_failures_total" ||
-  (echo "❌ Missing crypto_decrypt_failures_total metric"; kill $SERVER_PID;
-   exit 1)
-            echo "$METRICS" | grep -q "crypto_ops_duration_ms" || (echo "❌ 
-  Missing crypto_ops_duration_ms metric"; kill $SERVER_PID; exit 1)
-
-            kill $SERVER_PID
-            echo "✅ Encryption metrics verified"
-
-        - name: 'Gate: Partitioning migration exists (Phase 3 Week 3)'
-          run: |
-            set -euo pipefail
-            test -f migrations/002_partitions_dev.sql
-            grep -q "PARTITION BY RANGE (created_at)" 
-  migrations/002_partitions_dev.sql
-            grep -q "create_monthly_partition" 
-  migrations/002_partitions_dev.sql
-            echo "✅ Partitioning migration validated"
-
-        - name: 'Gate: TTL sweep job exists (Phase 3 Week 3)'
-          run: |
-            set -euo pipefail
-            test -f src/memory-layer/jobs/ttl-sweep.ts
-            grep -q "class TTLSweepJob" src/memory-layer/jobs/ttl-sweep.ts
-            grep -q "ttl_sweep_records_total" 
-  src/memory-layer/jobs/ttl-sweep.ts
-            echo "✅ TTL sweep job validated"
-
-        - name: 'Gate: Dual-write tests (Phase 3 Week 3)'
-          run: |
-            npm run test -- dual-write.test.ts
-            echo "✅ Dual-write tests passed"
-
-        - name: 'Gate: Backfill tests (Phase 3 Week 3)'
-          run: |
-            npm run test -- backfill.test.ts
-            echo "✅ Backfill tests passed"
-
-        - name: 'Gate: Dual-write adapter selector support (Phase 3 Week 3)'
-          run: |
-            set -euo pipefail
-            test -f src/memory-layer/storage/dual-store.ts
-            grep -q "class DualStore" src/memory-layer/storage/dual-store.ts
-            grep -q "case 'dual-write'" 
-  src/memory-layer/storage/adapter-selector.ts
-            grep -q "getDualStore" 
-  src/memory-layer/storage/adapter-selector.ts
-            echo "✅ Dual-write adapter selector validated"
-
-        - name: 'Gate: Backfill script exists (Phase 3 Week 3)'
-          run: |
-            set -euo pipefail
-            test -f scripts/backfill-to-postgres.ts
-            grep -q "backfillToPostgres" scripts/backfill-to-postgres.ts
-            grep -q "verifyBackfill" scripts/backfill-to-postgres.ts
-            echo "✅ Backfill script validated"
-
-        - name: 'Gate: Dual-write metrics available (Phase 3 Week 3)'
-          run: |
-            set -euo pipefail
-            SKIP_API_KEY_CHECK=true PERSISTENCE=dual-write 
-  DUAL_WRITE_ENABLED=true npm run server &
-            SERVER_PID=$!
-
-            echo "⏳ Waiting for server to start..."
-            for i in {1..30}; do
-              if curl -sf http://localhost:3000/readyz > /dev/null 2>&1;
-  then
-                echo "✅ Server ready after $i attempts"
-                break
-              fi
-              if [ $i -eq 30 ]; then
-                echo "❌ Server failed to start"
-                kill $SERVER_PID
-                exit 1
-              fi
-              sleep 1
-            done
-
-            sleep 3
-
-            METRICS=$(curl -sf http://localhost:3000/metrics)
-            echo "$METRICS" | grep -q "dual_write_records_total" || (echo
-  "❌ Missing dual_write_records_total metric"; kill $SERVER_PID; exit 1)
-            echo "$METRICS" | grep -q "dual_write_failures_total" || (echo
-  "❌ Missing dual_write_failures_total metric"; kill $SERVER_PID; exit 1)
-            echo "$METRICS" | grep -q "backfill_records_total" || (echo "❌ 
-  Missing backfill_records_total metric"; kill $SERVER_PID; exit 1)
-
-            kill $SERVER_PID
-            echo "✅ Dual-write metrics verified"
-
-        # ---------- Phase 3 Week 3 – Migration Safety ----------
-        - name: 'Gate: No destructive SQL in production migrations (Phase 3 
-  Week 3)'
-          run: |
-            set -euo pipefail
-            echo "🔍 Checking for destructive SQL in production 
-  migrations..."
-            if git grep -n -i -E "DROP[[:space:]]+TABLE" -- migrations/*.sql
-   | grep -v "_dev.sql"; then
-              echo "❌ FAIL: Destructive SQL detected in production 
-  migrations"
-              echo "  DROP TABLE statements must only be in files ending 
-  with _dev.sql"
-              echo "  Production migrations must be non-destructive and 
-  idempotent"
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID || true
               exit 1
             fi
-            echo "✅ No destructive SQL in production migrations"
+            sleep 1
+          done
 
-        - name: 'Gate: Safe migration banner validation (Phase 3 Week 3)'
-          run: |
-            set -euo pipefail
-            echo "🔍 Validating safe migration banner..."
-            if ! grep -q "SAFE PRODUCTION MIGRATION" 
-  migrations/002_partitions_dev.sql; then
-              echo "❌ FAIL: migrations/002_partitions_dev.sql missing 'SAFE
-   PRODUCTION MIGRATION' banner"
-              echo "  Ensure correct migration file is being used"
+          METRICS=$(curl -sf http://localhost:3000/metrics)
+          echo "$METRICS" | grep -q "memory_operation_duration_seconds" || (echo "❌ Missing memory_operation_duration_seconds metric"; kill $SERVER_PID || true; exit 1)
+          echo "$METRICS" | grep -q "memory_operation_total" || (echo "❌ Missing memory_operation_total metric"; kill $SERVER_PID || true; exit 1)
+          echo "$METRICS" | grep -q "memory_store_records_total" || (echo "❌ Missing memory_store_records_total metric"; kill $SERVER_PID || true; exit 1)
+          echo "$METRICS" | grep -q "memory_recall_records_total" || (echo "❌ Missing memory_recall_records_total metric"; kill $SERVER_PID || true; exit 1)
+
+          kill $SERVER_PID || true
+          echo "✅ Memory metrics instrumentation verified"
+
+      - name: 'Gate: Error envelope compliance (Phase 2)'
+        run: |
+          set -euo pipefail
+          SKIP_API_KEY_CHECK=true npm run server &
+          SERVER_PID=$!
+
+          echo "⏳ Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID || true
               exit 1
             fi
-            if ! grep -q "IF NOT EXISTS" migrations/002_partitions_dev.sql; 
-  then
-              echo "❌ FAIL: migrations/002_partitions_dev.sql missing IF 
-  NOT EXISTS patterns"
-              echo "  Production migrations must be idempotent"
+            sleep 1
+          done
+
+          echo "🔍 Test 1: 401 error envelope"
+          RESPONSE_401=$(curl -s -i -X POST http://localhost:3000/v1/personal/store -H "Content-Type: application/json" -d '{"content":{"type":"text","data":"test"}}' || true)
+          echo "$RESPONSE_401" | grep -qi "HTTP/1.1 401" || (echo "❌ Expected 401 status"; kill $SERVER_PID || true; exit 1)
+          BODY_401=$(echo "$RESPONSE_401" | sed -n '/^{/,$p')
+          echo "$BODY_401" | grep -q '"code":"UNAUTHORIZED"' || (echo "❌ Missing UNAUTHORIZED code"; kill $SERVER_PID || true; exit 1)
+          echo "$BODY_401" | grep -q '"timestamp"' || (echo "❌ Missing timestamp"; kill $SERVER_PID || true; exit 1)
+          echo "$BODY_401" | grep -q '"path"' || (echo "❌ Missing path"; kill $SERVER_PID || true; exit 1)
+
+          echo "🔍 Test 2: 400 error envelope"
+          RESPONSE_400=$(curl -s -i -X POST http://localhost:3000/v1/personal/store -H "Content-Type: application/json" -H "Authorization: Bearer test_token_12345678" -d '{"content":{"type":"text","data":"test"}}' || true)
+          echo "$RESPONSE_400" | grep -qi "HTTP/1.1 400" || (echo "❌ Expected 400 status"; kill $SERVER_PID || true; exit 1)
+          BODY_400=$(echo "$RESPONSE_400" | sed -n '/^{/,$p')
+          echo "$BODY_400" | grep -q '"code":"VALIDATION_ERROR"' || (echo "❌ Missing VALIDATION_ERROR code"; kill $SERVER_PID || true; exit 1)
+
+          kill $SERVER_PID || true
+          echo "✅ Error envelope compliance verified"
+
+      - name: 'Gate: Consent family enforcement (Phase 2)'
+        run: |
+          set -euo pipefail
+          SKIP_API_KEY_CHECK=true npm run server &
+          SERVER_PID=$!
+
+          echo "⏳ Waiting for server to be ready..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID || true
               exit 1
             fi
-            if ! grep -q "create_monthly_partition" 
-  migrations/002_partitions_dev.sql; then
-              echo "❌ FAIL: migrations/002_partitions_dev.sql missing 
-  partition helper function"
+            sleep 1
+          done
+
+          echo "🔍 Testing cohort recall forbidden (403)"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer test_user_12345678" "http://localhost:3000/v1/cohort/recall?hashed_pseudonym=test_user")
+          if [ "$RESPONSE" != "403" ]; then
+            echo "❌ Expected 403 for cohort recall, got $RESPONSE"
+            kill $SERVER_PID || true
+            exit 1
+          fi
+
+          echo "🔍 Testing population recall forbidden (403)"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer test_user_12345678" "http://localhost:3000/v1/population/recall?hashed_pseudonym=test_user")
+          if [ "$RESPONSE" != "403" ]; then
+            echo "❌ Expected 403 for population recall, got $RESPONSE"
+            kill $SERVER_PID || true
+            exit 1
+          fi
+
+          echo "🔍 Testing population forget forbidden (403)"
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -X DELETE -H "Authorization: Bearer test_user_12345678" "http://localhost:3000/v1/population/forget?hashed_pseudonym=test_user")
+          if [ "$RESPONSE" != "403" ]; then
+            echo "❌ Expected 403 for population forget, got $RESPONSE"
+            kill $SERVER_PID || true
+            exit 1
+          fi
+
+          kill $SERVER_PID || true
+          echo "✅ Consent family enforcement verified"
+
+      - name: 'Gate: PII Denylist Validation (Phase 2 Privacy Invariant)'
+        run: |
+          set -euo pipefail
+          echo "🔍 Checking for raw PII patterns in code..."
+
+          # Email patterns (not comments)
+          if grep -REn '@[a-zA-Z0-9._%+-]+\.(com|org|net)' src/memory-layer/api/ test/*.test.ts | \
+             grep -v 'example\.com' | grep -v 'test@example' | \
+             grep -v '^\s*//' | grep -v '^\s*\*' | grep -v 'DENYLIST' | \
+             grep -v 'description:' | grep -v 'comment:'; then
+            echo "❌ FAIL: Email-like patterns found in code (possible PII leak)"
+            echo "  Ensure all identifiers use hashed_pseudonym with hashed format"
+            exit 1
+          fi
+
+          # SSN-like patterns
+          if grep -REn '[0-9]{3}-[0-9]{2}-[0-9]{4}' src/memory-layer/api/ test/*.test.ts | \
+             grep -v '^\s*//' | grep -v 'DENYLIST' | grep -v 'pattern:' | grep -v 'example'; then
+            echo "❌ FAIL: SSN-like patterns found in code"
+            exit 1
+          fi
+
+          # user_id holding email-like values
+          if grep -REn 'user_id.*:.*@' src/memory-layer/ test/ --include="*.ts" | \
+             grep -v '^\s*//' | grep -v 'Old field' | grep -v 'deprecated'; then
+            echo "❌ FAIL: user_id field appears to contain email-like values"
+            echo "  All identifiers must use hashed_pseudonym with hashed format"
+            exit 1
+          fi
+
+          echo "✅ No raw PII patterns detected in code"
+
+      - name: 'Gate: No deprecated user_id field (Phase 2 Privacy Invariant)'
+        run: |
+          set -euo pipefail
+          echo "🔍 Checking for deprecated user_id references..."
+          if git grep -n "user_id" -- src openapi docs | grep .; then
+            echo "❌ FAIL: Found deprecated user_id references"
+            echo "  All references must use hashed_pseudonym instead"
+            echo "  Run: git grep -n 'user_id' -- src openapi docs"
+            exit 1
+          else
+            echo "✅ No deprecated user_id references found"
+          fi
+
+      # ---------- Phase 3 Week 1–2 – Access Control & Pseudonym Rotation ----------
+      - name: 'Gate: Auth verifier tests (Phase 3 Week 2)'
+        run: |
+          npm run test -- auth-verifier.test.ts
+          echo "✅ Auth verifier tests passed"
+
+      - name: 'Gate: Access control tests (Phase 3 Week 2)'
+        run: |
+          npm run test -- access-control.test.ts
+          echo "✅ Access control tests passed"
+
+      - name: 'Gate: Pseudonym rotation tests (Phase 3 Week 2)'
+        run: |
+          npm run test -- pseudonym-rotation.test.ts
+          echo "✅ Pseudonym rotation tests passed"
+
+      - name: 'Gate: No hardcoded salts in production (Phase 3)'
+        run: |
+          set -euo pipefail
+          echo "🔍 Checking for default pseudonym salt..."
+          if grep -R "default-dev-salt-change-in-prod" src/ --include="*.ts"; then
+            echo "⚠️ WARNING: Default pseudonym salt found in source code"
+            echo "  Ensure PSEUDONYM_PERIOD_SALT is set via environment variable in production"
+          fi
+          echo "✅ Salt configuration check passed"
+
+      # ---------- Phase 3 Week 3 – Encryption & Postgres Hardening ----------
+      - name: 'Gate: Encryption roundtrip tests (Phase 3 Week 3)'
+        run: |
+          npm run test -- encryption-roundtrip.test.ts
+          echo "✅ Encryption roundtrip tests passed"
+
+      - name: 'Gate: Postgres store tests (Phase 3 Week 3)'
+        env:
+          PGHOST: ${{ env.PGHOST }}
+          PGPORT: ${{ env.PGPORT }}
+          PGDATABASE: ${{ env.PGDATABASE }}
+          PGUSER: ${{ env.PGUSER }}
+          PGPASSWORD: ${{ env.PGPASSWORD }}
+        run: |
+          npm run test -- postgres-store.test.ts
+          echo "✅ Postgres store tests passed"
+
+      - name: 'Gate: Encryption metrics available (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          SKIP_API_KEY_CHECK=true ENCRYPTION_ENABLED=true npm run server &
+          SERVER_PID=$!
+
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID || true
               exit 1
             fi
-            echo "✅ Safe migration banner validated"
+            sleep 1
+          done
 
-        - name: 'Gate: Migration runbook exists (Phase 3 Week 3)'
-          run: |
-            set -euo pipefail
-            test -f docs/runbooks/partitioning-migrations.md
-            grep -q "Production-Safe Migration" 
-  docs/runbooks/partitioning-migrations.md
-            grep -q "Dev-Only Migration" 
-  docs/runbooks/partitioning-migrations.md
-            echo "✅ Migration runbook validated"
+          sleep 3
 
-        # ---------- Branch Protection Validation ----------
-        - name: 'Gate: Branch protection check'
-          if: github.ref == 'refs/heads/feature/memory-layer-phase-3.2'
-          run: |
-            echo "✅ Running on protected branch 
-  feature/memory-layer-phase-3.2"
-            echo "This branch should be protected with:"
-            echo "  - No force pushes"
-            echo "  - No deletions"
-            echo "  - Required status checks (this workflow)"
+          METRICS=$(curl -sf http://localhost:3000/metrics)
+          echo "$METRICS" | grep -q "crypto_encrypt_failures_total" || (echo "❌ Missing crypto_encrypt_failures_total metric"; kill $SERVER_PID || true; exit 1)
+          echo "$METRICS" | grep -q "crypto_decrypt_failures_total" || (echo "❌ Missing crypto_decrypt_failures_total metric"; kill $SERVER_PID || true; exit 1)
+          echo "$METRICS" | grep -q "crypto_ops_duration_ms" || (echo "❌ Missing crypto_ops_duration_ms metric"; kill $SERVER_PID || true; exit 1)
+
+          kill $SERVER_PID || true
+          echo "✅ Encryption metrics verified"
+
+      - name: 'Gate: Partitioning migration exists (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          test -f migrations/002_partitions_dev.sql
+          grep -q "PARTITION BY RANGE (created_at)" migrations/002_partitions_dev.sql
+          grep -q "create_monthly_partition" migrations/002_partitions_dev.sql
+          echo "✅ Partitioning migration validated"
+
+      - name: 'Gate: TTL sweep job exists (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          test -f src/memory-layer/jobs/ttl-sweep.ts
+          grep -q "class TTLSweepJob" src/memory-layer/jobs/ttl-sweep.ts
+          grep -q "ttl_sweep_records_total" src/memory-layer/jobs/ttl-sweep.ts
+          echo "✅ TTL sweep job validated"
+
+      - name: 'Gate: Dual-write tests (Phase 3 Week 3)'
+        run: |
+          npm run test -- dual-write.test.ts
+          echo "✅ Dual-write tests passed"
+
+      - name: 'Gate: Backfill tests (Phase 3 Week 3)'
+        run: |
+          npm run test -- backfill.test.ts
+          echo "✅ Backfill tests passed"
+
+      - name: 'Gate: Dual-write adapter selector support (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          test -f src/memory-layer/storage/dual-store.ts
+          grep -q "class DualStore" src/memory-layer/storage/dual-store.ts
+          grep -q "case 'dual-write'" src/memory-layer/storage/adapter-selector.ts
+          grep -q "getDualStore" src/memory-layer/storage/adapter-selector.ts
+          echo "✅ Dual-write adapter selector validated"
+
+      - name: 'Gate: Backfill script exists (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          test -f scripts/backfill-to-postgres.ts
+          grep -q "backfillToPostgres" scripts/backfill-to-postgres.ts
+          grep -q "verifyBackfill" scripts/backfill-to-postgres.ts
+          echo "✅ Backfill script validated"
+
+      - name: 'Gate: Dual-write metrics available (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          SKIP_API_KEY_CHECK=true PERSISTENCE=dual-write DUAL_WRITE_ENABLED=true npm run server &
+          SERVER_PID=$!
+
+          echo "⏳ Waiting for server to start..."
+          for i in {1..30}; do
+            if curl -sf http://localhost:3000/readyz > /dev/null 2>&1; then
+              echo "✅ Server ready after $i attempts"
+              break
+            fi
+            if [ $i -eq 30 ]; then
+              echo "❌ Server failed to start"
+              kill $SERVER_PID || true
+              exit 1
+            fi
+            sleep 1
+          done
+
+          sleep 3
+
+          METRICS=$(curl -sf http://localhost:3000/metrics)
+          echo "$METRICS" | grep -q "dual_write_records_total" || (echo "❌ Missing dual_write_records_total metric"; kill $SERVER_PID || true; exit 1)
+          echo "$METRICS" | grep -q "dual_write_failures_total" || (echo "❌ Missing dual_write_failures_total metric"; kill $SERVER_PID || true; exit 1)
+          echo "$METRICS" | grep -q "backfill_records_total" || (echo "❌ Missing backfill_records_total metric"; kill $SERVER_PID || true; exit 1)
+
+          kill $SERVER_PID || true
+          echo "✅ Dual-write metrics verified"
+
+      # ---------- Phase 3 Week 3 – Migration Safety ----------
+      - name: 'Gate: No destructive SQL in production migrations (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          echo "🔍 Checking for destructive SQL in production migrations..."
+          if git grep -n -i -E "DROP[[:space:]]+TABLE" -- migrations/*.sql | grep -v "_dev.sql"; then
+            echo "❌ FAIL: Destructive SQL detected in production migrations"
+            echo "  DROP TABLE statements must only be in files ending with _dev.sql"
+            echo "  Production migrations must be non-destructive and idempotent"
+            exit 1
+          fi
+          echo "✅ No destructive SQL in production migrations"
+
+      - name: 'Gate: Safe migration banner validation (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          echo "🔍 Validating safe migration banner..."
+          if ! grep -q "SAFE PRODUCTION MIGRATION" migrations/002_partitions_dev.sql; then
+            echo "❌ FAIL: migrations/002_partitions_dev.sql missing 'SAFE PRODUCTION MIGRATION' banner"
+            echo "  Ensure correct migration file is being used"
+            exit 1
+          fi
+          if ! grep -q "IF NOT EXISTS" migrations/002_partitions_dev.sql; then
+            echo "❌ FAIL: migrations/002_partitions_dev.sql missing IF NOT EXISTS patterns"
+            echo "  Production migrations must be idempotent"
+            exit 1
+          fi
+          if ! grep -q "create_monthly_partition" migrations/002_partitions_dev.sql; then
+            echo "❌ FAIL: migrations/002_partitions_dev.sql missing partition helper function"
+            exit 1
+          fi
+          echo "✅ Safe migration banner validated"
+
+      - name: 'Gate: Migration runbook exists (Phase 3 Week 3)'
+        run: |
+          set -euo pipefail
+          test -f docs/runbooks/partitioning-migrations.md
+          grep -q "Production-Safe Migration" docs/runbooks/partitioning-migrations.md
+          grep -q "Dev-Only Migration" docs/runbooks/partitioning-migrations.md
+          echo "✅ Migration runbook validated"
+
+      # ---------- Branch Protection Validation ----------
+      - name: 'Gate: Branch protection check'
+        if: github.ref == 'refs/heads/feature/memory-layer-phase-3.2'
+        run: |
+          echo "✅ Running on protected branch feature/memory-layer-phase-3.2"
+          echo "This branch should be protected with:"
+          echo "  - No force pushes"
+          echo "  - No deletions"
+          echo "  - Required status checks (this workflow)"
