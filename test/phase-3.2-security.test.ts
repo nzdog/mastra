@@ -13,7 +13,11 @@ import { MemoryRecord as _MemoryRecord } from '../src/memory-layer/models/memory
 import { DualStore } from '../src/memory-layer/storage/dual-store';
 import { getMemoryStore } from '../src/memory-layer/storage/in-memory-store';
 import { PostgresStore } from '../src/memory-layer/storage/postgres-store';
-import { MemoryKMSProvider, AWSKMSProvider, GCPKMSProvider } from '../src/memory-layer/security/encryption-service';
+import {
+  MemoryKMSProvider,
+  AWSKMSProvider,
+  GCPKMSProvider,
+} from '../src/memory-layer/security/encryption-service';
 
 describe('KMS Provider Production Guards (CRITICAL-1 & 2)', () => {
   test('should block MemoryKMS in production', () => {
@@ -67,7 +71,10 @@ describe.skipIf(skipIfNoPostgres)('Circuit Breaker Race Conditions (CRITICAL-5)'
   });
 
   test('should prevent concurrent reset attempts', async () => {
-    const privateStore = store as { circuitBreakerTripped?: boolean; circuitBreakerResetting?: boolean };
+    const privateStore = store as {
+      circuitBreakerTripped?: boolean;
+      circuitBreakerResetting?: boolean;
+    };
 
     // Simulate breaker tripped
     privateStore.circuitBreakerTripped = true;

@@ -47,7 +47,7 @@ async function main() {
     }
 
     const json = await res.json();
-    const required = ['status', 'active_sessions', 'memory_usage', 'version', 'policyVersion'];
+    const required = ['ready', 'message', 'ledger_initialized', 'ledger_optional'];
 
     for (const k of required) {
       if (!(k in json)) {

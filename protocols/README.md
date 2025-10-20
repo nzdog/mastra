@@ -4,7 +4,8 @@ This directory contains protocol markdown files for the Lichen Protocol system.
 
 ## Protocol Format
 
-All protocols follow a standardized markdown format that the system automatically parses. See `PROTOCOL_TEMPLATE.md` for a complete template.
+All protocols follow a standardized markdown format that the system automatically parses. See
+`PROTOCOL_TEMPLATE.md` for a complete template.
 
 ### Structure
 
@@ -18,20 +19,20 @@ Each protocol consists of:
 
 ```yaml
 ---
-id: unique_protocol_slug          # Machine-readable identifier
-title: Human Readable Title       # Display name
-version: 1.0.0                    # Semantic version
-entry_keys:                       # Required entry sections
+id: unique_protocol_slug # Machine-readable identifier
+title: Human Readable Title # Display name
+version: 1.0.0 # Semantic version
+entry_keys: # Required entry sections
   - purpose
   - why
   - use_when
   - outcomes_overall
-themes:                           # Theme metadata
+themes: # Theme metadata
   - index: 1
     title: Theme Name
   - index: 2
     title: Theme Name
-stones:                           # Stone references
+stones: # Stone references
   - Stone N: Stone Name
 ---
 ```
@@ -50,21 +51,19 @@ The entry content includes:
 Each theme follows this format:
 
 ```markdown
-### N. Theme Title *(Stone Reference)*
-**Purpose:** [What this theme does]
-**Why this matters:** [Why it's important]
-**Outcomes:**
+### N. Theme Title _(Stone Reference)_
+
+**Purpose:** [What this theme does] **Why this matters:** [Why it's important] **Outcomes:**
+
 - Poor: ...
 - Expected: ...
 - Excellent: ...
-- Transcendent: ...
-**Guiding Questions:**
+- Transcendent: ... **Guiding Questions:**
 - Question 1
 - Question 2
 - Question 3
 
-**Completion Prompt:**
-[Completion statement]
+**Completion Prompt:** [Completion statement]
 ```
 
 ## Creating a New Protocol

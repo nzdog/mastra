@@ -95,7 +95,10 @@ export class PostgresStore implements MemoryStore {
     const client = await this.pool.connect();
     try {
       // Week 3: Encrypt content before storing if enabled
-      let contentToStore: Record<string, unknown> = record.content as unknown as Record<string, unknown>;
+      let contentToStore: Record<string, unknown> = record.content as unknown as Record<
+        string,
+        unknown
+      >;
       if (isEncryptionEnabled()) {
         const encryptStart = Date.now();
         try {

@@ -120,7 +120,12 @@ export function errorHandler(
 
   // Handle standard HTTP errors (from express or middleware)
   if ('status' in err || 'statusCode' in err) {
-    const errWithStatus = err as { status?: number; statusCode?: number; message?: string; name?: string };
+    const errWithStatus = err as {
+      status?: number;
+      statusCode?: number;
+      message?: string;
+      name?: string;
+    };
     const statusCode = errWithStatus.status || errWithStatus.statusCode || 500;
     const errorCode = inferErrorCode(statusCode);
     const errorResponse = createErrorResponse(

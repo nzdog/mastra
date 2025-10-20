@@ -258,18 +258,18 @@ restoration protocol: "If trust breaks here, reconciliation looks like..."
 **2. What input normalization and output encoding are required?**
 
 I attune defensive energy to human context, not threat level. At 3am, normalization becomes gentler:
-accepting common typos in email domains (e.g., transposed letters), relaxing phone format requirements,
-auto-correcting timezone confusion. During crisis (detected by error rate spike), validation
-messages become more supportive: "Let's try that again" instead of "Invalid format". For elderly
-users (detected by accessibility settings), normalization patience increases: accepting dates like
-"next doctor visit" or "my birthday". Encoding adjusts to emotional state: after three failed login
-attempts, messages shift from technical ("Invalid credentials") to human ("Having trouble? Here's
-how to reset"). The system recognizes distress patterns: rapid repeated attempts trigger
-`CompassionMode`—longer timeouts, clearer instructions, proactive help offers. But reciprocity
-appears: users who consistently provide clean input get `TrustedInputMode`—fewer CAPTCHAs,
-streamlined forms, presumption of good intent. Output encoding includes gratitude: successful
-security checks return appreciation—"Thanks for keeping your account secure with 2FA". The
-normalization layer maintains memory: "This user always formats dates as DD/MM, adjust parser
+accepting common typos in email domains (e.g., transposed letters), relaxing phone format
+requirements, auto-correcting timezone confusion. During crisis (detected by error rate spike),
+validation messages become more supportive: "Let's try that again" instead of "Invalid format". For
+elderly users (detected by accessibility settings), normalization patience increases: accepting
+dates like "next doctor visit" or "my birthday". Encoding adjusts to emotional state: after three
+failed login attempts, messages shift from technical ("Invalid credentials") to human ("Having
+trouble? Here's how to reset"). The system recognizes distress patterns: rapid repeated attempts
+trigger `CompassionMode`—longer timeouts, clearer instructions, proactive help offers. But
+reciprocity appears: users who consistently provide clean input get `TrustedInputMode`—fewer
+CAPTCHAs, streamlined forms, presumption of good intent. Output encoding includes gratitude:
+successful security checks return appreciation—"Thanks for keeping your account secure with 2FA".
+The normalization layer maintains memory: "This user always formats dates as DD/MM, adjust parser
 accordingly."
 
 **3. Which permission should this code operate under if it fails closed?**

@@ -330,12 +330,14 @@ export class DualStore implements MemoryStore {
     const primaryStoreWithClose = this.primaryStore as unknown as Record<string, unknown>;
     const secondaryStoreWithClose = this.secondaryStore as unknown as Record<string, unknown>;
 
-    const primaryClose = typeof primaryStoreWithClose.close === 'function'
-      ? primaryStoreWithClose.close.bind(this.primaryStore)
-      : null;
-    const secondaryClose = typeof secondaryStoreWithClose.close === 'function'
-      ? secondaryStoreWithClose.close.bind(this.secondaryStore)
-      : null;
+    const primaryClose =
+      typeof primaryStoreWithClose.close === 'function'
+        ? primaryStoreWithClose.close.bind(this.primaryStore)
+        : null;
+    const secondaryClose =
+      typeof secondaryStoreWithClose.close === 'function'
+        ? secondaryStoreWithClose.close.bind(this.secondaryStore)
+        : null;
 
     await Promise.all([
       primaryClose ? primaryClose() : Promise.resolve(),

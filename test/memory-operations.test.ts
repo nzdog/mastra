@@ -17,7 +17,6 @@ import { INVALID_PSEUDONYM } from './_helpers';
 
 // Extend global namespace for test state sharing
 declare global {
-   
   var testStoreId: string | undefined;
 }
 

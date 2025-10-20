@@ -9,7 +9,10 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { assertKmsUsable, resetEncryptionService } from '../src/memory-layer/security/encryption-service';
+import {
+  assertKmsUsable,
+  resetEncryptionService,
+} from '../src/memory-layer/security/encryption-service';
 
 describe('Readiness Check - KMS Health', () => {
   let originalEnv: NodeJS.ProcessEnv;

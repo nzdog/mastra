@@ -19,9 +19,8 @@ import fetch from 'node-fetch';
 
 // Extend global namespace for test state sharing
 declare global {
-   
   var testRecordId: string | undefined;
-   
+
   var testReceiptIds: string[];
 }
 
@@ -361,7 +360,9 @@ async function main(): Promise<void> {
     const ledgerEnabledEnv = process.env.LEDGER_ENABLED?.toLowerCase();
     const ledgerEnabled = ledgerEnabledEnv === 'true';
 
-    console.log(`DEBUG: LEDGER_ENABLED="${process.env.LEDGER_ENABLED}" → ledgerEnabled=${ledgerEnabled}`);
+    console.log(
+      `DEBUG: LEDGER_ENABLED="${process.env.LEDGER_ENABLED}" → ledgerEnabled=${ledgerEnabled}`
+    );
 
     if (!ledgerEnabled) {
       console.log(

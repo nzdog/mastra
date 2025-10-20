@@ -67,7 +67,9 @@ async function backfillToPostgres(): Promise<void> {
 
     for (let i = 0; i < filteredRecords.length; i += config.batchSize) {
       const batch = filteredRecords.slice(i, i + config.batchSize);
-      console.log(`[Backfill] Processing batch ${Math.floor(i / config.batchSize) + 1}/${Math.ceil(filteredRecords.length / config.batchSize)} (${batch.length} records)`);
+      console.log(
+        `[Backfill] Processing batch ${Math.floor(i / config.batchSize) + 1}/${Math.ceil(filteredRecords.length / config.batchSize)} (${batch.length} records)`
+      );
 
       for (const record of batch) {
         totalProcessed++;
@@ -85,7 +87,9 @@ async function backfillToPostgres(): Promise<void> {
           backfillRecordsTotal.inc({ status: 'success' });
 
           if (totalSucceeded % 100 === 0) {
-            console.log(`[Backfill] Progress: ${totalSucceeded}/${filteredRecords.length} migrated`);
+            console.log(
+              `[Backfill] Progress: ${totalSucceeded}/${filteredRecords.length} migrated`
+            );
           }
         } catch (err: any) {
           totalFailed++;
@@ -152,7 +156,9 @@ async function verifyBackfill(): Promise<void> {
       console.log('✅ [Backfill] Verification passed: Record counts match');
     } else {
       console.warn('⚠️ [Backfill] Verification warning: Record counts differ');
-      console.warn(`   Memory: ${memoryStats.total_records}, Postgres: ${postgresStats.total_records}`);
+      console.warn(
+        `   Memory: ${memoryStats.total_records}, Postgres: ${postgresStats.total_records}`
+      );
     }
 
     // Compare by consent family

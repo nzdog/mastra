@@ -53,14 +53,14 @@ jobs:
       # Encryption (using memory KMS for tests)
       ENCRYPTION_ENABLED: true
       KMS_PROVIDER: memory
-      DEV_KEK_BASE64: dGVzdC1rZWstZm9yLWNpLXRlc3Rpbmctb25seS0zMi1ieXRlcw==  # test-only KEK
+      DEV_KEK_BASE64: dGVzdC1rZWstZm9yLWNpLXRlc3Rpbmctb25seS0zMi1ieXRlcw== # test-only KEK
 
       # Phase 3.2: Ledger configuration for graceful degradation
       LEDGER_ENABLED: false
       LEDGER_OPTIONAL: true
 
       # API key configuration for CI
-      SKIP_API_KEY_CHECK: true  # Allow tests to run without ANTHROPIC_API_KEY
+      SKIP_API_KEY_CHECK: true # Allow tests to run without ANTHROPIC_API_KEY
 
     steps:
       - name: Checkout code
