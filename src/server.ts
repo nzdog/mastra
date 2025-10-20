@@ -460,17 +460,19 @@ function validateApiKey(req: Request, res: Response, next: NextFunction): void {
 
   // If X_API_KEY not configured, skip validation (dev/test mode)
   if (!expectedKey) {
-    return next();
+    next();
+    return;
   }
 
   const providedKey = req.headers['x-api-key'];
 
   // Fail closed: reject if key is missing or incorrect
   if (!providedKey || providedKey !== expectedKey) {
-    return res.status(401).json({
+    res.status(401).json({
       error: 'Unauthorized',
       message: 'Valid X-API-Key header required',
     });
+    return;
   }
 
   next();
@@ -1045,162 +1047,172 @@ app.post(
 );
 
 // Continue protocol walk (rate-limited AI endpoint)
-app.post('/api/walk/continue', validateApiKey, aiEndpointLimiter, async (req: Request, res: Response) => {
-  try {
-    const { session_id, user_response } = req.body as ContinueRequest;
+app.post(
+  '/api/walk/continue',
+  validateApiKey,
+  aiEndpointLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { session_id, user_response } = req.body as ContinueRequest;
 
-    // Validate session_id
-    if (!session_id) {
-      return res.status(400).json({
-        error: 'Missing session_id',
-      });
-    }
+      // Validate session_id
+      if (!session_id) {
+        return res.status(400).json({
+          error: 'Missing session_id',
+        });
+      }
 
-    const sessionIdValidation = validateSessionId(session_id);
-    if (!sessionIdValidation.valid) {
-      return res.status(400).json({
-        error: sessionIdValidation.error,
-      });
-    }
+      const sessionIdValidation = validateSessionId(session_id);
+      if (!sessionIdValidation.valid) {
+        return res.status(400).json({
+          error: sessionIdValidation.error,
+        });
+      }
 
-    // Validate user_response
-    if (!user_response) {
-      return res.status(400).json({
-        error: 'Missing user_response',
-      });
-    }
+      // Validate user_response
+      if (!user_response) {
+        return res.status(400).json({
+          error: 'Missing user_response',
+        });
+      }
 
-    const responseValidation = validateUserInput(user_response, 'user_response');
-    if (!responseValidation.valid) {
-      return res.status(400).json({
-        error: responseValidation.error,
-      });
-    }
+      const responseValidation = validateUserInput(user_response, 'user_response');
+      if (!responseValidation.valid) {
+        return res.status(400).json({
+          error: responseValidation.error,
+        });
+      }
 
-    // Get session
-    const session = await getSession(session_id);
-    if (!session) {
-      return res.status(404).json({
-        error: 'Session not found or expired',
-      });
-    }
+      // Get session
+      const session = await getSession(session_id);
+      if (!session) {
+        return res.status(404).json({
+          error: 'Session not found or expired',
+        });
+      }
 
-    // Process message with sanitized input
-    const agentResponse = await session.agent.processMessage(responseValidation.sanitized!);
-    const state = session.agent.getState();
-
-    // Update session cost
-    session.total_cost = session.agent.getTotalCost();
-
-    // Format response
-    const response = formatResponse(agentResponse, state, session_id, session);
-
-    // Debug: Log what we're sending to the frontend
-    console.log(
-      '\n🌐 SENDING TO FRONTEND (last 300 chars of composer_output):',
-      response.composer_output.substring(response.composer_output.length - 300)
-    );
-
-    res.json(response);
-  } catch (error) {
-    console.error('Error in /api/walk/continue:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-// Complete protocol (rate-limited AI endpoint)
-app.post('/api/walk/complete', validateApiKey, aiEndpointLimiter, async (req: Request, res: Response) => {
-  try {
-    const { session_id, generate_summary } = req.body as CompleteRequest;
-
-    // Validate session_id
-    if (!session_id) {
-      return res.status(400).json({
-        error: 'Missing session_id',
-      });
-    }
-
-    const sessionIdValidation = validateSessionId(session_id);
-    if (!sessionIdValidation.valid) {
-      return res.status(400).json({
-        error: sessionIdValidation.error,
-      });
-    }
-
-    // Get session
-    const session = await getSession(session_id);
-    if (!session) {
-      return res.status(404).json({
-        error: 'Session not found or expired',
-      });
-    }
-
-    let summaryHtml = '';
-
-    // If generate_summary requested, directly trigger CLOSE mode
-    if (generate_summary) {
-      console.log('🎯 COMPLETION: Directly forcing CLOSE mode to generate field diagnosis');
-
-      // Get current state and directly set it to CLOSE mode
+      // Process message with sanitized input
+      const agentResponse = await session.agent.processMessage(responseValidation.sanitized!);
       const state = session.agent.getState();
-      state.mode = 'CLOSE';
-
-      // Trigger field diagnosis by processing with CLOSE mode
-      // The agent's processMessage will see mode=CLOSE and generate the diagnosis
-      const agentResponse = await session.agent.processMessage('Generate field diagnosis');
-      summaryHtml = agentResponse;
 
       // Update session cost
       session.total_cost = session.agent.getTotalCost();
 
-      // Get updated state for proper response formatting
-      const updatedState = session.agent.getState();
+      // Format response
+      const response = formatResponse(agentResponse, state, session_id, session);
 
-      // Return proper completion response with theme info
-      const protocolMetadata = session.registry.getMetadata();
-      const response = {
-        session_id: session_id,
-        protocol_name: protocolMetadata.title,
-        theme_number: updatedState.theme_index || 5,
-        total_themes: session.registry.getTotalThemes(),
-        mode: 'COMPLETE' as const,
-        composer_output: summaryHtml,
-        supports: [],
-        state: {
-          current_mode: 'CLOSE',
-          current_theme: updatedState.theme_index,
-          last_response_type: updatedState.last_response,
-          turn_count: updatedState.turn_counter,
-        },
-        total_cost: session.total_cost,
-        completed: true,
-      };
+      // Debug: Log what we're sending to the frontend
+      console.log(
+        '\n🌐 SENDING TO FRONTEND (last 300 chars of composer_output):',
+        response.composer_output.substring(response.composer_output.length - 300)
+      );
 
-      // Delete session after sending response
+      res.json(response);
+    } catch (error) {
+      console.error('Error in /api/walk/continue:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+);
+
+// Complete protocol (rate-limited AI endpoint)
+app.post(
+  '/api/walk/complete',
+  validateApiKey,
+  aiEndpointLimiter,
+  async (req: Request, res: Response) => {
+    try {
+      const { session_id, generate_summary } = req.body as CompleteRequest;
+
+      // Validate session_id
+      if (!session_id) {
+        return res.status(400).json({
+          error: 'Missing session_id',
+        });
+      }
+
+      const sessionIdValidation = validateSessionId(session_id);
+      if (!sessionIdValidation.valid) {
+        return res.status(400).json({
+          error: sessionIdValidation.error,
+        });
+      }
+
+      // Get session
+      const session = await getSession(session_id);
+      if (!session) {
+        return res.status(404).json({
+          error: 'Session not found or expired',
+        });
+      }
+
+      let summaryHtml = '';
+
+      // If generate_summary requested, directly trigger CLOSE mode
+      if (generate_summary) {
+        console.log('🎯 COMPLETION: Directly forcing CLOSE mode to generate field diagnosis');
+
+        // Get current state and directly set it to CLOSE mode
+        const state = session.agent.getState();
+        state.mode = 'CLOSE';
+
+        // Trigger field diagnosis by processing with CLOSE mode
+        // The agent's processMessage will see mode=CLOSE and generate the diagnosis
+        const agentResponse = await session.agent.processMessage('Generate field diagnosis');
+        summaryHtml = agentResponse;
+
+        // Update session cost
+        session.total_cost = session.agent.getTotalCost();
+
+        // Get updated state for proper response formatting
+        const updatedState = session.agent.getState();
+
+        // Return proper completion response with theme info
+        const protocolMetadata = session.registry.getMetadata();
+        const response = {
+          session_id: session_id,
+          protocol_name: protocolMetadata.title,
+          theme_number: updatedState.theme_index || 5,
+          total_themes: session.registry.getTotalThemes(),
+          mode: 'COMPLETE' as const,
+          composer_output: summaryHtml,
+          supports: [],
+          state: {
+            current_mode: 'CLOSE',
+            current_theme: updatedState.theme_index,
+            last_response_type: updatedState.last_response,
+            turn_count: updatedState.turn_counter,
+          },
+          total_cost: session.total_cost,
+          completed: true,
+        };
+
+        // Delete session after sending response
+        await sessionStore.delete(session_id);
+        console.log(`✅ Completed and deleted session: ${session_id}`);
+
+        return res.json(response);
+      }
+
+      // If no summary requested, just complete without generating content
       await sessionStore.delete(session_id);
       console.log(`✅ Completed and deleted session: ${session_id}`);
 
-      return res.json(response);
+      res.json({
+        completed: true,
+      });
+    } catch (error) {
+      console.error('Error in /api/walk/complete:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : String(error),
+      });
     }
-
-    // If no summary requested, just complete without generating content
-    await sessionStore.delete(session_id);
-    console.log(`✅ Completed and deleted session: ${session_id}`);
-
-    res.json({
-      completed: true,
-    });
-  } catch (error) {
-    console.error('Error in /api/walk/complete:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: error instanceof Error ? error.message : String(error),
-    });
   }
-});
+);
 
 // Get session state (debugging, rate-limited)
 app.get('/api/session/:id', apiLimiter, async (req: Request, res: Response) => {
