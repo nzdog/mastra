@@ -3761,14 +3761,79 @@
             completionContainer.style.paddingTop = '2rem';
             completionContainer.style.borderTop = '1px solid #E7E5E4';
             completionContainer.innerHTML = `
-                <button class="walk-button" id="download-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Download Summary</button>
+                <button class="walk-button" id="download-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Download Summary (PDF)</button>
                 <button class="walk-button" id="completion-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Mark complete</button>
+            `;
+
+            // Add Q&A interface after buttons
+            const qaContainer = document.createElement('div');
+            qaContainer.id = 'qa-container';
+            qaContainer.style.cssText = 'margin-top: 3rem; padding: 2rem; background: #F5F5F4; border-radius: 8px;';
+            qaContainer.innerHTML = `
+                <h3 style="margin-top: 0; font-size: 1.1rem; font-weight: 600; color: #292524;">Ask About Your Diagnosis</h3>
+                <p style="margin-bottom: 1.5rem; color: #57534E; font-size: 0.9rem;">Have questions about your field diagnosis? Ask here for context-aware guidance.</p>
+                <div style="display: flex; gap: 0.75rem; margin-bottom: 1rem;">
+                    <input type="text" id="qa-input" placeholder="e.g., How do I exit this field?"
+                        style="flex: 1; padding: 0.75rem; border: 1px solid #D6D3D1; border-radius: 4px; font-size: 0.9rem;"
+                        maxlength="500">
+                    <button id="qa-submit" class="walk-button" style="padding: 0.75rem 1.5rem; white-space: nowrap;">Ask</button>
+                </div>
+                <div id="qa-response" style="display: none; padding: 1.5rem; background: white; border-radius: 4px; margin-top: 1rem; color: #292524;"></div>
+                <div id="qa-loading" style="display: none; padding: 1rem; color: #57534E; font-style: italic;">Thinking...</div>
             `;
             
             // Insert completion button after composer output
             console.log('🔍 Composer output parent:', !!composerOutput.parentNode);
             composerOutput.parentNode.insertBefore(completionContainer, composerOutput.nextSibling);
-            console.log('✅ Completion buttons added');
+            composerOutput.parentNode.insertBefore(qaContainer, completionContainer.nextSibling);
+            console.log('✅ Completion buttons and Q&A interface added');
+
+            // Handle Q&A submit
+            const qaSubmit = document.getElementById('qa-submit');
+            const qaInput = document.getElementById('qa-input');
+            const qaResponse = document.getElementById('qa-response');
+            const qaLoading = document.getElementById('qa-loading');
+
+            const handleQASubmit = async () => {
+                const question = qaInput.value.trim();
+                if (!question) return;
+
+                qaLoading.style.display = 'block';
+                qaResponse.style.display = 'none';
+                qaSubmit.disabled = true;
+
+                try {
+                    const response = await fetch(`${API_BASE_URL}/api/summary/question`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            question,
+                            field_diagnosis: data.composer_output,
+                            protocol_name: data.protocol_name
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to get answer');
+                    }
+
+                    const result = await response.json();
+                    qaResponse.innerHTML = `<div style="white-space: pre-wrap;">${result.answer}</div>`;
+                    qaResponse.style.display = 'block';
+                    qaInput.value = '';
+                } catch (error) {
+                    qaResponse.innerHTML = '<p style="color: #DC2626;">Error getting answer. Please try again.</p>';
+                    qaResponse.style.display = 'block';
+                } finally {
+                    qaLoading.style.display = 'none';
+                    qaSubmit.disabled = false;
+                }
+            };
+
+            qaSubmit.onclick = handleQASubmit;
+            qaInput.onkeypress = (e) => {
+                if (e.key === 'Enter') handleQASubmit();
+            };
             
             // Handle download button click
             const downloadButton = completionContainer.querySelector('#download-button');
