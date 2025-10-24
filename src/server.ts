@@ -981,6 +981,52 @@ app.get('/api/protocols', apiLimiter, (_req: Request, res: Response) => {
   }
 });
 
+// Answer questions about field diagnosis (rate-limited)
+app.post('/api/summary/question', apiLimiter, async (req: Request, res: Response) => {
+  try {
+    const { answerFieldQuestion, validateQuestion } = await import('./services/qa-handler');
+
+    const { question, field_diagnosis, protocol_name, user_answers } = req.body;
+
+    // Validate question
+    if (!question) {
+      return res.status(400).json({
+        error: 'Missing question field',
+      });
+    }
+
+    const validation = validateQuestion(question);
+    if (!validation.valid) {
+      return res.status(400).json({
+        error: validation.error,
+      });
+    }
+
+    // Validate field_diagnosis
+    if (!field_diagnosis || typeof field_diagnosis !== 'string') {
+      return res.status(400).json({
+        error: 'Missing or invalid field_diagnosis',
+      });
+    }
+
+    // Generate answer using Q&A handler
+    const qaResponse = await answerFieldQuestion(API_KEY!, {
+      question: question.trim(),
+      field_diagnosis,
+      protocol_name: protocol_name || 'Field Diagnostic Protocol',
+      user_answers,
+    });
+
+    res.json(qaResponse);
+  } catch (error) {
+    console.error('Error in /api/summary/question:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
 // Start protocol walk (strictly rate-limited - creates sessions and uses AI)
 app.post(
   '/api/walk/start',
