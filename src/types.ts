@@ -55,3 +55,11 @@ export interface ProtocolChunk {
   content: string;
   theme_index?: number;
 }
+
+export interface ProtocolHistory {
+  protocol_id: string;
+  protocol_name: string;
+  completed_at: string;
+  diagnosed_field?: string;
+  summary_text?: string;
+}

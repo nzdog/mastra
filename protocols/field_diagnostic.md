@@ -173,11 +173,24 @@ I have seen how this field behaves under stress, and I notice how I respond in p
 
 **Type:** Field Diagnostic
 
-**Instruction:**
-Name the active field clearly and describe its defining pattern, energy, or behaviour.
-Use present-tense language only.
-Avoid speculation about what comes next.
-Do not recommend actions or solutions.
-Focus on precision, neutrality, and grounded observation.
+**Structure:**
+Generate a complete field diagnosis in 3 sections:
 
-**Tone:** clear, factual, nonjudgmental.
+1. **Field Diagnosis** - Name the active field clearly and describe its defining pattern, energy, or behaviour. Use present-tense language only. Focus on precision, neutrality, and grounded observation.
+
+2. **Next Steps** - Provide integration guidance:
+   - Recommended integration timing (typically 2-3 days to allow insight to settle)
+   - Adjust timing based on field intensity: lighter fields (1-2 days), heavier fields (3-5 days)
+   - Suggest 1-2 appropriate next protocols from available options based on the diagnosed field
+   - Explain why each suggested protocol would be valuable given their current field
+
+3. **Journey Context** (if protocol history available) - Briefly acknowledge previous protocols completed and diagnosed fields, showing the progression of their journey. Keep this section short (2-3 sentences maximum).
+
+**Tone:** clear, factual, nonjudgmental, forward-looking.
+
+**Available Next Protocols:**
+- Field Exit Protocol 1: Knowing When a Field Must End
+- Field Exit Protocol 2: Composting the Old Signal
+- Field Exit Protocol 3: Extracting the Gifts Without Carrying the Pattern
+- Field Exit Protocol 4: Designing a Clean Exit
+- Field Exit Protocol 5: Walking Forward Without Residue

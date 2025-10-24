@@ -9,6 +9,7 @@
 import { FieldDiagnosticAgent } from './agent';
 import { ProtocolParser } from './protocol/parser';
 import { ProtocolRegistry } from './tools/registry';
+import { ProtocolHistory } from './types';
 
 /**
  * Minimal Redis interface to avoid requiring ioredis as a dependency
@@ -28,6 +29,7 @@ export interface Session {
   created_at: string;
   last_accessed: string;
   total_cost: number;
+  protocol_history?: ProtocolHistory[];
 }
 
 export interface SerializedSession {
@@ -37,6 +39,7 @@ export interface SerializedSession {
   last_accessed: string;
   total_cost: number;
   protocol_path: string;
+  protocol_history?: ProtocolHistory[];
 }
 
 /**
@@ -201,6 +204,7 @@ export class RedisSessionStore implements SessionStore {
       last_accessed: session.last_accessed,
       total_cost: session.total_cost,
       protocol_path: metadata?.id || 'field_diagnostic',
+      protocol_history: session.protocol_history || [],
     };
   }
 
@@ -236,6 +240,7 @@ export class RedisSessionStore implements SessionStore {
       created_at: serialized.created_at,
       last_accessed: serialized.last_accessed,
       total_cost: serialized.total_cost,
+      protocol_history: serialized.protocol_history || [],
     };
   }
 }
