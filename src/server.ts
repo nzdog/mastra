@@ -1159,6 +1159,12 @@ app.post(
         const state = session.agent.getState();
         state.mode = 'CLOSE';
 
+        // Pass protocol history to agent for journey context
+        if (session.protocol_history && session.protocol_history.length > 0) {
+          session.agent.setProtocolHistory(session.protocol_history);
+          console.log(`📚 PROTOCOL HISTORY: Loaded ${session.protocol_history.length} previous protocols`);
+        }
+
         // Trigger field diagnosis by processing with CLOSE mode
         // The agent's processMessage will see mode=CLOSE and generate the diagnosis
         const agentResponse = await session.agent.processMessage('Generate field diagnosis');

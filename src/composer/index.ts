@@ -1,4 +1,4 @@
-import { Mode, ConversationTurn, ProtocolChunk, UserIntent } from '../types';
+import { Mode, ConversationTurn, ProtocolChunk, UserIntent, ProtocolHistory } from '../types';
 import { WalkResponseValidator } from '../validator';
 import { ClaudeClient } from './client';
 import { ENTRY_PROMPT, WALK_PROMPT, CLOSE_PROMPT } from './prompts';
@@ -32,6 +32,7 @@ export class Composer {
       protocolTitle?: string;
       isOnFinalTheme?: boolean;
       summaryInstructions?: string;
+      protocolHistory?: ProtocolHistory[];
     }
   ): Promise<string> {
     let systemPrompt = this.getSystemPrompt(mode);
@@ -178,6 +179,7 @@ export class Composer {
       protocolTitle?: string;
       isOnFinalTheme?: boolean;
       summaryInstructions?: string;
+      protocolHistory?: ProtocolHistory[];
     }
   ): Array<{ role: 'user' | 'assistant'; content: string }> {
     const messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
@@ -231,7 +233,21 @@ export class Composer {
         currentMessage += `Theme ${themeIndex}:\n${answer}\n\n`;
       });
 
-      currentMessage += `=== TASK ===\nSynthesize these answers and diagnose the field. Use the user's language to identify the underlying pattern.\n\n`;
+      // Include protocol history if available for journey context
+      if (context.protocolHistory && context.protocolHistory.length > 0) {
+        currentMessage += `\n=== PROTOCOL HISTORY (for Journey Context) ===\n`;
+        currentMessage += `Previous protocols completed:\n`;
+        context.protocolHistory.forEach((protocol) => {
+          currentMessage += `- ${protocol.protocol_name} (completed ${protocol.completed_at})`;
+          if (protocol.diagnosed_field) {
+            currentMessage += `: ${protocol.diagnosed_field}`;
+          }
+          currentMessage += `\n`;
+        });
+        currentMessage += `\n`;
+      }
+
+      currentMessage += `=== TASK ===\nSynthesize these answers and diagnose the field. Use the user's language to identify the underlying pattern. Follow the Summary Instructions format including Next Steps and Journey Context sections.\n\n`;
       // Don't include user message in CLOSE mode - the protocol is complete
     } else {
       currentMessage = userMessage;

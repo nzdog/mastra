@@ -3,7 +3,14 @@ import { IntentClassifier } from './classifier';
 import { Composer } from './composer';
 import { loadProtocol } from './protocol/parser';
 import { ProtocolRegistry } from './tools/registry';
-import { SessionState, ConversationTurn, Mode, ClassificationResult, ProtocolChunk } from './types';
+import {
+  SessionState,
+  ConversationTurn,
+  Mode,
+  ClassificationResult,
+  ProtocolChunk,
+  ProtocolHistory,
+} from './types';
 import { WalkResponseValidator } from './validator';
 
 export class FieldDiagnosticAgent {
@@ -18,6 +25,7 @@ export class FieldDiagnosticAgent {
   private closeModeTimes: number = 0; // Track how many times CLOSE mode has been entered
   private totalCost: number = 0; // Track cumulative API cost for this session
   private protocolPath: string;
+  private protocolHistory: ProtocolHistory[] = []; // Track completed protocols for journey context
 
   // Static cache for ENTRY mode responses (identical for all users)
   private static entryResponseCache: Map<string, string> = new Map();
@@ -114,6 +122,7 @@ export class FieldDiagnosticAgent {
         {
           themeAnswers: this.themeAnswers,
           summaryInstructions: summaryInstructions,
+          protocolHistory: this.protocolHistory,
         }
       );
 
@@ -705,6 +714,20 @@ export class FieldDiagnosticAgent {
    */
   getState(): SessionState {
     return { ...this.state };
+  }
+
+  /**
+   * Set protocol history for context in summary generation
+   */
+  setProtocolHistory(history: ProtocolHistory[]): void {
+    this.protocolHistory = history;
+  }
+
+  /**
+   * Get protocol history
+   */
+  getProtocolHistory(): ProtocolHistory[] {
+    return this.protocolHistory;
   }
 
   /**
