@@ -3972,6 +3972,52 @@
                 <button class="walk-button" id="completion-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Mark complete</button>
             `;
 
+            // Add journey arc visualization if protocol history exists
+            if (data.protocol_history && data.protocol_history.length > 0) {
+                const journeyContainer = document.createElement('div');
+                journeyContainer.id = 'journey-arc';
+                journeyContainer.style.cssText = 'margin-top: 3rem; padding: 2rem; background: linear-gradient(135deg, #F5F5F4 0%, #E7E5E4 100%); border-radius: 8px; border-left: 4px solid #78716C;';
+
+                let journeyHTML = `
+                    <h3 style="margin-top: 0; font-size: 1.1rem; font-weight: 600; color: #292524; margin-bottom: 0.5rem;">Your Journey</h3>
+                    <p style="margin: 0 0 1.5rem 0; color: #57534E; font-size: 0.9rem;">Protocols you've completed on your path to coherence</p>
+                    <div style="display: flex; flex-direction: column; gap: 1rem;">
+                `;
+
+                data.protocol_history.forEach((protocol, index) => {
+                    const date = new Date(protocol.completed_at);
+                    const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    const isLast = index === data.protocol_history.length - 1;
+
+                    journeyHTML += `
+                        <div style="display: flex; gap: 1rem; align-items: start;">
+                            <div style="flex-shrink: 0; width: 32px; height: 32px; border-radius: 50%; background: ${isLast ? '#78716C' : 'white'}; border: 2px solid #78716C; display: flex; align-items: center; justify-content: center; font-weight: 600; color: ${isLast ? 'white' : '#78716C'}; font-size: 0.875rem;">
+                                ${index + 1}
+                            </div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; color: #292524; margin-bottom: 0.25rem;">${protocol.protocol_name}</div>
+                                <div style="font-size: 0.875rem; color: #78716C; margin-bottom: 0.25rem;">${formattedDate}</div>
+                                ${protocol.diagnosed_field ? `<div style="font-size: 0.875rem; color: #57534E; font-style: italic;">Diagnosed: ${protocol.diagnosed_field}</div>` : ''}
+                            </div>
+                        </div>
+                        ${!isLast ? '<div style="margin-left: 15px; width: 2px; height: 16px; background: #D6D3D1;"></div>' : ''}
+                    `;
+                });
+
+                journeyHTML += `
+                    </div>
+                    <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid #D6D3D1;">
+                        <p style="margin: 0; color: #57534E; font-size: 0.875rem; font-style: italic;">
+                            Each protocol builds on the last, deepening your field awareness and capacity for coherence.
+                        </p>
+                    </div>
+                `;
+
+                journeyContainer.innerHTML = journeyHTML;
+                composerOutput.parentNode.insertBefore(journeyContainer, completionContainer.nextSibling);
+                console.log(`✨ Journey arc visualization added: ${data.protocol_history.length} protocols`);
+            }
+
             // Add Q&A interface after buttons
             const qaContainer = document.createElement('div');
             qaContainer.id = 'qa-container';
