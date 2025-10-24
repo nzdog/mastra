@@ -3694,6 +3694,210 @@
             supportsContainer.appendChild(card);
         } */
 
+        // Key terms and their definitions for smart highlighting
+        const FIELD_TERMS = {
+            'field': {
+                definition: 'The invisible architecture of forces that shapes what feels normal, possible, or rewarded in a given context.',
+                example: 'The Hustle Field makes rest feel like failure and speed trump depth.'
+            },
+            'coherence': {
+                definition: 'A state where rhythm balances intensity and rest, trust compounds, and clarity is valued.',
+                example: 'Operating from coherence means your actions align with sustainable energy and clear purpose.'
+            },
+            'collapse': {
+                definition: 'A state of unsustainable strain where the field\'s demands exceed capacity.',
+                example: 'Collapse occurs when urgency and proving patterns compound without rest.'
+            },
+            'hustle': {
+                definition: 'A field pattern where late nights are normal, speed trumps depth, and rest feels like failure.',
+                example: 'The Hustle Field rewards constant output and punishes pauses.'
+            },
+            'urgency': {
+                definition: 'A field pattern where everything must happen now, quick answers override clarity, and shortcuts compound.',
+                example: 'The Urgency Field creates pressure for immediate action over thoughtful response.'
+            },
+            'burnout': {
+                definition: 'A field pattern where you\'re always behind, firefighting is rewarded, and heroic saves are expected.',
+                example: 'The Burnout Field normalizes exhaustion and crisis management.'
+            },
+            'proving': {
+                definition: 'A field pattern where daily validation is required, worth is tied to output, and nothing feels enough.',
+                example: 'The Proving Field demands constant demonstration of value.'
+            },
+            'pressure': {
+                definition: 'Forces in the field that create urgency, demand, or strain on behavior and decisions.',
+                example: 'Pressure points reveal how the field responds under stress and what it demands from you.'
+            },
+            'reward': {
+                definition: 'What the field notices, praises, or incentivizes - training specific behaviors.',
+                example: 'Fields reward certain behaviors to reinforce their patterns and punish others to suppress them.'
+            }
+        };
+
+        function addSmartHighlightingToSummary() {
+            const composerOutput = document.getElementById('composer-output');
+            if (!composerOutput) return;
+
+            // Find all text nodes in the composer output
+            const walker = document.createTreeWalker(
+                composerOutput,
+                NodeFilter.SHOW_TEXT,
+                {
+                    acceptNode: (node) => {
+                        // Skip if in script/style or already highlighted
+                        if (node.parentElement?.classList?.contains('highlightable') ||
+                            node.parentElement?.tagName === 'SCRIPT' ||
+                            node.parentElement?.tagName === 'STYLE') {
+                            return NodeFilter.FILTER_REJECT;
+                        }
+                        return NodeFilter.FILTER_ACCEPT;
+                    }
+                }
+            );
+
+            const nodesToProcess = [];
+            let node;
+
+            while (node = walker.nextNode()) {
+                nodesToProcess.push(node);
+            }
+
+            // Process each text node
+            nodesToProcess.forEach(textNode => {
+                const text = textNode.textContent;
+                let hasTerms = false;
+                let newHTML = text;
+
+                // Check each term
+                Object.keys(FIELD_TERMS).forEach(term => {
+                    const regex = new RegExp(`\\b(${term})\\b`, 'gi');
+                    const termData = FIELD_TERMS[term.toLowerCase()];
+
+                    newHTML = newHTML.replace(regex, (match) => {
+                        hasTerms = true;
+                        const escapedDef = termData.definition.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                        const escapedEx = termData.example.replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+                        return `<span class="highlightable" data-term="${term.toLowerCase()}" data-definition="${escapedDef}" data-example="${escapedEx}" title="${termData.definition}">${match}</span>`;
+                    });
+                });
+
+                if (hasTerms) {
+                    const span = document.createElement('span');
+                    span.innerHTML = newHTML;
+
+                    // Replace text node with new spans
+                    while (span.firstChild) {
+                        textNode.parentNode.insertBefore(span.firstChild, textNode);
+                    }
+                    textNode.parentNode.removeChild(textNode);
+                }
+            });
+
+            // Add click handlers and styling to highlighted terms
+            const highlightedTerms = composerOutput.querySelectorAll('.highlightable');
+            highlightedTerms.forEach(term => {
+                term.style.cssText = 'background: linear-gradient(to bottom, transparent 65%, #FEF3C7 65%); cursor: help; font-weight: 500; transition: background 0.2s;';
+
+                term.addEventListener('mouseenter', () => {
+                    term.style.background = 'linear-gradient(to bottom, transparent 65%, #FDE047 65%)';
+                });
+
+                term.addEventListener('mouseleave', () => {
+                    term.style.background = 'linear-gradient(to bottom, transparent 65%, #FEF3C7 65%)';
+                });
+
+                term.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const termName = term.dataset.term;
+                    const definition = term.dataset.definition;
+                    const example = term.dataset.example;
+
+                    showTermModal(termName, definition, example);
+                });
+            });
+
+            console.log(`✨ Smart highlighting added: ${highlightedTerms.length} terms highlighted`);
+        }
+
+        function showTermModal(term, definition, example) {
+            // Remove existing modal if present
+            const existing = document.getElementById('term-modal');
+            if (existing) existing.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'term-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                z-index: 10000;
+                padding: 1rem;
+                animation: fadeIn 0.2s;
+            `;
+
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 12px;
+                    padding: 2rem;
+                    max-width: 500px;
+                    width: 100%;
+                    box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+                    animation: slideUp 0.3s;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                        <h3 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: #292524; text-transform: capitalize;">${term}</h3>
+                        <button id="close-modal" style="
+                            background: none;
+                            border: none;
+                            font-size: 1.5rem;
+                            cursor: pointer;
+                            color: #78716C;
+                            padding: 0;
+                            width: 32px;
+                            height: 32px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            border-radius: 4px;
+                        " onmouseover="this.style.background='#F5F5F4'" onmouseout="this.style.background='none'">&times;</button>
+                    </div>
+                    <div style="margin-bottom: 1.5rem;">
+                        <h4 style="font-size: 0.875rem; font-weight: 600; color: #78716C; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.05em;">Definition</h4>
+                        <p style="margin: 0; color: #292524; line-height: 1.6;">${definition}</p>
+                    </div>
+                    <div>
+                        <h4 style="font-size: 0.875rem; font-weight: 600; color: #78716C; margin: 0 0 0.5rem 0; text-transform: uppercase; letter-spacing: 0.05em;">Example</h4>
+                        <p style="margin: 0; color: #57534E; line-height: 1.6; font-style: italic;">${example}</p>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Close handlers
+            const closeBtn = modal.querySelector('#close-modal');
+            closeBtn.onclick = () => modal.remove();
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+
+            // ESC key handler
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    modal.remove();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
         // Handle completion
         function handleCompletion(data) {
             console.log('🔧 handleCompletion called');
@@ -3708,6 +3912,9 @@
             // Render the completion content (field diagnosis and summary)
             console.log('🎨 Rendering composer output...');
             renderComposerOutput(data.composer_output);
+
+            // Add smart highlighting to summary
+            addSmartHighlightingToSummary();
 
             // Add summary-mode class for enhanced styling
             console.log('🔧 Before adding summary-mode, classes:', composerOutput.className);
