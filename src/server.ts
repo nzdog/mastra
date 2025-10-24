@@ -1240,6 +1240,7 @@ app.post(
           },
           total_cost: session.total_cost,
           completed: true,
+          protocol_history: session.protocol_history || [], // Include journey context
         };
 
         // Delete session after sending response
