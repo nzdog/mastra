@@ -48,8 +48,18 @@ function initializeSessionStore(apiKey: string | undefined): SessionStore {
 
       redis.on('error', (err: Error) => {
         console.error('❌ Redis connection error:', err);
-        console.log('⚠️  Falling back to in-memory session store');
-        return createSessionStore({ type: 'memory', apiKey: apiKey! });
+
+        // Fail-fast in production to prevent session data loss
+        if (process.env.NODE_ENV === 'production') {
+          console.error('⚠️  Redis is required for production. Cannot continue with failed connection.');
+          console.error('   Either fix REDIS_URL or unset it to use in-memory store.');
+          process.exit(1);
+        }
+
+        // In development, log the error but allow the app to continue
+        // Note: The app will still use the Redis store (which may fail),
+        // but this prevents crashes during development
+        console.warn('⚠️  Continuing with Redis despite error (development mode)');
       });
 
       return createSessionStore({ type: 'redis', redis, apiKey: apiKey! });
