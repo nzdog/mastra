@@ -8,6 +8,7 @@ import {
   isOriginAllowed,
 } from './config/cors';
 import { loadConfig } from './server/config';
+import { validateUserInput, validateProtocolSlug, validateSessionId } from './server/validation';
 import { FieldDiagnosticAgent } from './agent';
 import { healthCheck } from './memory-layer/api/health';
 import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
@@ -67,121 +68,7 @@ interface CompleteRequest {
   generate_summary?: boolean;
 }
 
-// Input Validation & Sanitization
-const INPUT_CONSTRAINTS = {
-  MAX_USER_INPUT_LENGTH: 5000, // 5000 chars max for user input
-  MAX_SESSION_ID_LENGTH: 100, // UUID should be ~36 chars
-  MAX_PROTOCOL_SLUG_LENGTH: 200,
-  MIN_USER_INPUT_LENGTH: 1,
-};
-
-/**
- * Validate and sanitize user input to prevent prompt injection and excessive token usage
- */
-function validateUserInput(
-  input: string,
-  fieldName: string = 'input'
-): { valid: boolean; error?: string; sanitized?: string } {
-  // Check type
-  if (typeof input !== 'string') {
-    return { valid: false, error: `${fieldName} must be a string` };
-  }
-
-  // Trim whitespace
-  const trimmed = input.trim();
-
-  // Check minimum length
-  if (trimmed.length < INPUT_CONSTRAINTS.MIN_USER_INPUT_LENGTH) {
-    return { valid: false, error: `${fieldName} cannot be empty` };
-  }
-
-  // Check maximum length (prevents excessive token usage)
-  if (trimmed.length > INPUT_CONSTRAINTS.MAX_USER_INPUT_LENGTH) {
-    return {
-      valid: false,
-      error: `${fieldName} too long. Maximum ${INPUT_CONSTRAINTS.MAX_USER_INPUT_LENGTH} characters allowed (received ${trimmed.length})`,
-    };
-  }
-
-  // Check for suspicious patterns (basic prompt injection detection)
-  const suspiciousPatterns = [
-    /ignore\s+(all\s+)?(previous|above|prior)\s+instructions/i,
-    /disregard\s+(all\s+)?(previous|above|prior)\s+instructions/i,
-    /forget\s+(all\s+)?(previous|above|prior)\s+instructions/i,
-    /system\s*:\s*/i, // Trying to inject system messages
-    /assistant\s*:\s*/i, // Trying to inject assistant messages
-    /<\|im_start\|>/i, // ChatML injection
-    /<\|im_end\|>/i,
-  ];
-
-  for (const pattern of suspiciousPatterns) {
-    if (pattern.test(trimmed)) {
-      console.warn(`⚠️  Potential prompt injection detected: ${trimmed.substring(0, 100)}...`);
-      // Log but don't block - could be legitimate conversation about AI
-      // return { valid: false, error: 'Input contains suspicious patterns' };
-    }
-  }
-
-  // Check for excessive special characters (might indicate injection attempt)
-  const specialCharCount = (trimmed.match(/[<>{}[\]]/g) || []).length;
-  if (specialCharCount > 50) {
-    console.warn(`⚠️  Excessive special characters detected: ${specialCharCount}`);
-  }
-
-  return { valid: true, sanitized: trimmed };
-}
-
-/**
- * Validate protocol slug to prevent path traversal
- */
-function validateProtocolSlug(slug: string | undefined): { valid: boolean; error?: string } {
-  if (!slug) {
-    return { valid: true }; // Optional field
-  }
-
-  if (typeof slug !== 'string') {
-    return { valid: false, error: 'protocol_slug must be a string' };
-  }
-
-  if (slug.length > INPUT_CONSTRAINTS.MAX_PROTOCOL_SLUG_LENGTH) {
-    return { valid: false, error: 'protocol_slug too long' };
-  }
-
-  // Only allow alphanumeric, hyphens, and underscores (prevents path traversal)
-  if (!/^[a-z0-9_-]+$/i.test(slug)) {
-    return {
-      valid: false,
-      error: 'protocol_slug can only contain letters, numbers, hyphens, and underscores',
-    };
-  }
-
-  // Prevent path traversal attempts
-  if (slug.includes('..') || slug.includes('/') || slug.includes('\\')) {
-    return { valid: false, error: 'Invalid protocol_slug format' };
-  }
-
-  return { valid: true };
-}
-
-/**
- * Validate session ID format
- */
-function validateSessionId(sessionId: string): { valid: boolean; error?: string } {
-  if (typeof sessionId !== 'string') {
-    return { valid: false, error: 'session_id must be a string' };
-  }
-
-  if (sessionId.length > INPUT_CONSTRAINTS.MAX_SESSION_ID_LENGTH) {
-    return { valid: false, error: 'session_id too long' };
-  }
-
-  // UUIDs should be alphanumeric + hyphens
-  if (!/^[a-f0-9-]+$/i.test(sessionId)) {
-    return { valid: false, error: 'Invalid session_id format' };
-  }
-
-  return { valid: true };
-}
+// Input validation now imported from ./server/validation
 
 // Cleanup expired sessions every 10 minutes (for in-memory store)
 setInterval(
