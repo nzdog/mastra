@@ -1,15 +1,13 @@
 import { randomUUID } from 'crypto';
 import * as path from 'path';
-import * as dotenv from 'dotenv';
 import express, { Request, Response, NextFunction } from 'express';
-import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import {
-  parseCorsConfig,
   getPreflightHeaders,
   getCorsHeaders,
   isOriginAllowed,
 } from './config/cors';
+import { loadConfig } from './server/config';
 import { FieldDiagnosticAgent } from './agent';
 import { healthCheck } from './memory-layer/api/health';
 import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
@@ -40,49 +38,12 @@ import memoryRouter from './memory-layer/api/memory-router';
 import { getMemoryStore } from './memory-layer/storage/in-memory-store';
 import { errorHandler } from './memory-layer/middleware/error-handler';
 
-// Load environment variables
-dotenv.config();
-
-const API_KEY = process.env.ANTHROPIC_API_KEY;
-
-// Allow skipping the strict API key check in CI/test/dev for Phase 0.
-if (!API_KEY && process.env.NODE_ENV !== 'test' && process.env.SKIP_API_KEY_CHECK !== 'true') {
-  console.error('Error: ANTHROPIC_API_KEY not found in environment variables.');
-  process.exit(1);
-} else if (!API_KEY) {
-  console.warn('⚠️  ANTHROPIC_API_KEY missing, continuing in permissive mode for tests/dev.');
-}
+// Load configuration
+const config = loadConfig();
+const { apiKey: API_KEY, sessionStore, corsConfig } = config;
 
 // Server readiness flag
 let isReady = false;
-
-// Initialize session store (Redis if REDIS_URL provided, otherwise in-memory)
-let sessionStore: SessionStore;
-if (process.env.REDIS_URL) {
-  try {
-    // Dynamic import for Redis (optional dependency)
-    const Redis = require('ioredis');
-    const redis = new Redis(process.env.REDIS_URL);
-
-    redis.on('connect', () => {
-      console.log('✅ Connected to Redis');
-    });
-
-    redis.on('error', (err: Error) => {
-      console.error('❌ Redis connection error:', err);
-      console.log('⚠️  Falling back to in-memory session store');
-      sessionStore = createSessionStore({ type: 'memory', apiKey: API_KEY! });
-    });
-
-    sessionStore = createSessionStore({ type: 'redis', redis, apiKey: API_KEY! });
-  } catch {
-    console.warn('⚠️  Redis module not installed. Using in-memory session store.');
-    console.log('   To enable Redis: npm install ioredis');
-    sessionStore = createSessionStore({ type: 'memory', apiKey: API_KEY! });
-  }
-} else {
-  sessionStore = createSessionStore({ type: 'memory', apiKey: API_KEY! });
-}
 
 // Types for API
 interface Support {
@@ -392,7 +353,7 @@ function formatResponse(
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = config.port;
 
 // Trust proxy - Critical for rate limiting behind reverse proxies (Railway, Heroku, etc.)
 // Without this, all requests appear to come from the proxy's IP, breaking per-client rate limits
@@ -403,54 +364,8 @@ const fs = require('fs');
 const assetsPath = path.join(__dirname, '../assets');
 console.log(`📁 Assets path: ${assetsPath}`);
 
-// Rate Limiting Configuration
-// General API rate limiter - more lenient for read operations
-const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per window
-  message: {
-    error: 'Too many requests from this IP, please try again later.',
-    retryAfter: '15 minutes',
-  },
-  standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
-  legacyHeaders: false, // Disable `X-RateLimit-*` headers
-});
-
-// Strict rate limiter for AI endpoints (expensive operations)
-const aiEndpointLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // Limit each IP to 20 AI requests per window (protects API costs)
-  message: {
-    error: 'Too many AI requests from this IP. Please wait before continuing.',
-    retryAfter: '15 minutes',
-    note: 'AI operations are rate-limited to prevent API cost abuse.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Very strict limiter for session creation
-const sessionCreationLimiter = rateLimit({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  max: 10, // Limit each IP to 10 new sessions per hour
-  message: {
-    error: 'Too many sessions created from this IP. Please try again later.',
-    retryAfter: '1 hour',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-// Metrics endpoint rate limiter
-const metricsLimiter = rateLimit({
-  windowMs: 1 * 60 * 1000, // 1 minute
-  max: 10, // Limit each IP to 10 requests per minute
-  message: {
-    error: 'Too many metrics requests. Please slow down.',
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-});
+// Rate limiters now loaded from config
+const { api: apiLimiter, aiEndpoint: aiEndpointLimiter, sessionCreation: sessionCreationLimiter, metrics: metricsLimiter } = config.rateLimiters;
 
 // API Key validation middleware
 // Validates X-API-Key header against X_API_KEY environment variable
@@ -518,7 +433,7 @@ app.use(
 );
 
 // CORS Configuration - Hardened with explicit allowlist (Phase 3.2)
-const corsConfig = parseCorsConfig();
+// corsConfig loaded from config
 
 // CORS middleware - applies to all routes
 app.use((req: Request, res: Response, next: NextFunction) => {
