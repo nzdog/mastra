@@ -6,6 +6,7 @@ import { createHealthRouter } from './server/routes/health';
 import { createMetricsRouter } from './server/routes/metrics';
 import { createVerificationRouter } from './server/routes/verification';
 import { createProtocolRouter } from './server/routes/protocols';
+import { createStaticRouter } from './server/routes/static';
 import { getLedgerSink } from './memory-layer/storage/ledger-sink';
 import memoryRouter from './memory-layer/api/memory-router';
 import { getMemoryStore } from './memory-layer/storage/in-memory-store';
@@ -89,70 +90,11 @@ const protocolRouter = createProtocolRouter(
 );
 app.use(protocolRouter);
 
-// Test route
-app.get('/test-route', (_req: Request, res: Response) => {
-  console.log('✅ Test route hit!');
-  res.send('Test route works!');
-});
+// Mount static content routes
+const staticRouter = createStaticRouter();
+app.use(staticRouter);
 
-// Logo endpoint
-app.get('/lichen-logo.png', (_req: Request, res: Response) => {
-  console.log(`🖼️  Logo route hit!`);
-  const logoPath = path.join(__dirname, '../lichen-logo.png');
-  console.log(`🖼️  Serving logo from: ${logoPath}`);
-  console.log(`🖼️  File exists: ${fs.existsSync(logoPath)}`);
-
-  try {
-    const imageBuffer = fs.readFileSync(logoPath);
-    res.setHeader('Content-Type', 'image/png');
-    res.setHeader('Content-Length', imageBuffer.length);
-    res.send(imageBuffer);
-    console.log(`✅ Logo served successfully`);
-  } catch (error) {
-    console.error(`❌ Error serving logo:`, error);
-    res.status(404).send('Logo not found');
-  }
-});
-
-// Root endpoint - Serve the production frontend
-app.get('/', (_req: Request, res: Response) => {
-  const fs = require('fs');
-  const path = require('path');
-  const indexPath = path.join(__dirname, '../index.html');
-
-  if (fs.existsSync(indexPath)) {
-    res.sendFile(indexPath);
-  } else {
-    res
-      .status(404)
-      .send('Frontend not found. Please ensure index.html exists in the project root.');
-  }
-});
-
-// Test interface
-app.get('/test', (_req: Request, res: Response) => {
-  const fs = require('fs');
-  const path = require('path');
-  const testFilePath = path.join(__dirname, '../test-frontend.html');
-
-  if (fs.existsSync(testFilePath)) {
-    res.sendFile(testFilePath);
-  } else {
-    res
-      .status(404)
-      .send(
-        'Test interface not found. Please ensure test-frontend.html exists in the project root.'
-      );
-  }
-});
-
-// Health check routes now mounted via healthRouter
-
-// Verification and metrics routes now mounted via verificationRouter and metricsRouter
-
-
-
-// Protocol routes now mounted via protocolRouter
+// All application routes now mounted via routers
 
 
 // ============================================================================
