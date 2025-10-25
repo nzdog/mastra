@@ -6,6 +6,28 @@ import { ProtocolRegistry } from './tools/registry';
 import { SessionState, ConversationTurn, Mode, ClassificationResult, ProtocolChunk } from './types';
 import { WalkResponseValidator } from './validator';
 
+/**
+ * Field Diagnostic Agent - Main conversational agent for the Lichen Protocol
+ *
+ * This agent guides users through the Field Diagnostic Protocol, a structured
+ * conversational journey that helps users explore and understand complex concepts
+ * through progressive themes.
+ *
+ * **Key Features:**
+ * - Intent classification to understand user goals
+ * - Multi-mode operation: ENTRY (intro), WALK (guided dialogue), CLOSE (completion)
+ * - Theme-based progression with validation
+ * - Conversation history compression for context management
+ * - Response caching for improved performance
+ * - Cost tracking for API usage monitoring
+ *
+ * @example
+ * ```typescript
+ * const agent = new FieldDiagnosticAgent(process.env.ANTHROPIC_API_KEY);
+ * const response = await agent.processMessage("What field am I in?");
+ * console.log(response);
+ * ```
+ */
 export class FieldDiagnosticAgent {
   private classifier: IntentClassifier;
   private composer: Composer;
@@ -24,6 +46,28 @@ export class FieldDiagnosticAgent {
   private static cacheTimestamps: Map<string, number> = new Map();
   private static CACHE_TTL_MS = 10 * 60 * 1000; // 10 minutes
 
+  /**
+   * Create a new Field Diagnostic Agent instance
+   *
+   * @param apiKey - Anthropic API key for Claude access (required)
+   * @param registry - Optional protocol registry (defaults to Field Diagnostic Protocol)
+   * @param protocolPath - Optional custom protocol file path
+   *
+   * @example
+   * ```typescript
+   * // Basic usage with default protocol
+   * const agent = new FieldDiagnosticAgent(process.env.ANTHROPIC_API_KEY);
+   *
+   * // With custom protocol
+   * const customProtocol = loadProtocol('./custom-protocol.md');
+   * const customRegistry = new ProtocolRegistry(customProtocol);
+   * const agent = new FieldDiagnosticAgent(
+   *   process.env.ANTHROPIC_API_KEY,
+   *   customRegistry,
+   *   './custom-protocol.md'
+   * );
+   * ```
+   */
   constructor(apiKey: string, registry?: ProtocolRegistry, protocolPath?: string) {
     this.classifier = new IntentClassifier(apiKey);
 
@@ -48,7 +92,31 @@ export class FieldDiagnosticAgent {
   }
 
   /**
-   * Process a user message and return agent response
+   * Process a user message and return the agent's response
+   *
+   * This is the main entry point for interacting with the agent. It handles:
+   * - Intent classification to understand what the user wants
+   * - Mode determination (ENTRY, WALK, or CLOSE)
+   * - State management and progression tracking
+   * - Response generation based on current context
+   * - Conversation history management
+   * - Cost tracking for API usage
+   *
+   * @param userMessage - The user's input message as a string
+   * @returns Promise<string> The agent's response message
+   *
+   * @example
+   * ```typescript
+   * const agent = new FieldDiagnosticAgent(apiKey);
+   *
+   * // Start the conversation
+   * const intro = await agent.processMessage("What field am I in?");
+   *
+   * // Continue the conversation
+   * const response = await agent.processMessage("Tell me about Theme 1");
+   * ```
+   *
+   * @throws May throw errors from the underlying Anthropic API if rate limited or network issues occur
    */
   async processMessage(userMessage: string): Promise<string> {
     // If already in CLOSE mode, don't process additional user responses

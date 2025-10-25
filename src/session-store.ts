@@ -20,51 +20,101 @@ interface RedisLike {
   keys(pattern: string): Promise<string[]>;
 }
 
+/**
+ * Session object containing agent instance and metadata
+ *
+ * Represents an active conversation session with the Field Diagnostic Agent.
+ * Sessions are tracked by ID and include cost and timing information.
+ */
 export interface Session {
+  /** Unique session identifier (UUID) */
   id: string;
+  /** The agent instance for this session */
   agent: FieldDiagnosticAgent;
+  /** Protocol registry used by this session */
   registry: ProtocolRegistry;
+  /** Protocol parser for theme content */
   parser: ProtocolParser;
+  /** ISO timestamp when session was created */
   created_at: string;
+  /** ISO timestamp of last access (for TTL tracking) */
   last_accessed: string;
+  /** Cumulative API cost in USD for this session */
   total_cost: number;
 }
 
+/**
+ * Serialized session for persistence
+ *
+ * Used when storing sessions in Redis or other external stores.
+ * The agent state is serialized to JSON for storage.
+ */
 export interface SerializedSession {
+  /** Unique session identifier */
   id: string;
-  agent_state: unknown; // Serialized agent state
+  /** Serialized agent state (JSON) */
+  agent_state: unknown;
+  /** ISO timestamp when session was created */
   created_at: string;
+  /** ISO timestamp of last access */
   last_accessed: string;
+  /** Cumulative API cost in USD */
   total_cost: number;
+  /** Path to protocol file */
   protocol_path: string;
 }
 
 /**
  * Abstract session store interface
+ *
+ * Defines the contract for session storage implementations.
+ * Supports both in-memory and persistent storage backends.
+ *
+ * @example
+ * ```typescript
+ * // In-memory storage (development)
+ * const store = new InMemorySessionStore();
+ *
+ * // Redis storage (production)
+ * const redisClient = new Redis(process.env.REDIS_URL);
+ * const store = new RedisSessionStore(redisClient);
+ * ```
  */
 export interface SessionStore {
   /**
    * Get a session by ID
+   *
+   * @param sessionId - The unique session identifier
+   * @returns Promise resolving to Session or null if not found
    */
   get(sessionId: string): Promise<Session | null>;
 
   /**
    * Store a session
+   *
+   * @param sessionId - The unique session identifier
+   * @param session - The session object to store
    */
   set(sessionId: string, session: Session): Promise<void>;
 
   /**
    * Delete a session
+   *
+   * @param sessionId - The unique session identifier to delete
    */
   delete(sessionId: string): Promise<void>;
 
   /**
-   * Clean up expired sessions
+   * Clean up expired sessions based on TTL
+   *
+   * @returns Promise resolving to the number of sessions deleted
    */
   cleanup(): Promise<number>;
 
   /**
    * Get count of active sessions
+   *
+   * @returns Promise resolving to the number of active sessions
    */
   size(): Promise<number>;
 }

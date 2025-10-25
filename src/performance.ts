@@ -10,17 +10,60 @@
 
 import { Request, Response, NextFunction } from 'express';
 
+/**
+ * Performance metrics for a single request
+ *
+ * Captures timing, caching, cost, and resource usage data.
+ */
 export interface PerformanceMetrics {
+  /** ISO timestamp when the request was recorded */
   timestamp: string;
+  /** API endpoint path (e.g., '/api/walk/start') */
   endpoint: string;
+  /** Request duration in milliseconds */
   duration_ms: number;
+  /** Number of cache hits during this request */
   cache_hits: number;
+  /** Number of cache misses during this request */
   cache_misses: number;
+  /** Number of API calls made to Claude */
   api_calls: number;
+  /** Total cost in USD for this request */
   total_cost: number;
+  /** Memory usage in megabytes (optional) */
   memory_usage_mb?: number;
 }
 
+/**
+ * Performance Monitor - Tracks and analyzes request performance
+ *
+ * Collects metrics for API requests including timing, caching effectiveness,
+ * API usage, and costs. Provides statistical summaries for monitoring.
+ *
+ * @example
+ * ```typescript
+ * const monitor = new PerformanceMonitor();
+ *
+ * // Time a request
+ * const stopTimer = monitor.startTimer();
+ * await doWork();
+ * const duration = stopTimer();
+ *
+ * // Record metrics
+ * monitor.recordRequest({
+ *   endpoint: '/api/walk/start',
+ *   duration_ms: duration,
+ *   cache_hits: 1,
+ *   cache_misses: 0,
+ *   api_calls: 2,
+ *   total_cost: 0.0164
+ * });
+ *
+ * // Get summary
+ * const summary = monitor.getSummary('/api/walk/start');
+ * console.log(`Avg duration: ${summary.avg_duration_ms}ms`);
+ * ```
+ */
 export class PerformanceMonitor {
   private metrics: PerformanceMetrics[] = [];
   private maxMetricsSize = 1000; // Keep last 1000 requests

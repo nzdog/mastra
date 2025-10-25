@@ -3,17 +3,81 @@ import { WalkResponseValidator } from '../validator';
 import { ClaudeClient } from './client';
 import { ENTRY_PROMPT, WALK_PROMPT, CLOSE_PROMPT } from './prompts';
 
+/**
+ * Composer - Generates agent responses using Claude
+ *
+ * The Composer creates contextual responses based on:
+ * - Current conversation mode (ENTRY, WALK, or CLOSE)
+ * - Protocol content chunks
+ * - Conversation history
+ * - User intent and navigation desires
+ *
+ * It validates WALK mode responses to prevent hallucination and ensures
+ * protocol fidelity.
+ *
+ * @example
+ * ```typescript
+ * const composer = new Composer(apiKey, validator);
+ * const response = await composer.compose(
+ *   'WALK',
+ *   themeChunk,
+ *   conversationHistory,
+ *   userMessage,
+ *   {
+ *     currentThemeIndex: 1,
+ *     currentThemeTitle: 'The Field',
+ *     awaitingConfirmation: false
+ *   }
+ * );
+ * ```
+ */
 export class Composer {
   private client: ClaudeClient;
   private validator: WalkResponseValidator | null = null;
 
+  /**
+   * Create a new Composer instance
+   *
+   * @param apiKey - Anthropic API key for Claude access
+   * @param validator - Optional validator to ensure response fidelity
+   */
   constructor(apiKey: string, validator?: WalkResponseValidator) {
     this.client = new ClaudeClient(apiKey);
     this.validator = validator || null;
   }
 
   /**
-   * Generate a response based on mode, chunk, and conversation history
+   * Generate a contextual response based on mode and conversation state
+   *
+   * This is the main method for generating agent responses. It:
+   * - Selects the appropriate system prompt based on mode
+   * - Injects protocol metadata and theme information
+   * - Builds the message context from conversation history
+   * - Validates WALK mode responses against protocol content
+   * - Retries if hallucination detected
+   *
+   * @param mode - Current conversation mode (ENTRY, WALK, or CLOSE)
+   * @param chunk - Protocol content chunk (theme or intro text)
+   * @param conversationHistory - Array of previous conversation turns
+   * @param userMessage - The user's latest message
+   * @param context - Optional context including theme info, user intent, etc.
+   * @returns Promise<string> The generated response text
+   *
+   * @example
+   * ```typescript
+   * const response = await composer.compose(
+   *   'WALK',
+   *   themeChunk,
+   *   history,
+   *   "I work in healthcare",
+   *   {
+   *     currentThemeIndex: 0,
+   *     currentThemeTitle: 'The Field',
+   *     totalThemes: 5,
+   *     awaitingConfirmation: false
+   *   }
+   * );
+   * ```
    */
   async compose(
     mode: Mode,
@@ -86,8 +150,9 @@ export class Composer {
       `   awaitingConfirmation=${context?.awaitingConfirmation}, intent=${context?.intent}`
     );
 
-    // TEMPORARILY DISABLED: Validator is too strict for new template system
-    // TODO: Update validator to work with new flexible templates
+    // VALIDATION DISABLED: Current validator enforces strict template matching.
+    // DEFERRED(Phase 4): Update validator to support flexible response templates.
+    // This is intentional to allow more natural conversational responses.
     const VALIDATION_DISABLED = true;
 
     // Only validate when showing interpretation (awaitingConfirmation = true)

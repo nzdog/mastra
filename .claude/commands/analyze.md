@@ -24,7 +24,7 @@ description: Generate comprehensive analysis and documentation of entire codebas
   !`find . -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" -o -name "*.py" -o -name "*.java" -o -name "*.php" -o -name "*.rb" -o -name "*.go" -o -name "*.rs" -o -name "*.cpp" -o -name "*.c" | grep -v node_modules | wc -l`
 - Project size: !`du -sh . 2>/dev/null | awk '{print $1}'`
 - Source size (excluding deps):
-  !`du -sh $(find . -type d -maxdepth 1 ! -name node_modules ! -name .git ! -name dist ! -name build ! -name . 2>/dev/null) 2>/dev/null | awk '{sum+=$1} END {print sum "K"}'`
+  !`find . -type f -not -path "./node_modules/*" -not -path "./.git/*" -not -path "./dist/*" -not -path "./build/*" -exec du -ch {} + 2>/dev/null | tail -1 | awk '{print $1}'`
 
 ## Configuration Files Analysis
 
