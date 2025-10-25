@@ -5,6 +5,8 @@ import { loadConfig } from './server/config';
 import { validateUserInput, validateProtocolSlug, validateSessionId } from './server/validation';
 import { applyMiddleware, validateApiKey } from './server/middleware';
 import { createHealthRouter } from './server/routes/health';
+import { createMetricsRouter } from './server/routes/metrics';
+import { createVerificationRouter } from './server/routes/verification';
 import { FieldDiagnosticAgent } from './agent';
 import { healthCheck } from './memory-layer/api/health';
 import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
@@ -254,6 +256,14 @@ applyMiddleware(app, config);
 const healthRouter = createHealthRouter(sessionStore, apiLimiter, isReadyRef);
 app.use(healthRouter);
 
+// Mount verification routes
+const verificationRouter = createVerificationRouter(apiLimiter);
+app.use(verificationRouter);
+
+// Mount metrics routes
+const metricsRouter = createMetricsRouter(apiLimiter, metricsLimiter);
+app.use(metricsRouter);
+
 // Test route
 app.get('/test-route', (_req: Request, res: Response) => {
   console.log('✅ Test route hit!');
@@ -313,194 +323,7 @@ app.get('/test', (_req: Request, res: Response) => {
 
 // Health check routes now mounted via healthRouter
 
-// Phase 1.1: Verification API Endpoints
-
-// GET /v1/ledger/root - Get current Merkle root
-app.get('/v1/ledger/root', apiLimiter, async (_req: Request, res: Response) => {
-  try {
-    const ledger = await getLedgerSink();
-    const signer = ledger.getKeyRotationStatus();
-
-    res.json({
-      root: ledger.getRootHash(),
-      height: ledger.getLedgerHeight(),
-      timestamp: new Date().toISOString(),
-      kid: signer.keyId,
-      algorithm: 'Ed25519',
-    });
-  } catch (error) {
-    console.error('Error in /v1/ledger/root:', error);
-    res.status(500).json({
-      error: 'Failed to get ledger root',
-      message: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-// GET /v1/receipts/:id - Get and verify specific receipt
-app.get('/v1/receipts/:id', apiLimiter, async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const ledger = await getLedgerSink();
-
-    const receipt = await ledger.getReceipt(id);
-    if (!receipt) {
-      return res.status(404).json({ error: 'Receipt not found' });
-    }
-
-    // Verify receipt
-    const verification = ledger.verifyReceipt(receipt);
-
-    res.json({
-      receipt,
-      verification: {
-        valid: verification.valid,
-        merkle_valid: verification.merkle_valid,
-        signature_valid: verification.signature_valid,
-        message: verification.message,
-      },
-    });
-  } catch (error) {
-    console.error('Error in /v1/receipts/:id:', error);
-    res.status(500).json({
-      error: 'Failed to get receipt',
-      message: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-// GET /v1/keys/jwks - Get public keys for verification
-app.get('/v1/keys/jwks', apiLimiter, async (_req: Request, res: Response) => {
-  try {
-    // Phase 1.2: Emit JWKS fetch metric
-    auditJwksFetchRequests.labels('success').inc();
-    const jwksManager = await getJWKSManager();
-    const jwks = await jwksManager.getJWKS();
-
-    res.json(jwks);
-  } catch (error) {
-    // Phase 1.2: Emit JWKS fetch error metric
-    auditJwksFetchRequests.labels('error').inc();
-    console.error('Error in /v1/keys/jwks:', error);
-    res.status(500).json({
-      error: 'Failed to get JWKS',
-      message: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-// POST /v1/receipts/verify - Verify a receipt
-app.post('/v1/receipts/verify', apiLimiter, async (req: Request, res: Response) => {
-  try {
-    const { receipt } = req.body;
-
-    if (!receipt) {
-      return res.status(400).json({ error: 'Missing receipt' });
-    }
-
-    const ledger = await getLedgerSink();
-
-    // Phase 1.2: Measure verification duration
-    const verification = await measureAsync(
-      auditVerificationDuration,
-      { verification_type: 'full' },
-      async () => ledger.verifyReceipt(receipt)
-    );
-
-    // Phase 1.2: Emit verification failure metric
-    if (!verification.valid) {
-      const reason = !verification.merkle_valid ? 'merkle_invalid' : 'signature_invalid';
-      auditVerificationFailures.labels(reason).inc();
-    }
-
-    res.json({
-      valid: verification.valid,
-      details: {
-        merkle_valid: verification.merkle_valid,
-        signature_valid: verification.signature_valid,
-        message: verification.message,
-      },
-    });
-  } catch (error) {
-    console.error('Error in /v1/receipts/verify:', error);
-    res.status(500).json({
-      error: 'Failed to verify receipt',
-      message: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-// GET /v1/ledger/integrity - Verify ledger integrity
-app.get('/v1/ledger/integrity', apiLimiter, async (req: Request, res: Response) => {
-  try {
-    const { full } = req.query;
-    const ledger = await getLedgerSink();
-
-    // Phase 1.1: Full chain verification (for now, will add incremental later)
-    const result = ledger.verifyChain();
-
-    res.json({
-      valid: result.valid,
-      message: result.message,
-      brokenAt: result.brokenAt,
-      height: ledger.getLedgerHeight(),
-      timestamp: new Date().toISOString(),
-      verificationType: full === 'true' ? 'full' : 'incremental',
-    });
-  } catch (error) {
-    console.error('Error in /v1/ledger/integrity:', error);
-    res.status(500).json({
-      error: 'Failed to verify integrity',
-      message: error instanceof Error ? error.message : String(error),
-    });
-  }
-});
-
-// Prometheus metrics endpoint (Phase 1.2)
-app.get('/metrics', metricsLimiter, async (_req: Request, res: Response) => {
-  res.set('Content-Type', getContentType());
-  res.end(await getMetrics());
-});
-
-// Git branch info endpoint (for UI display)
-app.get('/api/git/branch', apiLimiter, (_req: Request, res: Response) => {
-  const { execSync } = require('child_process');
-  let branchName = 'unknown';
-  try {
-    branchName = execSync('git rev-parse --abbrev-ref HEAD', { encoding: 'utf8' }).trim();
-  } catch {
-    // If git command fails, use unknown
-  }
-
-  res.json({
-    branch: branchName,
-    timestamp: new Date().toISOString(),
-  });
-});
-
-// Performance metrics endpoint (rate-limited)
-app.get('/api/metrics', metricsLimiter, (_req: Request, res: Response) => {
-  const summary = performanceMonitor.getSummary();
-  const cacheStats = CacheStats.getStats();
-  const memory = performanceMonitor.getMemoryUsage();
-
-  res.json({
-    performance: {
-      ...summary,
-      avg_duration_ms: Math.round(summary.avg_duration_ms * 100) / 100,
-      p50_duration_ms: Math.round(summary.p50_duration_ms * 100) / 100,
-      p95_duration_ms: Math.round(summary.p95_duration_ms * 100) / 100,
-      p99_duration_ms: Math.round(summary.p99_duration_ms * 100) / 100,
-      cache_hit_rate: Math.round(summary.cache_hit_rate * 10000) / 100 + '%',
-    },
-    cache: {
-      ...cacheStats,
-      hit_rate: Math.round(cacheStats.hit_rate * 10000) / 100 + '%',
-    },
-    memory,
-    timestamp: new Date().toISOString(),
-  });
-});
+// Verification and metrics routes now mounted via verificationRouter and metricsRouter
 
 // List available protocols (rate-limited)
 app.get('/api/protocols', apiLimiter, (_req: Request, res: Response) => {
