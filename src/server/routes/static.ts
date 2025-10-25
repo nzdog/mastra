@@ -29,7 +29,8 @@ export function createStaticRouter(): Router {
   // GET /lichen-logo.png - Logo asset
   router.get('/lichen-logo.png', (_req: Request, res: Response) => {
     console.log(`🖼️  Logo route hit!`);
-    const logoPath = path.join(__dirname, '../../lichen-logo.png');
+    // Use process.cwd() to get project root, works regardless of tsx or compiled code
+    const logoPath = path.join(process.cwd(), 'lichen-logo.png');
     console.log(`🖼️  Serving logo from: ${logoPath}`);
     console.log(`🖼️  File exists: ${fs.existsSync(logoPath)}`);
 
@@ -47,20 +48,25 @@ export function createStaticRouter(): Router {
 
   // GET / - Root endpoint - Serve the production frontend
   router.get('/', (_req: Request, res: Response) => {
-    const indexPath = path.join(__dirname, '../../index.html');
+    // Use process.cwd() to get project root, works regardless of tsx or compiled code
+    const indexPath = path.join(process.cwd(), 'index.html');
+    console.log(`📄 Attempting to serve index.html from: ${indexPath}`);
+    console.log(`📄 File exists: ${fs.existsSync(indexPath)}`);
+    console.log(`📄 process.cwd(): ${process.cwd()}`);
 
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
       res
         .status(404)
-        .send('Frontend not found. Please ensure index.html exists in the project root.');
+        .send(`Frontend not found. Checked: ${indexPath}`);
     }
   });
 
   // GET /test - Test interface
   router.get('/test', (_req: Request, res: Response) => {
-    const testFilePath = path.join(__dirname, '../../test-frontend.html');
+    // Use process.cwd() to get project root, works regardless of tsx or compiled code
+    const testFilePath = path.join(process.cwd(), 'test-frontend.html');
 
     if (fs.existsSync(testFilePath)) {
       res.sendFile(testFilePath);
