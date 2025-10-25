@@ -136,8 +136,13 @@ app.use(errorHandler);
 // Server Lifecycle (startup and shutdown)
 // ============================================================================
 
-// Start the server with initialization
-startServer(app, config.port, isReadyRef);
-
-// Register graceful shutdown handlers
-setupGracefulShutdown(sessionStore);
+// Start the server with initialization and register shutdown handlers
+(async () => {
+  try {
+    await startServer(app, config.port, isReadyRef);
+    setupGracefulShutdown(sessionStore);
+  } catch (error) {
+    console.error('❌ Fatal error starting server:', error);
+    process.exit(1);
+  }
+})();
