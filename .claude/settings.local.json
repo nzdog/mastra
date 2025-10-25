@@ -1,6 +1,5 @@
 {
   "permissions": {
-    "defaultMode": "bypassPermissions",
     "allow": [
       "Bash(npm init:*)",
       "Bash(npm install:*)",
@@ -37,9 +36,17 @@
       "Bash(find:*)",
       "Bash(head:*)",
       "Bash(du:*)",
-      "Bash(while:*)"
+      "Bash(while:*)",
+      "Bash(chmod:*)",
+      "Bash(bash:*)",
+      "Bash(shasum:*)",
+      "Bash(npm run analyze:*)",
+      "Bash(for file in src/agent.ts src/classifier.ts src/validator.ts src/session-store.ts src/performance.ts src/types.ts src/composer/index.ts)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(REPORT_DIR=\"./reports/97b561c-20251025T053059\")"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "defaultMode": "bypassPermissions"
   }
 }

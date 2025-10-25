@@ -2,15 +2,64 @@ import { ClaudeClient } from './composer/client';
 import { CLASSIFIER_PROMPT } from './composer/prompts';
 import { ClassificationResult, ConversationTurn, SessionState } from './types';
 
+/**
+ * Intent Classifier - Analyzes user messages to determine intent and continuity
+ *
+ * The classifier uses Claude to understand what the user wants to do next:
+ * - Continue with the current theme ('memory' intent)
+ * - Discover/start a new theme ('discover' intent)
+ * - Walk through the protocol ('walk' intent)
+ * - Or just chat ('none' intent)
+ *
+ * It also tracks conversation continuity and navigation desires.
+ *
+ * @example
+ * ```typescript
+ * const classifier = new IntentClassifier(apiKey);
+ * const result = await classifier.classify(
+ *   "Yes, I understand",
+ *   conversationHistory,
+ *   sessionState
+ * );
+ * console.log(result.intent); // 'memory' (user is continuing)
+ * ```
+ */
 export class IntentClassifier {
   private client: ClaudeClient;
 
+  /**
+   * Create a new IntentClassifier instance
+   *
+   * @param apiKey - Anthropic API key for Claude access
+   */
   constructor(apiKey: string) {
     this.client = new ClaudeClient(apiKey);
   }
 
   /**
    * Classify user intent based on conversation history and current state
+   *
+   * Analyzes the user's message in context to determine:
+   * - What they intend to do (discover, walk, memory, none)
+   * - Whether they're continuing the conversation naturally
+   * - If they want to navigate to a specific theme
+   * - Their confidence level in the classification
+   *
+   * @param userMessage - The user's latest message
+   * @param conversationHistory - Array of previous conversation turns
+   * @param state - Current session state including mode, theme, etc.
+   * @returns Promise<ClassificationResult> Classification with intent, continuity, and navigation desires
+   *
+   * @example
+   * ```typescript
+   * const result = await classifier.classify(
+   *   "Tell me more about Theme 2",
+   *   history,
+   *   state
+   * );
+   * // result.intent === 'walk'
+   * // result.user_wants_to.navigate_to_theme === 2
+   * ```
    */
   async classify(
     userMessage: string,

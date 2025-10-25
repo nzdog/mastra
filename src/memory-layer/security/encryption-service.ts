@@ -520,22 +520,24 @@ export async function assertKmsUsable(): Promise<void> {
   const provider = process.env.KMS_PROVIDER || 'memory';
 
   // Block production usage of unimplemented providers
+  // NOTE: AWS/GCP KMS integration deferred to Phase 4 (Q1 2025)
+  // Current implementation supports in-memory KEK for development/testing only
   if (process.env.NODE_ENV === 'production') {
     if (provider === 'aws') {
       throw new Error(
-        'FATAL: AWS KMS Provider not implemented in this release. ' +
+        'FATAL: AWS KMS Provider not yet implemented (planned for Phase 4). ' +
           'Production deployments must:\n' +
-          '  - Implement AWS KMS integration (see TODO in encryption-service.ts)\n' +
-          '  - OR use alternative KMS provider\n' +
+          '  - Use KMS_PROVIDER=memory with secure KEK management\n' +
+          '  - OR wait for Phase 4 AWS KMS integration\n' +
           'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
       );
     }
     if (provider === 'gcp') {
       throw new Error(
-        'FATAL: GCP KMS Provider not implemented for production use. ' +
+        'FATAL: GCP KMS Provider not yet implemented (planned for Phase 4). ' +
           'Production deployments must:\n' +
-          '  - Implement GCP KMS integration (see TODO in encryption-service.ts)\n' +
-          '  - OR use AWS KMS (when implemented)\n' +
+          '  - Use KMS_PROVIDER=memory with secure KEK management\n' +
+          '  - OR wait for Phase 4 GCP KMS integration\n' +
           'For development only: Set KMS_PROVIDER=memory with DEV_KEK_BASE64'
       );
     }

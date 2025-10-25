@@ -3,9 +3,16 @@
  * Phase 3: Privacy, Security & Governance
  *
  * Implements MemoryStore interface backed by PostgreSQL.
- * Week 1 scope: store, recall, count only (no encryption yet).
- * Week 3: Added envelope encryption support.
- * Other methods stubbed with TODO Phase 3.
+ * Fully implements all MemoryStore methods with envelope encryption support.
+ *
+ * Features:
+ * - Store, recall, count with query filtering
+ * - Forget (hard delete) by ID, user, or session
+ * - Record access tracking (get, incrementAccessCount, exists)
+ * - TTL enforcement (clearExpired)
+ * - Storage statistics (getStats)
+ * - Test cleanup (clear)
+ * - Envelope encryption with data encryption keys (DEK)
  */
 
 import { Pool } from 'pg';
@@ -255,56 +262,217 @@ export class PostgresStore implements MemoryStore {
   }
 
   /**
-   * TODO(Phase 3): Implement forget with hard delete support
+   * Forget (delete) memory records based on request criteria
+   *
+   * Supports deletion by:
+   * - Specific record ID
+   * - All records for a user (hashed_pseudonym)
+   * - All records for a session
+   *
+   * @param request - Forget request with id, hashed_pseudonym, or session_id
+   * @returns Array of deleted record IDs
    */
-  async forget(_request: ForgetRequest): Promise<string[]> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.forget()');
+  async forget(request: ForgetRequest): Promise<string[]> {
+    const client = await this.pool.connect();
+    try {
+      const conditions: string[] = [];
+      const values: any[] = [];
+      let paramCount = 1;
+
+      // Build WHERE clause based on request
+      if (request.id) {
+        conditions.push(`id = $${paramCount++}`);
+        values.push(request.id);
+      }
+
+      if (request.hashed_pseudonym) {
+        conditions.push(`hashed_pseudonym = $${paramCount++}`);
+        values.push(request.hashed_pseudonym);
+      }
+
+      if (request.session_id) {
+        conditions.push(`session_id = $${paramCount++}`);
+        values.push(request.session_id);
+      }
+
+      if (conditions.length === 0) {
+        throw new Error('Forget request must specify id, hashed_pseudonym, or session_id');
+      }
+
+      const query = `
+        DELETE FROM memory_records
+        WHERE ${conditions.join(' AND ')}
+        RETURNING id
+      `;
+
+      const result = await client.query(query, values);
+      return result.rows.map((row) => row.id);
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement get by ID
+   * Get a single memory record by ID
+   *
+   * @param id - Record ID to retrieve
+   * @returns The memory record or null if not found
    */
-  async get(_id: string): Promise<MemoryRecord | null> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.get()');
+  async get(id: string): Promise<MemoryRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      const query = 'SELECT * FROM memory_records WHERE id = $1';
+      const result = await client.query(query, [id]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return await this.rowToRecord(result.rows[0]);
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement access count increment
+   * Increment the access count for a record
+   *
+   * Updates the access_count field and updated_at timestamp.
+   *
+   * @param id - Record ID to update
+   * @returns Updated memory record or null if not found
    */
-  async incrementAccessCount(_id: string): Promise<MemoryRecord | null> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.incrementAccessCount()');
+  async incrementAccessCount(id: string): Promise<MemoryRecord | null> {
+    const client = await this.pool.connect();
+    try {
+      const query = `
+        UPDATE memory_records
+        SET access_count = access_count + 1,
+            updated_at = NOW()
+        WHERE id = $1
+        RETURNING *
+      `;
+
+      const result = await client.query(query, [id]);
+
+      if (result.rows.length === 0) {
+        return null;
+      }
+
+      return await this.rowToRecord(result.rows[0]);
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement exists check
+   * Check if a record exists by ID
+   *
+   * @param id - Record ID to check
+   * @returns true if record exists, false otherwise
    */
-  async exists(_id: string): Promise<boolean> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.exists()');
+  async exists(id: string): Promise<boolean> {
+    const client = await this.pool.connect();
+    try {
+      const query = 'SELECT EXISTS(SELECT 1 FROM memory_records WHERE id = $1)';
+      const result = await client.query(query, [id]);
+      return result.rows[0].exists;
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement TTL sweep job
+   * Clear expired records based on expires_at timestamp
+   *
+   * Deletes all records where expires_at is in the past.
+   * Should be called periodically by a background job.
+   *
+   * @returns Number of records deleted
    */
   async clearExpired(): Promise<number> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.clearExpired()');
+    const client = await this.pool.connect();
+    try {
+      const query = `
+        DELETE FROM memory_records
+        WHERE expires_at IS NOT NULL AND expires_at < NOW()
+        RETURNING id
+      `;
+
+      const result = await client.query(query);
+      return result.rowCount || 0;
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement stats aggregation
+   * Get storage statistics
+   *
+   * Returns:
+   * - Total record count
+   * - Record counts grouped by consent_family
+   * - Approximate storage size in bytes
+   *
+   * @returns Storage statistics object
    */
   async getStats(): Promise<{
     total_records: number;
     records_by_family: Record<string, number>;
     storage_bytes: number;
   }> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.getStats()');
+    const client = await this.pool.connect();
+    try {
+      // Get total count
+      const totalQuery = 'SELECT COUNT(*) as count FROM memory_records';
+      const totalResult = await client.query(totalQuery);
+      const total_records = parseInt(totalResult.rows[0].count, 10);
+
+      // Get count by consent_family
+      const familyQuery = `
+        SELECT consent_family, COUNT(*) as count
+        FROM memory_records
+        GROUP BY consent_family
+      `;
+      const familyResult = await client.query(familyQuery);
+      const records_by_family: Record<string, number> = {};
+      familyResult.rows.forEach((row) => {
+        records_by_family[row.consent_family] = parseInt(row.count, 10);
+      });
+
+      // Estimate storage size (sum of content column sizes)
+      const sizeQuery = `
+        SELECT COALESCE(SUM(pg_column_size(content)), 0) as bytes
+        FROM memory_records
+      `;
+      const sizeResult = await client.query(sizeQuery);
+      const storage_bytes = parseInt(sizeResult.rows[0].bytes, 10);
+
+      return {
+        total_records,
+        records_by_family,
+        storage_bytes,
+      };
+    } finally {
+      client.release();
+    }
   }
 
   /**
-   * TODO(Phase 3): Implement clear for testing
+   * Clear all records from the database
+   *
+   * **WARNING:** This deletes ALL memory records permanently.
+   * Should only be used for testing purposes.
+   *
+   * @returns Promise that resolves when all records are deleted
    */
   async clear(): Promise<void> {
-    throw new Error('TODO(Phase 3): Implement PostgresStore.clear()');
+    const client = await this.pool.connect();
+    try {
+      await client.query('DELETE FROM memory_records');
+    } finally {
+      client.release();
+    }
   }
 
   /**

@@ -1,13 +1,46 @@
+# Dependencies
 node_modules/
+package-lock.json
+
+# Build outputs
 dist/
+*.js.map
+
+# Environment & secrets
 .env
 .env.local
 .env.*.local
-*.log
-.DS_Store
-.netlify/
-.railway/
 
-# Ledger and keys (generated at runtime)
-.keys/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Ledger data
 .ledger/
+
+# Temporary files
+*.tmp
+*.bak
+.analysis-state.yaml.bak
+*.md.bak
+*.json.bak
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# EXPLICITLY TRACK analysis reports
+# (Everything in packages/code-analysis/reports/ is tracked)
+!packages/code-analysis/reports/**
+.keys/

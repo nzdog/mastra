@@ -2,12 +2,39 @@ import { ProtocolParser } from './protocol/parser';
 import { ProtocolRegistry } from './tools/registry';
 
 /**
- * Validates Claude's WALK mode output against the actual protocol content
+ * Walk Response Validator - Ensures Claude's responses match actual protocol content
+ *
+ * This validator prevents hallucination by verifying that the agent's WALK mode
+ * responses contain the correct theme content from the protocol. It checks:
+ * - Theme titles match exactly
+ * - Questions are present and accurate
+ * - No fabricated content is included
+ *
+ * **Purpose:** Maintain protocol fidelity and prevent LLM hallucination
+ *
+ * @example
+ * ```typescript
+ * const validator = new WalkResponseValidator(registry, protocolPath);
+ * const result = validator.validateThemeResponse(
+ *   claudeResponse,
+ *   themeIndex,
+ *   awaitingConfirmation
+ * );
+ * if (!result.valid) {
+ *   console.error('Hallucination detected:', result.issues);
+ * }
+ * ```
  */
 export class WalkResponseValidator {
   private registry: ProtocolRegistry;
   private parser: ProtocolParser;
 
+  /**
+   * Create a new WalkResponseValidator
+   *
+   * @param registry - Protocol registry containing theme chunks
+   * @param protocolPath - Path to the protocol markdown file
+   */
   constructor(registry: ProtocolRegistry, protocolPath: string) {
     this.registry = registry;
     this.parser = new ProtocolParser(protocolPath);
@@ -36,7 +63,25 @@ export class WalkResponseValidator {
 
   /**
    * Check if Claude's response contains the correct theme content
-   * Returns true if valid, false if hallucinating
+   *
+   * Validates that the response includes the expected theme title and questions
+   * from the protocol, preventing hallucination and ensuring protocol fidelity.
+   *
+   * @param response - Claude's generated response to validate
+   * @param themeIndex - The theme number being presented (0-based)
+   * @param awaitingConfirmation - Whether we're in the confirmation/reflection phase
+   * @returns Object with `valid` boolean and array of `issues` found
+   *
+   * @example
+   * ```typescript
+   * const result = validator.validateThemeResponse(
+   *   "### Theme 1: The Field\n\nQuestion 1: What field are you in?",
+   *   0,
+   *   false
+   * );
+   * console.log(result.valid); // true if content matches protocol
+   * console.log(result.issues); // [] if valid, or list of problems
+   * ```
    */
   validateThemeResponse(
     response: string,
