@@ -658,23 +658,23 @@ async function main(): Promise<void> {
   try {
     const store = new InMemoryStore();
 
-    // Store records for each family
+    // Store records for each family (using valid hs_ prefixed base64url hashed pseudonyms)
     await store.store(
       createTestRecord({
         consent_family: 'personal',
-        hashed_pseudonym: 'hs_dXNlcl8xX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+        hashed_pseudonym: 'hs_c3RhdHNfdXNlcl8xX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF92YWxpZF9mb3JtYXQ',
       })
     );
     await store.store(
       createTestRecord({
         consent_family: 'cohort',
-        hashed_pseudonym: 'hs_dXNlcl8yX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+        hashed_pseudonym: 'hs_c3RhdHNfdXNlcl8yX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF92YWxpZF9mb3JtYXQ',
       })
     );
     await store.store(
       createTestRecord({
         consent_family: 'population',
-        hashed_pseudonym: 'hs_dXNlcl8zX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdA',
+        hashed_pseudonym: 'hs_c3RhdHNfdXNlcl8zX2hhc2hlZF9wc2V1ZG9ueW1fdGVzdF92YWxpZF9mb3JtYXQ',
       })
     );
 

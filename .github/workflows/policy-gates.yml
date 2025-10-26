@@ -38,8 +38,8 @@ jobs:
       PGPASSWORD: postgres
 
       # Phase 3.2: Ledger configuration for CI
-      LEDGER_ENABLED: "false"
-      LEDGER_OPTIONAL: "true"
+      LEDGER_ENABLED: 'false'
+      LEDGER_OPTIONAL: 'true'
 
       # Anthropic API Expose
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -82,7 +82,7 @@ jobs:
       # Test Gates
       - name: 'Gate: Unit tests'
         run: npm test
-        continue-on-error: true  # Tests optional in Phase 0
+        continue-on-error: true # Tests optional in Phase 0
 
       # Audit Stub Validation
       - name: 'Gate: Audit emitter stub validation'

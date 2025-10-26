@@ -1,10 +1,12 @@
 # Lichen Protocol Code Analysis
 
-Reproducible codebase analysis following the Lichen Protocol principles: **Integrity**, **Empathy**, and **Rhythm**.
+Reproducible codebase analysis following the Lichen Protocol principles: **Integrity**, **Empathy**,
+and **Rhythm**.
 
 ## What is This?
 
-This package provides automated, reproducible analysis of the Mastra Lichen Agent codebase across five dimensions:
+This package provides automated, reproducible analysis of the Mastra Lichen Agent codebase across
+five dimensions:
 
 1. **[INT] Integrity** - Security, cryptographic guarantees, invariants
 2. **[EMP] Empathy** - Developer experience, documentation, cognitive load
@@ -37,6 +39,7 @@ cat ./reports/latest/TEC-technical-health.json
 ## Understanding Scores
 
 All scores are normalized to **0-100** scale:
+
 - **95-100**: Excellent
 - **80-94**: Good
 - **70-79**: Acceptable
@@ -45,6 +48,7 @@ All scores are normalized to **0-100** scale:
 ### Composite Score
 
 The overall health score is a weighted average:
+
 - **INT**: 30% (security is critical)
 - **EMP**: 20% (developer experience matters)
 - **RHY**: 20% (sustainability is key)
@@ -54,28 +58,31 @@ The overall health score is a weighted average:
 
 **Composite**: 68.40/100
 
-| Stone | Score | Status |
-|-------|-------|--------|
-| INT | 98/100 | ✅ Excellent |
-| EMP | 0/100 | ⚠️  Needs work |
-| RHY | 45/100 | ⚠️  Tech debt |
-| TEC | 100/100 | ✅ Perfect |
+| Stone | Score   | Status        |
+| ----- | ------- | ------------- |
+| INT   | 98/100  | ✅ Excellent  |
+| EMP   | 0/100   | ⚠️ Needs work |
+| RHY   | 45/100  | ⚠️ Tech debt  |
+| TEC   | 100/100 | ✅ Perfect    |
 
 **Key Findings:**
+
 - ✅ Strong security posture
 - ✅ Perfect TypeScript compilation
-- ⚠️  Zero JSDoc documentation
-- ⚠️  Technical debt markers present
+- ⚠️ Zero JSDoc documentation
+- ⚠️ Technical debt markers present
 
 ## Reproducibility
 
 Every analysis generates:
+
 - **Input fingerprint**: SHA256 hash of all source files
 - **Environment hash**: Runtime/tool versions
 - **Canonical hashes**: Timestamp-independent verification
 - **Audit ledger**: Historical tracking (`.analysis-ledger.jsonl`)
 
 To verify an analysis:
+
 ```bash
 cd reports/97b561c-20251025T041351/
 shasum -a 256 -c checksums.manifest
@@ -87,7 +94,8 @@ Every analysis run automatically completes the **Theme-5 loop closure**:
 
 ### What Happens Every Run
 
-1. **SYN files registered** - `SYN-executive-summary.md` and `SYN-next-actions.md` added to proof chain
+1. **SYN files registered** - `SYN-executive-summary.md` and `SYN-next-actions.md` added to proof
+   chain
 2. **Checksums computed** - Both raw (unique) and canonical (reproducible) hashes
 3. **Manifest rebuilt** - `checksums.manifest` in `sha256sum -c` compatible format
 4. **Ledger appended** - One JSON line added to `.analysis-ledger.jsonl` with dual manifest hashes
@@ -109,7 +117,15 @@ reports/<sha>-<timestamp>/
 Each analysis appends one line to `reports/.analysis-ledger.jsonl`:
 
 ```jsonl
-{"run_sha":"97b561c","timestamp":"20251025T045623","version":"2025-01-v1","composite_score":68.40,"files_registered":6,"manifest_hash":"e635e86b...","manifest_canon_hash":"8f3ddb5e..."}
+{
+  "run_sha": "97b561c",
+  "timestamp": "20251025T045623",
+  "version": "2025-01-v1",
+  "composite_score": 68.4,
+  "files_registered": 6,
+  "manifest_hash": "e635e86b...",
+  "manifest_canon_hash": "8f3ddb5e..."
+}
 ```
 
 ### How to Verify Loop-Closure
@@ -131,7 +147,9 @@ bash tools/loop-closure.sh
 
 ### Idempotency Guarantee
 
-Running analysis twice on the same commit produces **identical canonical hashes** (timestamps stripped). This proves:
+Running analysis twice on the same commit produces **identical canonical hashes** (timestamps
+stripped). This proves:
+
 - ✅ Analysis is deterministic
 - ✅ Results are reproducible
 - ✅ Proofs are tamper-evident
@@ -152,6 +170,7 @@ Running analysis twice on the same commit produces **identical canonical hashes*
 ## Configuration
 
 Edit `config/thresholds.yaml` to adjust:
+
 - Score targets per stone
 - Metric thresholds
 - Failure conditions
@@ -160,36 +179,42 @@ Edit `config/thresholds.yaml` to adjust:
 ## Analysis Phases
 
 ### Phase 0: Setup
+
 - Verify workspace
 - Generate run identifiers
 - Calculate input fingerprint
 - Capture environment
 
 ### Phase 1: Integrity [INT]
+
 - Run `npm audit`
 - Scan for hardcoded secrets
 - Check CORS configuration
 - Verify cryptographic guarantees
 
 ### Phase 2: Empathy [EMP]
+
 - Measure documentation coverage
 - Analyze file complexity
 - Identify large files (>1000 lines)
 - Calculate cognitive load
 
 ### Phase 3: Rhythm [RHY]
+
 - Count test files
 - Find technical debt markers (TODO/FIXME/HACK)
 - Check dependency freshness
 - Assess sustainability
 
 ### Phase 4: Technical [TEC]
+
 - Run `tsc --noEmit --strict`
 - Count TypeScript errors
 - Verify build health
 - Check type coverage
 
 ### Phase 5: Synthesis [SYN]
+
 - Calculate composite score
 - Generate executive summary
 - Create actionable recommendations
@@ -231,10 +256,11 @@ Based on current analysis (68.40/100):
 
 ## Philosophy
 
-> "Each metric is a mirror, not a verdict."
-> "The System Walks With Us - each analysis strengthens the whole."
+> "Each metric is a mirror, not a verdict." "The System Walks With Us - each analysis strengthens
+> the whole."
 
 This analysis tool embodies the Lichen Protocol principles:
+
 - **Integrity**: Cryptographically verified, tamper-evident
 - **Empathy**: Measures human experience, not just code
 - **Rhythm**: Tracks sustainability over time
