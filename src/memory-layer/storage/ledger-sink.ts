@@ -30,7 +30,7 @@ export interface AuditEvent {
   operation: string;
   user_id?: string;
   session_id?: string;
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
   consent_context?: {
     consent_level: 'personal' | 'cohort' | 'population';
     scope: string[];

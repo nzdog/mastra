@@ -57,7 +57,7 @@ export function isPseudonymRotationEnabled(): boolean {
 /**
  * Get feature flags summary (for debugging)
  */
-export function getFeatureFlags(): Record<string, any> {
+export function getFeatureFlags(): Record<string, unknown> {
   return {
     persistence: process.env.PERSISTENCE || 'memory',
     encryption_enabled: isEncryptionEnabled(),

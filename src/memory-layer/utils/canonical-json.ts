@@ -11,7 +11,7 @@
  * - Arrays: Keep original order
  * - Primitives: Return as-is
  */
-function canonicalizeValue(value: any): any {
+function canonicalizeValue(value: unknown): unknown {
   if (value === null || value === undefined) {
     return value;
   }
@@ -26,10 +26,10 @@ function canonicalizeValue(value: any): any {
 
   // Sort object keys alphabetically
   const sortedKeys = Object.keys(value).sort();
-  const canonicalObj: Record<string, any> = {};
+  const canonicalObj: Record<string, unknown> = {};
 
   for (const key of sortedKeys) {
-    canonicalObj[key] = canonicalizeValue(value[key]);
+    canonicalObj[key] = canonicalizeValue((value as Record<string, unknown>)[key]);
   }
 
   return canonicalObj;
@@ -54,7 +54,7 @@ function canonicalizeValue(value: any): any {
  * // Result: '{"a":2,"m":{"x":4,"y":3},"z":1}'
  * ```
  */
-export function canonicalStringify(obj: any): string {
+export function canonicalStringify(obj: unknown): string {
   const canonical = canonicalizeValue(obj);
   return JSON.stringify(canonical);
 }
@@ -63,6 +63,6 @@ export function canonicalStringify(obj: any): string {
  * Compare two objects for canonical equality
  * Uses canonical serialization to ensure consistent comparison
  */
-export function canonicalEqual(a: any, b: any): boolean {
+export function canonicalEqual(a: unknown, b: unknown): boolean {
   return canonicalStringify(a) === canonicalStringify(b);
 }

@@ -19,6 +19,7 @@ import { getMetrics, getContentType } from '../../observability/metrics';
  * @param metricsLimiter - Rate limiter for metrics endpoints
  * @returns Express router with metrics endpoints
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createMetricsRouter(apiLimiter: any, metricsLimiter: any): Router {
   const router = Router();
 

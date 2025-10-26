@@ -38,7 +38,7 @@ export interface AuditEvent {
     expiry?: string;
     revocable: boolean;
   };
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
 }
 
 export interface AuditReceipt {
@@ -47,7 +47,7 @@ export interface AuditReceipt {
   timestamp: string;
   signature: string;
   merkle_root: string;
-  merkle_proof: any;
+  merkle_proof: unknown;
   ledger_height: number;
 }
 
@@ -84,7 +84,7 @@ export class AuditEmitter {
   async emit(
     eventType: AuditEventType,
     operation: string,
-    payload: Record<string, any>,
+    payload: Record<string, unknown>,
     consentContext?: {
       consent_level?: 'personal' | 'cohort' | 'population';
       scope?: string[];
@@ -178,7 +178,7 @@ export class AuditEmitter {
    */
   async emitAmbiguityEvent(
     operation: string,
-    consentDiffs: Record<string, any>,
+    consentDiffs: Record<string, unknown>,
     userId?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {
@@ -202,7 +202,7 @@ export class AuditEmitter {
   async emitGovernanceOverride(
     overrideType: 'policy_engine' | 'ethics_committee' | 'constitutional',
     rationale: string,
-    policyDiffs: Record<string, any>,
+    policyDiffs: Record<string, unknown>,
     userId?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {

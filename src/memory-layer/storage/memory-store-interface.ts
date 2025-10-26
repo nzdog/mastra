@@ -114,7 +114,7 @@ export function isMemoryRecord(obj: unknown): obj is MemoryRecord {
     return false;
   }
 
-  const record = obj as any;
+  const record = obj as Record<string, unknown>;
   return (
     typeof record.id === 'string' &&
     typeof record.hashed_pseudonym === 'string' &&

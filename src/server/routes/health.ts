@@ -30,6 +30,7 @@ import {
  */
 export function createHealthRouter(
   sessionStore: SessionStore,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiLimiter: any,
   isReadyRef: { current: boolean }
 ): Router {

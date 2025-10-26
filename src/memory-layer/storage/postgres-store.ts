@@ -83,7 +83,7 @@ export class PostgresStore implements MemoryStore {
     const client = await this.pool.connect();
     try {
       // Week 3: Encrypt content before storing if enabled
-      let contentToStore: any = record.content;
+      let contentToStore: unknown = record.content;
       if (isEncryptionEnabled()) {
         const encryptStart = Date.now();
         try {
@@ -153,7 +153,7 @@ export class PostgresStore implements MemoryStore {
     const client = await this.pool.connect();
     try {
       const conditions: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
       let paramIndex = 1;
 
       // Required: hashed_pseudonym
@@ -214,7 +214,7 @@ export class PostgresStore implements MemoryStore {
     const client = await this.pool.connect();
     try {
       const conditions: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
       let paramIndex = 1;
 
       if (filters.hashed_pseudonym) {
@@ -276,7 +276,7 @@ export class PostgresStore implements MemoryStore {
     const client = await this.pool.connect();
     try {
       const conditions: string[] = [];
-      const values: any[] = [];
+      const values: unknown[] = [];
       let paramCount = 1;
 
       // Build WHERE clause based on request
@@ -479,8 +479,8 @@ export class PostgresStore implements MemoryStore {
    * Convert database row to MemoryRecord
    * Week 3: Added decryption support
    */
-  private async rowToRecord(row: any): Promise<MemoryRecord> {
-    const content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content;
+  private async rowToRecord(row: Record<string, unknown>): Promise<MemoryRecord> {
+    const content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content as Record<string, unknown>;
 
     // Week 3: Decrypt content if encrypted
     if (isEncryptionEnabled() && content.data_ciphertext) {
@@ -506,18 +506,18 @@ export class PostgresStore implements MemoryStore {
     }
 
     return {
-      id: row.id,
-      hashed_pseudonym: row.hashed_pseudonym,
-      session_id: row.session_id,
+      id: row.id as string,
+      hashed_pseudonym: row.hashed_pseudonym as string,
+      session_id: row.session_id as string | undefined,
       content,
-      consent_family: row.consent_family,
-      consent_timestamp: row.consent_timestamp,
-      consent_version: row.consent_version,
-      created_at: row.created_at,
-      updated_at: row.updated_at,
-      expires_at: row.expires_at,
-      access_count: row.access_count,
-      audit_receipt_id: row.audit_receipt_id,
+      consent_family: row.consent_family as 'personal' | 'cohort' | 'population',
+      consent_timestamp: row.consent_timestamp as string,
+      consent_version: row.consent_version as string,
+      created_at: row.created_at as string,
+      updated_at: row.updated_at as string,
+      expires_at: row.expires_at as string | undefined,
+      access_count: row.access_count as number,
+      audit_receipt_id: row.audit_receipt_id as string,
     };
   }
 

@@ -61,8 +61,13 @@ function extractNumericValue(record: MemoryRecord, field?: string): number | nul
 
   // For structured content with field specified
   if (content.type === 'structured' && field) {
-    const data = content.data as Record<string, any>;
-    const value = field.split('.').reduce((obj, key) => obj?.[key], data);
+    const data = content.data as Record<string, unknown>;
+    const value = field.split('.').reduce((obj: unknown, key: string): unknown => {
+      if (obj && typeof obj === 'object' && key in obj) {
+        return (obj as Record<string, unknown>)[key];
+      }
+      return undefined;
+    }, data);
     return typeof value === 'number' ? value : null;
   }
 
@@ -287,8 +292,13 @@ export function distribution(
     let key: string;
 
     if (field && record.content.type === 'structured') {
-      const data = record.content.data as Record<string, any>;
-      const value = field.split('.').reduce((obj, k) => obj?.[k], data);
+      const data = record.content.data as Record<string, unknown>;
+      const value = field.split('.').reduce((obj: unknown, k: string): unknown => {
+        if (obj && typeof obj === 'object' && k in obj) {
+          return (obj as Record<string, unknown>)[k];
+        }
+        return undefined;
+      }, data);
       key = String(value);
     } else {
       key = String(record.content.data);

@@ -106,7 +106,8 @@ export function errorHandler(
 
   // Check if error is already an ErrorResponse
   if (isErrorResponse(err)) {
-    res.status(getStatusCode((err as any).error.code)).json(err);
+    const errorResponse = err as { error: { code: ErrorCode } };
+    res.status(getStatusCode(errorResponse.error.code)).json(err);
     return;
   }
 
@@ -120,7 +121,8 @@ export function errorHandler(
 
   // Handle standard HTTP errors (from express or middleware)
   if ('status' in err || 'statusCode' in err) {
-    const statusCode = (err as any).status || (err as any).statusCode || 500;
+    const httpError = err as { status?: number; statusCode?: number };
+    const statusCode = httpError.status || httpError.statusCode || 500;
     const errorCode = inferErrorCode(statusCode);
     const errorResponse = createErrorResponse(
       errorCode,
@@ -186,7 +188,7 @@ export function notFoundHandler(req: Request, res: Response): void {
  * Wraps async route handlers to catch promise rejections
  */
 export function asyncHandler(
-  fn: (req: Request, res: Response, next: NextFunction) => Promise<any>
+  fn: (req: Request, res: Response, next: NextFunction) => Promise<unknown>
 ) {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
