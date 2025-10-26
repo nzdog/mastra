@@ -50,9 +50,6 @@ jobs:
       NODE_ENV: test
       PERSISTENCE: postgres
 
-      # Anthropic API (placeholder for tests - not used in unit/integration tests)
-      ANTHROPIC_API_KEY: sk-ant-test-key-placeholder-for-ci-testing-only
-
       # Encryption (using memory KMS for tests)
       ENCRYPTION_ENABLED: true
       KMS_PROVIDER: memory
