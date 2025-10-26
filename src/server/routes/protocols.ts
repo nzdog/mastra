@@ -77,7 +77,8 @@ async function createSession(
     }
     protocolPath = pathResult;
   } else {
-    protocolPath = path.join(__dirname, '../../protocols/field_diagnostic.md');
+    protocolPath = loader.getProtocolPath('field_diagnostic') ||
+      path.join(__dirname, '../../../protocols/field_diagnostic.md');
   }
 
   const parser = new ProtocolParser(protocolPath);
