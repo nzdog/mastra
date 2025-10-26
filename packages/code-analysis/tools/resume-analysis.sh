@@ -6,7 +6,7 @@ if [ ! -f "$STATE_FILE" ]; then
 fi
 
 CURRENT_PHASE=$(grep "current_phase:" "$STATE_FILE" | cut -d'"' -f2)
-echo "=� Resuming from phase: $CURRENT_PHASE"
+echo "🔄 Resuming from phase: $CURRENT_PHASE"
 
 case $CURRENT_PHASE in
   "setup")      exec bash ./analyze.sh --phase=integrity ;;
@@ -14,5 +14,5 @@ case $CURRENT_PHASE in
   "empathy")    exec bash ./analyze.sh --phase=rhythm ;;
   "rhythm")     exec bash ./analyze.sh --phase=technical ;;
   "technical")  exec bash ./analyze.sh --phase=synthesis ;;
-  *) echo " Analysis already complete or in unknown state" ;;
+  *) echo "✓ Analysis already complete or in unknown state" ;;
 esac
