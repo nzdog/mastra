@@ -1,11 +1,11 @@
 -- Migration 001: Create memory_records table
 -- Phase 3: Privacy, Security & Governance
--- Week 1: Base table with indexes (no partitioning yet)
+-- Week 1: Base table with indexes and range partitioning by created_at
 
--- Create memory_records table
+-- Create memory_records table (partitioned by created_at for performance)
 CREATE TABLE IF NOT EXISTS memory_records (
   -- Identity
-  id UUID PRIMARY KEY,
+  id UUID NOT NULL,
   hashed_pseudonym TEXT NOT NULL,
   session_id TEXT,
 
@@ -27,8 +27,11 @@ CREATE TABLE IF NOT EXISTS memory_records (
   access_count INTEGER NOT NULL DEFAULT 0,
 
   -- Audit
-  audit_receipt_id UUID NOT NULL
-);
+  audit_receipt_id UUID NOT NULL,
+
+  -- Composite primary key (id + created_at required for partitioning)
+  PRIMARY KEY (id, created_at)
+) PARTITION BY RANGE (created_at);
 
 -- Indexes for common queries
 -- Primary lookup: hashed_pseudonym + consent_family + created_at (for recall)
@@ -68,5 +71,48 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 );
 
 INSERT INTO schema_migrations (version, description)
-VALUES (1, 'Create memory_records table with base indexes')
+VALUES (1, 'Create memory_records table with base indexes and partitioning')
 ON CONFLICT (version) DO NOTHING;
+
+-- ============================================================================
+-- Create initial partitions
+-- ============================================================================
+-- Note: Additional partitions will be created by migration 002_partitions.sql
+
+-- Historical partition (for any old data)
+CREATE TABLE IF NOT EXISTS memory_records_historical PARTITION OF memory_records
+  FOR VALUES FROM (MINVALUE) TO ('2025-01-01');
+
+-- Monthly partitions for 2025
+CREATE TABLE IF NOT EXISTS memory_records_2025_01 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-01-01') TO ('2025-02-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_02 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-02-01') TO ('2025-03-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_03 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-03-01') TO ('2025-04-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_04 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-04-01') TO ('2025-05-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_05 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-05-01') TO ('2025-06-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_06 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-06-01') TO ('2025-07-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_07 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-07-01') TO ('2025-08-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_08 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-08-01') TO ('2025-09-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_09 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-09-01') TO ('2025-10-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_10 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-10-01') TO ('2025-11-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_11 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-11-01') TO ('2025-12-01');
+CREATE TABLE IF NOT EXISTS memory_records_2025_12 PARTITION OF memory_records
+  FOR VALUES FROM ('2025-12-01') TO ('2026-01-01');
+
+-- Future partitions (first 3 months of 2026)
+CREATE TABLE IF NOT EXISTS memory_records_2026_01 PARTITION OF memory_records
+  FOR VALUES FROM ('2026-01-01') TO ('2026-02-01');
+CREATE TABLE IF NOT EXISTS memory_records_2026_02 PARTITION OF memory_records
+  FOR VALUES FROM ('2026-02-01') TO ('2026-03-01');
+CREATE TABLE IF NOT EXISTS memory_records_2026_03 PARTITION OF memory_records
+  FOR VALUES FROM ('2026-03-01') TO ('2026-04-01');

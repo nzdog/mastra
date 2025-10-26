@@ -356,7 +356,8 @@ export class InMemoryStore implements MemoryStore {
    */
   private getCandidateIds(query: RecallQuery): Set<string> {
     // Start with hashed_pseudonym index (required)
-    const hashedPseudonyms = this.indexes.byHashedPseudonym.get(query.hashed_pseudonym) || new Set<string>();
+    const hashedPseudonyms =
+      this.indexes.byHashedPseudonym.get(query.hashed_pseudonym) || new Set<string>();
 
     // If session_id specified, intersect with session index
     if (query.session_id) {
