@@ -74,10 +74,10 @@ BEGIN
   PERFORM create_monthly_partition(CURRENT_DATE);
 
   -- Next month
-  PERFORM create_monthly_partition(CURRENT_DATE + INTERVAL '1 month');
+  PERFORM create_monthly_partition((CURRENT_DATE + INTERVAL '1 month')::DATE);
 
   -- Month after next
-  PERFORM create_monthly_partition(CURRENT_DATE + INTERVAL '2 months');
+  PERFORM create_monthly_partition((CURRENT_DATE + INTERVAL '2 months')::DATE);
 
   RAISE NOTICE 'Partition creation complete';
 END $$;
