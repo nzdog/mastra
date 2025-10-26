@@ -1,7 +1,7 @@
 #!/bin/bash
 STATE_FILE="${1:-./analysis-state.yaml}"
 if [ ! -f "$STATE_FILE" ]; then
-  echo "L No state file found. Start fresh analysis."
+  echo "❌ No state file found. Start fresh analysis."
   exit 1
 fi
 
