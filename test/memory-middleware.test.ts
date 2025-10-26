@@ -23,6 +23,20 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Helper: Type guard for response data
+interface ResponseData {
+  error?: {
+    code?: string;
+    message?: string;
+    trace_id?: string;
+  };
+  timestamp?: string;
+  path?: string;
+  method?: string;
+  trace_id?: string;
+  [key: string]: unknown;
+}
+
 // Helper: Make request
 async function makeRequest(
   path: string,
@@ -31,7 +45,7 @@ async function makeRequest(
     body?: unknown;
     headers?: Record<string, string>;
   }
-): Promise<{ status: number; data: any; headers: any }> {
+): Promise<{ status: number; data: ResponseData; headers: unknown }> {
   const response = await fetch(`${BASE_URL}${path}`, {
     method: options.method,
     headers: {
@@ -41,12 +55,12 @@ async function makeRequest(
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  let data: any;
+  let data: ResponseData;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
+    data = await response.json() as ResponseData;
   } else {
-    data = await response.text();
+    data = { text: await response.text() } as ResponseData;
   }
 
   return { status: response.status, data, headers: response.headers };

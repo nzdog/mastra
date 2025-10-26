@@ -94,7 +94,7 @@ describe('DualStore', () => {
         store: async () => {
           throw new Error('Postgres store failed');
         },
-      } as any;
+      } as PostgresStore;
 
       const dualStoreWithFailure = new DualStore(memoryStore, failingPostgres, {
         enabled: true,
@@ -230,7 +230,7 @@ describe('DualStore', () => {
         recall: async () => {
           throw new Error('Memory recall failed');
         },
-      } as any;
+      } as InMemoryStore;
 
       const dualStoreWithFailure = new DualStore(failingMemory, postgresStore);
 
