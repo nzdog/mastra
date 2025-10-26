@@ -25,6 +25,7 @@ import {
  * @param apiLimiter - Rate limiter for API endpoints
  * @returns Express router with verification endpoints
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createVerificationRouter(apiLimiter: any): Router {
   const router = Router();
 

@@ -57,9 +57,7 @@ export function createStaticRouter(): Router {
     if (fs.existsSync(indexPath)) {
       res.sendFile(indexPath);
     } else {
-      res
-        .status(404)
-        .send(`Frontend not found. Checked: ${indexPath}`);
+      res.status(404).send(`Frontend not found. Checked: ${indexPath}`);
     }
   });
 

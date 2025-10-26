@@ -31,8 +31,8 @@ describe('Backward Compatibility - StoreRequest', () => {
   function createMocks(
     method: string,
     path: string,
-    body: any,
-    consentContext?: any
+    body: Record<string, unknown>,
+    consentContext?: Record<string, unknown>
   ): { req: Partial<Request>; res: Partial<Response>; next: NextFunction } {
     const req: Partial<Request> = {
       method,
@@ -42,7 +42,7 @@ describe('Backward Compatibility - StoreRequest', () => {
 
     // Add consent context if provided
     if (consentContext) {
-      (req as any).consentContext = consentContext;
+      (req as Record<string, unknown>).consentContext = consentContext;
     }
 
     const res: Partial<Response> = {

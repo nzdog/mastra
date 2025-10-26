@@ -25,7 +25,9 @@ describe('Readiness Check - KMS Health', () => {
   it('should pass health check with valid memory KMS provider in test environment', async () => {
     process.env.NODE_ENV = 'test';
     process.env.KMS_PROVIDER = 'memory';
-    process.env.DEV_KEK_BASE64 = Buffer.from('test-key-32-bytes-for-aes-256-gcm').toString('base64');
+    process.env.DEV_KEK_BASE64 = Buffer.from('test-key-32-bytes-for-aes-256-gcm').toString(
+      'base64'
+    );
 
     // Should not throw
     await expect(assertKmsUsable()).resolves.toBeUndefined();
@@ -36,7 +38,9 @@ describe('Readiness Check - KMS Health', () => {
     process.env.KMS_PROVIDER = 'memory';
 
     // Should throw with actionable error
-    await expect(assertKmsUsable()).rejects.toThrow(/MemoryKMSProvider is for development\/testing only/);
+    await expect(assertKmsUsable()).rejects.toThrow(
+      /MemoryKMSProvider is for development\/testing only/
+    );
   });
 
   it('should fail health check with unimplemented AWS provider', async () => {

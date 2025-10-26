@@ -67,7 +67,7 @@ describe('Circuit Breaker Race Conditions (CRITICAL-5)', () => {
   });
 
   test('should prevent concurrent reset attempts', async () => {
-    const privateStore = store as any;
+    const privateStore = store as Record<string, unknown>;
 
     // Simulate breaker tripped
     privateStore.circuitBreakerTripped = true;
@@ -83,8 +83,8 @@ describe('Circuit Breaker Race Conditions (CRITICAL-5)', () => {
 
 describe('Dual-Write Secondary Timeouts (HIGH-5)', () => {
   let _dualStore: DualStore;
-  let memoryStore: any;
-  let postgresStore: any;
+  let memoryStore: ReturnType<typeof getMemoryStore>;
+  let postgresStore: PostgresStore;
 
   beforeEach(() => {
     memoryStore = getMemoryStore();
@@ -121,7 +121,7 @@ describe('Dual-Write Secondary Timeouts (HIGH-5)', () => {
 });
 
 describe('Concurrent Write Safety', () => {
-  let memoryStore: any;
+  let memoryStore: ReturnType<typeof getMemoryStore>;
 
   beforeEach(() => {
     memoryStore = getMemoryStore();

@@ -70,7 +70,7 @@ Phase 2 builds on the governance and audit foundation established in Phase 1 to 
 interface MemoryRecord {
   // Identity
   id: string;                    // UUID v4
-  user_id: string;               // Pseudonymized user identifier
+  hashed_pseudonym: string;               // Pseudonymized user identifier
   session_id?: string;           // Optional session context
 
   // Content
@@ -172,7 +172,7 @@ interface ErrorResponse {
 
 **Acceptance Criteria:**
 - [x] In-memory store with CRUD operations
-- [x] Index by user_id, session_id, consent_family
+- [x] Index by hashed_pseudonym, session_id, consent_family
 - [x] Expiration handling (TTL)
 - [x] Audit event emission on Store/Forget
 - [x] Unit tests with 90%+ coverage
@@ -216,7 +216,7 @@ Location: /v1/personal/recall?id=<uuid>
 
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "user_id": "usr_abc123",
+  "hashed_pseudonym": "usr_abc123",
   "consent_family": "personal",
   "created_at": "2025-10-16T12:00:00Z",
   "audit_receipt_id": "rcpt_xyz789"
@@ -246,7 +246,7 @@ Location: /v1/personal/recall?id=<uuid>
 
 **Request:**
 ```typescript
-GET /v1/personal/recall?user_id=usr_abc123&limit=10&since=2025-10-01T00:00:00Z
+GET /v1/personal/recall?hashed_pseudonym=usr_abc123&limit=10&since=2025-10-01T00:00:00Z
 Authorization: Bearer <token>
 ```
 
@@ -274,7 +274,7 @@ Authorization: Bearer <token>
 ```
 
 **Query Parameters:**
-- `user_id` - Filter by user (required for personal)
+- `hashed_pseudonym` - Filter by user (required for personal)
 - `session_id` - Filter by session (optional)
 - `since` - Filter by created_at >= timestamp (optional)
 - `until` - Filter by created_at <= timestamp (optional)
@@ -372,7 +372,7 @@ Authorization: Bearer <token>
 ```
 
 **Acceptance Criteria:**
-- [x] Supports deletion by id, user_id, session_id
+- [x] Supports deletion by id, hashed_pseudonym, session_id
 - [x] Personal family: full deletion
 - [x] Cohort family: anonymization (content deleted, metadata retained)
 - [x] Population family: deny operation (403 Forbidden)
@@ -395,7 +395,7 @@ Authorization: Bearer <token>
 
 **Request:**
 ```typescript
-GET /v1/personal/export?user_id=usr_abc123&format=json
+GET /v1/personal/export?hashed_pseudonym=usr_abc123&format=json
 Authorization: Bearer <token>
 ```
 
@@ -407,7 +407,7 @@ Content-Disposition: attachment; filename="memory-export-usr_abc123-20251016.jso
 
 {
   "export_metadata": {
-    "user_id": "usr_abc123",
+    "hashed_pseudonym": "usr_abc123",
     "export_timestamp": "2025-10-16T12:00:00Z",
     "consent_family": "personal",
     "total_records": 42
@@ -420,7 +420,7 @@ Content-Disposition: attachment; filename="memory-export-usr_abc123-20251016.jso
 **Acceptance Criteria:**
 - [x] Supports JSON format (CSV deferred to later)
 - [x] Personal family: full export with all fields
-- [x] Cohort family: anonymized export (no user_id, session_id)
+- [x] Cohort family: anonymized export (no hashed_pseudonym, session_id)
 - [x] Population family: deny operation (403 Forbidden)
 - [x] Emits audit event with receipt (GDPR compliance proof)
 - [x] Returns 200 OK with export file
@@ -663,7 +663,7 @@ error_responses_total{operation, family, code}
 |------|--------|------------|
 | Consent model complexity | High | Start with simple personal/cohort/population, expand later |
 | SLO budget exhaustion | Medium | Circuit breaker to prevent cascading failures |
-| Query performance (large datasets) | High | Add indexes on user_id, session_id, created_at |
+| Query performance (large datasets) | High | Add indexes on hashed_pseudonym, session_id, created_at |
 | Storage scalability | High | Deferred to Phase 3 with persistent DB |
 | GDPR compliance gaps | Critical | Comprehensive audit logging for all operations |
 

@@ -1,20 +1,24 @@
 # COMPREHENSIVE CODEBASE ANALYSIS: MASTRA LICHEN AGENT
 
-**Generated:** 2025-10-25
-**Analysis Method:** Explore Agent (optimized, no diagram generation hang)
+**Generated:** 2025-10-25 **Analysis Method:** Explore Agent (optimized, no diagram generation hang)
 
 ---
 
 ## 1. PROJECT OVERVIEW
 
-**Application Type:** A TypeScript-based conversational AI agent implementing the **Lichen Protocol Memory Layer** - a specialized system for surfacing invisible fields (systemic pressures and behavioral patterns) through guided diagnostic protocols.
+**Application Type:** A TypeScript-based conversational AI agent implementing the **Lichen Protocol
+Memory Layer** - a specialized system for surfacing invisible fields (systemic pressures and
+behavioral patterns) through guided diagnostic protocols.
 
 **Primary Purpose:**
-- Guides users through the Field Diagnostic Protocol - a 6-theme conversational walk that helps identify the systemic forces ("fields") shaping their behavior
+
+- Guides users through the Field Diagnostic Protocol - a 6-theme conversational walk that helps
+  identify the systemic forces ("fields") shaping their behavior
 - Implements cryptographic audit trails and privacy-preserving memory operations
 - Provides REST API backend for frontend integration
 
 **Tech Stack:**
+
 - **Runtime:** Node.js 20+ (npm 10+)
 - **Language:** TypeScript 5.9+
 - **Frameworks:** Express 5.1.0, Mastra 0.19.1 (Anthropic AI SDK wrapper)
@@ -24,6 +28,7 @@
 - **Architecture Pattern:** Event-driven conversational agent with state management
 
 **Key Dependencies:**
+
 - `express` - REST API framework
 - `@anthropic-ai/sdk` - Claude API client
 - `@mastra/core` - Agent framework
@@ -311,12 +316,14 @@ SKIP_API_KEY_CHECK        # Skip API key validation in tests
 ```
 
 **Build Configuration:**
+
 - TypeScript targets ES2022
 - Compiled to CommonJS (Node.js compatible)
 - Output: `dist/` directory
 - Build command: `npm run build` (tsc)
 
 **Deployment:**
+
 - **Docker**: Node.js 20-slim image, runs `node dist/server.js`
 - **Railway**: Uses `Dockerfile`, `railway.json` for config, auto-redeploys on git push
 - **Netlify**: Static HTML frontend (index.html)
@@ -402,7 +409,7 @@ Access-Control-Allow-Headers: [configured headers]
 ### **Rate Limiting:**
 
 - **API**: 100 req/15min per IP
-- **AI endpoints** (/api/walk/*): 20 req/15min (expensive)
+- **AI endpoints** (/api/walk/\*): 20 req/15min (expensive)
 - **Session creation**: 10 sessions/hour per IP
 - **Metrics**: 10 req/min per IP
 
@@ -504,6 +511,7 @@ Access-Control-Allow-Headers: [configured headers]
    - `imgSrc`: `'self'` + `data:` + `https:`
 
 **Deployment**:
+
 - Static file served from Netlify
 - Calls backend API on Railway
 - CORS handles cross-origin requests
@@ -513,6 +521,7 @@ Access-Control-Allow-Headers: [configured headers]
 ## 8. TECHNOLOGY STACK (Complete Breakdown)
 
 ### **Runtime & Build:**
+
 - Node.js 20.x (LTS)
 - npm 10.x
 - TypeScript 5.9.3 (strict mode enabled)
@@ -520,21 +529,25 @@ Access-Control-Allow-Headers: [configured headers]
 - tsx (development runner)
 
 ### **Web Framework:**
+
 - Express 5.1.0
 - Helmet 8.1.0 (security headers)
 - CORS middleware 2.8.5
 - Rate-limiter-flexible 8.1.0 + express-rate-limit 8.1.0
 
 ### **AI/LLM:**
+
 - @anthropic-ai/sdk 0.65.0
 - @mastra/core 0.19.1
 
 ### **Data & Storage:**
+
 - pg 8.16.3 (PostgreSQL)
 - ioredis 5.8.1 (optional, Redis)
 - gray-matter 4.0.3 (YAML frontmatter parsing)
 
 ### **Security & Cryptography:**
+
 - jose 6.1.0 (JWT/JWK)
 - argon2 0.44.0 (password hashing)
 - Node.js crypto (built-in)
@@ -543,16 +556,19 @@ Access-Control-Allow-Headers: [configured headers]
   - AES-256-GCM (envelope encryption)
 
 ### **Monitoring & Observability:**
+
 - prom-client 15.1.3 (Prometheus metrics)
 - Custom metrics for audit, crypto, CORS
 
 ### **Utilities:**
+
 - dotenv 17.2.3 (environment config)
 - glob 11.0.3 (file discovery)
 - proper-lockfile 4.1.2 (file locking for ledger)
 - ajv 8.17.1 + ajv-formats 3.0.1 (JSON Schema validation)
 
 ### **Testing & Development:**
+
 - vitest 3.2.4 (test runner)
 - eslint 9.37.0 + @typescript-eslint plugins (linting)
 - prettier 3.6.2 (code formatting)
@@ -561,6 +577,7 @@ Access-Control-Allow-Headers: [configured headers]
 - node-fetch 2.7.0 (fetch in Node tests)
 
 ### **Frontend (index.html):**
+
 - Vanilla JavaScript (no frameworks)
 - jsPDF 2.5.1 (PDF export via CDN)
 - CSS animations (custom)
@@ -679,6 +696,7 @@ Access-Control-Allow-Headers: [configured headers]
 ### **Code Quality: STRONG**
 
 **Strengths:**
+
 1. **Type Safety**: Strict TypeScript mode, comprehensive interfaces for all major types
 2. **Modularity**: Clear separation of concerns (agent, classifier, composer, registry)
 3. **Error Handling**: Try-catch blocks with fallback rules, structured error responses
@@ -688,6 +706,7 @@ Access-Control-Allow-Headers: [configured headers]
 7. **Performance**: Caching (protocol parser 5-min TTL, entry response cache)
 
 **Areas for Improvement:**
+
 1. **Validator**: Disabled for WALK mode (marked TODO - too strict)
 2. **Response Compression**: Large HTML file (146k+) could benefit from gzip
 3. **Error Messages**: Some could be more actionable (e.g., KEK rotation errors)
@@ -698,6 +717,7 @@ Access-Control-Allow-Headers: [configured headers]
 ### **Security: EXCELLENT (Recent Hardening)**
 
 **Recent Improvements** (Last 7 commits):
+
 1. **X-API-Key Authentication** (6bf9df5)
    - Optional header-based API key validation
    - Fail-closed: 401 if key expected but missing
@@ -717,6 +737,7 @@ Access-Control-Allow-Headers: [configured headers]
    - Fixed validateApiKey middleware error
 
 **Security Features:**
+
 1. **Input Validation**
    - User input: 5000 char max, prompt injection patterns detected
    - Protocol slug: Alphanumeric + hyphens/underscores only (prevents path traversal)
@@ -744,6 +765,7 @@ Access-Control-Allow-Headers: [configured headers]
    - Content stored encrypted in PostgreSQL
 
 **Potential Vulnerabilities:**
+
 1. **API Key in ENV**: X_API_KEY must not be exposed in logs (good practice needed)
 2. **Redis URL**: If exposed, includes plaintext password (SSL recommended for production)
 3. **Session Hijacking**: In-memory sessions lost on restart; Redis is ephemeral too
@@ -778,12 +800,14 @@ Access-Control-Allow-Headers: [configured headers]
 ### **Deployment Readiness: PRODUCTION-GRADE**
 
 **Deployment Strategy:**
+
 - **Backend**: Docker on Railway (Node.js 20-slim)
 - **Frontend**: Static on Netlify (index.html)
 - **Database**: PostgreSQL (optional, with fallback)
 - **Session Store**: Redis (optional, with fallback to in-memory)
 
 **Production Checklist** (from DEPLOYMENT.md):
+
 - [x] Docker image building
 - [x] Railway environment variables
 - [x] CORS configuration for specific origins
@@ -827,14 +851,17 @@ Access-Control-Allow-Headers: [configured headers]
 ### **Testing Coverage:**
 
 **Test Categories:**
+
 1. **Smoke Tests**: health-smoke.ts, cors-smoke.test.ts, phase-2-smoke.test.ts
-2. **Cryptography**: jwks-verification.test.ts, encryption-roundtrip.test.ts, merkle-canonical-json.test.ts
+2. **Cryptography**: jwks-verification.test.ts, encryption-roundtrip.test.ts,
+   merkle-canonical-json.test.ts
 3. **Memory Layer**: memory-operations.test.ts, memory-storage.test.ts, memory-middleware.test.ts
 4. **Database**: postgres-store.test.ts, dual-write.test.ts
 5. **Security**: phase-3-review-fixes.test.ts, hard-delete-verification.test.ts
 6. **Compatibility**: compat-store-request.test.ts, kek-rotation.test.ts
 
 **Gaps:**
+
 - No frontend integration tests
 - Limited UI/UX testing
 - No load/stress testing documented
@@ -843,23 +870,28 @@ Access-Control-Allow-Headers: [configured headers]
 
 ## SUMMARY
 
-This is a **well-architected, security-hardened conversational AI agent** implementing an advanced memory layer with cryptographic audit trails. The codebase demonstrates:
+This is a **well-architected, security-hardened conversational AI agent** implementing an advanced
+memory layer with cryptographic audit trails. The codebase demonstrates:
 
 - **Strong engineering**: Proper separation of concerns, type safety, comprehensive testing
 - **Security-first**: Recent CORS/CSP hardening, API key validation, encryption, audit trails
 - **Production-ready deployment**: Docker, Railway, Netlify, health checks, rate limiting
 - **Advanced features**: Merkle trees, Ed25519 signing, envelope encryption, consent families
-- **Phase-based architecture**: Foundation (Phase 0) → Audit (Phase 1) → Memory APIs (Phase 2) → Privacy & Encryption (Phase 3)
+- **Phase-based architecture**: Foundation (Phase 0) → Audit (Phase 1) → Memory APIs (Phase 2) →
+  Privacy & Encryption (Phase 3)
 
 **Key Files to Monitor:**
+
 - `src/server.ts:*` - Core API and middleware
 - `src/agent.ts:*` - Conversation orchestration
 - `src/memory-layer/` - Encryption, audit, governance
 - `index.html` - Frontend (ensure CSP headers are correct)
 - `migrations/` - Database schema (if using PostgreSQL)
 
-**Deployment Readiness**: **95%** - Minor gaps in APM, log aggregation, multi-instance session management.
+**Deployment Readiness**: **95%** - Minor gaps in APM, log aggregation, multi-instance session
+management.
 
 ---
 
-**Analysis completed without diagram generation hang** - Used Explore agent instead of full /analyze command for faster, more comprehensive results.
+**Analysis completed without diagram generation hang** - Used Explore agent instead of full /analyze
+command for faster, more comprehensive results.

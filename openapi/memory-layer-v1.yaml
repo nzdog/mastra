@@ -100,29 +100,29 @@ paths:
                 value:
                   content:
                     type: text
-                    data: "User completed onboarding tutorial"
+                    data: 'User completed onboarding tutorial'
                     metadata:
-                      source: "app.tutorial"
+                      source: 'app.tutorial'
                   metadata:
-                    hashed_pseudonym: "hs_abc123def456ghi789jkl012mno345pqr678stu"
-                    session_id: "session_abc123"
-                    consent_family: "personal"
-                    consent_timestamp: "2025-10-17T12:00:00Z"
-                    consent_version: "1.0"
+                    hashed_pseudonym: 'hs_abc123def456ghi789jkl012mno345pqr678stu'
+                    session_id: 'session_abc123'
+                    consent_family: 'personal'
+                    consent_timestamp: '2025-10-17T12:00:00Z'
+                    consent_version: '1.0'
               cohortStructured:
                 summary: Store cohort structured data
                 value:
                   content:
                     type: structured
                     data:
-                      action: "feature_used"
-                      feature: "dark_mode"
+                      action: 'feature_used'
+                      feature: 'dark_mode'
                       duration_seconds: 300
                   metadata:
-                    hashed_pseudonym: "a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd"
-                    consent_family: "cohort"
-                    consent_timestamp: "2025-10-17T12:00:00Z"
-                    consent_version: "1.0"
+                    hashed_pseudonym: 'a1b2c3d4e5f6789012345678901234567890123456789012345678901234abcd'
+                    consent_family: 'cohort'
+                    consent_timestamp: '2025-10-17T12:00:00Z'
+                    consent_version: '1.0'
       responses:
         '201':
           description: Memory successfully stored
@@ -260,10 +260,10 @@ paths:
               cohortCount:
                 summary: Count features used by cohort
                 value:
-                  cohort_id: "cohort_premium_users"
+                  cohort_id: 'cohort_premium_users'
                   aggregation:
                     type: count
-                    field: "feature"
+                    field: 'feature'
                   filters:
                     content_type: structured
                     consent_family: cohort
@@ -273,12 +273,12 @@ paths:
                 value:
                   aggregation:
                     type: average
-                    field: "duration_seconds"
+                    field: 'duration_seconds'
                     time_bucket: day
                   filters:
                     consent_family: population
-                    since: "2025-10-01T00:00:00Z"
-                    until: "2025-10-17T23:59:59Z"
+                    since: '2025-10-01T00:00:00Z'
+                    until: '2025-10-17T23:59:59Z'
                   min_records: 100
       responses:
         '200':
@@ -480,19 +480,19 @@ components:
       description: API version
       schema:
         type: string
-        example: "1.0.0"
+        example: '1.0.0'
 
     X-Spec-Version:
       description: Specification version
       schema:
         type: string
-        example: "1.0"
+        example: '1.0'
 
     X-SLO-Latency:
       description: Request latency in milliseconds
       schema:
         type: string
-        example: "245ms"
+        example: '245ms'
 
   schemas:
     HealthResponse:
@@ -510,7 +510,7 @@ components:
           format: date-time
         version:
           type: string
-          example: "1.0.0"
+          example: '1.0.0'
         audit_system:
           type: object
           properties:
@@ -965,13 +965,13 @@ components:
           example:
             error:
               code: VALIDATION_ERROR
-              message: "Invalid request body"
+              message: 'Invalid request body'
               details:
-                field: "content.type"
-                reason: "Must be one of: text, structured, embedding"
-            timestamp: "2025-10-17T12:00:00Z"
-            path: "/v1/personal/store"
-            method: "POST"
+                field: 'content.type'
+                reason: 'Must be one of: text, structured, embedding'
+            timestamp: '2025-10-17T12:00:00Z'
+            path: '/v1/personal/store'
+            method: 'POST'
 
     Unauthorized:
       description: Authentication required or failed
@@ -982,10 +982,10 @@ components:
           example:
             error:
               code: UNAUTHORIZED
-              message: "Missing Authorization header"
-            timestamp: "2025-10-17T12:00:00Z"
-            path: "/v1/personal/recall"
-            method: "GET"
+              message: 'Missing Authorization header'
+            timestamp: '2025-10-17T12:00:00Z'
+            path: '/v1/personal/recall'
+            method: 'GET'
 
     Forbidden:
       description: Authenticated but lacks permission
@@ -996,13 +996,13 @@ components:
           example:
             error:
               code: FORBIDDEN
-              message: "Access denied for consent family: population"
+              message: 'Access denied for consent family: population'
               details:
-                family: "population"
-                hashed_pseudonym: "hs_abc123def456ghi789jkl012mno345pqr678stu"
-            timestamp: "2025-10-17T12:00:00Z"
-            path: "/v1/population/distill"
-            method: "POST"
+                family: 'population'
+                hashed_pseudonym: 'hs_abc123def456ghi789jkl012mno345pqr678stu'
+            timestamp: '2025-10-17T12:00:00Z'
+            path: '/v1/population/distill'
+            method: 'POST'
 
     NotFound:
       description: Requested resource not found
@@ -1013,12 +1013,12 @@ components:
           example:
             error:
               code: NOT_FOUND
-              message: "Memory record not found"
+              message: 'Memory record not found'
               details:
-                id: "550e8400-e29b-41d4-a716-446655440000"
-            timestamp: "2025-10-17T12:00:00Z"
-            path: "/v1/personal/recall"
-            method: "GET"
+                id: '550e8400-e29b-41d4-a716-446655440000'
+            timestamp: '2025-10-17T12:00:00Z'
+            path: '/v1/personal/recall'
+            method: 'GET'
 
     InternalError:
       description: Unexpected server error
@@ -1029,8 +1029,8 @@ components:
           example:
             error:
               code: INTERNAL_ERROR
-              message: "An unexpected error occurred"
-              trace_id: "trace_1234567890abcdef"
-            timestamp: "2025-10-17T12:00:00Z"
-            path: "/v1/personal/store"
-            method: "POST"
+              message: 'An unexpected error occurred'
+              trace_id: 'trace_1234567890abcdef'
+            timestamp: '2025-10-17T12:00:00Z'
+            path: '/v1/personal/store'
+            method: 'POST'

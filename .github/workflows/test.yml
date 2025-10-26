@@ -52,10 +52,13 @@ jobs:
       NODE_ENV: test
       PERSISTENCE: postgres
 
+      # Anthropic API (placeholder for tests - not used in unit/integration tests)
+      ANTHROPIC_API_KEY: sk-ant-test-key-placeholder-for-ci-testing-only
+
       # Encryption (using memory KMS for tests)
       ENCRYPTION_ENABLED: true
       KMS_PROVIDER: memory
-      DEV_KEK_BASE64: dGVzdC1rZWstZm9yLWNpLXRlc3Rpbmctb25seS0zMi1ieXRlcw==  # test-only KEK
+      DEV_KEK_BASE64: dGVzdC1rZWstZm9yLWNpLXRlc3Rpbmctb25seS0zMi1ieXRlcw== # test-only KEK
 
       # Phase 3.2: Ledger configuration for graceful degradation
       LEDGER_ENABLED: false
@@ -68,7 +71,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.19.0'
           cache: 'npm'
 
       - name: Cache node_modules

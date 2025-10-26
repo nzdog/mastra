@@ -106,7 +106,10 @@ function mapLegacyConsentFamily(value: string): ConsentFamily | null {
  * Synthesize metadata field from legacy request format
  * Legacy format had hashed_pseudonym, consent_family, etc. at top level
  */
-function synthesizeMetadata(body: any, consentContext?: any): any {
+function synthesizeMetadata(
+  body: Record<string, unknown>,
+  consentContext?: Record<string, unknown>
+): Record<string, unknown> | null {
   const allowLegacyMetadata = process.env.COMPAT_ALLOW_LEGACY_METADATA === 'true';
 
   // If metadata already exists, no synthesis needed
@@ -135,10 +138,10 @@ function synthesizeMetadata(body: any, consentContext?: any): any {
 
   // Synthesize metadata object
   return {
-    hashed_pseudonym: hashedPseudonym,
-    consent_family: mapLegacyConsentFamily(consentFamily) || 'personal',
-    consent_timestamp: consentTimestamp,
-    consent_version: consentVersion,
+    hashed_pseudonym: String(hashedPseudonym),
+    consent_family: mapLegacyConsentFamily(String(consentFamily)) || 'personal',
+    consent_timestamp: String(consentTimestamp),
+    consent_version: String(consentVersion),
   };
 }
 
@@ -160,8 +163,9 @@ export function compatShim(req: Request, res: Response, next: NextFunction): voi
     return next();
   }
 
-  const body = req.body as any;
-  const consentContext = (req as any).consentContext;
+  const body = req.body as Record<string, unknown>;
+  const consentContext = (req as unknown as { consentContext?: Record<string, unknown> })
+    .consentContext;
 
   // Step 1: Synthesize metadata if missing
   const synthesizedMetadata = synthesizeMetadata(body, consentContext);
@@ -170,8 +174,9 @@ export function compatShim(req: Request, res: Response, next: NextFunction): voi
   }
 
   // Step 2: Map legacy consent_family in metadata (if it exists now)
-  if (body.metadata?.consent_family) {
-    const originalFamily = body.metadata.consent_family;
+  const metadata = body.metadata as Record<string, unknown> | undefined;
+  if (metadata && typeof metadata.consent_family === 'string') {
+    const originalFamily = metadata.consent_family;
     const mappedFamily = mapLegacyConsentFamily(originalFamily);
 
     if (mappedFamily === null) {
@@ -182,7 +187,7 @@ export function compatShim(req: Request, res: Response, next: NextFunction): voi
       // Let schema validator reject it
     } else if (mappedFamily !== originalFamily) {
       // Legacy alias detected, map to canonical
-      body.metadata.consent_family = mappedFamily;
+      metadata.consent_family = mappedFamily;
     }
   }
 

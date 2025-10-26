@@ -136,7 +136,7 @@ export class DualStore implements MemoryStore {
       }
 
       return secondaryResults;
-    } catch (err) {
+    } catch (err: unknown) {
       // If primary fails, try secondary
       console.error('[DualStore] Primary recall failed, trying secondary:', err);
       dualWriteFailuresTotal.inc({
@@ -326,8 +326,8 @@ export class DualStore implements MemoryStore {
    * Close: Close both stores (for graceful shutdown)
    */
   async close(): Promise<void> {
-    const primaryClose = (this.primaryStore as any).close;
-    const secondaryClose = (this.secondaryStore as any).close;
+    const primaryClose = (this.primaryStore as { close?: () => Promise<void> }).close;
+    const secondaryClose = (this.secondaryStore as { close?: () => Promise<void> }).close;
 
     await Promise.all([
       primaryClose ? primaryClose.call(this.primaryStore) : Promise.resolve(),

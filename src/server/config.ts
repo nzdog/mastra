@@ -51,7 +51,9 @@ function initializeSessionStore(apiKey: string | undefined): SessionStore {
 
         // Fail-fast in production to prevent session data loss
         if (process.env.NODE_ENV === 'production') {
-          console.error('⚠️  Redis is required for production. Cannot continue with failed connection.');
+          console.error(
+            '⚠️  Redis is required for production. Cannot continue with failed connection.'
+          );
           console.error('   Either fix REDIS_URL or unset it to use in-memory store.');
           process.exit(1);
         }

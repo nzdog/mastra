@@ -1,327 +1,341 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Welcome to Lichen</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
 
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+        background: #fafaf9;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 3rem 1.5rem;
+      }
+
+      /* Logo */
+      .logo-container {
+        position: absolute;
+        top: 2.5rem;
+        left: 50%;
+        transform: translateX(-50%);
+        opacity: 0;
+        animation: fadeInLogo 1s ease forwards;
+        animation-delay: 0.1s;
+        z-index: 100;
+      }
+
+      .logo {
+        width: 48px;
+        height: 48px;
+        opacity: 0.85;
+      }
+
+      @keyframes fadeInLogo {
+        to {
+          opacity: 1;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+
+      .onboarding-container {
+        max-width: 640px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 5rem;
+        padding-top: 5rem;
+      }
+
+      /* Welcome */
+      .welcome {
+        font-size: 1.625rem;
+        line-height: 1.75;
+        color: #292524;
+        font-weight: 400;
+      }
+
+      /* Orientation */
+      .orientation {
+        font-size: 1.0625rem;
+        line-height: 1.8;
+        color: #57534e;
+      }
+
+      /* Threshold Sequence */
+      .threshold-sequence {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+      }
+
+      .sequence-label {
+        font-size: 0.8125rem;
+        letter-spacing: 0.05em;
+        color: #a8a29e;
+      }
+
+      .sequence-phases {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+      }
+
+      .phase {
+        display: flex;
+        flex-direction: column;
+        gap: 0.625rem;
+      }
+
+      .phase-number {
+        font-size: 0.75rem;
+        letter-spacing: 0.08em;
+        color: #a8a29e;
+      }
+
+      .phase-name {
+        font-size: 1.125rem;
+        font-weight: 500;
+        color: #292524;
+      }
+
+      .phase-description {
+        font-size: 0.9375rem;
+        line-height: 1.7;
+        color: #78716c;
+        padding-left: 1.25rem;
+        border-left: 1px solid #e7e5e4;
+      }
+
+      /* Begin Section */
+      .begin-section {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+        padding-top: 2rem;
+        border-top: 1px solid #f5f5f4;
+      }
+
+      .begin-question {
+        font-size: 1.375rem;
+        line-height: 1.6;
+        color: #292524;
+        font-weight: 400;
+      }
+
+      .begin-input {
+        width: 100%;
+        font-size: 1.125rem;
+        line-height: 1.7;
+        padding: 1.5rem 0;
+        border: none;
+        border-bottom: 1px solid #e7e5e4;
+        background: transparent;
+        color: #1c1917;
+        font-family: inherit;
+        transition: border-color 0.4s ease;
+      }
+
+      .begin-input:focus {
+        outline: none;
+        border-bottom-color: #78716c;
+      }
+
+      .begin-input::placeholder {
+        color: #d6d3d1;
+      }
+
+      .begin-action {
+        opacity: 0;
+        transition: opacity 0.6s ease;
+        text-align: center;
+      }
+
+      .begin-action.visible {
+        opacity: 1;
+      }
+
+      .begin-link {
+        font-size: 0.875rem;
+        letter-spacing: 0.03em;
+        color: #78716c;
+        text-decoration: none;
+        transition: color 0.3s ease;
+      }
+
+      .begin-link:hover {
+        color: #57534e;
+      }
+
+      /* Fade-in animation */
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(12px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .onboarding-container > * {
+        animation: fadeIn 0.8s ease forwards;
+        opacity: 0;
+      }
+
+      .welcome {
+        animation-delay: 0.3s;
+      }
+      .orientation {
+        animation-delay: 0.7s;
+      }
+      .threshold-sequence {
+        animation-delay: 1.1s;
+      }
+      .begin-section {
+        animation-delay: 1.5s;
+      }
+
+      /* Mobile adjustments */
+      @media (max-width: 640px) {
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            background: #FAFAF9;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 3rem 1.5rem;
-        }
-
-        /* Logo */
-        .logo-container {
-            position: absolute;
-            top: 2.5rem;
-            left: 50%;
-            transform: translateX(-50%);
-            opacity: 0;
-            animation: fadeInLogo 1s ease forwards;
-            animation-delay: 0.1s;
-            z-index: 100;
-        }
-
-        .logo {
-            width: 48px;
-            height: 48px;
-            opacity: 0.85;
-        }
-
-        @keyframes fadeInLogo {
-            to {
-                opacity: 1;
-            }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                transition-duration: 0.01ms !important;
-            }
+          padding: 2rem 1.25rem;
         }
 
         .onboarding-container {
-            max-width: 640px;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            gap: 5rem;
-            padding-top: 5rem;
+          gap: 4rem;
         }
 
-        /* Welcome */
         .welcome {
-            font-size: 1.625rem;
-            line-height: 1.75;
-            color: #292524;
-            font-weight: 400;
-        }
-
-        /* Orientation */
-        .orientation {
-            font-size: 1.0625rem;
-            line-height: 1.8;
-            color: #57534E;
-        }
-
-        /* Threshold Sequence */
-        .threshold-sequence {
-            display: flex;
-            flex-direction: column;
-            gap: 2rem;
-        }
-
-        .sequence-label {
-            font-size: 0.8125rem;
-            letter-spacing: 0.05em;
-            color: #A8A29E;
-        }
-
-        .sequence-phases {
-            display: flex;
-            flex-direction: column;
-            gap: 2.5rem;
-        }
-
-        .phase {
-            display: flex;
-            flex-direction: column;
-            gap: 0.625rem;
-        }
-
-        .phase-number {
-            font-size: 0.75rem;
-            letter-spacing: 0.08em;
-            color: #A8A29E;
-        }
-
-        .phase-name {
-            font-size: 1.125rem;
-            font-weight: 500;
-            color: #292524;
-        }
-
-        .phase-description {
-            font-size: 0.9375rem;
-            line-height: 1.7;
-            color: #78716C;
-            padding-left: 1.25rem;
-            border-left: 1px solid #E7E5E4;
-        }
-
-        /* Begin Section */
-        .begin-section {
-            display: flex;
-            flex-direction: column;
-            gap: 2.5rem;
-            padding-top: 2rem;
-            border-top: 1px solid #F5F5F4;
+          font-size: 1.375rem;
         }
 
         .begin-question {
-            font-size: 1.375rem;
-            line-height: 1.6;
-            color: #292524;
-            font-weight: 400;
+          font-size: 1.25rem;
         }
-
-        .begin-input {
-            width: 100%;
-            font-size: 1.125rem;
-            line-height: 1.7;
-            padding: 1.5rem 0;
-            border: none;
-            border-bottom: 1px solid #E7E5E4;
-            background: transparent;
-            color: #1C1917;
-            font-family: inherit;
-            transition: border-color 0.4s ease;
-        }
-
-        .begin-input:focus {
-            outline: none;
-            border-bottom-color: #78716C;
-        }
-
-        .begin-input::placeholder {
-            color: #D6D3D1;
-        }
-
-        .begin-action {
-            opacity: 0;
-            transition: opacity 0.6s ease;
-            text-align: center;
-        }
-
-        .begin-action.visible {
-            opacity: 1;
-        }
-
-        .begin-link {
-            font-size: 0.875rem;
-            letter-spacing: 0.03em;
-            color: #78716C;
-            text-decoration: none;
-            transition: color 0.3s ease;
-        }
-
-        .begin-link:hover {
-            color: #57534E;
-        }
-
-        /* Fade-in animation */
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(12px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .onboarding-container > * {
-            animation: fadeIn 0.8s ease forwards;
-            opacity: 0;
-        }
-
-        .welcome { animation-delay: 0.3s; }
-        .orientation { animation-delay: 0.7s; }
-        .threshold-sequence { animation-delay: 1.1s; }
-        .begin-section { animation-delay: 1.5s; }
-
-        /* Mobile adjustments */
-        @media (max-width: 640px) {
-            body {
-                padding: 2rem 1.25rem;
-            }
-
-            .onboarding-container {
-                gap: 4rem;
-            }
-
-            .welcome {
-                font-size: 1.375rem;
-            }
-
-            .begin-question {
-                font-size: 1.25rem;
-            }
-        }
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <!-- Logo -->
     <div class="logo-container">
-        <img src="./assets/lichen-logo.png" alt="Lichen Protocol" class="logo">
+      <img src="./assets/lichen-logo.png" alt="Lichen Protocol" class="logo" />
     </div>
 
     <div class="onboarding-container">
-        <!-- Welcome -->
-        <div class="welcome">
-            Welcome to a different way of building.
-        </div>
+      <!-- Welcome -->
+      <div class="welcome">Welcome to a different way of building.</div>
 
-        <!-- Orientation -->
-        <div class="orientation">
-            This is the Lichen Protocol. You're here because the typical startup rhythm—urgency, proof-seeking, constant motion—no longer fits. What follows is a series of reflective walks designed to help you see the field you've been operating in, exit what no longer serves, and rest in coherence before building what's next.
-        </div>
+      <!-- Orientation -->
+      <div class="orientation">
+        This is the Lichen Protocol. You're here because the typical startup rhythm—urgency,
+        proof-seeking, constant motion—no longer fits. What follows is a series of reflective walks
+        designed to help you see the field you've been operating in, exit what no longer serves, and
+        rest in coherence before building what's next.
+      </div>
 
-        <!-- Threshold Sequence -->
-        <div class="threshold-sequence">
-            <div class="sequence-label">What you'll walk through</div>
-            
-            <div class="sequence-phases">
-                <div class="phase">
-                    <div class="phase-number">First</div>
-                    <div class="phase-name">Field Diagnostic</div>
-                    <div class="phase-description">
-                        A mirror to see the invisible architecture shaping your decisions, pace, and energy. You'll recognize the field you've been in—whether urgency, burnout, proof-seeking, or early coherence.
-                    </div>
-                </div>
+      <!-- Threshold Sequence -->
+      <div class="threshold-sequence">
+        <div class="sequence-label">What you'll walk through</div>
 
-                <div class="phase">
-                    <div class="phase-number">Second</div>
-                    <div class="phase-name">Field Exit</div>
-                    <div class="phase-description">
-                        Five protocols for leaving a field that no longer serves you. Not abandonment, but composting—transformation through conscious closure, extracting wisdom, and walking forward without residue.
-                    </div>
-                </div>
-
-                <div class="phase">
-                    <div class="phase-number">Third</div>
-                    <div class="phase-name">Resting in the Not-Yet</div>
-                    <div class="phase-description">
-                        The fertile emptiness between exit and emergence. A protected space where new coherence can germinate unseen, before form appears.
-                    </div>
-                </div>
+        <div class="sequence-phases">
+          <div class="phase">
+            <div class="phase-number">First</div>
+            <div class="phase-name">Field Diagnostic</div>
+            <div class="phase-description">
+              A mirror to see the invisible architecture shaping your decisions, pace, and energy.
+              You'll recognize the field you've been in—whether urgency, burnout, proof-seeking, or
+              early coherence.
             </div>
-        </div>
+          </div>
 
-        <!-- Begin Section -->
-        <div class="begin-section">
-            <div class="begin-question">
-                What feels normal in your work right now?
+          <div class="phase">
+            <div class="phase-number">Second</div>
+            <div class="phase-name">Field Exit</div>
+            <div class="phase-description">
+              Five protocols for leaving a field that no longer serves you. Not abandonment, but
+              composting—transformation through conscious closure, extracting wisdom, and walking
+              forward without residue.
             </div>
+          </div>
 
-            <input 
-                type="text" 
-                class="begin-input" 
-                id="reflection-input"
-                placeholder="Take your time."
-            />
-
-            <div class="begin-action" id="begin-action">
-                <a href="#" class="begin-link" id="begin-link">Begin the reflection</a>
+          <div class="phase">
+            <div class="phase-number">Third</div>
+            <div class="phase-name">Resting in the Not-Yet</div>
+            <div class="phase-description">
+              The fertile emptiness between exit and emergence. A protected space where new
+              coherence can germinate unseen, before form appears.
             </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Begin Section -->
+      <div class="begin-section">
+        <div class="begin-question">What feels normal in your work right now?</div>
+
+        <input
+          type="text"
+          class="begin-input"
+          id="reflection-input"
+          placeholder="Take your time."
+        />
+
+        <div class="begin-action" id="begin-action">
+          <a href="#" class="begin-link" id="begin-link">Begin the reflection</a>
+        </div>
+      </div>
     </div>
 
     <script>
-        const input = document.getElementById('reflection-input');
-        const beginAction = document.getElementById('begin-action');
-        const beginLink = document.getElementById('begin-link');
+      const input = document.getElementById('reflection-input');
+      const beginAction = document.getElementById('begin-action');
+      const beginLink = document.getElementById('begin-link');
 
-        // Show begin link when input has content
-        input.addEventListener('input', () => {
-            if (input.value.trim().length > 0) {
-                beginAction.classList.add('visible');
-            } else {
-                beginAction.classList.remove('visible');
-            }
-        });
+      // Show begin link when input has content
+      input.addEventListener('input', () => {
+        if (input.value.trim().length > 0) {
+          beginAction.classList.add('visible');
+        } else {
+          beginAction.classList.remove('visible');
+        }
+      });
 
-        // Begin reflection
-        beginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            
-            const userResponse = input.value.trim();
-            if (!userResponse) return;
+      // Begin reflection
+      beginLink.addEventListener('click', (e) => {
+        e.preventDefault();
 
-            // Fade out current content
-            document.body.style.transition = 'opacity 0.8s ease';
-            document.body.style.opacity = '0';
+        const userResponse = input.value.trim();
+        if (!userResponse) return;
 
-            // In production: transition to Field Diagnostic
-            setTimeout(() => {
-                console.log('Transitioning to Field Diagnostic with:', userResponse);
-                // window.location.href = '/field-diagnostic?initial=' + encodeURIComponent(userResponse);
-            }, 800);
-        });
+        // Fade out current content
+        document.body.style.transition = 'opacity 0.8s ease';
+        document.body.style.opacity = '0';
+
+        // In production: transition to Field Diagnostic
+        setTimeout(() => {
+          console.log('Transitioning to Field Diagnostic with:', userResponse);
+          // window.location.href = '/field-diagnostic?initial=' + encodeURIComponent(userResponse);
+        }, 800);
+      });
     </script>
-</body>
+  </body>
 </html>

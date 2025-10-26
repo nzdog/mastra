@@ -53,7 +53,7 @@ Authorization: Bearer <token>
 
 **Development Mode:**
 - Accepts any token matching the format above
-- Extracts user_id from token (e.g., `user_abc123` from token `user_abc123`)
+- Extracts hashed_pseudonym from token (e.g., `user_abc123` from token `user_abc123`)
 
 **Production:**
 - JWT tokens with signature verification
@@ -146,7 +146,7 @@ Stores a new memory record with consent family validation.
     "metadata": {}
   },
   "metadata": {
-    "user_id": "string",
+    "hashed_pseudonym": "string",
     "session_id": "string (optional)",
     "consent_family": "personal|cohort",
     "consent_timestamp": "ISO 8601",
@@ -160,7 +160,7 @@ Stores a new memory record with consent family validation.
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "user_id": "user_12345",
+  "hashed_pseudonym": "user_12345",
   "session_id": "session_abc123",
   "consent_family": "personal",
   "created_at": "2025-10-17T12:00:00Z",
@@ -184,7 +184,7 @@ Retrieves memory records with consent family enforcement.
 - `family` (string, required): Consent family (`personal`, `cohort`)
 
 **Query Parameters:**
-- `user_id` (string, required): User identifier
+- `hashed_pseudonym` (string, required): User identifier
 - `session_id` (string, optional): Session filter
 - `since` (ISO 8601, optional): Filter records created after this timestamp
 - `until` (ISO 8601, optional): Filter records created before this timestamp
@@ -199,7 +199,7 @@ Retrieves memory records with consent family enforcement.
   "records": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
-      "user_id": "user_12345",
+      "hashed_pseudonym": "user_12345",
       "session_id": "session_abc123",
       "content": {
         "type": "text",
@@ -223,7 +223,7 @@ Retrieves memory records with consent family enforcement.
     "has_more": false
   },
   "query": {
-    "user_id": "user_12345",
+    "hashed_pseudonym": "user_12345",
     "session_id": "session_abc123",
     "since": "2025-10-01T00:00:00Z"
   },
@@ -312,12 +312,12 @@ Deletes memory records with consent family enforcement. Supports GDPR right to b
 
 **Query Parameters:**
 - `id` (string, optional): Specific memory record ID to delete
-- `user_id` (string, optional): Delete all memories for this user
+- `hashed_pseudonym` (string, optional): Delete all memories for this user
 - `session_id` (string, optional): Delete all memories for this session
 - `reason` (string, optional): Deletion reason (for audit trail)
 - `hard_delete` (boolean, optional): Hard delete vs soft delete (default: false)
 
-**Note:** At least one of `id`, `user_id`, or `session_id` must be provided.
+**Note:** At least one of `id`, `hashed_pseudonym`, or `session_id` must be provided.
 
 **Response (200 OK):**
 ```json
@@ -330,7 +330,7 @@ Deletes memory records with consent family enforcement. Supports GDPR right to b
   ],
   "hard_delete": false,
   "metadata": {
-    "user_id": "user_12345",
+    "hashed_pseudonym": "user_12345",
     "reason": "GDPR data deletion request"
   },
   "audit_receipt_id": "receipt_forget_789",
@@ -352,7 +352,7 @@ Exports user data with consent family enforcement. Supports GDPR data portabilit
 - `family` (string, required): Consent family (`personal`)
 
 **Query Parameters:**
-- `user_id` (string, required): User identifier
+- `hashed_pseudonym` (string, required): User identifier
 - `format` (string, required): Export format (`json`, `csv`, `jsonlines`)
 - `consent_families` (array, optional): Filter by families (comma-separated)
 - `since` (ISO 8601, optional): Filter records created after this timestamp
@@ -368,7 +368,7 @@ Exports user data with consent family enforcement. Supports GDPR data portabilit
     "records": []
   },
   "metadata": {
-    "user_id": "user_12345",
+    "hashed_pseudonym": "user_12345",
     "format": "json",
     "record_count": 42,
     "size_bytes": 15360,
@@ -406,7 +406,7 @@ curl -X POST http://localhost:4099/v1/personal/store \
       "data": "User completed onboarding tutorial"
     },
     "metadata": {
-      "user_id": "user_alice123",
+      "hashed_pseudonym": "user_alice123",
       "session_id": "session_xyz789",
       "consent_family": "personal",
       "consent_timestamp": "2025-10-17T12:00:00Z",
@@ -419,7 +419,7 @@ curl -X POST http://localhost:4099/v1/personal/store \
 ```json
 {
   "id": "550e8400-e29b-41d4-a716-446655440000",
-  "user_id": "user_alice123",
+  "hashed_pseudonym": "user_alice123",
   "session_id": "session_xyz789",
   "consent_family": "personal",
   "created_at": "2025-10-17T12:00:00.123Z",
@@ -434,7 +434,7 @@ curl -X POST http://localhost:4099/v1/personal/store \
 
 **Request:**
 ```bash
-curl -X GET "http://localhost:4099/v1/personal/recall?user_id=user_alice123&limit=10" \
+curl -X GET "http://localhost:4099/v1/personal/recall?hashed_pseudonym=user_alice123&limit=10" \
   -H "Authorization: Bearer user_alice123"
 ```
 
@@ -444,7 +444,7 @@ curl -X GET "http://localhost:4099/v1/personal/recall?user_id=user_alice123&limi
   "records": [
     {
       "id": "550e8400-e29b-41d4-a716-446655440000",
-      "user_id": "user_alice123",
+      "hashed_pseudonym": "user_alice123",
       "session_id": "session_xyz789",
       "content": {
         "type": "text",
@@ -468,7 +468,7 @@ curl -X GET "http://localhost:4099/v1/personal/recall?user_id=user_alice123&limi
     "has_more": false
   },
   "query": {
-    "user_id": "user_alice123"
+    "hashed_pseudonym": "user_alice123"
   },
   "audit_receipt_id": "receipt_1729166401456_def",
   "timestamp": "2025-10-17T12:00:01.456Z"
@@ -531,7 +531,7 @@ curl -X POST http://localhost:4099/v1/cohort/distill \
 
 **Request:**
 ```bash
-curl -X DELETE "http://localhost:4099/v1/personal/forget?user_id=user_alice123&reason=GDPR%20deletion%20request" \
+curl -X DELETE "http://localhost:4099/v1/personal/forget?hashed_pseudonym=user_alice123&reason=GDPR%20deletion%20request" \
   -H "Authorization: Bearer user_alice123"
 ```
 
@@ -545,7 +545,7 @@ curl -X DELETE "http://localhost:4099/v1/personal/forget?user_id=user_alice123&r
   ],
   "hard_delete": false,
   "metadata": {
-    "user_id": "user_alice123",
+    "hashed_pseudonym": "user_alice123",
     "reason": "GDPR deletion request"
   },
   "audit_receipt_id": "receipt_1729166403012_jkl",
@@ -559,7 +559,7 @@ curl -X DELETE "http://localhost:4099/v1/personal/forget?user_id=user_alice123&r
 
 **Request:**
 ```bash
-curl -X GET "http://localhost:4099/v1/personal/export?user_id=user_alice123&format=json&include_audit=true" \
+curl -X GET "http://localhost:4099/v1/personal/export?hashed_pseudonym=user_alice123&format=json&include_audit=true" \
   -H "Authorization: Bearer user_alice123"
 ```
 
@@ -579,7 +579,7 @@ curl -X GET "http://localhost:4099/v1/personal/export?user_id=user_alice123&form
     ]
   },
   "metadata": {
-    "user_id": "user_alice123",
+    "hashed_pseudonym": "user_alice123",
     "format": "json",
     "record_count": 1,
     "size_bytes": 256,

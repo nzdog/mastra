@@ -38,8 +38,8 @@ jobs:
       PGPASSWORD: postgres
 
       # Phase 3.2: Ledger configuration for CI
-      LEDGER_ENABLED: "false"
-      LEDGER_OPTIONAL: "true"
+      LEDGER_ENABLED: 'false'
+      LEDGER_OPTIONAL: 'true'
 
       # Anthropic API Expose
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -50,7 +50,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.19.0'
           cache: 'npm'
 
       - name: Install dependencies
@@ -82,7 +82,7 @@ jobs:
       # Test Gates
       - name: 'Gate: Unit tests'
         run: npm test
-        continue-on-error: true  # Tests optional in Phase 0
+        continue-on-error: true # Tests optional in Phase 0
 
       # Audit Stub Validation
       - name: 'Gate: Audit emitter stub validation'
@@ -296,7 +296,7 @@ jobs:
 
           # Test 1: 401 Unauthorized error envelope
           echo "🔍 Test 1: 401 error envelope"
-          RESPONSE_401=$(curl -sf -i -X POST http://localhost:3000/v1/personal/store \
+          RESPONSE_401=$(curl -s -i -X POST http://localhost:3000/v1/personal/store \
             -H "Content-Type: application/json" \
             -d '{"content":{"type":"text","data":"test"}}' || true)
 
@@ -309,7 +309,7 @@ jobs:
 
           # Test 2: 400 Validation error envelope
           echo "🔍 Test 2: 400 error envelope"
-          RESPONSE_400=$(curl -sf -i -X POST http://localhost:3000/v1/personal/store \
+          RESPONSE_400=$(curl -s -i -X POST http://localhost:3000/v1/personal/store \
             -H "Content-Type: application/json" \
             -H "Authorization: Bearer test_token_12345678" \
             -d '{"content":{"type":"text","data":"test"}}' || true)
@@ -665,7 +665,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '20.19.0'
           cache: 'npm'
 
       - name: Install dependencies

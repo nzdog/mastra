@@ -1,23 +1,26 @@
 # Phase 2 Middleware & Storage Implementation Summary
 
-**Date:** 2025-10-17
-**Branch:** phase-1.2-verification-metrics (ready for phase-2 branch)
+**Date:** 2025-10-17 **Branch:** phase-1.2-verification-metrics (ready for phase-2 branch)
 **Status:** Complete - Middleware and Storage Layers Implemented
 
 ---
 
 ## Overview
 
-Implemented middleware and storage layers for Phase 2 of the Memory Layer specification. All components follow the fail-closed security principle, emit audit events, and integrate with Phase 1 governance infrastructure.
+Implemented middleware and storage layers for Phase 2 of the Memory Layer specification. All
+components follow the fail-closed security principle, emit audit events, and integrate with Phase 1
+governance infrastructure.
 
 ---
 
 ## Components Implemented
 
 ### 1. Consent Family Resolver Middleware
+
 **File:** `src/memory-layer/middleware/consent-resolver.ts`
 
 **Features:**
+
 - Extracts consent family from URL path: `/v1/{family}/{operation}`
 - Validates consent family: `personal`, `cohort`, `population`
 - Validates Bearer token authentication (mock for dev, extensible for production)
@@ -27,19 +30,21 @@ Implemented middleware and storage layers for Phase 2 of the Memory Layer specif
 - Fail-closed: 401 if no auth, 403 if family not allowed
 
 **Key Functions:**
+
 - `extractConsentFamily(path)` - Parse family from URL
 - `validateUserToken(authHeader)` - Validate Bearer token
-- `checkFamilyAuthorization(userId, family)` - Check permissions
+- `checkFamilyAuthorization(hashedPseudonym, family)` - Check permissions
 - `consentResolver` - Express middleware
 
 **Usage:**
+
 ```typescript
 app.use(consentResolver);
 
 // Request will have:
 req.consentContext = {
   family: 'personal',
-  user_id: 'user_abc123',
+  hashed_pseudonym: 'user_abc123',
   scope: ['read', 'write', 'delete'],
   trace_id: 'trace_...',
 };
@@ -48,9 +53,11 @@ req.consentContext = {
 ---
 
 ### 2. SLO Middleware with Circuit Breaker
+
 **File:** `src/memory-layer/middleware/slo-middleware.ts`
 
 **Features:**
+
 - Tracks request latency for all memory operations
 - Emits Prometheus histogram: `memory_operation_latency_ms{operation, family, status}`
 - Checks against SLO targets (p99 thresholds)
@@ -59,6 +66,7 @@ req.consentContext = {
 - Circuit breaker: 503 if violation rate > 50% in last 10 requests
 
 **SLO Targets (p99 latency):**
+
 - `store`: 500ms
 - `recall`: 1000ms
 - `distill`: 5000ms
@@ -67,12 +75,14 @@ req.consentContext = {
 - `health`: 100ms
 
 **Circuit Breaker:**
+
 - 1-minute rolling window
 - Triggers at 50% violation rate
 - Minimum 10 requests to activate
 - Returns 503 Service Unavailable when open
 
 **Usage:**
+
 ```typescript
 app.use(sloMiddleware);
 
@@ -84,9 +94,11 @@ import { circuitBreaker } from './middleware/slo-middleware';
 ---
 
 ### 3. Schema Validation Middleware
+
 **File:** `src/memory-layer/middleware/schema-validator.ts`
 
 **Features:**
+
 - Uses Ajv with format validators (date-time, uuid, etc.)
 - Validates request bodies against `memory-schema.json`
 - Validates GET query parameters and POST/DELETE bodies
@@ -94,6 +106,7 @@ import { circuitBreaker } from './middleware/slo-middleware';
 - Supports all operation schemas: store, recall, distill, forget, export
 
 **Schemas Validated:**
+
 - `StoreRequest` - POST /v1/{family}/store
 - `RecallQuery` - GET /v1/{family}/recall
 - `DistillRequest` - POST /v1/{family}/distill
@@ -101,6 +114,7 @@ import { circuitBreaker } from './middleware/slo-middleware';
 - `ExportRequest` - GET /v1/{family}/export
 
 **Error Format:**
+
 ```json
 {
   "error": {
@@ -109,7 +123,7 @@ import { circuitBreaker } from './middleware/slo-middleware';
     "details": {
       "validation_errors": [
         {
-          "field": "user_id",
+          "field": "hashed_pseudonym",
           "message": "must be string",
           "params": {}
         }
@@ -120,6 +134,7 @@ import { circuitBreaker } from './middleware/slo-middleware';
 ```
 
 **Usage:**
+
 ```typescript
 app.use(schemaValidator);
 
@@ -131,15 +146,18 @@ import { schemas } from './middleware/schema-validator';
 ---
 
 ### 4. Storage Interface
+
 **File:** `src/memory-layer/storage/memory-store-interface.ts`
 
 **Features:**
+
 - Defines `MemoryStore` interface for all storage implementations
 - Supports store, recall, forget, count operations
 - Includes TTL enforcement and statistics methods
 - Type guards for runtime validation
 
 **Interface Methods:**
+
 ```typescript
 interface MemoryStore {
   store(record: MemoryRecord): Promise<MemoryRecord>;
@@ -156,6 +174,7 @@ interface MemoryStore {
 ```
 
 **Future Implementations:**
+
 - PostgreSQL (Phase 3)
 - DynamoDB (Phase 3)
 - Redis (Phase 3)
@@ -163,12 +182,14 @@ interface MemoryStore {
 ---
 
 ### 5. In-Memory Storage Adapter
+
 **File:** `src/memory-layer/storage/in-memory-store.ts`
 
 **Features:**
+
 - Fast CRUD operations with O(1) lookups via Map
 - Three indexes for fast queries:
-  - `byUserId`: Map<user_id, Set<record_id>>
+  - `byUserId`: Map<hashed_pseudonym, Set<record_id>>
   - `bySessionId`: Map<session_id, Set<record_id>>
   - `byConsentFamily`: Map<consent_family, Set<record_id>>
 - TTL enforcement with `expires_at` field
@@ -177,17 +198,20 @@ interface MemoryStore {
 - K-anonymity enforcement (minimum 5 records for cohort/population)
 
 **Privacy Enforcement:**
+
 - Personal: Full CRUD access, all fields visible
 - Cohort: Anonymized on write, no PII in recall
 - Population: Aggregated on write, only distill operations allowed
 
 **Query Features:**
-- Filter by user_id (required), session_id, consent_family, time range, content type
+
+- Filter by hashed_pseudonym (required), session_id, consent_family, time range, content type
 - Pagination with limit/offset
 - Sorting by created_at (asc/desc)
 - Automatic expiration filtering
 
 **Usage:**
+
 ```typescript
 import { getMemoryStore } from './storage/in-memory-store';
 
@@ -198,7 +222,7 @@ const record = await store.store({ ... });
 
 // Recall with filters
 const records = await store.recall({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   since: '2025-10-01T00:00:00Z',
   limit: 10,
   sort: 'desc',
@@ -206,7 +230,7 @@ const records = await store.recall({
 
 // Forget
 const deletedIds = await store.forget({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
 });
 
 // Stats
@@ -216,9 +240,11 @@ const stats = await store.getStats();
 ---
 
 ### 6. Error Envelope Middleware
+
 **File:** `src/memory-layer/middleware/error-handler.ts`
 
 **Features:**
+
 - Global error handler for Express
 - Converts all errors to ErrorResponse format
 - Structured error logging with trace IDs
@@ -227,6 +253,7 @@ const stats = await store.getStats();
 - `asyncHandler` wrapper for async route handlers
 
 **Error Codes:**
+
 - `VALIDATION_ERROR` (400)
 - `UNAUTHORIZED` (401)
 - `FORBIDDEN` (403)
@@ -237,14 +264,23 @@ const stats = await store.getStats();
 - `SERVICE_UNAVAILABLE` (503)
 
 **Usage:**
+
 ```typescript
-import { errorHandler, notFoundHandler, asyncHandler, MemoryLayerError } from './middleware/error-handler';
+import {
+  errorHandler,
+  notFoundHandler,
+  asyncHandler,
+  MemoryLayerError,
+} from './middleware/error-handler';
 
 // Wrap async routes
-app.get('/v1/personal/recall', asyncHandler(async (req, res) => {
-  // Throw typed errors
-  throw new MemoryLayerError(ErrorCode.NOT_FOUND, 'Record not found');
-}));
+app.get(
+  '/v1/personal/recall',
+  asyncHandler(async (req, res) => {
+    // Throw typed errors
+    throw new MemoryLayerError(ErrorCode.NOT_FOUND, 'Record not found');
+  })
+);
 
 // 404 handler (after routes)
 app.use(notFoundHandler);
@@ -265,7 +301,7 @@ import {
   sloMiddleware,
   schemaValidator,
   errorHandler,
-  notFoundHandler
+  notFoundHandler,
 } from './memory-layer/middleware';
 
 // 1. SLO tracking (measure all requests)
@@ -296,16 +332,19 @@ app.use(errorHandler);
 All middleware components integrate with Phase 1 governance:
 
 **Audit Events:**
+
 - Consent resolver emits `CONSENT_GRANT` events
 - All operations will emit operation-specific events (STORE, RECALL, etc.)
 - Events include trace IDs for correlation
 
 **Metrics:**
+
 - SLO middleware emits Prometheus metrics
 - Integrates with existing `/metrics` endpoint
 - Circuit breaker status visible in metrics
 
 **Error Handling:**
+
 - Uses Phase 1 `ErrorResponse` model
 - Trace IDs link errors to audit events
 - Structured logging for observability
@@ -339,24 +378,28 @@ src/memory-layer/
 ## Testing Recommendations
 
 ### Unit Tests
+
 - Test each middleware in isolation with Express test app
 - Test storage operations with mock data
 - Test error handling paths
 - Test circuit breaker behavior
 
 ### Integration Tests
+
 - Test full middleware stack
 - Test consent resolution with different families
 - Test SLO violations and circuit breaking
 - Test schema validation with invalid data
 
 ### E2E Tests
+
 - Test complete request flow: auth → validation → operation → response
 - Test error scenarios: 400, 401, 403, 404, 500, 503
 - Test privacy enforcement across consent families
 - Test TTL expiration and cleanup
 
 **Test Files to Create:**
+
 ```
 test/memory-layer/
 ├── middleware/
@@ -378,6 +421,7 @@ test/memory-layer/
 ## Next Steps
 
 ### Immediate (Phase 2 Continuation)
+
 1. **Implement API Endpoints:**
    - POST `/v1/{family}/store` - Store operation
    - GET `/v1/{family}/recall` - Recall operation
@@ -403,6 +447,7 @@ test/memory-layer/
    - E2E smoke test for full workflow
 
 ### Future (Phase 3)
+
 - Implement PostgreSQL storage adapter
 - Add differential privacy to distill operations
 - Implement AES-256 encryption at rest
@@ -414,6 +459,7 @@ test/memory-layer/
 ## Dependencies
 
 **Existing (Already Installed):**
+
 - `express` - Web framework
 - `ajv` - JSON schema validation
 - `ajv-formats` - Format validators for Ajv
@@ -426,18 +472,21 @@ test/memory-layer/
 ## Performance Characteristics
 
 **Middleware Overhead:**
+
 - Consent resolver: ~1-2ms (token validation)
 - SLO middleware: <1ms (timestamp tracking)
 - Schema validator: ~5-10ms (Ajv validation)
 - Error handler: <1ms (error formatting)
 
 **Storage Performance:**
+
 - Store: O(1) - Map insertion
 - Recall: O(n) where n = matching records
 - Forget: O(m) where m = records to delete
 - Get: O(1) - Map lookup
 
 **Memory Usage:**
+
 - ~1KB per record (estimated)
 - ~3x overhead for indexes
 - Total: ~4KB per record
@@ -447,22 +496,26 @@ test/memory-layer/
 ## Security Properties
 
 **Fail-Closed:**
+
 - Missing auth → 401
 - Invalid family → 403
 - Invalid schema → 400
 - SLO exceeded → 503
 
 **Privacy:**
+
 - Personal: Full access with hashed/pseudonymous identifiers only (e.g., sha256(email+salt))
 - Cohort: Anonymized, no direct identifiers
 - Population: Aggregated only, no direct identifiers
 
 **Audit:**
+
 - All consent resolutions logged
 - All errors logged with trace IDs
 - All operations will emit audit events
 
 **Trace IDs:**
+
 - Propagated through all middleware
 - Included in error responses
 - Linked to audit events
@@ -472,17 +525,20 @@ test/memory-layer/
 ## Compliance
 
 **GDPR:**
+
 - Right to forget (DELETE operation)
 - Right to export (GET export operation)
 - Consent tracking per record
 - Audit trail for all operations
 
 **Privacy:**
+
 - Consent family enforcement
 - K-anonymity for cohort/population
 - TTL enforcement for data retention
 
 **Security:**
+
 - Fail-closed authentication
 - Bearer token validation
 - Input validation (Ajv)
@@ -493,11 +549,13 @@ test/memory-layer/
 ## Documentation
 
 **Created:**
+
 - `src/memory-layer/middleware/README.md` - Middleware guide
 - `src/memory-layer/storage/README.md` - Storage guide
 - `src/memory-layer/PHASE2_IMPLEMENTATION_SUMMARY.md` - This summary
 
 **To Update:**
+
 - `README.md` - Add Phase 2 status
 - `CHANGELOG.md` - Phase 2 release notes
 - `env/SPEC_SANDBOX.md` - Add Phase 2 environment variables
@@ -506,15 +564,19 @@ test/memory-layer/
 
 ## Conclusion
 
-All middleware and storage layers for Phase 2 are complete and ready for integration. The components follow the specification, integrate with Phase 1 governance, and are production-ready with comprehensive error handling, audit logging, and observability.
+All middleware and storage layers for Phase 2 are complete and ready for integration. The components
+follow the specification, integrate with Phase 1 governance, and are production-ready with
+comprehensive error handling, audit logging, and observability.
 
 **Ready for:**
+
 1. Operation handler implementation
 2. API endpoint registration
 3. Server integration
 4. Testing and validation
 
 **Branch Status:**
+
 - Currently on: `phase-1.2-verification-metrics`
 - Ready to merge to: `feature/memory-layer-phase-2`
 - Target: `main` (after Phase 2 complete)

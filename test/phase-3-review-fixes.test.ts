@@ -42,7 +42,7 @@ describe('Circuit Breaker', () => {
     // In production, you'd use dependency injection or expose a health check method
 
     // For now, we verify that circuit breaker guard exists and throws
-    const privateStore = store as any;
+    const privateStore = store as Record<string, unknown>;
 
     // Manually trip the breaker to test guard behavior
     privateStore.circuitBreakerTripped = true;
@@ -54,7 +54,7 @@ describe('Circuit Breaker', () => {
   });
 
   test('should reset breaker on successful connection', async () => {
-    const privateStore = store as any;
+    const privateStore = store as Record<string, unknown>;
 
     // Verify error counter resets work
     privateStore.consecutivePoolErrors = 3;
@@ -68,8 +68,8 @@ describe('Circuit Breaker', () => {
 
 describe('GDPR-Safe Forget', () => {
   let dualStore: DualStore;
-  let memoryStore: any;
-  let postgresStore: any;
+  let memoryStore: ReturnType<typeof getMemoryStore>;
+  let postgresStore: PostgresStore;
 
   beforeEach(() => {
     memoryStore = getMemoryStore();
@@ -435,7 +435,7 @@ describe('NaN Guards', () => {
       created_at: 'invalid-date',
     };
 
-    const timestamp = new Date(mockRecord.created_at as any).getTime();
+    const timestamp = new Date(mockRecord.created_at as string).getTime();
     expect(Number.isNaN(timestamp)).toBe(true);
 
     // Verify NaN guard would prevent metric update

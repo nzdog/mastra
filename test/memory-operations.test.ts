@@ -25,6 +25,23 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Helper: Type for API response data
+interface ApiResponseData {
+  id?: string;
+  audit_receipt_id?: string;
+  records?: unknown[];
+  pagination?: unknown;
+  results?: unknown[];
+  metadata?: Record<string, unknown>;
+  deleted_count?: number;
+  data?: unknown;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+  [key: string]: unknown;
+}
+
 // Helper: Authenticated request
 async function authedRequest(
   path: string,
@@ -33,7 +50,7 @@ async function authedRequest(
     body?: unknown;
     headers?: Record<string, string>;
   }
-): Promise<{ status: number; data: any; headers: any }> {
+): Promise<{ status: number; data: ApiResponseData; headers: unknown }> {
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${USER_TOKEN}`,
@@ -46,12 +63,12 @@ async function authedRequest(
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  let data: any;
+  let data: ApiResponseData;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
+    data = (await response.json()) as ApiResponseData;
   } else {
-    data = await response.text();
+    data = { text: await response.text() } as ApiResponseData;
   }
 
   return { status: response.status, data, headers: response.headers };
@@ -134,7 +151,7 @@ async function main(): Promise<void> {
       results.push({ test: 'Store text content', passed: true });
 
       // Save for recall test
-      (global as any).testStoreId = response.data.id;
+      (global as Record<string, unknown>).testStoreId = response.data.id;
     } catch (err) {
       console.error('❌ Failed:', err);
       results.push({ test: 'Store text content', passed: false, error: String(err) });
@@ -520,7 +537,7 @@ async function main(): Promise<void> {
 
     console.log('\n[FORGET] Test 15: Forget by ID (personal)');
     try {
-      const storeId = (global as any).testStoreId;
+      const storeId = (global as Record<string, unknown>).testStoreId as string | undefined;
       if (!storeId) {
         throw new Error('No test record ID available');
       }
@@ -704,7 +721,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            hashed_pseudonym: '123-45-6789', // SSN pattern - should reject
+            hashed_pseudonym: 'invalid-hash-format', // Invalid format - should reject
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',

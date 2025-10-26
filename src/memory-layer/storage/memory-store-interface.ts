@@ -51,7 +51,7 @@ export interface MemoryStore {
 
   /**
    * Forget (delete) memory records
-   * @param request - Forget request with id, user_id, or session_id
+   * @param request - Forget request with id, hashed_pseudonym, or session_id
    * @returns Promise resolving to array of deleted record IDs
    */
   forget(request: ForgetRequest): Promise<string[]>;
@@ -114,7 +114,7 @@ export function isMemoryRecord(obj: unknown): obj is MemoryRecord {
     return false;
   }
 
-  const record = obj as any;
+  const record = obj as Record<string, unknown>;
   return (
     typeof record.id === 'string' &&
     typeof record.hashed_pseudonym === 'string' &&

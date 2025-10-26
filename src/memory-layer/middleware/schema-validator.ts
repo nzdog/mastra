@@ -40,7 +40,7 @@ type SchemaType = keyof typeof schemas;
 /**
  * Format Ajv errors into human-readable messages
  */
-function formatValidationErrors(errors: ErrorObject[] | null | undefined): Record<string, any> {
+function formatValidationErrors(errors: ErrorObject[] | null | undefined): Record<string, unknown> {
   if (!errors || errors.length === 0) {
     return {};
   }
@@ -108,7 +108,7 @@ export function schemaValidator(req: Request, res: Response, next: NextFunction)
   const validate = schemas[schemaType];
 
   // Prepare data for validation
-  let data: any;
+  let data: unknown;
   if (req.method === 'GET') {
     // For GET requests, validate query parameters
     data = req.query;

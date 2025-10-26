@@ -4,41 +4,41 @@
 
 # Individual Stone Score Targets (0-100 scale)
 stones:
-  INT: 95  # Integrity - Security must be high
-  EMP: 75  # Empathy - Documentation and developer experience
-  RHY: 80  # Rhythm - Sustainable technical debt
-  TEC: 90  # Technical - Type safety is critical
+  INT: 95 # Integrity - Security must be high
+  EMP: 75 # Empathy - Documentation and developer experience
+  RHY: 80 # Rhythm - Sustainable technical debt
+  TEC: 90 # Technical - Type safety is critical
 
 # Composite Score Requirements
-composite_minimum: 85  # Overall health threshold
-composite_target: 90   # Aspirational target
+composite_minimum: 85 # Overall health threshold
+composite_target: 90 # Aspirational target
 
 # Specific Metric Thresholds
 metrics:
-  test_coverage: 80            # Minimum test coverage %
-  documentation_coverage: 70   # Minimum JSDoc coverage %
-  type_coverage: 95            # TypeScript type safety %
-  complexity_max: 10           # Max cyclomatic complexity per function
-  max_file_lines: 1000         # Flag files exceeding this
-  max_function_lines: 100      # Flag functions exceeding this
-  max_tech_debt_markers: 50    # TODO/FIXME/HACK count
-  security_critical_vulns: 0   # Zero tolerance for critical
-  security_high_vulns: 0       # Zero tolerance for high
-  bundle_size_kb: 500          # Maximum bundle size
+  test_coverage: 80 # Minimum test coverage %
+  documentation_coverage: 70 # Minimum JSDoc coverage %
+  type_coverage: 95 # TypeScript type safety %
+  complexity_max: 10 # Max cyclomatic complexity per function
+  max_file_lines: 1000 # Flag files exceeding this
+  max_function_lines: 100 # Flag functions exceeding this
+  max_tech_debt_markers: 50 # TODO/FIXME/HACK count
+  security_critical_vulns: 0 # Zero tolerance for critical
+  security_high_vulns: 0 # Zero tolerance for high
+  bundle_size_kb: 500 # Maximum bundle size
 
 # Weighted Scoring (must sum to 1.0)
 weights:
-  INT: 0.30  # Security is highest priority
-  EMP: 0.20  # Developer experience matters
-  RHY: 0.20  # Sustainability is key
-  TEC: 0.30  # Technical correctness is critical
+  INT: 0.30 # Security is highest priority
+  EMP: 0.20 # Developer experience matters
+  RHY: 0.20 # Sustainability is key
+  TEC: 0.30 # Technical correctness is critical
 
 # Reporting Preferences
 reporting:
   include_file_references: true
   include_line_numbers: true
   max_findings_per_category: 10
-  generate_charts: false  # Text-based reports only
+  generate_charts: false # Text-based reports only
 
 # Failure Conditions (any triggers analysis failure)
 fail_conditions:

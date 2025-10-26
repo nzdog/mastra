@@ -171,7 +171,7 @@ export function sloMiddleware(req: Request, res: Response, next: NextFunction): 
 
   // Hook into response finish event
   const originalEnd = res.end;
-  res.end = function (this: Response, ...args: any[]): Response {
+  res.end = function (this: Response, ...args: unknown[]): Response {
     // Calculate latency
     const latency = Date.now() - startTime;
 
@@ -196,6 +196,7 @@ export function sloMiddleware(req: Request, res: Response, next: NextFunction): 
     }
 
     // Call original end
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return originalEnd.apply(this, args as any);
   };
 

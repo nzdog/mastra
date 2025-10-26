@@ -30,7 +30,7 @@ export interface AuditEvent {
   event_type: AuditEventType;
   timestamp: string;
   operation: string;
-  user_id?: string; // Pseudonymized
+  hashed_pseudonym?: string; // Pseudonymized
   session_id?: string;
   consent_context?: {
     consent_level: 'personal' | 'cohort' | 'population';
@@ -38,7 +38,7 @@ export interface AuditEvent {
     expiry?: string;
     revocable: boolean;
   };
-  payload: Record<string, any>;
+  payload: Record<string, unknown>;
 }
 
 export interface AuditReceipt {
@@ -47,7 +47,7 @@ export interface AuditReceipt {
   timestamp: string;
   signature: string;
   merkle_root: string;
-  merkle_proof: any;
+  merkle_proof: unknown;
   ledger_height: number;
 }
 
@@ -84,14 +84,14 @@ export class AuditEmitter {
   async emit(
     eventType: AuditEventType,
     operation: string,
-    payload: Record<string, any>,
+    payload: Record<string, unknown>,
     consentContext?: {
       consent_level?: 'personal' | 'cohort' | 'population';
       scope?: string[];
       expiry?: string;
       revocable?: boolean;
     },
-    userId?: string,
+    hashedPseudonym?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {
     // Check if ledger is enabled
@@ -132,7 +132,7 @@ export class AuditEmitter {
       timestamp: new Date().toISOString(),
       event_type: eventType,
       operation,
-      user_id: userId,
+      hashed_pseudonym: hashedPseudonym,
       session_id: sessionId,
       consent_context: consentContext
         ? {
@@ -178,8 +178,8 @@ export class AuditEmitter {
    */
   async emitAmbiguityEvent(
     operation: string,
-    consentDiffs: Record<string, any>,
-    userId?: string,
+    consentDiffs: Record<string, unknown>,
+    hashedPseudonym?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {
     return this.emit(
@@ -191,7 +191,7 @@ export class AuditEmitter {
         scope: ['ambiguity_tracking'],
         revocable: true,
       },
-      userId,
+      hashedPseudonym,
       sessionId
     );
   }
@@ -202,8 +202,8 @@ export class AuditEmitter {
   async emitGovernanceOverride(
     overrideType: 'policy_engine' | 'ethics_committee' | 'constitutional',
     rationale: string,
-    policyDiffs: Record<string, any>,
-    userId?: string,
+    policyDiffs: Record<string, unknown>,
+    hashedPseudonym?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {
     return this.emit(
@@ -219,7 +219,7 @@ export class AuditEmitter {
         scope: ['governance_override'],
         revocable: false, // Overrides are not revocable
       },
-      userId,
+      hashedPseudonym,
       sessionId
     );
   }

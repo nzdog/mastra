@@ -47,7 +47,7 @@
       "minLength": 1,
       "description": "Operation being audited (e.g., 'health_check', 'store_memory')"
     },
-    "user_id": {
+    "hashed_pseudonym": {
       "type": "string",
       "description": "Pseudonymized user identifier (optional)"
     },

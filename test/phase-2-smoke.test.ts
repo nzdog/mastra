@@ -31,6 +31,26 @@ function wait(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+// Helper: Type for API response data
+interface ApiResponseData {
+  id?: string;
+  audit_receipt_id?: string;
+  records?: unknown[];
+  results?: unknown[];
+  metadata?: Record<string, unknown>;
+  deleted_count?: number;
+  data?: unknown;
+  error?: {
+    code?: string;
+    message?: string;
+  };
+  verification?: {
+    valid?: boolean;
+  };
+  receipt?: unknown;
+  [key: string]: unknown;
+}
+
 // Helper: Make authenticated request
 async function authedRequest(
   path: string,
@@ -39,7 +59,7 @@ async function authedRequest(
     body?: unknown;
     headers?: Record<string, string>;
   }
-): Promise<{ status: number; data: any; headers: any }> {
+): Promise<{ status: number; data: ApiResponseData; headers: unknown }> {
   const headers = {
     'Content-Type': 'application/json',
     Authorization: `Bearer ${USER_TOKEN}`,
@@ -52,12 +72,12 @@ async function authedRequest(
     body: options.body ? JSON.stringify(options.body) : undefined,
   });
 
-  let data: any;
+  let data: ApiResponseData;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    data = await response.json();
+    data = (await response.json()) as ApiResponseData;
   } else {
-    data = await response.text();
+    data = { text: await response.text() } as ApiResponseData;
   }
 
   return {
@@ -156,8 +176,8 @@ async function main(): Promise<void> {
       results.push({ test: 'Store memory (personal)', passed: true });
 
       // Store recordId and receiptId for later tests
-      (global as any).testRecordId = recordId;
-      (global as any).testReceiptIds = [receiptId];
+      (global as Record<string, unknown>).testRecordId = recordId;
+      (global as Record<string, unknown>).testReceiptIds = [receiptId];
     } catch (err) {
       console.error('❌ Store test failed:', err);
       results.push({ test: 'Store memory (personal)', passed: false, error: String(err) });
@@ -189,7 +209,8 @@ async function main(): Promise<void> {
       results.push({ test: 'Recall memory (personal)', passed: true });
 
       // Save receipt ID
-      (global as any).testReceiptIds.push(recallResponse.data.audit_receipt_id);
+      const receiptIds = (global as Record<string, unknown>).testReceiptIds as string[];
+      receiptIds.push(recallResponse.data.audit_receipt_id as string);
     } catch (err) {
       console.error('❌ Recall test failed:', err);
       results.push({ test: 'Recall memory (personal)', passed: false, error: String(err) });
@@ -233,9 +254,10 @@ async function main(): Promise<void> {
       results.push({ test: 'Store multiple memories', passed: true });
 
       // Save receipt IDs
+      const receiptIds = (global as Record<string, unknown>).testReceiptIds as string[];
       storeResponses.forEach((r) => {
         if (r.data.audit_receipt_id) {
-          (global as any).testReceiptIds.push(r.data.audit_receipt_id);
+          receiptIds.push(r.data.audit_receipt_id as string);
         }
       });
     } catch (err) {
@@ -279,7 +301,8 @@ async function main(): Promise<void> {
       results.push({ test: 'Distill memories (cohort)', passed: true });
 
       // Save receipt ID
-      (global as any).testReceiptIds.push(distillResponse.data.audit_receipt_id);
+      const receiptIds = (global as Record<string, unknown>).testReceiptIds as string[];
+      receiptIds.push(distillResponse.data.audit_receipt_id as string);
     } catch (err) {
       console.error('❌ Distill test failed:', err);
       results.push({ test: 'Distill memories (cohort)', passed: false, error: String(err) });
@@ -290,7 +313,7 @@ async function main(): Promise<void> {
     // ============================================================================
     console.log('\n🗑️  TEST 5: Forget memory (personal family)');
     try {
-      const recordId = (global as any).testRecordId;
+      const recordId = (global as Record<string, unknown>).testRecordId as string;
       const forgetResponse = await authedRequest(
         `/v1/personal/forget?id=${recordId}&reason=test_cleanup`,
         { method: 'DELETE' }
@@ -308,7 +331,8 @@ async function main(): Promise<void> {
       results.push({ test: 'Forget memory (personal)', passed: true });
 
       // Save receipt ID
-      (global as any).testReceiptIds.push(forgetResponse.data.audit_receipt_id);
+      const receiptIds = (global as Record<string, unknown>).testReceiptIds as string[];
+      receiptIds.push(forgetResponse.data.audit_receipt_id as string);
     } catch (err) {
       console.error('❌ Forget test failed:', err);
       results.push({ test: 'Forget memory (personal)', passed: false, error: String(err) });
@@ -336,7 +360,8 @@ async function main(): Promise<void> {
       results.push({ test: 'Export memories (personal)', passed: true });
 
       // Save receipt ID
-      (global as any).testReceiptIds.push(exportResponse.data.audit_receipt_id);
+      const receiptIds = (global as Record<string, unknown>).testReceiptIds as string[];
+      receiptIds.push(exportResponse.data.audit_receipt_id as string);
     } catch (err) {
       console.error('❌ Export test failed:', err);
       results.push({ test: 'Export memories (personal)', passed: false, error: String(err) });
@@ -353,7 +378,9 @@ async function main(): Promise<void> {
     const ledgerEnabledEnv = process.env.LEDGER_ENABLED?.toLowerCase();
     const ledgerEnabled = ledgerEnabledEnv === 'true';
 
-    console.log(`DEBUG: LEDGER_ENABLED="${process.env.LEDGER_ENABLED}" → ledgerEnabled=${ledgerEnabled}`);
+    console.log(
+      `DEBUG: LEDGER_ENABLED="${process.env.LEDGER_ENABLED}" → ledgerEnabled=${ledgerEnabled}`
+    );
 
     if (!ledgerEnabled) {
       console.log(
@@ -362,7 +389,7 @@ async function main(): Promise<void> {
       results.push({ test: 'Verify audit receipts', passed: true });
     } else {
       try {
-        const receiptIds = (global as any).testReceiptIds || [];
+        const receiptIds = ((global as Record<string, unknown>).testReceiptIds as string[]) || [];
         if (receiptIds.length === 0) {
           throw new Error('No receipt IDs to verify');
         }

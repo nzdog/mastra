@@ -51,10 +51,7 @@ interface CompleteRequest {
 /**
  * Helper: Get session (async wrapper for SessionStore)
  */
-async function getSession(
-  sessionStore: SessionStore,
-  sessionId: string
-): Promise<Session | null> {
+async function getSession(sessionStore: SessionStore, sessionId: string): Promise<Session | null> {
   return await sessionStore.get(sessionId);
 }
 
@@ -77,7 +74,9 @@ async function createSession(
     }
     protocolPath = pathResult;
   } else {
-    protocolPath = path.join(__dirname, '../../protocols/field_diagnostic.md');
+    protocolPath =
+      loader.getProtocolPath('field_diagnostic') ||
+      path.join(__dirname, '../../../protocols/field_diagnostic.md');
   }
 
   const parser = new ProtocolParser(protocolPath);
@@ -218,8 +217,11 @@ function formatResponse(
 export function createProtocolRouter(
   apiKey: string | undefined,
   sessionStore: SessionStore,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   apiLimiter: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   aiEndpointLimiter: any,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sessionCreationLimiter: any
 ): Router {
   const router = Router();
@@ -231,6 +233,7 @@ export function createProtocolRouter(
       const protocols = loader.listProtocols();
 
       res.json({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         protocols: protocols.map((p: any) => ({
           id: p.id,
           slug: p.slug,

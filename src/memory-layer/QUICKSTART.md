@@ -2,11 +2,13 @@
 
 ## Overview
 
-Phase 2 middleware and storage components are ready for integration. This guide shows you how to use them.
+Phase 2 middleware and storage components are ready for integration. This guide shows you how to use
+them.
 
 ## Installation
 
 No new dependencies needed! All components use existing packages:
+
 - `express` - Web framework
 - `ajv` + `ajv-formats` - Schema validation
 - `prom-client` - Metrics
@@ -71,154 +73,163 @@ import { getMemoryStore } from './memory-layer/storage';
 import { getAuditEmitter } from './memory-layer/governance/audit-emitter';
 import { randomUUID } from 'crypto';
 
-app.post('/v1/:family/store', asyncHandler(async (req, res) => {
-  const store = getMemoryStore();
-  const auditor = getAuditEmitter();
+app.post(
+  '/v1/:family/store',
+  asyncHandler(async (req, res) => {
+    const store = getMemoryStore();
+    const auditor = getAuditEmitter();
 
-  // Consent context is already attached by middleware
-  const { family, user_id, trace_id } = req.consentContext!;
+    // Consent context is already attached by middleware
+    const { family, hashed_pseudonym, trace_id } = req.consentContext!;
 
-  // Extract request data (already validated by schema middleware)
-  const { content, metadata, expires_at } = req.body;
+    // Extract request data (already validated by schema middleware)
+    const { content, metadata, expires_at } = req.body;
 
-  // Create memory record
-  const record = {
-    id: randomUUID(),
-    user_id: metadata.user_id,
-    session_id: metadata.session_id,
-    content,
-    consent_family: family,
-    consent_timestamp: metadata.consent_timestamp,
-    consent_version: metadata.consent_version,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-    expires_at,
-    access_count: 0,
-    audit_receipt_id: '', // Will be filled by audit
-  };
+    // Create memory record
+    const record = {
+      id: randomUUID(),
+      hashed_pseudonym: metadata.hashed_pseudonym,
+      session_id: metadata.session_id,
+      content,
+      consent_family: family,
+      consent_timestamp: metadata.consent_timestamp,
+      consent_version: metadata.consent_version,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      expires_at,
+      access_count: 0,
+      audit_receipt_id: '', // Will be filled by audit
+    };
 
-  // Emit audit event
-  const receipt = await auditor.emit(
-    'STORE',
-    'memory_store',
-    { record_id: record.id },
-    { consent_level: family, scope: req.consentContext!.scope },
-    user_id
-  );
+    // Emit audit event
+    const receipt = await auditor.emit(
+      'STORE',
+      'memory_store',
+      { record_id: record.id },
+      { consent_level: family, scope: req.consentContext!.scope },
+      hashed_pseudonym
+    );
 
-  record.audit_receipt_id = receipt.receipt_id;
+    record.audit_receipt_id = receipt.receipt_id;
 
-  // Store in database
-  const stored = await store.store(record);
+    // Store in database
+    const stored = await store.store(record);
 
-  // Return response
-  res.status(201).json({
-    id: stored.id,
-    user_id: stored.user_id,
-    consent_family: stored.consent_family,
-    created_at: stored.created_at,
-    audit_receipt_id: stored.audit_receipt_id,
-  });
-}));
+    // Return response
+    res.status(201).json({
+      id: stored.id,
+      hashed_pseudonym: stored.hashed_pseudonym,
+      consent_family: stored.consent_family,
+      created_at: stored.created_at,
+      audit_receipt_id: stored.audit_receipt_id,
+    });
+  })
+);
 ```
 
 ### Recall Operation
 
 ```typescript
-app.get('/v1/:family/recall', asyncHandler(async (req, res) => {
-  const store = getMemoryStore();
-  const auditor = getAuditEmitter();
+app.get(
+  '/v1/:family/recall',
+  asyncHandler(async (req, res) => {
+    const store = getMemoryStore();
+    const auditor = getAuditEmitter();
 
-  // Consent context from middleware
-  const { user_id, trace_id } = req.consentContext!;
+    // Consent context from middleware
+    const { hashed_pseudonym, trace_id } = req.consentContext!;
 
-  // Query params (already validated)
-  const query = {
-    user_id: req.query.user_id as string,
-    session_id: req.query.session_id as string | undefined,
-    since: req.query.since as string | undefined,
-    until: req.query.until as string | undefined,
-    type: req.query.type as any,
-    limit: parseInt(req.query.limit as string) || 100,
-    offset: parseInt(req.query.offset as string) || 0,
-    sort: (req.query.sort as 'asc' | 'desc') || 'desc',
-  };
+    // Query params (already validated)
+    const query = {
+      hashed_pseudonym: req.query.hashed_pseudonym as string,
+      session_id: req.query.session_id as string | undefined,
+      since: req.query.since as string | undefined,
+      until: req.query.until as string | undefined,
+      type: req.query.type as any,
+      limit: parseInt(req.query.limit as string) || 100,
+      offset: parseInt(req.query.offset as string) || 0,
+      sort: (req.query.sort as 'asc' | 'desc') || 'desc',
+    };
 
-  // Recall from storage
-  const records = await store.recall(query);
+    // Recall from storage
+    const records = await store.recall(query);
 
-  // Count total
-  const total = await store.count({ user_id: query.user_id });
+    // Count total
+    const total = await store.count({ hashed_pseudonym: query.hashed_pseudonym });
 
-  // Emit audit event
-  const receipt = await auditor.emit(
-    'RECALL',
-    'memory_recall',
-    {
-      record_count: records.length,
-      query_params: query,
-    },
-    { consent_level: req.consentContext!.family, scope: req.consentContext!.scope },
-    user_id
-  );
+    // Emit audit event
+    const receipt = await auditor.emit(
+      'RECALL',
+      'memory_recall',
+      {
+        record_count: records.length,
+        query_params: query,
+      },
+      { consent_level: req.consentContext!.family, scope: req.consentContext!.scope },
+      hashed_pseudonym
+    );
 
-  // Return response
-  res.json({
-    records,
-    pagination: {
-      total,
-      count: records.length,
-      offset: query.offset,
-      limit: query.limit,
-      has_more: query.offset + records.length < total,
-    },
-    audit_receipt_id: receipt.receipt_id,
-    timestamp: new Date().toISOString(),
-  });
-}));
+    // Return response
+    res.json({
+      records,
+      pagination: {
+        total,
+        count: records.length,
+        offset: query.offset,
+        limit: query.limit,
+        has_more: query.offset + records.length < total,
+      },
+      audit_receipt_id: receipt.receipt_id,
+      timestamp: new Date().toISOString(),
+    });
+  })
+);
 ```
 
 ### Forget Operation
 
 ```typescript
-app.delete('/v1/:family/forget', asyncHandler(async (req, res) => {
-  const store = getMemoryStore();
-  const auditor = getAuditEmitter();
+app.delete(
+  '/v1/:family/forget',
+  asyncHandler(async (req, res) => {
+    const store = getMemoryStore();
+    const auditor = getAuditEmitter();
 
-  const { user_id, trace_id } = req.consentContext!;
+    const { hashed_pseudonym, trace_id } = req.consentContext!;
 
-  // Delete request (already validated)
-  const forgetRequest = {
-    id: req.query.id as string | undefined,
-    user_id: req.query.user_id as string | undefined,
-    session_id: req.query.session_id as string | undefined,
-    reason: req.query.reason as string | undefined,
-  };
+    // Delete request (already validated)
+    const forgetRequest = {
+      id: req.query.id as string | undefined,
+      hashed_pseudonym: req.query.hashed_pseudonym as string | undefined,
+      session_id: req.query.session_id as string | undefined,
+      reason: req.query.reason as string | undefined,
+    };
 
-  // Delete from storage
-  const deletedIds = await store.forget(forgetRequest);
+    // Delete from storage
+    const deletedIds = await store.forget(forgetRequest);
 
-  // Emit audit event (GDPR compliance)
-  const receipt = await auditor.emit(
-    'FORGET',
-    'memory_forget',
-    {
+    // Emit audit event (GDPR compliance)
+    const receipt = await auditor.emit(
+      'FORGET',
+      'memory_forget',
+      {
+        deleted_count: deletedIds.length,
+        deleted_ids: deletedIds,
+        reason: forgetRequest.reason,
+      },
+      { consent_level: req.consentContext!.family, scope: req.consentContext!.scope },
+      hashed_pseudonym
+    );
+
+    // Return response
+    res.json({
       deleted_count: deletedIds.length,
       deleted_ids: deletedIds,
-      reason: forgetRequest.reason,
-    },
-    { consent_level: req.consentContext!.family, scope: req.consentContext!.scope },
-    user_id
-  );
-
-  // Return response
-  res.json({
-    deleted_count: deletedIds.length,
-    deleted_ids: deletedIds,
-    audit_receipt_id: receipt.receipt_id,
-    timestamp: new Date().toISOString(),
-  });
-}));
+      audit_receipt_id: receipt.receipt_id,
+      timestamp: new Date().toISOString(),
+    });
+  })
+);
 ```
 
 ## Testing Your API
@@ -235,7 +246,7 @@ curl -X POST http://localhost:3000/v1/personal/store \
       "data": "User prefers dark mode"
     },
     "metadata": {
-      "user_id": "user_test123",
+      "hashed_pseudonym": "user_test123",
       "consent_family": "personal",
       "consent_timestamp": "2025-10-17T00:00:00Z",
       "consent_version": "1.0"
@@ -246,7 +257,7 @@ curl -X POST http://localhost:3000/v1/personal/store \
 ### Recall Memories
 
 ```bash
-curl -X GET "http://localhost:3000/v1/personal/recall?user_id=user_test123&limit=10" \
+curl -X GET "http://localhost:3000/v1/personal/recall?hashed_pseudonym=user_test123&limit=10" \
   -H "Authorization: Bearer user_test123"
 ```
 
@@ -282,11 +293,7 @@ import { ErrorCode } from './memory-layer/models/error-envelope';
 
 // In your handler
 if (!record) {
-  throw new MemoryLayerError(
-    ErrorCode.NOT_FOUND,
-    'Memory record not found',
-    { id: recordId }
-  );
+  throw new MemoryLayerError(ErrorCode.NOT_FOUND, 'Memory record not found', { id: recordId });
 }
 ```
 
@@ -310,6 +317,7 @@ audit_events_total{event_type="STORE",operation="memory_store"}
 ### SLO Response Header
 
 Check latency in response:
+
 ```
 X-SLO-Latency: 45ms
 ```
@@ -317,6 +325,7 @@ X-SLO-Latency: 45ms
 ### Circuit Breaker Status
 
 When circuit is open:
+
 ```json
 {
   "error": {
@@ -370,29 +379,35 @@ const deletedCount = await store.clearExpired();
 Run periodically to clear expired records:
 
 ```typescript
-setInterval(async () => {
-  const store = getMemoryStore();
-  const count = await store.clearExpired();
-  if (count > 0) {
-    console.log(`Cleared ${count} expired records`);
-  }
-}, 60 * 60 * 1000); // Every hour
+setInterval(
+  async () => {
+    const store = getMemoryStore();
+    const count = await store.clearExpired();
+    if (count > 0) {
+      console.log(`Cleared ${count} expired records`);
+    }
+  },
+  60 * 60 * 1000
+); // Every hour
 ```
 
 ## Consent Families
 
 ### Personal
+
 - Full CRUD access
 - All fields visible (including PII)
 - User can recall, forget, export
 
 ### Cohort
+
 - Anonymized data
 - No PII in responses
 - Recall returns empty (use distill instead)
 - Forget removes content but keeps metadata
 
 ### Population
+
 - Aggregated data only
 - No individual records
 - Only distill operations allowed
@@ -401,39 +416,52 @@ setInterval(async () => {
 ## Development Tips
 
 ### 1. Use asyncHandler
+
 Always wrap async routes to catch promise rejections:
+
 ```typescript
 import { asyncHandler } from './memory-layer/middleware';
 
-app.get('/route', asyncHandler(async (req, res) => {
-  // Your async code
-}));
+app.get(
+  '/route',
+  asyncHandler(async (req, res) => {
+    // Your async code
+  })
+);
 ```
 
 ### 2. Check Consent Context
+
 The middleware attaches consent context to all requests:
+
 ```typescript
 if (!req.consentContext) {
   // Not a memory layer route or auth failed
 }
 
-const { family, user_id, scope } = req.consentContext;
+const { family, hashed_pseudonym, scope } = req.consentContext;
 ```
 
 ### 3. Emit Audit Events
+
 Always emit audit events for operations:
+
 ```typescript
 const receipt = await auditor.emit(
   'OPERATION_TYPE',
   'operation_name',
-  { /* payload */ },
+  {
+    /* payload */
+  },
   { consent_level: family, scope },
-  user_id
+  hashed_pseudonym
 );
 ```
 
 ### 4. Use Trace IDs
+
 Extract trace ID for logging:
+
 ```typescript
 const traceId = req.get('X-Trace-ID');
 console.log(`[${traceId}] Processing request...`);
@@ -458,18 +486,22 @@ console.log(`[${traceId}] Processing request...`);
 ## Troubleshooting
 
 ### 401 Unauthorized
+
 - Check Authorization header: `Bearer <token>`
 - Token must be at least 10 characters
 
 ### 403 Forbidden
+
 - Check consent family in URL matches user permissions
 - Personal family has all permissions
 
 ### 400 Validation Error
+
 - Check request body matches schema
 - See error.details for specific validation errors
 
 ### 503 Service Unavailable
+
 - Circuit breaker is open due to SLO violations
 - Wait for violations to decrease
 - Check `/metrics` for violation count
@@ -484,6 +516,7 @@ console.log(`[${traceId}] Processing request...`);
 ## Support
 
 For issues or questions:
+
 1. Check the README files in each component directory
 2. Review the implementation summary
 3. Check the audit logs at `GET /v1/ledger/root`

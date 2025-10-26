@@ -305,7 +305,7 @@ export class EncryptionService {
 
     // Phase 3.2: Delegate to KMS provider to create and store new KEK
     if (this.kmsProvider instanceof MemoryKMSProvider) {
-      (this.kmsProvider as any).rotateKEK(newKekId);
+      this.kmsProvider.rotateKEK(newKekId);
     }
 
     // Update current KEK ID

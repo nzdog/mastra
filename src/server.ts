@@ -61,7 +61,12 @@ const assetsPath = path.join(__dirname, '../assets');
 console.log(`📁 Assets path: ${assetsPath}`);
 
 // Rate limiters now loaded from config
-const { api: apiLimiter, aiEndpoint: aiEndpointLimiter, sessionCreation: sessionCreationLimiter, metrics: metricsLimiter } = config.rateLimiters;
+const {
+  api: apiLimiter,
+  aiEndpoint: aiEndpointLimiter,
+  sessionCreation: sessionCreationLimiter,
+  metrics: metricsLimiter,
+} = config.rateLimiters;
 
 // Apply all middleware (security, CORS, body parser)
 applyMiddleware(app, config);
@@ -93,7 +98,6 @@ const staticRouter = createStaticRouter();
 app.use(staticRouter);
 
 // All application routes now mounted via routers
-
 
 // ============================================================================
 // Phase 2: Memory Layer Routes

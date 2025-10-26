@@ -11,7 +11,11 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
 import * as memorySchema from '../src/memory-layer/validation/memory-schema.json';
-import { validateStoreRequest, validateRecallQuery, validateForgetRequest } from '../src/memory-layer/models/operation-requests';
+import {
+  validateStoreRequest,
+  validateRecallQuery,
+  validateForgetRequest,
+} from '../src/memory-layer/models/operation-requests';
 
 // Initialize AJV
 const ajv = new Ajv({ allErrors: true, strict: false });
@@ -78,7 +82,9 @@ const validStoreRequestSchemaResult = storeRequestSchema(fixtures.validStoreRequ
 const validStoreRequestTsResult = validateStoreRequest(fixtures.validStoreRequest);
 
 if (validStoreRequestSchemaResult !== validStoreRequestTsResult) {
-  console.error(`  ❌ MISMATCH: Schema=${validStoreRequestSchemaResult}, TS=${validStoreRequestTsResult}`);
+  console.error(
+    `  ❌ MISMATCH: Schema=${validStoreRequestSchemaResult}, TS=${validStoreRequestTsResult}`
+  );
   failures++;
 } else if (!validStoreRequestSchemaResult) {
   console.error(`  ❌ FAIL: Both rejected valid fixture`);
@@ -93,7 +99,9 @@ const invalidStoreRequestSchemaResult = storeRequestSchema(fixtures.invalidStore
 const invalidStoreRequestTsResult = validateStoreRequest(fixtures.invalidStoreRequest_noMetadata);
 
 if (invalidStoreRequestSchemaResult !== invalidStoreRequestTsResult) {
-  console.error(`  ❌ MISMATCH: Schema=${invalidStoreRequestSchemaResult}, TS=${invalidStoreRequestTsResult}`);
+  console.error(
+    `  ❌ MISMATCH: Schema=${invalidStoreRequestSchemaResult}, TS=${invalidStoreRequestTsResult}`
+  );
   failures++;
 } else if (invalidStoreRequestSchemaResult) {
   console.error(`  ❌ FAIL: Both accepted invalid fixture`);
@@ -120,7 +128,9 @@ const validRecallQuerySchemaResult = recallQuerySchema(fixtures.validRecallQuery
 const validRecallQueryTsResult = validateRecallQuery(fixtures.validRecallQuery);
 
 if (validRecallQuerySchemaResult !== validRecallQueryTsResult) {
-  console.error(`  ❌ MISMATCH: Schema=${validRecallQuerySchemaResult}, TS=${validRecallQueryTsResult}`);
+  console.error(
+    `  ❌ MISMATCH: Schema=${validRecallQuerySchemaResult}, TS=${validRecallQueryTsResult}`
+  );
   failures++;
 } else if (!validRecallQuerySchemaResult) {
   console.error(`  ❌ FAIL: Both rejected valid fixture`);
@@ -135,7 +145,9 @@ const validForgetRequestSchemaResult = forgetRequestSchema(fixtures.validForgetR
 const validForgetRequestTsResult = validateForgetRequest(fixtures.validForgetRequest);
 
 if (validForgetRequestSchemaResult !== validForgetRequestTsResult) {
-  console.error(`  ❌ MISMATCH: Schema=${validForgetRequestSchemaResult}, TS=${validForgetRequestTsResult}`);
+  console.error(
+    `  ❌ MISMATCH: Schema=${validForgetRequestSchemaResult}, TS=${validForgetRequestTsResult}`
+  );
   failures++;
 } else if (!validForgetRequestSchemaResult) {
   console.error(`  ❌ FAIL: Both rejected valid fixture`);
