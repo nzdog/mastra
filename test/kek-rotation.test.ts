@@ -128,7 +128,9 @@ describe('KEK Rotation - Data Preservation', () => {
     // Attempt to decrypt should fail with clear error
     await expect(service.decrypt(encrypted)).rejects.toThrow(/KEK not found/);
     await expect(service.decrypt(encrypted)).rejects.toThrow(/kek-nonexistent-missing/);
-    await expect(service.decrypt(encrypted)).rejects.toThrow(/restore the missing KEK or re-encrypt/);
+    await expect(service.decrypt(encrypted)).rejects.toThrow(
+      /restore the missing KEK or re-encrypt/
+    );
   });
 
   it('should preserve old KEKs in map after rotation', async () => {

@@ -58,7 +58,7 @@ async function makeRequest(
   let data: ResponseData;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    data = await response.json() as ResponseData;
+    data = (await response.json()) as ResponseData;
   } else {
     data = { text: await response.text() } as ResponseData;
   }

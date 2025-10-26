@@ -66,7 +66,7 @@ async function authedRequest(
   let data: ApiResponseData;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    data = await response.json() as ApiResponseData;
+    data = (await response.json()) as ApiResponseData;
   } else {
     data = { text: await response.text() } as ApiResponseData;
   }

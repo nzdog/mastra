@@ -53,6 +53,7 @@ interface MemoryStore {
 Production-ready in-memory implementation of MemoryStore interface.
 
 **Features:**
+
 - Fast CRUD operations with O(1) lookups
 - Indexing by `user_id`, `session_id`, `consent_family`
 - TTL enforcement with `expires_at`
@@ -130,11 +131,13 @@ The in-memory store uses three indexes for fast queries:
 ## Privacy Enforcement
 
 ### Personal Family
+
 - Full CRUD access
 - All fields visible
 - No restrictions
 
 ### Cohort Family
+
 - Store: Allowed (anonymized on write)
 - Recall: Denied (returns empty array)
 - Distill: Allowed (aggregates only)
@@ -142,6 +145,7 @@ The in-memory store uses three indexes for fast queries:
 - Export: Anonymized (no `user_id`, `session_id`)
 
 ### Population Family
+
 - Store: Allowed (aggregated on write)
 - Recall: Denied (returns empty array)
 - Distill: Allowed (population-level aggregates)
@@ -170,12 +174,15 @@ const deletedCount = await store.clearExpired();
 **Recommended:** Run `clearExpired()` periodically (e.g., every 1 hour):
 
 ```typescript
-setInterval(async () => {
-  const count = await store.clearExpired();
-  if (count > 0) {
-    console.log(`Cleared ${count} expired records`);
-  }
-}, 60 * 60 * 1000); // Every hour
+setInterval(
+  async () => {
+    const count = await store.clearExpired();
+    if (count > 0) {
+      console.log(`Cleared ${count} expired records`);
+    }
+  },
+  60 * 60 * 1000
+); // Every hour
 ```
 
 ## Query Filters
@@ -184,14 +191,14 @@ The `recall` method supports comprehensive filtering:
 
 ```typescript
 interface RecallQuery {
-  user_id: string;          // Required: user to query
-  session_id?: string;      // Optional: filter by session
-  since?: string;           // Optional: created_at >= timestamp
-  until?: string;           // Optional: created_at <= timestamp
-  type?: ContentType;       // Optional: filter by content type
-  limit?: number;           // Optional: max results (default: 100)
-  offset?: number;          // Optional: pagination offset (default: 0)
-  sort?: 'asc' | 'desc';   // Optional: sort order (default: 'desc')
+  user_id: string; // Required: user to query
+  session_id?: string; // Optional: filter by session
+  since?: string; // Optional: created_at >= timestamp
+  until?: string; // Optional: created_at <= timestamp
+  type?: ContentType; // Optional: filter by content type
+  limit?: number; // Optional: max results (default: 100)
+  offset?: number; // Optional: pagination offset (default: 0)
+  sort?: 'asc' | 'desc'; // Optional: sort order (default: 'desc')
 }
 ```
 
@@ -236,6 +243,7 @@ const page2 = await store.recall({
 ## Performance Characteristics
 
 **Time Complexity:**
+
 - `store`: O(1) - Map insertion + index updates
 - `recall`: O(n) where n = matching records (indexed lookups)
 - `forget`: O(m) where m = records to delete
@@ -244,10 +252,12 @@ const page2 = await store.recall({
 - `count`: O(n) where n = matching records
 
 **Space Complexity:**
+
 - Main storage: O(n) where n = total records
-- Indexes: O(n * 3) = O(n) - Three indexes
+- Indexes: O(n \* 3) = O(n) - Three indexes
 
 **Optimization Tips:**
+
 - Use specific filters (user_id, session_id) to leverage indexes
 - Avoid large `limit` values for pagination
 - Run `clearExpired()` regularly to prevent memory bloat
@@ -257,6 +267,7 @@ const page2 = await store.recall({
 The `MemoryStore` interface supports multiple backends:
 
 1. **PostgreSQL** (Phase 3):
+
    ```typescript
    class PostgresStore implements MemoryStore {
      // Use pg library with connection pool
@@ -265,6 +276,7 @@ The `MemoryStore` interface supports multiple backends:
    ```
 
 2. **DynamoDB** (Phase 3):
+
    ```typescript
    class DynamoDBStore implements MemoryStore {
      // Use AWS SDK v3
@@ -350,10 +362,7 @@ class HybridStore implements MemoryStore {
 
   async store(record: MemoryRecord): Promise<MemoryRecord> {
     // Write to both
-    await Promise.all([
-      this.primary.store(record),
-      this.secondary.store(record),
-    ]);
+    await Promise.all([this.primary.store(record), this.secondary.store(record)]);
     return record;
   }
 

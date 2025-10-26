@@ -75,7 +75,7 @@ async function authedRequest(
   let data: ApiResponseData;
   const contentType = response.headers.get('content-type');
   if (contentType && contentType.includes('application/json')) {
-    data = await response.json() as ApiResponseData;
+    data = (await response.json()) as ApiResponseData;
   } else {
     data = { text: await response.text() } as ApiResponseData;
   }
@@ -378,7 +378,9 @@ async function main(): Promise<void> {
     const ledgerEnabledEnv = process.env.LEDGER_ENABLED?.toLowerCase();
     const ledgerEnabled = ledgerEnabledEnv === 'true';
 
-    console.log(`DEBUG: LEDGER_ENABLED="${process.env.LEDGER_ENABLED}" → ledgerEnabled=${ledgerEnabled}`);
+    console.log(
+      `DEBUG: LEDGER_ENABLED="${process.env.LEDGER_ENABLED}" → ledgerEnabled=${ledgerEnabled}`
+    );
 
     if (!ledgerEnabled) {
       console.log(

@@ -480,7 +480,10 @@ export class PostgresStore implements MemoryStore {
    * Week 3: Added decryption support
    */
   private async rowToRecord(row: Record<string, unknown>): Promise<MemoryRecord> {
-    const content = typeof row.content === 'string' ? JSON.parse(row.content) : row.content as Record<string, unknown>;
+    const content =
+      typeof row.content === 'string'
+        ? JSON.parse(row.content)
+        : (row.content as Record<string, unknown>);
 
     // Week 3: Decrypt content if encrypted
     if (isEncryptionEnabled() && content.data_ciphertext) {

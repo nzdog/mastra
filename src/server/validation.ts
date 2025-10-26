@@ -40,10 +40,7 @@ export interface ValidationResult {
  * const sanitized = result.sanitized;
  * ```
  */
-export function validateUserInput(
-  input: string,
-  fieldName: string = 'input'
-): ValidationResult {
+export function validateUserInput(input: string, fieldName: string = 'input'): ValidationResult {
   // Check type
   if (typeof input !== 'string') {
     return { valid: false, error: `${fieldName} must be a string` };

@@ -4,13 +4,7 @@
   "title": "SignedAuditReceipt",
   "description": "Schema for signed audit receipts with Merkle proof (Phase 1.1)",
   "type": "object",
-  "required": [
-    "event",
-    "merkle",
-    "signature",
-    "ledger_height",
-    "receipt_id"
-  ],
+  "required": ["event", "merkle", "signature", "ledger_height", "receipt_id"],
   "properties": {
     "event": {
       "$ref": "audit-event.json",

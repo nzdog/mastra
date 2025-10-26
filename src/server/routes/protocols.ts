@@ -51,10 +51,7 @@ interface CompleteRequest {
 /**
  * Helper: Get session (async wrapper for SessionStore)
  */
-async function getSession(
-  sessionStore: SessionStore,
-  sessionId: string
-): Promise<Session | null> {
+async function getSession(sessionStore: SessionStore, sessionId: string): Promise<Session | null> {
   return await sessionStore.get(sessionId);
 }
 
@@ -77,7 +74,8 @@ async function createSession(
     }
     protocolPath = pathResult;
   } else {
-    protocolPath = loader.getProtocolPath('field_diagnostic') ||
+    protocolPath =
+      loader.getProtocolPath('field_diagnostic') ||
       path.join(__dirname, '../../../protocols/field_diagnostic.md');
   }
 

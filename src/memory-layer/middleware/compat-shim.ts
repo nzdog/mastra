@@ -106,7 +106,10 @@ function mapLegacyConsentFamily(value: string): ConsentFamily | null {
  * Synthesize metadata field from legacy request format
  * Legacy format had hashed_pseudonym, consent_family, etc. at top level
  */
-function synthesizeMetadata(body: Record<string, unknown>, consentContext?: Record<string, unknown>): Record<string, unknown> | null {
+function synthesizeMetadata(
+  body: Record<string, unknown>,
+  consentContext?: Record<string, unknown>
+): Record<string, unknown> | null {
   const allowLegacyMetadata = process.env.COMPAT_ALLOW_LEGACY_METADATA === 'true';
 
   // If metadata already exists, no synthesis needed
@@ -161,7 +164,8 @@ export function compatShim(req: Request, res: Response, next: NextFunction): voi
   }
 
   const body = req.body as Record<string, unknown>;
-  const consentContext = (req as unknown as { consentContext?: Record<string, unknown> }).consentContext;
+  const consentContext = (req as unknown as { consentContext?: Record<string, unknown> })
+    .consentContext;
 
   // Step 1: Synthesize metadata if missing
   const synthesizedMetadata = synthesizeMetadata(body, consentContext);
