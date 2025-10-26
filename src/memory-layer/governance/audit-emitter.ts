@@ -30,7 +30,7 @@ export interface AuditEvent {
   event_type: AuditEventType;
   timestamp: string;
   operation: string;
-  user_id?: string; // Pseudonymized
+  hashed_pseudonym?: string; // Pseudonymized
   session_id?: string;
   consent_context?: {
     consent_level: 'personal' | 'cohort' | 'population';
@@ -91,7 +91,7 @@ export class AuditEmitter {
       expiry?: string;
       revocable?: boolean;
     },
-    userId?: string,
+    hashedPseudonym?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {
     // Check if ledger is enabled
@@ -132,7 +132,7 @@ export class AuditEmitter {
       timestamp: new Date().toISOString(),
       event_type: eventType,
       operation,
-      user_id: userId,
+      hashed_pseudonym: hashedPseudonym,
       session_id: sessionId,
       consent_context: consentContext
         ? {
@@ -179,7 +179,7 @@ export class AuditEmitter {
   async emitAmbiguityEvent(
     operation: string,
     consentDiffs: Record<string, unknown>,
-    userId?: string,
+    hashedPseudonym?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {
     return this.emit(
@@ -191,7 +191,7 @@ export class AuditEmitter {
         scope: ['ambiguity_tracking'],
         revocable: true,
       },
-      userId,
+      hashedPseudonym,
       sessionId
     );
   }
@@ -203,7 +203,7 @@ export class AuditEmitter {
     overrideType: 'policy_engine' | 'ethics_committee' | 'constitutional',
     rationale: string,
     policyDiffs: Record<string, unknown>,
-    userId?: string,
+    hashedPseudonym?: string,
     sessionId?: string
   ): Promise<AuditReceipt> {
     return this.emit(
@@ -219,7 +219,7 @@ export class AuditEmitter {
         scope: ['governance_override'],
         revocable: false, // Overrides are not revocable
       },
-      userId,
+      hashedPseudonym,
       sessionId
     );
   }

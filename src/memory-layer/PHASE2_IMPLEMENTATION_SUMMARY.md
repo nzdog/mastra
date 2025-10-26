@@ -33,7 +33,7 @@ governance infrastructure.
 
 - `extractConsentFamily(path)` - Parse family from URL
 - `validateUserToken(authHeader)` - Validate Bearer token
-- `checkFamilyAuthorization(userId, family)` - Check permissions
+- `checkFamilyAuthorization(hashedPseudonym, family)` - Check permissions
 - `consentResolver` - Express middleware
 
 **Usage:**
@@ -44,7 +44,7 @@ app.use(consentResolver);
 // Request will have:
 req.consentContext = {
   family: 'personal',
-  user_id: 'user_abc123',
+  hashed_pseudonym: 'user_abc123',
   scope: ['read', 'write', 'delete'],
   trace_id: 'trace_...',
 };
@@ -123,7 +123,7 @@ import { circuitBreaker } from './middleware/slo-middleware';
     "details": {
       "validation_errors": [
         {
-          "field": "user_id",
+          "field": "hashed_pseudonym",
           "message": "must be string",
           "params": {}
         }
@@ -189,7 +189,7 @@ interface MemoryStore {
 
 - Fast CRUD operations with O(1) lookups via Map
 - Three indexes for fast queries:
-  - `byUserId`: Map<user_id, Set<record_id>>
+  - `byUserId`: Map<hashed_pseudonym, Set<record_id>>
   - `bySessionId`: Map<session_id, Set<record_id>>
   - `byConsentFamily`: Map<consent_family, Set<record_id>>
 - TTL enforcement with `expires_at` field
@@ -205,7 +205,7 @@ interface MemoryStore {
 
 **Query Features:**
 
-- Filter by user_id (required), session_id, consent_family, time range, content type
+- Filter by hashed_pseudonym (required), session_id, consent_family, time range, content type
 - Pagination with limit/offset
 - Sorting by created_at (asc/desc)
 - Automatic expiration filtering
@@ -222,7 +222,7 @@ const record = await store.store({ ... });
 
 // Recall with filters
 const records = await store.recall({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
   since: '2025-10-01T00:00:00Z',
   limit: 10,
   sort: 'desc',
@@ -230,7 +230,7 @@ const records = await store.recall({
 
 // Forget
 const deletedIds = await store.forget({
-  user_id: 'user_123',
+  hashed_pseudonym: 'user_123',
 });
 
 // Stats

@@ -28,7 +28,7 @@ export interface AuditEvent {
   timestamp: string;
   event_type: string;
   operation: string;
-  user_id?: string;
+  hashed_pseudonym?: string;
   session_id?: string;
   payload: Record<string, unknown>;
   consent_context?: {

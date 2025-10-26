@@ -72,13 +72,13 @@ Request structures for all memory operations:
 **StoreRequest**
 
 - Store new memories with content, metadata, and consent info
-- Required fields: `content`, `metadata.user_id`, `metadata.consent_family`,
+- Required fields: `content`, `metadata.hashed_pseudonym`, `metadata.consent_family`,
   `metadata.consent_timestamp`, `metadata.consent_version`
 
 **RecallQuery**
 
 - Retrieve personal memories with filtering and pagination
-- Required: `user_id`
+- Required: `hashed_pseudonym`
 - Optional: `session_id`, `since`, `until`, `type`, `limit`, `offset`, `sort`
 
 **DistillRequest**
@@ -91,13 +91,13 @@ Request structures for all memory operations:
 **ForgetRequest**
 
 - Delete memories (GDPR right to be forgotten)
-- At least one of: `id`, `user_id`, `session_id`
+- At least one of: `id`, `hashed_pseudonym`, `session_id`
 - Optional: `reason`, `hard_delete`
 
 **ExportRequest**
 
 - Export user data (GDPR data portability)
-- Required: `user_id`, `format` (`json` | `csv` | `jsonlines`)
+- Required: `hashed_pseudonym`, `format` (`json` | `csv` | `jsonlines`)
 - Optional: `filters`, `include_audit`
 
 **Validation Functions:**
@@ -117,7 +117,7 @@ Response structures for all memory operations. All responses extend `BaseRespons
 
 **StoreResponse**
 
-- Returns: `id`, `user_id`, `session_id`, `consent_family`, `created_at`, `expires_at`
+- Returns: `id`, `hashed_pseudonym`, `session_id`, `consent_family`, `created_at`, `expires_at`
 
 **RecallResponse**
 
@@ -209,7 +209,7 @@ const storeReq: StoreRequest = {
     data: 'User preference: dark mode enabled',
   },
   metadata: {
-    user_id: 'user-123',
+    hashed_pseudonym: 'user-123',
     session_id: 'session-abc',
     consent_family: 'personal',
     consent_timestamp: new Date().toISOString(),

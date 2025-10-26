@@ -30,7 +30,7 @@ app.use(consentResolver);
 ```typescript
 req.consentContext = {
   family: 'personal' | 'cohort' | 'population',
-  user_id: 'user_abc123',
+  hashed_pseudonym: 'user_abc123',
   scope: ['read', 'write', 'delete'],
   trace_id: 'trace_...',
 };
@@ -94,7 +94,7 @@ app.use(schemaValidator);
     "details": {
       "validation_errors": [
         {
-          "field": "user_id",
+          "field": "hashed_pseudonym",
           "message": "must be string",
           "params": {}
         }

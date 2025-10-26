@@ -166,7 +166,7 @@ Phase 2 introduces consent-aware memory operations across three consent families
    ```
 
 2. **Route 1% of read traffic**
-   - Use consistent hashing by user_id
+   - Use consistent hashing by hashed_pseudonym
    - Ensure same users always hit canary
    - Monitor canary vs baseline metrics
 

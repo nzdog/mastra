@@ -80,7 +80,7 @@ app.post(
     const auditor = getAuditEmitter();
 
     // Consent context is already attached by middleware
-    const { family, user_id, trace_id } = req.consentContext!;
+    const { family, hashed_pseudonym, trace_id } = req.consentContext!;
 
     // Extract request data (already validated by schema middleware)
     const { content, metadata, expires_at } = req.body;
@@ -88,7 +88,7 @@ app.post(
     // Create memory record
     const record = {
       id: randomUUID(),
-      user_id: metadata.user_id,
+      hashed_pseudonym: metadata.hashed_pseudonym,
       session_id: metadata.session_id,
       content,
       consent_family: family,
@@ -107,7 +107,7 @@ app.post(
       'memory_store',
       { record_id: record.id },
       { consent_level: family, scope: req.consentContext!.scope },
-      user_id
+      hashed_pseudonym
     );
 
     record.audit_receipt_id = receipt.receipt_id;
@@ -118,7 +118,7 @@ app.post(
     // Return response
     res.status(201).json({
       id: stored.id,
-      user_id: stored.user_id,
+      hashed_pseudonym: stored.hashed_pseudonym,
       consent_family: stored.consent_family,
       created_at: stored.created_at,
       audit_receipt_id: stored.audit_receipt_id,
@@ -137,11 +137,11 @@ app.get(
     const auditor = getAuditEmitter();
 
     // Consent context from middleware
-    const { user_id, trace_id } = req.consentContext!;
+    const { hashed_pseudonym, trace_id } = req.consentContext!;
 
     // Query params (already validated)
     const query = {
-      user_id: req.query.user_id as string,
+      hashed_pseudonym: req.query.hashed_pseudonym as string,
       session_id: req.query.session_id as string | undefined,
       since: req.query.since as string | undefined,
       until: req.query.until as string | undefined,
@@ -155,7 +155,7 @@ app.get(
     const records = await store.recall(query);
 
     // Count total
-    const total = await store.count({ user_id: query.user_id });
+    const total = await store.count({ hashed_pseudonym: query.hashed_pseudonym });
 
     // Emit audit event
     const receipt = await auditor.emit(
@@ -166,7 +166,7 @@ app.get(
         query_params: query,
       },
       { consent_level: req.consentContext!.family, scope: req.consentContext!.scope },
-      user_id
+      hashed_pseudonym
     );
 
     // Return response
@@ -195,12 +195,12 @@ app.delete(
     const store = getMemoryStore();
     const auditor = getAuditEmitter();
 
-    const { user_id, trace_id } = req.consentContext!;
+    const { hashed_pseudonym, trace_id } = req.consentContext!;
 
     // Delete request (already validated)
     const forgetRequest = {
       id: req.query.id as string | undefined,
-      user_id: req.query.user_id as string | undefined,
+      hashed_pseudonym: req.query.hashed_pseudonym as string | undefined,
       session_id: req.query.session_id as string | undefined,
       reason: req.query.reason as string | undefined,
     };
@@ -218,7 +218,7 @@ app.delete(
         reason: forgetRequest.reason,
       },
       { consent_level: req.consentContext!.family, scope: req.consentContext!.scope },
-      user_id
+      hashed_pseudonym
     );
 
     // Return response
@@ -246,7 +246,7 @@ curl -X POST http://localhost:3000/v1/personal/store \
       "data": "User prefers dark mode"
     },
     "metadata": {
-      "user_id": "user_test123",
+      "hashed_pseudonym": "user_test123",
       "consent_family": "personal",
       "consent_timestamp": "2025-10-17T00:00:00Z",
       "consent_version": "1.0"
@@ -257,7 +257,7 @@ curl -X POST http://localhost:3000/v1/personal/store \
 ### Recall Memories
 
 ```bash
-curl -X GET "http://localhost:3000/v1/personal/recall?user_id=user_test123&limit=10" \
+curl -X GET "http://localhost:3000/v1/personal/recall?hashed_pseudonym=user_test123&limit=10" \
   -H "Authorization: Bearer user_test123"
 ```
 
@@ -439,7 +439,7 @@ if (!req.consentContext) {
   // Not a memory layer route or auth failed
 }
 
-const { family, user_id, scope } = req.consentContext;
+const { family, hashed_pseudonym, scope } = req.consentContext;
 ```
 
 ### 3. Emit Audit Events
@@ -454,7 +454,7 @@ const receipt = await auditor.emit(
     /* payload */
   },
   { consent_level: family, scope },
-  user_id
+  hashed_pseudonym
 );
 ```
 

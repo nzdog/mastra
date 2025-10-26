@@ -51,7 +51,7 @@ export interface MemoryStore {
 
   /**
    * Forget (delete) memory records
-   * @param request - Forget request with id, user_id, or session_id
+   * @param request - Forget request with id, hashed_pseudonym, or session_id
    * @returns Promise resolving to array of deleted record IDs
    */
   forget(request: ForgetRequest): Promise<string[]>;

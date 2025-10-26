@@ -24,7 +24,7 @@ interface MemoryIndex {
  *
  * Features:
  * - Fast CRUD operations with O(1) lookups
- * - Indexing by user_id, session_id, consent_family
+ * - Indexing by hashed_pseudonym, session_id, consent_family
  * - TTL enforcement with expires_at
  * - Consent family privacy enforcement
  * - k-anonymity for cohort/population queries
@@ -356,15 +356,15 @@ export class InMemoryStore implements MemoryStore {
    */
   private getCandidateIds(query: RecallQuery): Set<string> {
     // Start with hashed_pseudonym index (required)
-    const userIds = this.indexes.byHashedPseudonym.get(query.hashed_pseudonym) || new Set<string>();
+    const hashedPseudonyms = this.indexes.byHashedPseudonym.get(query.hashed_pseudonym) || new Set<string>();
 
     // If session_id specified, intersect with session index
     if (query.session_id) {
       const sessionIds = this.indexes.bySessionId.get(query.session_id) || new Set<string>();
-      return new Set([...userIds].filter((id) => sessionIds.has(id)));
+      return new Set([...hashedPseudonyms].filter((id) => sessionIds.has(id)));
     }
 
-    return userIds;
+    return hashedPseudonyms;
   }
 
   /**
