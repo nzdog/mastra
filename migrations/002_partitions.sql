@@ -30,16 +30,16 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Helper function to create new partitions automatically
 -- ============================================================================
 
-CREATE OR REPLACE FUNCTION create_monthly_partition(target_date DATE)
+CREATE OR REPLACE FUNCTION create_monthly_partition(target_date TIMESTAMP)
 RETURNS TEXT AS $$
 DECLARE
   partition_name TEXT;
   start_date DATE;
   end_date DATE;
 BEGIN
-  -- Calculate partition boundaries
-  start_date := DATE_TRUNC('month', target_date);
-  end_date := start_date + INTERVAL '1 month';
+  -- Calculate partition boundaries (cast to DATE for partition keys)
+  start_date := DATE_TRUNC('month', target_date)::DATE;
+  end_date := (start_date + INTERVAL '1 month')::DATE;
 
   -- Generate partition name
   partition_name := 'memory_records_' || TO_CHAR(start_date, 'YYYY_MM');
@@ -70,14 +70,14 @@ COMMENT ON FUNCTION create_monthly_partition IS 'Helper to create new monthly pa
 -- Use the helper function to create partitions (will skip if exists)
 DO $$
 BEGIN
-  -- Current month
+  -- Current month (CURRENT_DATE is DATE, will be cast to TIMESTAMP)
   PERFORM create_monthly_partition(CURRENT_DATE);
 
-  -- Next month
-  PERFORM create_monthly_partition((CURRENT_DATE + INTERVAL '1 month')::DATE);
+  -- Next month (CURRENT_DATE + INTERVAL returns TIMESTAMP)
+  PERFORM create_monthly_partition(CURRENT_DATE + INTERVAL '1 month');
 
-  -- Month after next
-  PERFORM create_monthly_partition((CURRENT_DATE + INTERVAL '2 months')::DATE);
+  -- Month after next (CURRENT_DATE + INTERVAL returns TIMESTAMP)
+  PERFORM create_monthly_partition(CURRENT_DATE + INTERVAL '2 months');
 
   RAISE NOTICE 'Partition creation complete';
 END $$;
