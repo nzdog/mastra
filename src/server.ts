@@ -1,5 +1,5 @@
 import * as path from 'path';
-import express, { Request, Response } from 'express';
+import express from 'express';
 import { loadConfig } from './server/config';
 import { applyMiddleware } from './server/middleware';
 import { createHealthRouter } from './server/routes/health';
@@ -14,7 +14,7 @@ import { errorHandler } from './memory-layer/middleware/error-handler';
 
 // Load configuration
 const config = loadConfig();
-const { apiKey: API_KEY, sessionStore, corsConfig } = config;
+const { apiKey: API_KEY, sessionStore } = config;
 
 // Server readiness flag (mutable reference for health router)
 const isReadyRef = { current: false };
@@ -51,14 +51,12 @@ setInterval(
 
 // Initialize Express app
 const app = express();
-const PORT = config.port;
 
 // Trust proxy - Critical for rate limiting behind reverse proxies (Railway, Heroku, etc.)
 // Without this, all requests appear to come from the proxy's IP, breaking per-client rate limits
 app.set('trust proxy', 1);
 
-// Temporarily disable static middleware to test logo route
-const fs = require('fs');
+// Log assets path for debugging
 const assetsPath = path.join(__dirname, '../assets');
 console.log(`📁 Assets path: ${assetsPath}`);
 
