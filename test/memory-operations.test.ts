@@ -721,7 +721,7 @@ async function main(): Promise<void> {
         body: {
           content: { type: 'text', data: 'test' },
           metadata: {
-            hashed_pseudonym: '123-45-6789', // SSN pattern - should reject
+            hashed_pseudonym: 'invalid-hash-format', // Invalid format - should reject
             consent_family: 'personal',
             consent_timestamp: new Date().toISOString(),
             consent_version: '1.0',
