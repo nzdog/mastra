@@ -85,7 +85,10 @@ and allows clean forward movement. **Outcomes:**
 - Poor: We stay attached and feel heavy or distracted.
 - Expected: We loosen some ties but revisit them often.
 - Excellent: We release fully and feel free to focus ahead.
-- Transcendent: Letting go becomes effortless. Freedom feels normal. **Guiding Questions:**
+- Transcendent: Letting go becomes effortless. Freedom feels normal.
+
+**Guiding Questions:**
+
 - What still pulls my thoughts or feelings toward the past?
 - Who or what am I still holding onto?
 - What will change once I release this fully?
@@ -121,7 +124,10 @@ keeps you identified with what's over. Resetting them allows you to see clearly 
 - Expected: We recognise the loop but only partly shift the story.
 - Excellent: We update our thinking to match present reality. Focus returns.
 - Transcendent: We no longer cling to old interpretations; experience becomes neutral information,
-  not identity. **Guiding Questions:**
+  not identity.
+
+**Guiding Questions:**
+
 - What story about the past am I still repeating?
 - How does that story keep me tied to it?
 - What is actually true now?
@@ -156,7 +162,10 @@ by release can turn into drift. Defining purpose channels energy productively. *
 - Expected: We make tentative plans but remain uncertain.
 - Excellent: We set clear next steps and feel steady momentum.
 - Transcendent: Direction-setting becomes instinctive; we adjust naturally to changing
-  circumstances. **Guiding Questions:**
+  circumstances.
+
+**Guiding Questions:**
+
 - What do I want to move toward now?
 - What's the first simple step that feels right?
 - How can I keep my direction grounded but adaptable?

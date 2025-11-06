@@ -93,7 +93,10 @@ enacts Clarity over Cleverness, teaching that awareness itself is a creative act
 - Excellent: We acknowledge the fading vitality and accept its message; energy that was bound in
   resistance becomes available for honest work.
 - Transcendent: We witness decline as part of the wider ecosystem; endings no longer frighten us,
-  and cycles unfold with calm precision. **Guiding Questions:**
+  and cycles unfold with calm precision.
+
+**Guiding Questions:**
+
 - Where am I sustaining something that no longer sustains me?
 - What feels heavy that once felt clear?
 - Which truths are ready to be spoken aloud?
@@ -117,7 +120,10 @@ weakness. **Outcomes:**
 - Excellent: We give emotions space to move; clarity expands, and compassion arises for both self
   and system.
 - Transcendent: We feel deeply yet remain anchored in peace; emotion becomes wisdom, and future
-  endings unfold with less resistance. **Guiding Questions:**
+  endings unfold with less resistance.
+
+**Guiding Questions:**
+
 - What emotion am I avoiding by staying in motion?
 - Which feeling holds the key to my release?
 - How can I let emotion complete without making it my identity?
@@ -139,7 +145,10 @@ possibility to return in its own time. **Outcomes:**
 - Excellent: We release false hope with grace; energy rebalances and the mind clears to sense new
   signals.
 - Transcendent: We live in relationship with truth, not fantasy; endings feel spacious, and
-  authentic hope re-emerges naturally. **Guiding Questions:**
+  authentic hope re-emerges naturally.
+
+**Guiding Questions:**
+
 - What am I calling hope that's really fear of letting go?
 - Where has persistence become self-protection?
 - What truth would I see if I stopped waiting for a turnaround?
@@ -161,7 +170,10 @@ defining what's complete creates space for regeneration. **Outcomes:**
 - Excellent: We clearly articulate what's done and why; coherence strengthens and the future field
   feels lighter.
 - Transcendent: Completion becomes an art form; every closure transmits strength and clean energy
-  into what follows. **Guiding Questions:**
+  into what follows.
+
+**Guiding Questions:**
+
 - What is undeniably complete, even if I wish it weren't?
 - What fragments still call for closure?
 - How can I mark the boundary between gratitude and obligation?
@@ -180,7 +192,10 @@ Ownership—recognising that what passed through us was never ours to keep, only
 - Expected: We attempt gratitude intellectually; warmth flickers but doesn't yet reach the body.
 - Excellent: We thank the field sincerely; energy softens and the heart steadies for transition.
 - Transcendent: Gratitude becomes our native posture; past, present, and future form one living
-  continuum of appreciation. **Guiding Questions:**
+  continuum of appreciation.
+
+**Guiding Questions:**
+
 - What gifts did this field give, even through hardship?
 - How can I express thanks without reopening the bond?
 - What beauty emerged that I hadn't recognised until now?
@@ -202,7 +217,10 @@ without force. **Outcomes:**
 - Excellent: We honour the pause and listen deeply; subtle new directions begin revealing themselves
   in daily life.
 - Transcendent: We dwell comfortably in openness; the next field finds us through resonance, not
-  search. **Guiding Questions:**
+  search.
+
+**Guiding Questions:**
+
 - What wants to move through the space that's now open?
 - How can I rest without rushing toward definition?
 - What early signals of life am I beginning to sense?

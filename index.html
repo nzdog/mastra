@@ -1997,7 +1997,9 @@
                 disabled
                 aria-label="Continue (Ctrl or Cmd + Enter)"
               >
-                Continue
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: 0 auto;">
+                  <polyline points="18 15 12 9 6 15"></polyline>
+                </svg>
               </button>
             </div>
           </div>
@@ -3737,18 +3739,35 @@
         // CLOSE mode - field diagnosis content
         // Check if this is completion content by looking for common CLOSE mode patterns
         // Updated to handle both Field Diagnostic and Field Exit protocols
+        console.log('🔍 Checking if CLOSE mode...', {
+          hasFieldCall: markdown.includes("field I'd call"),
+          hasCompleted: markdown.includes("You've completed"),
+          hasFieldDiagnosis: markdown.includes('**FIELD DIAGNOSIS**'),
+          hasPattern: markdown.includes('**Pattern Identified:**'),
+          hasType: markdown.includes('**Type:**'),
+          hasPurposeColon: markdown.includes('Purpose:'),
+          hasGuidingQuestions: markdown.includes('Guiding Questions:'),
+          length: markdown.length,
+          preview: markdown.substring(0, 200)
+        });
+
         if (
           markdown.includes("field I'd call") ||
           markdown.includes("You've completed") ||
           markdown.includes('**FIELD DIAGNOSIS**') ||
           markdown.includes('**Pattern Identified:**') ||
           markdown.includes('**Type:**') ||
-          (markdown.includes('**') && markdown.length > 200 && !markdown.includes('Purpose:'))
+          markdown.includes('## Field Diagnosis') ||
+          markdown.includes('## Evidence') ||
+          markdown.includes('## Coherence Assessment')
         ) {
           // For CLOSE mode, treat the entire content as acknowledgment/diagnosis
+          console.log('✅ CLOSE mode detected - treating as acknowledgment');
           sections.acknowledgment = markdown.trim();
           return sections;
         }
+
+        console.log('📝 Not CLOSE mode - continuing to parse sections');
 
         // Interpretation section (with invisible marker like <!-- INTERPRETATION -->)
         const interpretationMatch = markdown.match(
@@ -3793,6 +3812,15 @@
         // Extract final instruction like "Take a moment..."
         const instructionMatch = markdown.match(/\n\n([A-Z][^*\n]+(?:moment|ready)[^*\n]+\.)/);
         if (instructionMatch) sections.instruction = instructionMatch[1].trim();
+
+        console.log('📋 Parsed sections:', {
+          hasOrientation: !!sections.orientation,
+          hasGuidingQuestion: !!sections.guiding_question,
+          hasWhyThisMatters: !!sections.why_this_matters,
+          hasAcknowledgment: !!sections.acknowledgment,
+          hasTransition: !!sections.transition,
+          guidingQuestionPreview: sections.guiding_question ? sections.guiding_question.substring(0, 100) : 'none'
+        });
 
         return sections;
       }

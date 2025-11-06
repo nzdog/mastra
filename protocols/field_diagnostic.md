@@ -106,8 +106,10 @@ it. You can't exit what you can't see.
 - Poor: Deny or ignore behaviors → future of unchecked repetition.
 - Expected: Name surface behaviors → future of more accurate reflection.
 - Excellent: Connect behaviors to field dynamics → future of proactive awareness.
-- Transcendent: Behaviors become live signals → future of instant self-correction. **Guiding
-  Questions:**
+- Transcendent: Behaviors become live signals → future of instant self-correction.
+
+**Guiding Questions:**
+
 - What language am I using most often right now?
 - How do I act under pressure—push harder, freeze, comply, withdraw?
 - What behaviors would others notice first in me this week?
@@ -123,7 +125,10 @@ show up in the nervous system before logic. **Outcomes:**
 - Poor: Override signals → future of burnout or collapse.
 - Expected: Notice cues → future of informed choices.
 - Excellent: Map experience to field dynamics → future of deeper alignment.
-- Transcendent: Body becomes compass → future of embodied diagnosis. **Guiding Questions:**
+- Transcendent: Body becomes compass → future of embodied diagnosis.
+
+**Guiding Questions:**
+
 - What sensations arise when I picture continuing as I am?
 - Where does tension, heaviness, or lightness sit in my body?
 - What emotions repeat most often this week?
@@ -138,7 +143,10 @@ behavior; naming them breaks control. **Outcomes:**
 - Poor: Misinterpret incentives as preferences → future of manipulation.
 - Expected: See rewards/punishments → future of clearer agency.
 - Excellent: Identify incentive shaping → future of resistance.
-- Transcendent: Operate by integrity → future of freedom from manipulation. **Guiding Questions:**
+- Transcendent: Operate by integrity → future of freedom from manipulation.
+
+**Guiding Questions:**
+
 - What gets praised, noticed, or rewarded in this context?
 - What is ignored, punished, or made invisible?
 - When do I feel compelled to comply even if misaligned?
@@ -154,7 +162,10 @@ fields; until named, they remain unquestioned. **Outcomes:**
 - Poor: Accept stories as fact → future of conformity.
 - Expected: Identify dominant stories → future of critical distance.
 - Excellent: See how stories shape choices → future of discernment.
-- Transcendent: Rewrite the story → future of self-authored field. **Guiding Questions:**
+- Transcendent: Rewrite the story → future of self-authored field.
+
+**Guiding Questions:**
+
 - What story does this field tell about success and failure?
 - What story does it tell about rest, productivity, or worth?
 - What story does it tell about relationships and power?
@@ -171,7 +182,9 @@ underlying logic of a field. **Outcomes:**
 - Expected: Notice stress behaviors → future of awareness.
 - Excellent: See how demands train responses → future of choice.
 - Transcendent: Remain steady regardless of field pressure → future of resilient coherence.
-  **Guiding Questions:**
+
+**Guiding Questions:**
+
 - How does this field react when things go wrong?
 - What is demanded under stress?
 - How do I find myself reacting in parallel?

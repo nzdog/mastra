@@ -91,7 +91,10 @@ field. **Outcomes:**
 - Expected: We close a few items but leave minor gaps that complicate the future.
 - Excellent: We address every open loop clearly. Energy stabilises and the field rests.
 - Transcendent: Completion becomes a personal standard. Every cycle ends with order and readiness
-  for the next. **Guiding Questions:**
+  for the next.
+
+**Guiding Questions:**
+
 - What tasks or promises still need completion?
 - Who is waiting for a response or action from me?
 - What feels unfinished even if it looks minor?
@@ -110,7 +113,10 @@ peace of mind. **Outcomes:**
 - Expected: We acknowledge some feelings but leave others hidden. Relief comes slowly.
 - Excellent: We express what needs to be said respectfully and completely. Closure feels real.
 - Transcendent: We approach all endings with emotional transparency. Relationships remain intact,
-  even when roles end. **Guiding Questions:**
+  even when roles end.
+
+**Guiding Questions:**
+
 - Is there something I still need to say to this person or group?
 - Have I expressed appreciation as clearly as feedback?
 - What emotional truth remains unspoken?
@@ -129,7 +135,10 @@ professional and energetic closure. **Outcomes:**
 - Expected: We complete most of the tasks but miss some small details that delay closure.
 - Excellent: All paperwork, agreements, and assets are finalised. No one needs to chase follow-ups.
 - Transcendent: We become known for finishing cleanly. Our exits set a standard for clarity and
-  professionalism. **Guiding Questions:**
+  professionalism.
+
+**Guiding Questions:**
+
 - What financial, legal, or administrative items still need action?
 - What information must be documented or handed over?
 - If someone stepped in tomorrow, would they find everything clear?
@@ -150,7 +159,10 @@ Being direct and thoughtful maintains respect and coherence in the wider system.
 - Excellent: We communicate openly and clearly, explaining the transition with respect. The field
   settles quickly.
 - Transcendent: Our communication style itself becomes trusted. Others feel guided, not disrupted,
-  by our exit. **Guiding Questions:**
+  by our exit.
+
+**Guiding Questions:**
+
 - Who needs to know, and in what order?
 - What tone best communicates respect and closure?
 - How can I share information clearly and calmly?
@@ -170,7 +182,7 @@ individual. **Outcomes:**
 - Excellent: We transfer all key knowledge and materials smoothly. The transition is clear and
   uninterrupted.
 - Transcendent: We hand over with clarity and grace. The system feels supported, not abandoned.
-  **Guiding Questions:**
+**Guiding Questions:**
 - Who will continue the work or take responsibility next?
 - What do they need to know to succeed?
 - Have I explained or documented everything clearly?
@@ -190,7 +202,7 @@ identity. **Outcomes:**
 - Excellent: We acknowledge the full picture and release attachment. Energy feels grounded and
   complete.
 - Transcendent: We close with quiet confidence. Endings and beginnings flow together as one process.
-  **Guiding Questions:**
+**Guiding Questions:**
 - What am I proud to leave behind?
 - What lesson stands out most from this field?
 - What signals tell me this exit is complete?

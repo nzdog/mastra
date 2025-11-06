@@ -89,7 +89,10 @@ same friction later. **Outcomes:**
 - Expected: We see some difference but hesitate to act on it; clarity begins but isn't yet solid.
 - Excellent: We name the real gifts and what must be released; energy feels steadier and cleaner.
 - Transcendent: Discernment becomes natural. Every ending quickly reveals what's worth carrying
-  forward. **Guiding Questions:**
+  forward.
+
+**Guiding Questions:**
+
 - What parts of this experience make me stronger?
 - What habits or attitudes drain me when I remember them?
 - What belongs in my future, and what doesn't?
@@ -107,7 +110,7 @@ Awareness allows learning instead of judgment. **Outcomes:**
 - Expected: We notice the pattern but treat it as personal failure.
 - Excellent: We understand its purpose and why it lasted. The pattern begins to lose hold.
 - Transcendent: We see patterns as feedback, not flaws. Growth becomes calm and consistent.
-  **Guiding Questions:**
+**Guiding Questions:**
 - When did this pattern first start?
 - What need or fear was it protecting?
 - How has it helped and limited me?
@@ -125,7 +128,10 @@ learning and makes it easier to apply in new contexts. **Outcomes:**
 - Expected: We see some value but understate its importance.
 - Excellent: We name the clear benefits and see how they equip us for what's next.
 - Transcendent: We recognise that every experience holds value. Confidence and gratitude become
-  steady foundations. **Guiding Questions:**
+  steady foundations.
+
+**Guiding Questions:**
+
 - What specific strengths or insights came from this field?
 - What am I more capable of now?
 - How can I name the gift in a way that's useful, not sentimental?
@@ -145,7 +151,10 @@ gift and reduces its strength. Releasing it prevents new patterns from forming a
 - Expected: We recognise what needs to go but release only part of it. The improvement is partial.
 - Excellent: We clear the distortion fully. The lesson feels lighter and more empowering.
 - Transcendent: We become skilled at clearing distortion quickly. Integrity stays high through
-  change. **Guiding Questions:**
+  change.
+
+**Guiding Questions:**
+
 - What emotional charge or belief still attaches to this lesson?
 - How can I release it without rejecting the learning?
 - What does clean understanding feel like in my body?
@@ -164,7 +173,10 @@ integrated, not just remembered. **Outcomes:**
 - Expected: We apply it sometimes, noticing partial results.
 - Excellent: We use it consistently and see better outcomes.
 - Transcendent: The gift becomes part of our natural way of working. Growth feels steady and
-  effortless. **Guiding Questions:**
+  effortless.
+
+**Guiding Questions:**
+
 - Where can I apply this lesson today?
 - How can I tell the gift is active in my choices?
 - What feedback shows I'm using it well?

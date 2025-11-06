@@ -89,7 +89,7 @@ active and keeps influencing decisions. Naming brings clarity and stops hidden d
 - Expected: We name a few pieces but leave others vague, so progress is uneven.
 - Excellent: We state clearly what can't continue and why. Energy starts to return.
 - Transcendent: We see breakdown as healthy. Endings become easier to handle in the future.
-  **Guiding Questions:**
+**Guiding Questions:**
 - What am I still carrying that doesn't belong in the next phase?
 - What habits or attachments have run their course?
 - What's ready to be dismantled or released?
@@ -108,7 +108,9 @@ tied to the old system. Allowing natural breakdown frees attention for what matt
 - Expected: We step back a little but still hold emotional tension.
 - Excellent: We let go and trust that time and space will do the work.
 - Transcendent: We stop resisting endings. Future transitions feel smoother and less personal.
-  **Guiding Questions:**
+
+**Guiding Questions:**
+
 - Where am I still holding on?
 - What's hard about giving this process time?
 - What would change if I stopped managing it?
@@ -146,7 +148,7 @@ energy can move in cleanly. **Outcomes:**
 - Expected: We acknowledge emotion but stay attached to it.
 - Excellent: We release the feelings through expression, forgiveness, or closure.
 - Transcendent: We learn to let go easily. Emotional cycles end quickly and leave no trace.
-  **Guiding Questions:**
+**Guiding Questions:**
 - What emotions am I still holding from the old field?
 - What do I need to forgive or accept?
 - How can I clear this without re-engaging the story?
@@ -183,7 +185,10 @@ reset ensures the new field starts clean. **Outcomes:**
 - Expected: We rest briefly, but the old mindset reappears under pressure.
 - Excellent: We pause fully, restore balance, and restart with focus.
 - Transcendent: Renewal becomes part of the process; every ending naturally feeds the next
-  beginning. **Guiding Questions:**
+  beginning.
+
+**Guiding Questions:**
+
 - How can I tell my system is ready for something new?
 - What would real rest look like right now?
 - What small signs show new energy is beginning to form?
