@@ -2279,6 +2279,11 @@
         await new Promise((resolve) => setTimeout(resolve, TIMING.initialWait));
         console.log('Initial wait complete, showing quote...');
 
+        // Check if animations were skipped during the wait
+        if (skipIntroAnimations) {
+          return; // Exit early if user clicked logo
+        }
+
         // 2. Show quote with simple fade (0.86s) - both desktop and mobile versions
         // The CSS will handle showing only the appropriate version
         if (introQuoteDesktop && introQuoteMobile) {
@@ -2295,6 +2300,11 @@
 
           // Wait 3 seconds total before greying out
           await new Promise((resolve) => setTimeout(resolve, 3000));
+
+          // Check if animations were skipped during the wait
+          if (skipIntroAnimations) {
+            return; // Exit early if user clicked logo
+          }
 
           // Grey out both versions
           introQuoteDesktop.style.transition = 'opacity 500ms ease, color 500ms ease';
@@ -2344,6 +2354,11 @@
           await fadeInClean(line, 860);
           announceForScreenReader(lineText);
           await new Promise((resolve) => setTimeout(resolve, TIMING.lineDuration));
+
+          // Check if animations were skipped during the wait
+          if (skipIntroAnimations) {
+            return; // Exit early if user clicked logo
+          }
 
           previousLine = line;
         }
