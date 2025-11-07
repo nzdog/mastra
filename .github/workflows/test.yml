@@ -53,6 +53,7 @@ jobs:
       # Encryption (using memory KMS for tests)
       ENCRYPTION_ENABLED: true
       KMS_PROVIDER: memory
+      KEK_ID: kek-default # Use fixed KEK ID for tests to avoid date-based rotation issues
       DEV_KEK_BASE64: aPmRlth3bxkUaJBCF72rL17ef9Or2oI4jW/BbLPfYto= # test-only KEK (32 bytes)
 
       # Phase 3.2: Ledger configuration for graceful degradation
