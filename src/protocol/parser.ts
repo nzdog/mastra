@@ -232,7 +232,7 @@ export class ProtocolParser {
     let currentField = '';
 
     for (let i = 1; i < lines.length; i++) {
-      let line = lines[i];
+      const line = lines[i];
 
       // Handle multiple bold sections on the same line by splitting them
       if (line.includes('**Purpose:**') && line.includes('**Why this matters:**')) {
