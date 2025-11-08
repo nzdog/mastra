@@ -3,7 +3,7 @@
  * Tests for parsing markdown protocol files into structured data
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ProtocolParser } from '../../src/protocol/parser';
 import * as path from 'path';
 import * as fs from 'fs';
