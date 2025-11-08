@@ -3044,16 +3044,15 @@
           // Hide loading indicator
           hideLoadingIndicator();
 
-          // Reset the flag
-          isHandlingContinue = false;
-
           // Focus will be set in renderWalkState after animation
         } catch (error) {
           showError('The field lost connection. Please try again.');
           continueButton.classList.remove('clicked');
-          isHandlingContinue = false;
           continueButton.disabled = false;
           hideLoadingIndicator();
+        } finally {
+          // Always reset the flag, regardless of success/error/early return
+          isHandlingContinue = false;
         }
       }
 
