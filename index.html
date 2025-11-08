@@ -680,14 +680,14 @@
 
       /* Error Strip */
       .error-strip {
-        background: #ffffff;
-        border: 1px solid #d6d3d1;
+        background: #fef2f2;
+        border: 1px solid #fca5a5;
+        border-left: 3px solid #dc2626;
         padding: 1rem 1.25rem;
         margin-bottom: 1.5rem;
         display: none;
         border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-        color: #57534e;
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.1);
       }
 
       .error-strip.active {
@@ -1926,12 +1926,6 @@
             id="lichen-logo"
             style="height: 80px; width: auto; margin-bottom: 2rem"
           />
-
-          <!-- Error Strip (Entry View) -->
-          <div class="error-strip" id="error-strip-entry">
-            <div class="error-message" id="error-message-entry"></div>
-          </div>
-
           <div
             class="header-logo-badge"
             style="transform: translate(60px, -40px); font-size: 0.95rem"
@@ -2098,8 +2092,6 @@
       // const supportsContainer = document.getElementById('supports-container');
       const errorStrip = document.getElementById('error-strip');
       const errorMessage = document.getElementById('error-message');
-      const errorStripEntry = document.getElementById('error-strip-entry');
-      const errorMessageEntry = document.getElementById('error-message-entry');
       const responseHint = document.getElementById('response-hint');
       const costDisplay = document.getElementById('cost-display');
       const branchLabel = document.getElementById('branch-label');
@@ -2836,25 +2828,7 @@
             }),
           });
 
-          console.log('📡 Response status:', response.status, 'OK:', response.ok);
-
           const data = await response.json();
-          console.log('📦 Response data:', data);
-
-          // Check if response contains an error
-          if (!response.ok || data.error) {
-            console.log('❌ Error detected:', { responseOk: response.ok, hasError: !!data.error, errorMessage: data.error });
-            const errorMsg = data.error || 'The field lost connection. Please try again.';
-            const retryInfo = data.retryAfter ? ` Please try again in ${data.retryAfter}.` : '';
-            console.log('🚨 Showing error:', errorMsg + retryInfo);
-            showError(errorMsg + retryInfo);
-            beginButton.textContent = 'Begin walk';
-            beginButton.disabled = false;
-            hideLoadingIndicator();
-            return;
-          }
-
-          console.log('✅ Success, setting session ID:', data.session_id);
           sessionId = data.session_id;
           protocolData = data;
 
@@ -2866,7 +2840,6 @@
           // Hide loading indicator
           hideLoadingIndicator();
         } catch (error) {
-          console.error('💥 Caught exception:', error);
           showError('The field lost connection. Please try again.');
           beginButton.textContent = 'Begin walk';
           beginButton.disabled = false;
@@ -2897,24 +2870,57 @@
         walkControl.appendChild(completeWalkBtn);
 
         // Handle ask another question
-        askAnotherBtn.addEventListener('click', () => {
-          // Show the response input area
-          const responseArea = document.querySelector('.response-area');
-          if (responseArea) {
-            responseArea.style.display = 'block';
+        askAnotherBtn.addEventListener('click', async () => {
+          const userResponse = responseInput.value.trim();
+          if (!userResponse) return;
+
+          askAnotherBtn.classList.add('clicked');
+          askAnotherBtn.disabled = true;
+          responseInput.blur();
+
+          // Show loading indicator
+          showLoadingIndicator();
+
+          try {
+            const response = await fetch(`${API_BASE}/api/walk/continue`, {
+              method: 'POST',
+              headers: getHeaders(),
+              body: JSON.stringify({
+                session_id: sessionId,
+                user_response: userResponse,
+              }),
+            });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+
+              // Check for API overload (529)
+              if (response.status === 529 || errorData.error?.type === 'overloaded_error') {
+                showError('The AI service is currently experiencing high demand. Please wait a moment and try again.');
+              } else {
+                showError('The field lost connection. Please try again.');
+              }
+
+              askAnotherBtn.classList.remove('clicked');
+              askAnotherBtn.disabled = false;
+              hideLoadingIndicator();
+              return;
+            }
+
+            const data = await response.json();
+            protocolData = data;
+            updateCostDisplay(0.02);
+            responseInput.value = '';
+            renderWalkState(data);
+
+            // Hide loading indicator
+            hideLoadingIndicator();
+          } catch (error) {
+            showError('The field lost connection. Please try again.');
+            askAnotherBtn.classList.remove('clicked');
+            askAnotherBtn.disabled = false;
+            hideLoadingIndicator();
           }
-
-          // Hide the completion options buttons
-          walkControl.innerHTML = '';
-
-          // Show the continue button
-          const continueBtn = document.getElementById('continue-button');
-          if (continueBtn) {
-            continueBtn.style.display = 'block';
-          }
-
-          // Focus the input
-          responseInput.focus();
         });
 
         // Handle complete walk
@@ -2935,19 +2941,23 @@
               }),
             });
 
-            const data = await response.json();
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
 
-            // Check if response contains an error
-            if (!response.ok || data.error) {
-              const errorMsg = data.error || 'The field lost connection. Please try again.';
-              const retryInfo = data.retryAfter ? ` Please try again in ${data.retryAfter}.` : '';
-              showError(errorMsg + retryInfo);
+              // Check for API overload (529)
+              if (response.status === 529 || errorData.error?.type === 'overloaded_error') {
+                showError('The AI service is currently experiencing high demand. Please wait a moment and try again.');
+              } else {
+                showError('The field lost connection. Please try again.');
+              }
+
               completeWalkBtn.classList.remove('clicked');
               completeWalkBtn.disabled = false;
               hideLoadingIndicator();
               return;
             }
 
+            const data = await response.json();
             protocolData = data;
 
             // Update cost display for completion
@@ -2966,35 +2976,10 @@
         });
       }
 
-      // Continue walk handler - persistent state for duplicate prevention
-      let isHandlingContinue = false;
-      let lastUserMessage = '';
-      let lastMessageTime = 0;
-
+      // Continue walk handler function
       async function handleContinue() {
         const userResponse = responseInput.value.trim();
         if (!userResponse || !sessionId) return;
-
-        // Prevent double-calling while request is in-flight
-        if (isHandlingContinue) {
-          console.log('⚠️ handleContinue already in progress, skipping');
-          return;
-        }
-
-        // Check for duplicate non-navigation messages within 3 seconds
-        const isNavigationRequest = /go (back )?to theme \d+|revisit theme|back to|return to theme/i.test(userResponse);
-
-        if (!isNavigationRequest &&
-            userResponse === lastUserMessage &&
-            Date.now() - lastMessageTime < 3000) {
-          console.log('⚠️ Duplicate message detected within 3s, skipping');
-          return;
-        }
-
-        // Set flags and tracking
-        isHandlingContinue = true;
-        lastUserMessage = userResponse;
-        lastMessageTime = Date.now();
 
         // Add clicked class to fade out border
         continueButton.classList.add('clicked');
@@ -3017,19 +3002,23 @@
             }),
           });
 
-          const data = await response.json();
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
 
-          // Check if response contains an error
-          if (!response.ok || data.error) {
-            const errorMsg = data.error || 'The field lost connection. Please try again.';
-            const retryInfo = data.retryAfter ? ` Please try again in ${data.retryAfter}.` : '';
-            showError(errorMsg + retryInfo);
+            // Check for API overload (529)
+            if (response.status === 529 || errorData.error?.type === 'overloaded_error') {
+              showError('The AI service is currently experiencing high demand. Please wait a moment and try again.');
+            } else {
+              showError('The field lost connection. Please try again.');
+            }
+
             continueButton.classList.remove('clicked');
             continueButton.disabled = false;
             hideLoadingIndicator();
             return;
           }
 
+          const data = await response.json();
           protocolData = data;
 
           // Update cost display (WALK responses typically cost ~$0.015-0.025)
@@ -3050,9 +3039,6 @@
           continueButton.classList.remove('clicked');
           continueButton.disabled = false;
           hideLoadingIndicator();
-        } finally {
-          // Always reset the flag, regardless of success/error/early return
-          isHandlingContinue = false;
         }
       }
 
@@ -3082,6 +3068,22 @@
                 user_response: 'generate field diagnosis',
               }),
             });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+
+              // Check for API overload (529)
+              if (response.status === 529 || errorData.error?.type === 'overloaded_error') {
+                showError('The AI service is currently experiencing high demand. Please wait a moment and try again.');
+              } else {
+                showError('The field lost connection. Please try again.');
+              }
+
+              button.classList.remove('clicked');
+              button.disabled = false;
+              hideLoadingIndicator();
+              return;
+            }
 
             const data = await response.json();
             protocolData = data;
@@ -3586,13 +3588,6 @@
 
         // Add to entry view
         entryView.appendChild(entryResponseArea);
-
-        // Add first reveal button or continue button after initial section
-        if (sectionData.length > 1) {
-          addRevealButton(sectionData[1].title);
-        } else {
-          addContinueButton();
-        }
       }
 
       // Render composer output
@@ -3658,32 +3653,12 @@
         return result;
       }
 
-      function renderComposerOutput(markdown, isCloseMode = false) {
+      function renderComposerOutput(markdown) {
         composerOutput.innerHTML = '';
 
         console.log('📄 Composer output markdown:', markdown);
-        console.log('🔍 isCloseMode:', isCloseMode);
 
-        // Safety check for undefined markdown
-        if (!markdown) {
-          console.error('❌ renderComposerOutput called with undefined markdown');
-          return;
-        }
-
-        // If this is CLOSE mode, treat entire content as acknowledgment
-        if (isCloseMode) {
-          console.log('✅ CLOSE mode - treating entire content as summary');
-          const sections = { acknowledgment: markdown.trim() };
-          const htmlContent = convertMarkdownToHTML(sections.acknowledgment);
-          composerOutput.innerHTML = `
-            <div class="output-section">
-              <div class="section-content">${htmlContent}</div>
-            </div>
-          `;
-          return;
-        }
-
-        // Parse markdown sections for WALK/ENTRY modes
+        // Parse markdown sections
         const sections = parseMarkdown(markdown);
         console.log('📋 Parsed sections:', sections);
 
@@ -3840,8 +3815,38 @@
         const whyMatch = markdown.match(/\*\*Why This Matters\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i);
         if (whyMatch) sections.why_this_matters = whyMatch[1].trim();
 
-        // Note: CLOSE mode detection now happens via isCloseMode parameter in renderComposerOutput
-        // No need to parse markdown patterns here
+        // CLOSE mode - field diagnosis content
+        // Check if this is completion content by looking for common CLOSE mode patterns
+        // Updated to handle both Field Diagnostic and Field Exit protocols
+        console.log('🔍 Checking if CLOSE mode...', {
+          hasFieldCall: markdown.includes("field I'd call"),
+          hasCompleted: markdown.includes("You've completed"),
+          hasFieldDiagnosis: markdown.includes('**FIELD DIAGNOSIS**'),
+          hasPattern: markdown.includes('**Pattern Identified:**'),
+          hasType: markdown.includes('**Type:**'),
+          hasPurposeColon: markdown.includes('Purpose:'),
+          hasGuidingQuestions: markdown.includes('Guiding Questions:'),
+          length: markdown.length,
+          preview: markdown.substring(0, 200)
+        });
+
+        if (
+          markdown.includes("field I'd call") ||
+          markdown.includes("You've completed") ||
+          markdown.includes('**FIELD DIAGNOSIS**') ||
+          markdown.includes('**Pattern Identified:**') ||
+          markdown.includes('**Type:**') ||
+          markdown.includes('## Field Diagnosis') ||
+          markdown.includes('## Evidence') ||
+          markdown.includes('## Coherence Assessment')
+        ) {
+          // For CLOSE mode, treat the entire content as acknowledgment/diagnosis
+          console.log('✅ CLOSE mode detected - treating as acknowledgment');
+          sections.acknowledgment = markdown.trim();
+          return sections;
+        }
+
+        console.log('📝 Not CLOSE mode - continuing to parse sections');
 
         // Interpretation section (with invisible marker like <!-- INTERPRETATION -->)
         const interpretationMatch = markdown.match(
@@ -3935,7 +3940,7 @@
 
         // Render the completion content (field diagnosis and summary)
         console.log('🎨 Rendering composer output...');
-        renderComposerOutput(data.composer_output, true); // true = isCloseMode
+        renderComposerOutput(data.composer_output);
 
         // Add summary-mode class for enhanced styling
         console.log('🔧 Before adding summary-mode, classes:', composerOutput.className);
@@ -4177,23 +4182,9 @@
 
       // Show error
       function showError(message) {
-        console.log('🔔 showError called with message:', message);
-        console.log('🔔 errorMessage element:', errorMessage);
-        console.log('🔔 errorStrip element:', errorStrip);
-        console.log('🔔 errorMessageEntry element:', errorMessageEntry);
-        console.log('🔔 errorStripEntry element:', errorStripEntry);
-
-        // Show error in walk view
         errorMessage.textContent = message;
         errorStrip.classList.add('active');
-        console.log('🔔 errorStrip classes after add:', errorStrip.className);
-
-        // Show error in entry view
-        errorMessageEntry.textContent = message;
-        errorStripEntry.classList.add('active');
-        console.log('🔔 errorStripEntry classes after add:', errorStripEntry.className);
-
-        // Message stays visible (no auto-hide)
+        setTimeout(() => errorStrip.classList.remove('active'), 5000);
       }
     </script>
   </body>

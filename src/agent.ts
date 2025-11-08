@@ -142,15 +142,39 @@ export class FieldDiagnosticAgent {
     }
 
     // Step 1: Classify intent
-    const classification = await this.classifier.classify(
-      userMessage,
-      this.conversationHistory,
-      this.state
-    );
+    // OPTIMIZATION: Skip classifier for initial ENTRY mode start (no conversation history)
+    let classification: ClassificationResult;
+    if (this.conversationHistory.length === 0 && this.state.mode === 'ENTRY') {
+      console.log('⚡ OPTIMIZATION: Skipping classifier for initial ENTRY mode start');
+      classification = {
+        intent: 'discover',
+        continuity: true,
+        protocol_pointer: {
+          protocol_slug: this.state.active_protocol || '',
+          theme_index: null,
+        },
+        confidence: 1.0,
+        requested_theme: undefined,
+        user_wants_to: {
+          advance_to_next_theme: false,
+          request_elaboration: false,
+          add_more_reflection: false,
+          navigate_to_theme: null,
+        },
+      };
+    } else {
+      classification = await this.classifier.classify(
+        userMessage,
+        this.conversationHistory,
+        this.state
+      );
 
-    // Track classifier cost
-    this.totalCost += 0.0082; // Rough estimate for classifier call
-    console.log(`💰 CLASSIFIER COST: ~$0.0082 | Total session cost: $${this.totalCost.toFixed(4)}`);
+      // Track classifier cost
+      this.totalCost += 0.0082; // Rough estimate for classifier call
+      console.log(
+        `💰 CLASSIFIER COST: ~$0.0082 | Total session cost: $${this.totalCost.toFixed(4)}`
+      );
+    }
 
     // Step 2: Set is_revisiting flag BEFORE any calculations (if user requested a specific theme)
     if (classification.requested_theme !== undefined) {
@@ -739,6 +763,17 @@ export class FieldDiagnosticAgent {
    */
   getState(): SessionState {
     return { ...this.state };
+  }
+
+  /**
+   * Set mode and theme (for skipping ENTRY mode)
+   * Used when frontend handles ENTRY content statically
+   */
+  setMode(mode: 'ENTRY' | 'WALK' | 'CLOSE', themeIndex?: number): void {
+    this.state.mode = mode;
+    if (themeIndex !== undefined) {
+      this.state.theme_index = themeIndex;
+    }
   }
 
   /**

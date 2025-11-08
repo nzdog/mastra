@@ -88,7 +88,9 @@ distortions from leaking into new work.
 - Expected: We name a few pieces but leave others vague, so progress is uneven.
 - Excellent: We state clearly what can't continue and why. Energy starts to return.
 - Transcendent: We see breakdown as healthy. Endings become easier to handle in the future.
+
 **Guiding Questions:**
+
 - What am I still carrying that doesn't belong in the next phase?
 - What habits or attachments have run their course?
 - What's ready to be dismantled or released?
@@ -97,10 +99,8 @@ distortions from leaking into new work.
 
 ### 2. Allowing the Breakdown _(Stone 6: Nothing Forced, Nothing Withheld)_
 
-**Purpose:** To stop trying to manage or rush the process once you've named what's ending.
-Composting works best when you give it time. This theme is about letting the breakdown happen
-without overthinking or forcing progress. **Why this matters:** Trying to stay in control keeps you
-tied to the old system. Allowing natural breakdown frees attention for what matters next.
+**Purpose:** To stop trying to manage or rush the process once you've named what's ending. Composting works best when you give it time. This theme is about letting the breakdown happen without overthinking or forcing progress.
+**Why this matters:** Trying to stay in control keeps you tied to the old system. Allowing natural breakdown frees attention for what matters next.
 **Outcomes:**
 
 - Poor: We keep checking or adjusting what's ending, and nothing truly releases.
@@ -125,8 +125,10 @@ tied to the old system. Allowing natural breakdown frees attention for what matt
 - Poor: We move on without reflecting, so mistakes repeat.
 - Expected: We notice a few lessons but don't apply them.
 - Excellent: We gather clear takeaways and use them to shape better systems or habits.
-- Transcendent: Every experience becomes a source of learning. Nothing is wasted. **Guiding
-  Questions:**
+- Transcendent: Every experience becomes a source of learning. Nothing is wasted.
+
+**Guiding Questions:**
+
 - What worked that I want to repeat?
 - What insight came from what didn't work?
 - How can this learning be built into how I work now?
@@ -136,16 +138,17 @@ forward.
 
 ### 4. Releasing the Toxins _(Stone 7: Built for Wholeness)_
 
-**Purpose:** To let go of the negative residue—resentment, guilt, frustration, or self-blame—that
-can't be turned into learning. These are the parts that need to leave the system completely. **Why
-this matters:** If toxins stay, they colour your next field. Releasing them clears the space so new
-energy can move in cleanly. **Outcomes:**
+**Purpose:** To let go of the negative residue—resentment, guilt, frustration, or self-blame—that can't be turned into learning. These are the parts that need to leave the system completely.
+**Why this matters:** If toxins stay, they colour your next field. Releasing them clears the space so new energy can move in cleanly.
+**Outcomes:**
 
 - Poor: We hold onto resentment or guilt, and the next project carries the same tone.
 - Expected: We acknowledge emotion but stay attached to it.
 - Excellent: We release the feelings through expression, forgiveness, or closure.
 - Transcendent: We learn to let go easily. Emotional cycles end quickly and leave no trace.
+
 **Guiding Questions:**
+
 - What emotions am I still holding from the old field?
 - What do I need to forgive or accept?
 - How can I clear this without re-engaging the story?
@@ -161,8 +164,10 @@ energy can move in cleanly. **Outcomes:**
 - Poor: We understand the lesson but act the same.
 - Expected: We apply part of the insight but slip into old habits.
 - Excellent: We use what we learned consistently, improving outcomes.
-- Transcendent: Wisdom becomes natural. The new patterns replace the old without effort. **Guiding
-  Questions:**
+- Transcendent: Wisdom becomes natural. The new patterns replace the old without effort.
+
+**Guiding Questions:**
+
 - How will I use what I've learned in real situations?
 - What behaviour shows this lesson has landed?
 - Where do I still act as if I haven't learned it?
@@ -172,10 +177,9 @@ working.
 
 ### 6. Preparing the New Soil _(Stone 1: Light Before Form)_
 
-**Purpose:** To make sure you're ready for the next field by stabilising your energy and creating
-clear ground for new work. This theme is about pausing before you start again. **Why this matters:**
-If you rush into the next project too fast, you carry old residue forward. Taking time to rest and
-reset ensures the new field starts clean. **Outcomes:**
+**Purpose:** To make sure you're ready for the next field by stabilising your energy and creating clear ground for new work. This theme is about pausing before you start again.
+**Why this matters:** If you rush into the next project too fast, you carry old residue forward. Taking time to rest and reset ensures the new field starts clean.
+**Outcomes:**
 
 - Poor: We rush ahead, repeating the same mistakes.
 - Expected: We rest briefly, but the old mindset reappears under pressure.

@@ -352,6 +352,23 @@ export class ProtocolParser {
 
     return summaryLines.join('\n').trim();
   }
+
+  /**
+   * Get parsed content for a specific theme by index
+   *
+   * @param themeIndex - Theme index (1-based)
+   * @returns Parsed theme content or null if not found
+   */
+  getThemeContent(themeIndex: number): ThemeContent | null {
+    const parsed = this.parse();
+    const themeChunk = parsed.theme_chunks.get(themeIndex);
+
+    if (!themeChunk) {
+      return null;
+    }
+
+    return this.parseThemeContent(themeChunk);
+  }
 }
 
 /**

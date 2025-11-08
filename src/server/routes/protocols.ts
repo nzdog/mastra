@@ -36,6 +36,7 @@ interface Support {
 interface StartRequest {
   user_input: string;
   protocol_slug?: string;
+  mode?: 'ENTRY' | 'WALK'; // Optional: skip ENTRY mode and go directly to WALK
 }
 
 interface ContinueRequest {
@@ -254,6 +255,67 @@ export function createProtocolRouter(
     }
   });
 
+  // GET /api/protocols/:slug/entry - Get protocol entry content + Theme 1 (no AI, just parsing)
+  router.get('/api/protocols/:slug/entry', apiLimiter, (req: Request, res: Response) => {
+    try {
+      const { slug } = req.params;
+
+      // Validate slug
+      const slugValidation = validateProtocolSlug(slug);
+      if (!slugValidation.valid) {
+        return res.status(400).json({
+          error: slugValidation.error,
+        });
+      }
+
+      const loader = new ProtocolLoader();
+      const protocolPath = loader.getProtocolPath(slug);
+
+      if (!protocolPath) {
+        return res.status(404).json({
+          error: 'Protocol not found',
+          message: `No protocol found with slug: ${slug}`,
+        });
+      }
+
+      // Parse protocol to get entry sections and Theme 1 content
+      const parser = new ProtocolParser(protocolPath);
+      const parsed = parser.parse();
+
+      // Get Theme 1 content
+      const theme1Content = parser.getThemeContent(1);
+
+      if (!theme1Content) {
+        return res.status(500).json({
+          error: 'Failed to parse Theme 1 content',
+        });
+      }
+
+      // Return entry sections + Theme 1 metadata (no AI call needed)
+      res.json({
+        protocol: {
+          id: parsed.metadata.id,
+          title: parsed.metadata.title,
+          version: parsed.metadata.version,
+        },
+        entry_sections: parsed.entry_sections,
+        theme_1: {
+          index: 1,
+          title: theme1Content.title,
+          purpose: theme1Content.purpose,
+          why_matters: theme1Content.why_matters,
+          guiding_questions: theme1Content.questions,
+        },
+      });
+    } catch (error) {
+      console.error('Error getting protocol entry:', error);
+      res.status(500).json({
+        error: 'Internal server error',
+        message: error instanceof Error ? error.message : String(error),
+      });
+    }
+  });
+
   // POST /api/walk/start - Start protocol walk (strictly rate-limited - creates sessions and uses AI)
   router.post(
     '/api/walk/start',
@@ -262,20 +324,21 @@ export function createProtocolRouter(
     aiEndpointLimiter,
     async (req: Request, res: Response) => {
       try {
-        const { user_input, protocol_slug } = req.body as StartRequest;
+        const { user_input, protocol_slug, mode } = req.body as StartRequest;
 
-        // Validate user_input
-        if (!user_input) {
-          return res.status(400).json({
-            error: 'Missing user_input field',
-          });
-        }
-
-        const inputValidation = validateUserInput(user_input, 'user_input');
-        if (!inputValidation.valid) {
-          return res.status(400).json({
-            error: inputValidation.error,
-          });
+        // Validate user_input (optional - if empty, use default message)
+        let sanitizedInput = '';
+        if (user_input && user_input.trim()) {
+          const inputValidation = validateUserInput(user_input, 'user_input');
+          if (!inputValidation.valid) {
+            return res.status(400).json({
+              error: inputValidation.error,
+            });
+          }
+          sanitizedInput = inputValidation.sanitized!;
+        } else {
+          // Default message when no input provided - use "begin" to get ENTRY mode
+          sanitizedInput = 'begin';
         }
 
         // Validate protocol_slug (optional field)
@@ -297,8 +360,14 @@ export function createProtocolRouter(
         // Create new session with specified protocol
         const session = await createSession(apiKey, sessionStore, protocol_slug);
 
+        // If mode is WALK, skip ENTRY mode and go directly to Theme 1
+        if (mode === 'WALK') {
+          // Set agent state to WALK mode starting at Theme 1
+          session.agent.setMode('WALK', 1);
+        }
+
         // Process initial message with sanitized input
-        const agentResponse = await session.agent.processMessage(inputValidation.sanitized!);
+        const agentResponse = await session.agent.processMessage(sanitizedInput);
         const state = session.agent.getState();
 
         // Update session cost
