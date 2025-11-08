@@ -17,8 +17,7 @@ describe('ProtocolParser', () => {
     beforeEach(() => {
       parser = new ProtocolParser(testProtocolPath);
       // Clear cache before each test
-      (ProtocolParser as any).parsedProtocolCache.clear();
-      (ProtocolParser as any).cacheTimestamps.clear();
+      ProtocolParser.clearCacheForTesting();
     });
 
     it('should parse frontmatter metadata correctly', () => {
@@ -92,17 +91,13 @@ describe('ProtocolParser', () => {
 
       // First call should parse from disk
       parser.parse();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('CACHE MISS')
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('CACHE MISS'));
 
       consoleSpy.mockClear();
 
       // Second call should use cache
       parser.parse();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('CACHE HIT')
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('CACHE HIT'));
 
       consoleSpy.mockRestore();
     });
@@ -120,9 +115,7 @@ describe('ProtocolParser', () => {
 
       // Should re-parse
       parser.parse();
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('CACHE MISS')
-      );
+      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('CACHE MISS'));
 
       consoleSpy.mockRestore();
       vi.useRealTimers();
@@ -134,8 +127,7 @@ describe('ProtocolParser', () => {
 
     beforeEach(() => {
       parser = new ProtocolParser(testProtocolPath);
-      (ProtocolParser as any).parsedProtocolCache.clear();
-      (ProtocolParser as any).cacheTimestamps.clear();
+      ProtocolParser.clearCacheForTesting();
     });
 
     it('should extract configured entry sections from frontmatter', () => {
@@ -222,8 +214,7 @@ Content here.
 
     beforeEach(() => {
       parser = new ProtocolParser(testProtocolPath);
-      (ProtocolParser as any).parsedProtocolCache.clear();
-      (ProtocolParser as any).cacheTimestamps.clear();
+      ProtocolParser.clearCacheForTesting();
     });
 
     it('should find ## Themes section', () => {
@@ -273,8 +264,7 @@ Content here.
 
     beforeEach(() => {
       parser = new ProtocolParser(testProtocolPath);
-      (ProtocolParser as any).parsedProtocolCache.clear();
-      (ProtocolParser as any).cacheTimestamps.clear();
+      ProtocolParser.clearCacheForTesting();
     });
 
     it('should extract theme title', () => {
@@ -411,8 +401,7 @@ Done.
 
     beforeEach(() => {
       parser = new ProtocolParser(testProtocolPath);
-      (ProtocolParser as any).parsedProtocolCache.clear();
-      (ProtocolParser as any).cacheTimestamps.clear();
+      ProtocolParser.clearCacheForTesting();
     });
 
     it('should find ## Summary Instructions marker', () => {

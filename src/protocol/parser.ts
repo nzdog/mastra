@@ -14,6 +14,14 @@ export class ProtocolParser {
   }
 
   /**
+   * Clear the parser cache (for testing purposes only)
+   */
+  static clearCacheForTesting(): void {
+    this.parsedProtocolCache.clear();
+    this.cacheTimestamps.clear();
+  }
+
+  /**
    * Parse the markdown protocol file into structured chunks
    * Uses in-memory cache to avoid repeated file I/O and parsing
    */
