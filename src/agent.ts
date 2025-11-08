@@ -281,9 +281,16 @@ export class FieldDiagnosticAgent {
     }
 
     // Starting the walk - handles both 'walk' intent and 'memory' when theme is null
+    // If no theme is set yet and the user intent indicates starting the walk,
+    // return theme 1. Include 'discover' here as well since the classifier may
+    // fallback to 'discover' when the external classifier is unavailable (test
+    // environments or missing API keys). Treating 'discover' as a start signal
+    // when a protocol is active ensures the UI receives the first theme content.
     if (
       this.state.theme_index === null &&
-      (classification.intent === 'walk' || classification.intent === 'memory')
+      (classification.intent === 'walk' ||
+        classification.intent === 'memory' ||
+        classification.intent === 'discover')
     ) {
       console.log('   → Starting walk, returning 1');
       return 1;

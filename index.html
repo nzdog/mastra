@@ -1805,7 +1805,7 @@
 
             <!-- Continue Button (shown after orientation) -->
             <div class="intro-continue-container" id="intro-continue-container">
-                <button class="intro-continue-btn" id="intro-continue-btn">Continue</button>
+                <button type="button" class="intro-continue-btn" id="intro-continue-btn">Continue</button>
                 <div class="intro-continue-hint">Press Shift + Enter or ⌘/Ctrl + Enter</div>
             </div>
         </div>
@@ -1877,7 +1877,7 @@
             })();
         </script>
                 <div id="protocol-title" style="font-size: 1.5rem; font-weight: 500; color: #78716C; margin-bottom: 3rem; text-align: center; line-height: 1.4;">Field Diagnostic Protocol</div>
-                <button class="walk-button" id="begin-button">Begin walk</button>
+                <button type="button" class="walk-button" id="begin-button">Begin walk</button>
             </div>
 
             <!-- Walk View (hidden initially) -->
@@ -1901,7 +1901,7 @@
                     <div class="response-hint" id="response-hint"></div>
 
                     <div class="walk-control" id="walk-control">
-                        <button class="walk-button" id="continue-button" disabled aria-label="Continue (Ctrl or Cmd + Enter)">Continue</button>
+                        <button type="button" class="walk-button" id="continue-button" disabled aria-label="Continue (Ctrl or Cmd + Enter)">Continue</button>
                     </div>
                 </div>
             </div>
@@ -1922,15 +1922,20 @@
     </div>
 
     <script type="module">
-        // API Integration - automatically detects environment
-        const API_BASE = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000'
-            : 'https://web-production-b6320.up.railway.app'; // Railway backend URL
+        // API Integration - use the same origin that served this page so
+        // the frontend always talks to the backend it's loaded from.
+        // This avoids a brittle check for 'localhost' and prevents
+        // requests from being routed to the production URL when using
+        // 127.0.0.1, container hostnames, or forwarded ports.
+        const API_BASE = window.location.origin;
+        console.log('API_BASE set to', API_BASE);
         
         let sessionId = null;
         let currentMode = 'ENTRY';
         let protocolData = null;
         let selectedProtocol = null; // Store selected protocol
+    // Prevent duplicate simultaneous walk requests
+    let walkRequestInFlight = false;
 
         // DOM Elements - Intro Flow
         const introFlowView = document.getElementById('intro-flow-view');
@@ -2361,6 +2366,7 @@
 
             // Use When button (initially visible)
             const useWhenBtn = document.createElement('button');
+            useWhenBtn.type = 'button';
             useWhenBtn.className = 'intro-disclosure-btn';
             useWhenBtn.textContent = 'Use This When';
             useWhenBtn.setAttribute('aria-expanded', 'false');
@@ -2370,6 +2376,7 @@
 
             // Walk this Protocol button (initially hidden, shown after Use This When is clicked)
             const walkBtn = document.createElement('button');
+            walkBtn.type = 'button';
             walkBtn.className = 'intro-walk-btn';
             walkBtn.textContent = 'Walk this Protocol';
             card.appendChild(walkBtn);
@@ -2421,8 +2428,12 @@
                         headerTitle.textContent = protocol.title;
                     }
                     
-                    // Focus the entry input
-                    entryInput.focus();
+                    // Focus the entry input if present; otherwise focus the Begin button
+                    if (entryInput) {
+                        entryInput.focus();
+                    } else if (beginButton && typeof beginButton.focus === 'function') {
+                        beginButton.focus();
+                    }
                     
                     // Scroll to top
                     window.scrollTo(0, 0);
@@ -2635,6 +2646,7 @@
                 });
 
                 const data = await response.json();
+                console.debug('walk/start response', data);
                 sessionId = data.session_id;
                 protocolData = data;
 
@@ -2653,8 +2665,8 @@
             }
         });
 
-        // Show completion options (two buttons)
-        function showCompletionOptions() {
+    // Show completion options (two buttons)
+    function showCompletionOptions() {
             const walkControl = document.getElementById('walk-control');
             
             // Clear existing buttons
@@ -2662,12 +2674,14 @@
             
             // Create two buttons
             const askAnotherBtn = document.createElement('button');
+            askAnotherBtn.type = 'button';
             askAnotherBtn.className = 'walk-button';
             askAnotherBtn.textContent = 'Ask Another Question';
             askAnotherBtn.id = 'ask-another-button';
             askAnotherBtn.style.marginRight = '1rem';
             
             const completeWalkBtn = document.createElement('button');
+            completeWalkBtn.type = 'button';
             completeWalkBtn.className = 'walk-button';
             completeWalkBtn.textContent = 'Complete Walk & View Summary';
             completeWalkBtn.id = 'complete-walk-button';
@@ -2679,6 +2693,9 @@
             askAnotherBtn.addEventListener('click', async () => {
                 const userResponse = responseInput.value.trim();
                 if (!userResponse) return;
+                // Prevent duplicate concurrent requests
+                if (walkRequestInFlight) return;
+                walkRequestInFlight = true;
 
                 askAnotherBtn.classList.add('clicked');
                 askAnotherBtn.disabled = true;
@@ -2710,6 +2727,9 @@
                     askAnotherBtn.classList.remove('clicked');
                     askAnotherBtn.disabled = false;
                     hideLoadingIndicator();
+                }
+                finally {
+                    walkRequestInFlight = false;
                 }
             });
             
@@ -2752,8 +2772,16 @@
 
         // Continue walk handler function
         async function handleContinue() {
+            console.debug('handleContinue invoked', { sessionId, valuePreview: responseInput?.value?.substring(0, 80) });
             const userResponse = responseInput.value.trim();
             if (!userResponse || !sessionId) return;
+
+            // Prevent duplicate concurrent requests
+            if (walkRequestInFlight) {
+                console.debug('handleContinue: request already in flight, ignoring');
+                return;
+            }
+            walkRequestInFlight = true;
 
             // Add clicked class to fade out border
             continueButton.classList.add('clicked');
@@ -2777,6 +2805,7 @@
                 });
 
                 const data = await response.json();
+                console.debug('walk/continue response', data);
                 protocolData = data;
 
                 // Update cost display (WALK responses typically cost ~$0.015-0.025)
@@ -2798,6 +2827,9 @@
                 continueButton.disabled = false;
                 hideLoadingIndicator();
             }
+            finally {
+                walkRequestInFlight = false;
+            }
         }
 
         // Continue walk
@@ -2808,6 +2840,10 @@
         document.addEventListener('click', async (e) => {
             if (e.target && e.target.id === 'generate-report-button') {
                 const button = e.target;
+
+                // Prevent duplicate concurrent requests
+                if (walkRequestInFlight) return;
+                walkRequestInFlight = true;
 
                 // Add clicked class to fade out border
                 button.classList.add('clicked');
@@ -2842,6 +2878,8 @@
                     button.classList.remove('clicked');
                     button.disabled = false;
                     hideLoadingIndicator();
+                } finally {
+                    walkRequestInFlight = false;
                 }
             }
         });
@@ -3019,7 +3057,7 @@
         }
 
         // Render ENTRY mode response (protocol introduction)
-        function renderEntryResponse(data) {
+    function renderEntryResponse(data) {
             // Hide begin button
             beginButton.style.display = 'none';
 
@@ -3158,6 +3196,7 @@
 
             function addRevealButton(nextTitle) {
                 const btn = document.createElement('button');
+                btn.type = 'button';
                 btn.className = 'section-reveal-btn fade-in-only section-reveal-button';
                 btn.textContent = nextTitle;
                 btn.onclick = showNextSection;
@@ -3171,9 +3210,14 @@
                 continueControl.style.marginTop = '2rem';
 
                 const continueBtn = document.createElement('button');
+                continueBtn.type = 'button';
                 continueBtn.className = 'walk-button fade-in-only';
                 continueBtn.textContent = `Continue to Theme 1 – ${firstThemeTitle}`;
                 continueBtn.onclick = async () => {
+                    // Prevent duplicate concurrent requests
+                    if (walkRequestInFlight) return;
+                    walkRequestInFlight = true;
+
                     continueBtn.classList.add('clicked');
                     continueBtn.disabled = true;
 
@@ -3205,11 +3249,14 @@
                         continueBtn.classList.remove('clicked');
                         continueBtn.disabled = false;
                         hideLoadingIndicator();
+                    } finally {
+                        walkRequestInFlight = false;
                     }
                 };
 
                 // Add "Return to Protocol Selection" button
                 const backBtn = document.createElement('button');
+                backBtn.type = 'button';
                 backBtn.className = 'walk-button fade-in-only';
                 backBtn.style.cssText = 'background: transparent; border: 1px solid #D6D3D1; color: #78716C; margin-left: 1rem;';
                 backBtn.textContent = 'Return to Protocol Selection';
@@ -3397,7 +3444,7 @@
                             <div class="section-content" style="color: #78716C; font-size: 1rem;">${completionText}</div>
                         </div>
                         <div class="output-section" style="margin-top: 2rem;">
-                            <button id="generate-report-button" class="walk-button">Field Diagnosis Complete, generate report</button>
+                            <button type="button" id="generate-report-button" class="walk-button">Field Diagnosis Complete, generate report</button>
                         </div>
                     `;
                 } else {
@@ -3594,8 +3641,8 @@
             completionContainer.style.paddingTop = '2rem';
             completionContainer.style.borderTop = '1px solid #E7E5E4';
             completionContainer.innerHTML = `
-                <button class="walk-button" id="download-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Download Summary</button>
-                <button class="walk-button" id="completion-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Mark complete</button>
+                <button type="button" class="walk-button" id="download-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Download Summary</button>
+                <button type="button" class="walk-button" id="completion-button" style="padding: 0.875rem 1.75rem; font-size: 0.9375rem;">Mark complete</button>
             `;
             
             // Insert completion button after composer output
@@ -3744,21 +3791,29 @@
                 const overlay = document.getElementById('completion-overlay');
                 overlay.classList.add('active');
 
+                // Prevent duplicate completion actions
+                if (walkRequestInFlight) return;
+                walkRequestInFlight = true;
+
                 setTimeout(async () => {
                     overlay.classList.remove('active');
                     
-                    // Call complete endpoint
-                    await fetch(`${API_BASE}/api/walk/complete`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            session_id: sessionId,
-                            generate_summary: false
-                        })
-                    });
+                    try {
+                        // Call complete endpoint
+                        await fetch(`${API_BASE}/api/walk/complete`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                session_id: sessionId,
+                                generate_summary: false
+                            })
+                        });
 
-                    // Reset to entry
-                    location.reload();
+                        // Reset to entry
+                        location.reload();
+                    } finally {
+                        walkRequestInFlight = false;
+                    }
                 }, 4000);
             };
             
