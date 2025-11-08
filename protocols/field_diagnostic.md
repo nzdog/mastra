@@ -119,8 +119,9 @@ judgment.
 
 ### 2. Felt Experience _(Stone 5: Presence Is Productivity)_
 
-**Purpose:** Attend to how the body and emotions register the field. **Why this matters:** Fields
-show up in the nervous system before logic. **Outcomes:**
+**Purpose:** Attend to how the body and emotions register the field.
+**Why this matters:** Fields show up in the nervous system before logic.
+**Outcomes:**
 
 - Poor: Override signals → future of burnout or collapse.
 - Expected: Notice cues → future of informed choices.
@@ -137,8 +138,9 @@ show up in the nervous system before logic. **Outcomes:**
 
 ### 3. Rewards and Punishments _(Stone 8: Integrity Is the Growth Strategy)_
 
-**Purpose:** Identify what the field rewards and punishes. **Why this matters:** Incentives train
-behavior; naming them breaks control. **Outcomes:**
+**Purpose:** Identify what the field rewards and punishes.
+**Why this matters:** Incentives train behavior; naming them breaks control.
+**Outcomes:**
 
 - Poor: Misinterpret incentives as preferences → future of manipulation.
 - Expected: See rewards/punishments → future of clearer agency.
@@ -156,8 +158,9 @@ trains behavior.
 
 ### 4. Source Stories _(Stone 1: Light Before Form)_
 
-**Purpose:** Uncover narratives and myths the field is built on. **Why this matters:** Stories carry
-fields; until named, they remain unquestioned. **Outcomes:**
+**Purpose:** Uncover narratives and myths the field is built on.
+**Why this matters:** Stories carry fields; until named, they remain unquestioned.
+**Outcomes:**
 
 - Poor: Accept stories as fact → future of conformity.
 - Expected: Identify dominant stories → future of critical distance.
@@ -175,8 +178,9 @@ inevitable truths.
 
 ### 5. Pressure Points _(Stone 6: Nothing Forced, Nothing Withheld)_
 
-**Purpose:** Examine how the field behaves under stress. **Why this matters:** Stress exposes the
-underlying logic of a field. **Outcomes:**
+**Purpose:** Examine how the field behaves under stress.
+**Why this matters:** Stress exposes the underlying logic of a field.
+**Outcomes:**
 
 - Poor: Internalize stress logic → future of repeated collapse.
 - Expected: Notice stress behaviors → future of awareness.

@@ -97,10 +97,9 @@ and allows clean forward movement. **Outcomes:**
 
 ### 2. Reclaiming Scattered Energy _(Stone 5: Presence Is Productivity)_
 
-**Purpose:** To bring back the mental and emotional energy still invested in old stories, tasks, or
-concerns. This step gathers your energy into the present so it's available for new work. **Why this
-matters:** When energy stays scattered, it weakens current effort. Reclaiming it restores capacity
-and concentration. **Outcomes:**
+**Purpose:** To bring back the mental and emotional energy still invested in old stories, tasks, or concerns. This step gathers your energy into the present so it's available for new work.
+**Why this matters:** When energy stays scattered, it weakens current effort. Reclaiming it restores capacity and concentration.
+**Outcomes:**
 
 - Poor: We stay mentally split; new work feels tiring from the start.
 - Expected: We recover some focus but remain partially distracted.

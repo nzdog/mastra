@@ -80,10 +80,9 @@ distortions from leaking into new work.
 
 ### 1. Naming What Must Break Down _(Stone 4: Clarity Over Cleverness)_
 
-**Purpose:** To clearly identify which parts of the past need to decompose—roles, habits, beliefs,
-or attachments that no longer work. Naming them is how you take them out of the background and start
-the composting process. **Why this matters:** If you don't name what needs to break down, it stays
-active and keeps influencing decisions. Naming brings clarity and stops hidden drag. **Outcomes:**
+**Purpose:** To clearly identify which parts of the past need to decompose—roles, habits, beliefs, or attachments that no longer work. Naming them is how you take them out of the background and start the composting process.
+**Why this matters:** If you don't name what needs to break down, it stays active and keeps influencing decisions. Naming brings clarity and stops hidden drag.
+**Outcomes:**
 
 - Poor: We avoid looking at what's expired, and it keeps shaping our behaviour.
 - Expected: We name a few pieces but leave others vague, so progress is uneven.
@@ -119,10 +118,8 @@ tied to the old system. Allowing natural breakdown frees attention for what matt
 
 ### 3. Extracting the Nutrients _(Stone 8: Integrity Is the Growth Strategy)_
 
-**Purpose:** To identify what's useful and worth keeping from the experience that's ended. This
-could be skills, insights, or lessons. Composting isn't about discarding everything—it's about
-keeping the good material. **Why this matters:** Without this step, you lose the learning and risk
-repeating the same patterns. It also helps you see that even difficult experiences can have value.
+**Purpose:** To identify what's useful and worth keeping from the experience that's ended. This could be skills, insights, or lessons. Composting isn't about discarding everything—it's about keeping the good material.
+**Why this matters:** Without this step, you lose the learning and risk repeating the same patterns. It also helps you see that even difficult experiences can have value.
 **Outcomes:**
 
 - Poor: We move on without reflecting, so mistakes repeat.
@@ -157,10 +154,9 @@ energy can move in cleanly. **Outcomes:**
 
 ### 5. Integrating the Wisdom _(Stone 5: Presence Is Productivity)_
 
-**Purpose:** To make the lessons from the old field part of how you think and act now. Integration
-means applying insight to behaviour, not just understanding it mentally. **Why this matters:**
-Learning only matters when it changes how you move. Integration turns reflection into better
-practice. **Outcomes:**
+**Purpose:** To make the lessons from the old field part of how you think and act now. Integration means applying insight to behaviour, not just understanding it mentally.
+**Why this matters:** Learning only matters when it changes how you move. Integration turns reflection into better practice.
+**Outcomes:**
 
 - Poor: We understand the lesson but act the same.
 - Expected: We apply part of the insight but slip into old habits.

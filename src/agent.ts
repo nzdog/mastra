@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { IntentClassifier } from './classifier';
 import { Composer } from './composer';
-import { loadProtocol } from './protocol/parser';
+import { loadProtocol, ProtocolParser } from './protocol/parser';
 import { ProtocolRegistry } from './tools/registry';
 import { SessionState, ConversationTurn, Mode, ClassificationResult, ProtocolChunk } from './types';
 import { WalkResponseValidator } from './validator';
@@ -33,6 +33,7 @@ export class FieldDiagnosticAgent {
   private composer: Composer;
   private registry: ProtocolRegistry;
   private validator: WalkResponseValidator;
+  private parser: ProtocolParser;
   private state: SessionState;
   private conversationHistory: ConversationTurn[] = [];
   private themeAnswers: Map<number, string> = new Map();
@@ -80,6 +81,9 @@ export class FieldDiagnosticAgent {
       this.registry = new ProtocolRegistry(protocol);
       this.protocolPath = path.join(__dirname, '../protocols/field_diagnostic.md');
     }
+
+    // Create parser
+    this.parser = new ProtocolParser(this.protocolPath);
 
     // Create validator
     this.validator = new WalkResponseValidator(this.registry, this.protocolPath);
@@ -636,47 +640,9 @@ export class FieldDiagnosticAgent {
 
       // Fallback (should never reach here if protocol is properly formatted)
       return 'Error: Unable to load protocol introduction.';
-    } else if (mode === 'WALK' && chunk) {
-      // Return theme questions from protocol content
-      const content = chunk.content;
-      const lines = content.split('\n');
-
-      // Extract theme title, purpose, why this matters, and guiding questions
-      let _themeTitle = '';
-      let purpose = '';
-      let whyThisMatters = '';
-      const questions: string[] = [];
-
-      let inQuestions = false;
-
-      for (const line of lines) {
-        if (line.startsWith('###')) {
-          // Parse: "### 1. Surface Behaviors *(Stone 4: Clarity Over Cleverness)*"
-          // Extract just "Surface Behaviors"
-          const titleMatch = line.match(/###\s*\d+\.\s*([^*]+)/);
-          if (titleMatch) {
-            _themeTitle = titleMatch[1].trim();
-          }
-        } else if (line.startsWith('**Purpose:**')) {
-          purpose = line.replace('**Purpose:**', '').trim();
-        } else if (line.startsWith('**Why this matters:**')) {
-          whyThisMatters = line.replace('**Why this matters:**', '').trim();
-        } else if (line.startsWith('**Guiding Questions:**')) {
-          inQuestions = true;
-        } else if (inQuestions && line.startsWith('- ')) {
-          questions.push('• ' + line.substring(2));
-        } else if (inQuestions && line.startsWith('**')) {
-          inQuestions = false;
-        }
-      }
-
-      // Build response with proper formatting
-      let response = `**Purpose:** ${purpose}\n`;
-      response += `**Why This Matters**\n${whyThisMatters}\n`;
-      response += `**Guiding Questions:**\n${questions.join('\n')}\n`;
-      response += `Take a moment with those, and when you're ready, share what comes up.`;
-
-      return response;
+    } else if (mode === 'WALK' && chunk && themeIndex !== null) {
+      // Use deterministic theme presentation built from parsed content
+      return this.buildThemePresentation(chunk, themeIndex);
     }
 
     console.error(
@@ -773,6 +739,25 @@ export class FieldDiagnosticAgent {
    */
   getState(): SessionState {
     return { ...this.state };
+  }
+
+  /**
+   * Build a deterministic theme presentation from parsed protocol content
+   * This eliminates the need for AI to extract content
+   */
+  private buildThemePresentation(chunk: ProtocolChunk, themeIndex: number): string {
+    const themeContent = this.parser.parseThemeContent(chunk.content);
+
+    let presentation = `**Theme ${themeIndex} – ${themeContent.title}**\n\n`;
+    presentation += `**Purpose:** ${themeContent.purpose}\n\n`;
+    presentation += `**Why This Matters**\n${themeContent.why_matters}\n\n`;
+    presentation += `**Guiding Questions:**\n`;
+    themeContent.questions.forEach(q => {
+      presentation += `• ${q}\n`;
+    });
+    presentation += `\nTake a moment with those, and when you're ready, share what comes up.`;
+
+    return presentation;
   }
 
   /**

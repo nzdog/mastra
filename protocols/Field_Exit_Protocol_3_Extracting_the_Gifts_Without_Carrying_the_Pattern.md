@@ -101,10 +101,9 @@ same friction later. **Outcomes:**
 
 ### 2. Understanding the Origin of the Pattern _(Stone 5: Presence Is Productivity)_
 
-**Purpose:** To trace where the distortion came from. Often, patterns begin as strategies that once
-worked. Seeing the origin removes shame and gives insight into how it formed. **Why this matters:**
-If you don't understand where a pattern came from, you risk fighting it instead of resolving it.
-Awareness allows learning instead of judgment. **Outcomes:**
+**Purpose:** To trace where the distortion came from. Often, patterns begin as strategies that once worked. Seeing the origin removes shame and gives insight into how it formed.
+**Why this matters:** If you don't understand where a pattern came from, you risk fighting it instead of resolving it. Awareness allows learning instead of judgment.
+**Outcomes:**
 
 - Poor: We blame ourselves and repeat the cycle.
 - Expected: We notice the pattern but treat it as personal failure.
@@ -186,15 +185,16 @@ work.
 
 ### 6. Checking for Residual Pattern Drift _(Stone 7: Built for Wholeness)_
 
-**Purpose:** To review periodically for traces of the old pattern reappearing. This ensures that
-residue doesn't slowly rebuild over time. **Why this matters:** Patterns often resurface quietly.
-Regular checking keeps your system clean and prevents regression. **Outcomes:**
+**Purpose:** To review periodically for traces of the old pattern reappearing. This ensures that residue doesn't slowly rebuild over time.
+**Why this matters:** Patterns often resurface quietly. Regular checking keeps your system clean and prevents regression.
+**Outcomes:**
 
 - Poor: We assume the work is done and old habits return unnoticed.
 - Expected: We catch drift occasionally but react late.
 - Excellent: We monitor ourselves regularly and correct course quickly.
-- Transcendent: Awareness stays continuous; old patterns no longer take root at all. **Guiding
-  Questions:**
+- Transcendent: Awareness stays continuous; old patterns no longer take root at all.
+
+**Guiding Questions:**
 - What signs show the old pattern might be creeping back?
 - How can I stay alert without becoming anxious?
 - What supports help keep this awareness alive?
