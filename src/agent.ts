@@ -752,7 +752,7 @@ export class FieldDiagnosticAgent {
     presentation += `**Purpose:** ${themeContent.purpose}\n\n`;
     presentation += `**Why This Matters**\n${themeContent.why_matters}\n\n`;
     presentation += `**Guiding Questions:**\n`;
-    themeContent.questions.forEach(q => {
+    themeContent.questions.forEach((q) => {
       presentation += `• ${q}\n`;
     });
     presentation += `\nTake a moment with those, and when you're ready, share what comes up.`;
