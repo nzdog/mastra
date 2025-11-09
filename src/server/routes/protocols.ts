@@ -36,16 +36,19 @@ interface Support {
 interface StartRequest {
   user_input: string;
   protocol_slug?: string;
+  user_id?: string; // Optional user identifier for memory layer
 }
 
 interface ContinueRequest {
   session_id: string;
   user_response: string;
+  user_id?: string; // Optional user identifier for memory layer
 }
 
 interface CompleteRequest {
   session_id: string;
   generate_summary?: boolean;
+  user_id?: string; // Optional user identifier for memory layer
 }
 
 /**
@@ -98,6 +101,40 @@ async function createSession(
     `✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`
   );
   return session;
+}
+
+/**
+ * Helper: Extract user ID from request
+ *
+ * Checks multiple sources in order:
+ * 1. Request body (user_id field)
+ * 2. X-User-Id header
+ * 3. Session (if authenticated)
+ *
+ * @param req - Express request object
+ * @returns User ID string or undefined if not found
+ */
+function extractUserId(req: Request): string | undefined {
+  // Check body first (explicit user_id field)
+  const bodyUserId = (req.body as { user_id?: string }).user_id;
+  if (bodyUserId && typeof bodyUserId === 'string') {
+    return bodyUserId;
+  }
+
+  // Check X-User-Id header
+  const headerUserId = req.headers['x-user-id'];
+  if (headerUserId && typeof headerUserId === 'string') {
+    return headerUserId;
+  }
+
+  // Check session (if session middleware is enabled)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sessionUserId = (req as any).session?.userId;
+  if (sessionUserId && typeof sessionUserId === 'string') {
+    return sessionUserId;
+  }
+
+  return undefined;
 }
 
 /**
@@ -294,11 +331,16 @@ export function createProtocolRouter(
           });
         }
 
+        // Extract user ID for memory layer
+        const userId = extractUserId(req);
+
         // Create new session with specified protocol
         const session = await createSession(apiKey, sessionStore, protocol_slug);
 
-        // Process initial message with sanitized input
-        const agentResponse = await session.agent.processMessage(inputValidation.sanitized!);
+        // Process initial message with sanitized input and userId
+        const agentResponse = await session.agent.processMessage(inputValidation.sanitized!, {
+          userId,
+        });
         const state = session.agent.getState();
 
         // Update session cost
@@ -364,6 +406,9 @@ export function createProtocolRouter(
           });
         }
 
+        // Extract user ID for memory layer
+        const userId = extractUserId(req);
+
         // Get session
         const session = await getSession(sessionStore, session_id);
         if (!session) {
@@ -372,8 +417,10 @@ export function createProtocolRouter(
           });
         }
 
-        // Process message with sanitized input
-        const agentResponse = await session.agent.processMessage(responseValidation.sanitized!);
+        // Process message with sanitized input and userId
+        const agentResponse = await session.agent.processMessage(responseValidation.sanitized!, {
+          userId,
+        });
         const state = session.agent.getState();
 
         // Update session cost
@@ -422,6 +469,9 @@ export function createProtocolRouter(
           });
         }
 
+        // Extract user ID for memory layer
+        const userId = extractUserId(req);
+
         // Get session
         const session = await getSession(sessionStore, session_id);
         if (!session) {
@@ -442,7 +492,9 @@ export function createProtocolRouter(
 
           // Trigger field diagnosis by processing with CLOSE mode
           // The agent's processMessage will see mode=CLOSE and generate the diagnosis
-          const agentResponse = await session.agent.processMessage('Generate field diagnosis');
+          const agentResponse = await session.agent.processMessage('Generate field diagnosis', {
+            userId,
+          });
           summaryHtml = agentResponse;
 
           // Update session cost
