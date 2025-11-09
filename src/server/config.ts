@@ -81,8 +81,7 @@ function initializeSessionStore(apiKey: string | undefined): SessionStore {
  */
 function createRateLimiters() {
   // Check if we're in test mode - disable rate limiting for tests
-  const isTest =
-    process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true';
+  const isTest = process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true';
 
   // Custom handler that includes trace ID in 429 responses
   const rateLimitHandler = (req: Request, res: Response) => {

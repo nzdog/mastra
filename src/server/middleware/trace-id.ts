@@ -12,15 +12,10 @@ import { Request, Response, NextFunction } from 'express';
  * 2. Generated if not present
  * 3. Set in both request headers and response headers
  */
-export function traceIdMiddleware(
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void {
+export function traceIdMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Extract existing trace ID or generate new one
   const traceId =
-    req.get('X-Trace-ID') ||
-    `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+    req.get('X-Trace-ID') || `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
   // Store in request headers for downstream middleware
   req.headers['x-trace-id'] = traceId;
