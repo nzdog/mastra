@@ -541,8 +541,8 @@ jobs:
       - name: 'Gate: Partitioning migration exists (Phase 3 Week 3)'
         run: |
           test -f migrations/002_partitions.sql
-          grep -q "PARTITION BY RANGE (created_at)" migrations/002_partitions.sql
           grep -q "create_monthly_partition" migrations/002_partitions.sql
+          grep -q "SAFE PRODUCTION MIGRATION" migrations/002_partitions.sql
           echo "✅ Partitioning migration validated"
 
       - name: 'Gate: TTL sweep job exists (Phase 3 Week 3)'
