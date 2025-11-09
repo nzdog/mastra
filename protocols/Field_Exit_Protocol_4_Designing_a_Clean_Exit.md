@@ -182,7 +182,7 @@ individual. **Outcomes:**
 - Excellent: We transfer all key knowledge and materials smoothly. The transition is clear and
   uninterrupted.
 - Transcendent: We hand over with clarity and grace. The system feels supported, not abandoned.
-**Guiding Questions:**
+  **Guiding Questions:**
 - Who will continue the work or take responsibility next?
 - What do they need to know to succeed?
 - Have I explained or documented everything clearly?
@@ -202,7 +202,7 @@ identity. **Outcomes:**
 - Excellent: We acknowledge the full picture and release attachment. Energy feels grounded and
   complete.
 - Transcendent: We close with quiet confidence. Endings and beginnings flow together as one process.
-**Guiding Questions:**
+  **Guiding Questions:**
 - What am I proud to leave behind?
 - What lesson stands out most from this field?
 - What signals tell me this exit is complete?

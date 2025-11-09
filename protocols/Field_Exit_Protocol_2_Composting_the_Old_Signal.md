@@ -89,7 +89,7 @@ active and keeps influencing decisions. Naming brings clarity and stops hidden d
 - Expected: We name a few pieces but leave others vague, so progress is uneven.
 - Excellent: We state clearly what can't continue and why. Energy starts to return.
 - Transcendent: We see breakdown as healthy. Endings become easier to handle in the future.
-**Guiding Questions:**
+  **Guiding Questions:**
 - What am I still carrying that doesn't belong in the next phase?
 - What habits or attachments have run their course?
 - What's ready to be dismantled or released?
@@ -148,7 +148,7 @@ energy can move in cleanly. **Outcomes:**
 - Expected: We acknowledge emotion but stay attached to it.
 - Excellent: We release the feelings through expression, forgiveness, or closure.
 - Transcendent: We learn to let go easily. Emotional cycles end quickly and leave no trace.
-**Guiding Questions:**
+  **Guiding Questions:**
 - What emotions am I still holding from the old field?
 - What do I need to forgive or accept?
 - How can I clear this without re-engaging the story?
