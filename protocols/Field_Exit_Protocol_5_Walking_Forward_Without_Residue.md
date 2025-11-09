@@ -77,10 +77,9 @@ sure that your next steps are based on the present, not shaped by what came befo
 
 ### 1. Clearing Lingering Attachments _(Stone 6: Nothing Forced, Nothing Withheld)_
 
-**Purpose:** To identify and release attachments—emotional, mental, or relational—that still tie you
-to the old field. This includes habits, people, or patterns that keep drawing your attention
-backward. **Why this matters:** Attachments hold energy in place. Clearing them brings back focus
-and allows clean forward movement. **Outcomes:**
+**Purpose:** To identify and release attachments—emotional, mental, or relational—that still tie you to the old field. This includes habits, people, or patterns that keep drawing your attention backward.
+**Why this matters:** Attachments hold energy in place. Clearing them brings back focus and allows clean forward movement.
+**Outcomes:**
 
 - Poor: We stay attached and feel heavy or distracted.
 - Expected: We loosen some ties but revisit them often.
@@ -97,16 +96,17 @@ and allows clean forward movement. **Outcomes:**
 
 ### 2. Reclaiming Scattered Energy _(Stone 5: Presence Is Productivity)_
 
-**Purpose:** To bring back the mental and emotional energy still invested in old stories, tasks, or
-concerns. This step gathers your energy into the present so it's available for new work. **Why this
-matters:** When energy stays scattered, it weakens current effort. Reclaiming it restores capacity
-and concentration. **Outcomes:**
+**Purpose:** To bring back the mental and emotional energy still invested in old stories, tasks, or concerns. This step gathers your energy into the present so it's available for new work.
+**Why this matters:** When energy stays scattered, it weakens current effort. Reclaiming it restores capacity and concentration.
+**Outcomes:**
 
 - Poor: We stay mentally split; new work feels tiring from the start.
 - Expected: We recover some focus but remain partially distracted.
 - Excellent: We recall our energy fully; motivation and attention return.
-- Transcendent: Our energy naturally self-centres; new beginnings start strong and clear. **Guiding
-  Questions:**
+- Transcendent: Our energy naturally self-centres; new beginnings start strong and clear.
+
+**Guiding Questions:**
+
 - Where is my attention still stuck in the past?
 - What unfinished thought or emotion drains me?
 - How can I call my energy back to the present?
@@ -115,9 +115,8 @@ and concentration. **Outcomes:**
 
 ### 3. Resetting Mental Narratives _(Stone 4: Clarity Over Cleverness)_
 
-**Purpose:** To stop replaying old stories—what went wrong, what should have happened, or what
-others think—and replace them with current reality. **Why this matters:** Replaying old narratives
-keeps you identified with what's over. Resetting them allows you to see clearly what's real now.
+**Purpose:** To stop replaying old stories—what went wrong, what should have happened, or what others think—and replace them with current reality.
+**Why this matters:** Replaying old narratives keeps you identified with what's over. Resetting them allows you to see clearly what's real now.
 **Outcomes:**
 
 - Poor: We keep looping on the same story; perspective stays fixed in the past.
@@ -136,16 +135,17 @@ keeps you identified with what's over. Resetting them allows you to see clearly 
 
 ### 4. Rebalancing Emotionally _(Stone 7: Built for Wholeness)_
 
-**Purpose:** To stabilise emotionally after release. This means acknowledging feelings that surface,
-processing them, and returning to a calm baseline before moving on. **Why this matters:** Residual
-emotion can pull you backward or distort new decisions. Emotional balance keeps transitions steady.
+**Purpose:** To stabilise emotionally after release. This means acknowledging feelings that surface, processing them, and returning to a calm baseline before moving on.
+**Why this matters:** Residual emotion can pull you backward or distort new decisions. Emotional balance keeps transitions steady.
 **Outcomes:**
 
 - Poor: We move forward while still agitated or unsettled. The new field inherits old emotion.
 - Expected: We process some emotion but feel unsettled at times.
 - Excellent: We process fully and feel calm, centred, and ready.
-- Transcendent: Emotional regulation becomes natural. Change no longer destabilises us. **Guiding
-  Questions:**
+- Transcendent: Emotional regulation becomes natural. Change no longer destabilises us.
+
+**Guiding Questions:**
+
 - What feelings are still active from what ended?
 - What helps me calm and reset when emotions rise?
 - How will I know I'm balanced again?
@@ -154,9 +154,9 @@ emotion can pull you backward or distort new decisions. Emotional balance keeps 
 
 ### 5. Re-establishing Direction _(Stone 8: Integrity Is the Growth Strategy)_
 
-**Purpose:** To set a clear line of focus for what comes next. Once the past is cleared, this step
-defines the first meaningful steps forward. **Why this matters:** Without new direction, space left
-by release can turn into drift. Defining purpose channels energy productively. **Outcomes:**
+**Purpose:** To set a clear line of focus for what comes next. Once the past is cleared, this step defines the first meaningful steps forward.
+**Why this matters:** Without new direction, space left by release can turn into drift. Defining purpose channels energy productively.
+**Outcomes:**
 
 - Poor: We stay in limbo; energy disperses without direction.
 - Expected: We make tentative plans but remain uncertain.
@@ -174,16 +174,17 @@ by release can turn into drift. Defining purpose channels energy productively. *
 
 ### 6. Anchoring in the Present Field _(Stone 1: Light Before Form)_
 
-**Purpose:** To ground fully in the current moment—body, environment, and current work—so that no
-part of you is still living in the past or waiting for the future. **Why this matters:** Anchoring
-prevents drift and keeps you connected to what's actually happening. It marks the completion of
-transition. **Outcomes:**
+**Purpose:** To ground fully in the current moment—body, environment, and current work—so that no part of you is still living in the past or waiting for the future.
+**Why this matters:** Anchoring prevents drift and keeps you connected to what's actually happening. It marks the completion of transition.
+**Outcomes:**
 
 - Poor: We stay mentally ahead or behind, missing the present.
 - Expected: We connect briefly but slip into old mental habits.
 - Excellent: We stay grounded and responsive in real time.
-- Transcendent: Presence becomes second nature; every moment feels integrated and whole. **Guiding
-  Questions:**
+- Transcendent: Presence becomes second nature; every moment feels integrated and whole.
+
+**Guiding Questions:**
+
 - What helps me stay connected to what's happening now?
 - How does my body tell me I'm present?
 - What supports this state of grounded focus?

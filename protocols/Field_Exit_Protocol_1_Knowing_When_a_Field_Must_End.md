@@ -80,11 +80,9 @@ closes loops cleanly so evolution can continue without residue.
 
 ### 1. Facing Signs of Decline _(Stone 4: Clarity Over Cleverness)_
 
-**Purpose:** To identify with neutrality the signals that a field's life force is waning—loss of
-enthusiasm, repetition without inspiration, or the sense that growth has plateaued. This theme
-cultivates the discipline to see what is, without judgment or sentimentality. **Why this matters:**
-Refusing to see decline keeps energy trapped in denial. Seeing truth restores movement. This theme
-enacts Clarity over Cleverness, teaching that awareness itself is a creative act. **Outcomes:**
+**Purpose:** To identify with neutrality the signals that a field's life force is waning—loss of enthusiasm, repetition without inspiration, or the sense that growth has plateaued. This theme cultivates the discipline to see what is, without judgment or sentimentality.
+**Why this matters:** Refusing to see decline keeps energy trapped in denial. Seeing truth restores movement. This theme enacts Clarity over Cleverness, teaching that awareness itself is a creative act.
+**Outcomes:**
 
 - Poor: We pretend nothing is changing and carry the weight of illusion; fatigue deepens as truth
   knocks louder.
@@ -106,12 +104,9 @@ awareness.
 
 ### 2. Admitting Emotional Resistance _(Stone 7: Built for Wholeness)_
 
-**Purpose:** To acknowledge and feel the emotional current that surfaces when an ending becomes
-visible—grief for what's over, fear of what's next, guilt for wanting to move on, or even relief.
-This theme invites emotional honesty so endings can complete through feeling, not suppression. **Why
-this matters:** Unfelt emotion clogs the exit. When feelings move, coherence returns. This theme
-enacts Built for Wholeness by welcoming emotion as part of intelligent process, not proof of
-weakness. **Outcomes:**
+**Purpose:** To acknowledge and feel the emotional current that surfaces when an ending becomes visible—grief for what's over, fear of what's next, guilt for wanting to move on, or even relief. This theme invites emotional honesty so endings can complete through feeling, not suppression.
+**Why this matters:** Unfelt emotion clogs the exit. When feelings move, coherence returns. This theme enacts Built for Wholeness by welcoming emotion as part of intelligent process, not proof of weakness.
+**Outcomes:**
 
 - Poor: We intellectualise the ending to avoid feeling; unresolved emotion lingers and shadows the
   next chapter.

@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { IntentClassifier } from './classifier';
 import { Composer } from './composer';
-import { loadProtocol } from './protocol/parser';
+import { loadProtocol, ProtocolParser } from './protocol/parser';
 import { ProtocolRegistry } from './tools/registry';
 import { SessionState, ConversationTurn, Mode, ClassificationResult, ProtocolChunk } from './types';
 import { WalkResponseValidator } from './validator';
@@ -33,6 +33,7 @@ export class FieldDiagnosticAgent {
   private composer: Composer;
   private registry: ProtocolRegistry;
   private validator: WalkResponseValidator;
+  private parser: ProtocolParser;
   private state: SessionState;
   private conversationHistory: ConversationTurn[] = [];
   private themeAnswers: Map<number, string> = new Map();
@@ -80,6 +81,9 @@ export class FieldDiagnosticAgent {
       this.registry = new ProtocolRegistry(protocol);
       this.protocolPath = path.join(__dirname, '../protocols/field_diagnostic.md');
     }
+
+    // Create parser
+    this.parser = new ProtocolParser(this.protocolPath);
 
     // Create validator
     this.validator = new WalkResponseValidator(this.registry, this.protocolPath);
@@ -138,15 +142,39 @@ export class FieldDiagnosticAgent {
     }
 
     // Step 1: Classify intent
-    const classification = await this.classifier.classify(
-      userMessage,
-      this.conversationHistory,
-      this.state
-    );
+    // OPTIMIZATION: Skip classifier for initial ENTRY mode start (no conversation history)
+    let classification: ClassificationResult;
+    if (this.conversationHistory.length === 0 && this.state.mode === 'ENTRY') {
+      console.log('⚡ OPTIMIZATION: Skipping classifier for initial ENTRY mode start');
+      classification = {
+        intent: 'discover',
+        continuity: true,
+        protocol_pointer: {
+          protocol_slug: this.state.active_protocol || '',
+          theme_index: null,
+        },
+        confidence: 1.0,
+        requested_theme: undefined,
+        user_wants_to: {
+          advance_to_next_theme: false,
+          request_elaboration: false,
+          add_more_reflection: false,
+          navigate_to_theme: null,
+        },
+      };
+    } else {
+      classification = await this.classifier.classify(
+        userMessage,
+        this.conversationHistory,
+        this.state
+      );
 
-    // Track classifier cost
-    this.totalCost += 0.0082; // Rough estimate for classifier call
-    console.log(`💰 CLASSIFIER COST: ~$0.0082 | Total session cost: $${this.totalCost.toFixed(4)}`);
+      // Track classifier cost
+      this.totalCost += 0.0082; // Rough estimate for classifier call
+      console.log(
+        `💰 CLASSIFIER COST: ~$0.0082 | Total session cost: $${this.totalCost.toFixed(4)}`
+      );
+    }
 
     // Step 2: Set is_revisiting flag BEFORE any calculations (if user requested a specific theme)
     if (classification.requested_theme !== undefined) {
@@ -634,47 +662,9 @@ export class FieldDiagnosticAgent {
 
       // Fallback (should never reach here if protocol is properly formatted)
       return 'Error: Unable to load protocol introduction.';
-    } else if (mode === 'WALK' && chunk) {
-      // Return theme questions from protocol content
-      const content = chunk.content;
-      const lines = content.split('\n');
-
-      // Extract theme title, purpose, why this matters, and guiding questions
-      let _themeTitle = '';
-      let purpose = '';
-      let whyThisMatters = '';
-      const questions: string[] = [];
-
-      let inQuestions = false;
-
-      for (const line of lines) {
-        if (line.startsWith('###')) {
-          // Parse: "### 1. Surface Behaviors *(Stone 4: Clarity Over Cleverness)*"
-          // Extract just "Surface Behaviors"
-          const titleMatch = line.match(/###\s*\d+\.\s*([^*]+)/);
-          if (titleMatch) {
-            _themeTitle = titleMatch[1].trim();
-          }
-        } else if (line.startsWith('**Purpose:**')) {
-          purpose = line.replace('**Purpose:**', '').trim();
-        } else if (line.startsWith('**Why this matters:**')) {
-          whyThisMatters = line.replace('**Why this matters:**', '').trim();
-        } else if (line.startsWith('**Guiding Questions:**')) {
-          inQuestions = true;
-        } else if (inQuestions && line.startsWith('- ')) {
-          questions.push('• ' + line.substring(2));
-        } else if (inQuestions && line.startsWith('**')) {
-          inQuestions = false;
-        }
-      }
-
-      // Build response with proper formatting
-      let response = `**Purpose:** ${purpose}\n`;
-      response += `**Why This Matters**\n${whyThisMatters}\n`;
-      response += `**Guiding Questions:**\n${questions.join('\n')}\n`;
-      response += `Take a moment with those, and when you're ready, share what comes up.`;
-
-      return response;
+    } else if (mode === 'WALK' && chunk && themeIndex !== null) {
+      // Use deterministic theme presentation built from parsed content
+      return this.buildThemePresentation(chunk, themeIndex);
     }
 
     console.error(
@@ -774,11 +764,33 @@ export class FieldDiagnosticAgent {
   }
 
   /**
-   * Set the current mode (used for forcing CLOSE mode on completion)
+   * Set mode and theme (for skipping ENTRY mode)
+   * Used when frontend handles ENTRY content statically
    */
-  setMode(mode: Mode): void {
+  setMode(mode: 'ENTRY' | 'WALK' | 'CLOSE', themeIndex?: number): void {
     this.state.mode = mode;
-    this.state.updated_at = new Date().toISOString();
+    if (themeIndex !== undefined) {
+      this.state.theme_index = themeIndex;
+    }
+  }
+
+  /**
+   * Build a deterministic theme presentation from parsed protocol content
+   * This eliminates the need for AI to extract content
+   */
+  private buildThemePresentation(chunk: ProtocolChunk, themeIndex: number): string {
+    const themeContent = this.parser.parseThemeContent(chunk.content);
+
+    let presentation = `**Theme ${themeIndex} – ${themeContent.title}**\n\n`;
+    presentation += `**Purpose:** ${themeContent.purpose}\n\n`;
+    presentation += `**Why This Matters**\n${themeContent.why_matters}\n\n`;
+    presentation += `**Guiding Questions:**\n`;
+    themeContent.questions.forEach((q) => {
+      presentation += `• ${q}\n`;
+    });
+    presentation += `\nTake a moment with those, and when you're ready, share what comes up.`;
+
+    return presentation;
   }
 
   /**

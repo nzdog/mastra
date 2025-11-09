@@ -81,11 +81,9 @@ work and future potential.
 
 ### 1. Tying Loose Threads _(Stone 8: Integrity Is the Growth Strategy)_
 
-**Purpose:** To identify and complete any open relationships, tasks, or commitments that need
-attention before closure. This includes conversations, documents, responsibilities, or follow-ups
-that remain unaddressed. **Why this matters:** Loose threads hold energy. Completing them prevents
-leakage of attention or confusion later. It reinforces reliability and strengthens trust across the
-field. **Outcomes:**
+**Purpose:** To identify and complete any open relationships, tasks, or commitments that need attention before closure. This includes conversations, documents, responsibilities, or follow-ups that remain unaddressed.
+**Why this matters:** Loose threads hold energy. Completing them prevents leakage of attention or confusion later. It reinforces reliability and strengthens trust across the field.
+**Outcomes:**
 
 - Poor: We ignore what's undone. It resurfaces later as frustration or tension.
 - Expected: We close a few items but leave minor gaps that complicate the future.
@@ -103,11 +101,9 @@ field. **Outcomes:**
 
 ### 2. Clarifying Emotional Closure _(Stone 7: Built for Wholeness)_
 
-**Purpose:** To make sure emotional communication is complete—nothing unsaid that should be said, no
-withheld appreciation, no lingering resentment. This step allows the emotional field to match the
-practical one in closure. **Why this matters:** Unspoken emotion keeps relationships tethered.
-Clarifying emotion allows everyone involved to move on cleanly, protecting future collaboration or
-peace of mind. **Outcomes:**
+**Purpose:** To make sure emotional communication is complete—nothing unsaid that should be said, no withheld appreciation, no lingering resentment. This step allows the emotional field to match the practical one in closure.
+**Why this matters:** Unspoken emotion keeps relationships tethered. Clarifying emotion allows everyone involved to move on cleanly, protecting future collaboration or peace of mind.
+**Outcomes:**
 
 - Poor: We leave emotionally unsettled. The same tension returns later in new contexts.
 - Expected: We acknowledge some feelings but leave others hidden. Relief comes slowly.
@@ -125,11 +121,9 @@ peace of mind. **Outcomes:**
 
 ### 3. Reviewing Practical Details _(Stone 5: Presence Is Productivity)_
 
-**Purpose:** To ensure that all logistical, financial, and administrative details are handled before
-stepping away. This includes documentation, payments, assets, and responsibilities. **Why this
-matters:** Practical details are often overlooked during transitions. Overlooking them creates
-unnecessary complications for those who continue the work. Handling them cleanly is part of
-professional and energetic closure. **Outcomes:**
+**Purpose:** To ensure that all logistical, financial, and administrative details are handled before stepping away. This includes documentation, payments, assets, and responsibilities.
+**Why this matters:** Practical details are often overlooked during transitions. Overlooking them creates unnecessary complications for those who continue the work. Handling them cleanly is part of professional and energetic closure.
+**Outcomes:**
 
 - Poor: We rush the exit and forget key items. Others must clean up what we left undone.
 - Expected: We complete most of the tasks but miss some small details that delay closure.
@@ -148,10 +142,9 @@ to resolve.
 
 ### 4. Communicating the Exit _(Stone 9: The Speed of Trust)_
 
-**Purpose:** To make sure your departure or closure is communicated clearly, at the right time, to
-the right people. This avoids confusion, rumours, or emotional ripple effects. **Why this matters:**
-Communication defines perception. When you leave without clarity, others fill the gaps with stories.
-Being direct and thoughtful maintains respect and coherence in the wider system. **Outcomes:**
+**Purpose:** To make sure your departure or closure is communicated clearly, at the right time, to the right people. This avoids confusion, rumours, or emotional ripple effects.
+**Why this matters:** Communication defines perception. When you leave without clarity, others fill the gaps with stories. Being direct and thoughtful maintains respect and coherence in the wider system.
+**Outcomes:**
 
 - Poor: We disappear without proper notice. Trust erodes and confusion spreads.
 - Expected: We inform some people but not all. The message spreads unevenly and causes mild
@@ -171,18 +164,17 @@ Being direct and thoughtful maintains respect and coherence in the wider system.
 
 ### 5. Conducting the Handover _(Stone 10: Stewardship, Not Ownership)_
 
-**Purpose:** To transfer responsibility, knowledge, or systems in a way that ensures continuity. The
-goal is to set up whoever follows—or the next phase—for success. **Why this matters:** Poor
-handovers cause confusion and break trust. Clean handovers maintain momentum and demonstrate
-stewardship. They also reinforce the principle that endings serve the wider field, not just the
-individual. **Outcomes:**
+**Purpose:** To transfer responsibility, knowledge, or systems in a way that ensures continuity. The goal is to set up whoever follows—or the next phase—for success.
+**Why this matters:** Poor handovers cause confusion and break trust. Clean handovers maintain momentum and demonstrate stewardship. They also reinforce the principle that endings serve the wider field, not just the individual.
+**Outcomes:**
 
 - Poor: We walk away abruptly. Others struggle to piece things together.
 - Expected: We hand over partially, leaving gaps that cause short-term disruption.
-- Excellent: We transfer all key knowledge and materials smoothly. The transition is clear and
-  uninterrupted.
+- Excellent: We transfer all key knowledge and materials smoothly. The transition is clear and uninterrupted.
 - Transcendent: We hand over with clarity and grace. The system feels supported, not abandoned.
-  **Guiding Questions:**
+
+**Guiding Questions:**
+
 - Who will continue the work or take responsibility next?
 - What do they need to know to succeed?
 - Have I explained or documented everything clearly?
@@ -191,18 +183,17 @@ individual. **Outcomes:**
 
 ### 6. Final Reflection and Release _(Stone 1: Light Before Form)_
 
-**Purpose:** To take one last look at the whole field—what worked, what didn't, what you're taking
-with you—and consciously release any remaining attachment. This is the final internal step before
-stepping into the new field. **Why this matters:** Even when everything looks complete, energy can
-remain attached. Reflection ensures full closure and prevents subtle carryover of tension or
-identity. **Outcomes:**
+**Purpose:** To take one last look at the whole field—what worked, what didn't, what you're taking with you—and consciously release any remaining attachment. This is the final internal step before stepping into the new field.
+**Why this matters:** Even when everything looks complete, energy can remain attached. Reflection ensures full closure and prevents subtle carryover of tension or identity.
+**Outcomes:**
 
 - Poor: We rush out and immediately engage elsewhere. The old field still occupies space internally.
 - Expected: We reflect briefly but hold some emotional residue. Focus shifts slowly.
-- Excellent: We acknowledge the full picture and release attachment. Energy feels grounded and
-  complete.
+- Excellent: We acknowledge the full picture and release attachment. Energy feels grounded and complete.
 - Transcendent: We close with quiet confidence. Endings and beginnings flow together as one process.
-  **Guiding Questions:**
+
+**Guiding Questions:**
+
 - What am I proud to leave behind?
 - What lesson stands out most from this field?
 - What signals tell me this exit is complete?

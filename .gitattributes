@@ -1,0 +1,4 @@
+# Documentation should be in markdown
+*.docx binary
+*.pages binary
+*.doc binary

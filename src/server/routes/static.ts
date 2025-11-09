@@ -4,11 +4,13 @@
  * Provides static asset and page serving endpoints:
  * - GET /test-route - Simple test endpoint
  * - GET /lichen-logo.png - Logo asset
+ * - GET /assets/* - Static assets (CSS, JS)
  * - GET / - Production frontend (index.html)
  * - GET /test - Test interface (test-frontend.html)
  */
 
 import { Router, Request, Response } from 'express';
+import express from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -19,6 +21,11 @@ import * as fs from 'fs';
  */
 export function createStaticRouter(): Router {
   const router = Router();
+
+  // Serve static assets (CSS, JS) from /assets directory
+  const assetsPath = path.join(process.cwd(), 'assets');
+  console.log(`📁 Serving static assets from: ${assetsPath}`);
+  router.use('/assets', express.static(assetsPath));
 
   // GET /test-route - Simple test endpoint
   router.get('/test-route', (_req: Request, res: Response) => {
