@@ -79,22 +79,45 @@ function initializeSessionStore(apiKey: string | undefined): SessionStore {
  * Create rate limiter configurations
  */
 function createRateLimiters() {
+  // Check if we're in test mode - disable rate limiting for tests
+  const isTest =
+    process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true';
+
+  // Custom handler that includes trace ID in 429 responses
+  const rateLimitHandler = (req: any, res: any) => {
+    const traceId = req.get('X-Trace-ID') || 'unknown';
+    res.status(429).json({
+      error: {
+        code: 'RATE_LIMIT_EXCEEDED',
+        message: 'Too many requests from this IP, please try again later.',
+        trace_id: traceId,
+      },
+      timestamp: new Date().toISOString(),
+      path: req.path,
+      method: req.method,
+      trace_id: traceId,
+    });
+  };
+
   // General API rate limiter - more lenient for read operations
   const api = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
+    max: isTest ? 10000 : 100, // Very high limit in test mode
+    skip: isTest ? () => true : undefined, // Skip entirely in test mode
     message: {
       error: 'Too many requests from this IP, please try again later.',
       retryAfter: '15 minutes',
     },
     standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
     legacyHeaders: false, // Disable `X-RateLimit-*` headers
+    handler: rateLimitHandler,
   });
 
   // Strict rate limiter for AI endpoints (expensive operations)
   const aiEndpoint = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 20, // Limit each IP to 20 AI requests per window (protects API costs)
+    max: isTest ? 10000 : 20, // Very high limit in test mode
+    skip: isTest ? () => true : undefined, // Skip entirely in test mode
     message: {
       error: 'Too many AI requests from this IP. Please wait before continuing.',
       retryAfter: '15 minutes',
@@ -102,29 +125,34 @@ function createRateLimiters() {
     },
     standardHeaders: true,
     legacyHeaders: false,
+    handler: rateLimitHandler,
   });
 
   // Very strict limiter for session creation
   const sessionCreation = rateLimit({
     windowMs: 60 * 60 * 1000, // 1 hour
-    max: 10, // Limit each IP to 10 new sessions per hour
+    max: isTest ? 10000 : 10, // Very high limit in test mode
+    skip: isTest ? () => true : undefined, // Skip entirely in test mode
     message: {
       error: 'Too many sessions created from this IP. Please try again later.',
       retryAfter: '1 hour',
     },
     standardHeaders: true,
     legacyHeaders: false,
+    handler: rateLimitHandler,
   });
 
   // Metrics endpoint rate limiter
   const metrics = rateLimit({
     windowMs: 1 * 60 * 1000, // 1 minute
-    max: 10, // Limit each IP to 10 requests per minute
+    max: isTest ? 10000 : 10, // Very high limit in test mode
+    skip: isTest ? () => true : undefined, // Skip entirely in test mode
     message: {
       error: 'Too many metrics requests. Please slow down.',
     },
     standardHeaders: true,
     legacyHeaders: false,
+    handler: rateLimitHandler,
   });
 
   return { api, aiEndpoint, sessionCreation, metrics };

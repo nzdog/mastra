@@ -1997,7 +1997,17 @@
                 disabled
                 aria-label="Continue (Ctrl or Cmd + Enter)"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: 0 auto;">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  style="display: block; margin: 0 auto"
+                >
                   <polyline points="18 15 12 9 6 15"></polyline>
                 </svg>
               </button>
@@ -3763,7 +3773,7 @@
           hasPurposeColon: markdown.includes('Purpose:'),
           hasGuidingQuestions: markdown.includes('Guiding Questions:'),
           length: markdown.length,
-          preview: markdown.substring(0, 200)
+          preview: markdown.substring(0, 200),
         });
 
         if (
@@ -3835,7 +3845,9 @@
           hasWhyThisMatters: !!sections.why_this_matters,
           hasAcknowledgment: !!sections.acknowledgment,
           hasTransition: !!sections.transition,
-          guidingQuestionPreview: sections.guiding_question ? sections.guiding_question.substring(0, 100) : 'none'
+          guidingQuestionPreview: sections.guiding_question
+            ? sections.guiding_question.substring(0, 100)
+            : 'none',
         });
 
         return sections;
