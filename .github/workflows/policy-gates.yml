@@ -507,8 +507,11 @@ jobs:
           ENCRYPTION_ENABLED=true \
           PERSISTENCE=memory \
           LEDGER_ENABLED=false \
+          LEDGER_OPTIONAL=true \
           KEK_ID=kek-202511 \
           DEV_KEK_BASE64=oIOYHA4XD8asAWQD8G1MBXYNY6CszyEpIsjaLH8nlgk= \
+          PGUSER=postgres \
+          PGHOST=localhost \
           npm run server &
           SERVER_PID=$!
 
