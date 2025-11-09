@@ -61,6 +61,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup PostgreSQL root user
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d lichen_memory_test -c "DO \$\$ BEGIN IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'root') THEN CREATE ROLE root WITH LOGIN PASSWORD 'postgres'; END IF; END \$\$;"
+          echo "✅ PostgreSQL root user created (if it didn't exist)"
+
       # Phase 0 - Foundations Gates
       - name: 'Gate: ADR 0001 exists'
         run: test -f docs/adrs/0001-memory-layer-architecture.md
