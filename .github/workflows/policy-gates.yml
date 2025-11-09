@@ -42,6 +42,7 @@ jobs:
       LEDGER_OPTIONAL: 'true'
 
       # Phase 3.3: Encryption KEK for tests
+      KEK_ID: kek-202511
       DEV_KEK_BASE64: oIOYHA4XD8asAWQD8G1MBXYNY6CszyEpIsjaLH8nlgk=
 
       # Anthropic API Expose
