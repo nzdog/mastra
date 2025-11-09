@@ -10,6 +10,7 @@
 
 import * as dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { Request, Response } from 'express';
 import { SessionStore, createSessionStore } from '../session-store';
 import { parseCorsConfig, CorsConfig } from '../config/cors';
 
@@ -84,7 +85,7 @@ function createRateLimiters() {
     process.env.NODE_ENV === 'test' || process.env.DISABLE_RATE_LIMIT === 'true';
 
   // Custom handler that includes trace ID in 429 responses
-  const rateLimitHandler = (req: any, res: any) => {
+  const rateLimitHandler = (req: Request, res: Response) => {
     const traceId = req.get('X-Trace-ID') || 'unknown';
     res.status(429).json({
       error: {
