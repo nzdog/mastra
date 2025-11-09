@@ -4,6 +4,7 @@
  * Provides static asset and page serving endpoints:
  * - GET /test-route - Simple test endpoint
  * - GET /lichen-logo.png - Logo asset
+ * - GET /assets/css/*.css - CSS stylesheets
  * - GET / - Production frontend (index.html)
  * - GET /test - Test interface (test-frontend.html)
  */
@@ -43,6 +44,36 @@ export function createStaticRouter(): Router {
     } catch (error) {
       console.error(`❌ Error serving logo:`, error);
       res.status(404).send('Logo not found');
+    }
+  });
+
+  // GET /assets/css/*.css - CSS files
+  router.get('/assets/css/:filename', (req: Request, res: Response) => {
+    const filename = req.params.filename;
+
+    // Security: Only allow .css files and prevent directory traversal
+    if (!filename.endsWith('.css') || filename.includes('..') || filename.includes('/')) {
+      return res.status(400).send('Invalid filename');
+    }
+
+    const cssPath = path.join(process.cwd(), 'assets', 'css', filename);
+    console.log(`🎨 CSS route hit for: ${filename}`);
+    console.log(`🎨 Serving CSS from: ${cssPath}`);
+
+    if (fs.existsSync(cssPath)) {
+      try {
+        const cssContent = fs.readFileSync(cssPath, 'utf-8');
+        res.setHeader('Content-Type', 'text/css');
+        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+        res.send(cssContent);
+        console.log(`✅ CSS served: ${filename}`);
+      } catch (error) {
+        console.error(`❌ Error serving CSS ${filename}:`, error);
+        res.status(500).send('Error loading CSS file');
+      }
+    } else {
+      console.error(`❌ CSS file not found: ${cssPath}`);
+      res.status(404).send(`CSS file not found: ${filename}`);
     }
   });
 
