@@ -2024,7 +2024,7 @@
       // API Integration - automatically detects environment
       const API_BASE =
         window.location.hostname === 'localhost'
-          ? 'http://localhost:3000'
+          ? `http://localhost:${window.location.port || 3000}`
           : 'https://web-production-b6320.up.railway.app'; // Railway backend URL
 
       // API Key for authentication (set to null for local dev if X_API_KEY not required)
@@ -3774,7 +3774,8 @@
           markdown.includes('**Type:**') ||
           markdown.includes('## Field Diagnosis') ||
           markdown.includes('## Evidence') ||
-          markdown.includes('## Coherence Assessment')
+          markdown.includes('## Coherence Assessment') ||
+          markdown.includes('## Close Mode Summary')
         ) {
           // For CLOSE mode, treat the entire content as acknowledgment/diagnosis
           console.log('✅ CLOSE mode detected - treating as acknowledgment');

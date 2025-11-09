@@ -119,9 +119,9 @@ export class FieldDiagnosticAgent {
    * @throws May throw errors from the underlying Anthropic API if rate limited or network issues occur
    */
   async processMessage(userMessage: string): Promise<string> {
-    // If already in CLOSE mode, don't process additional user responses
-    // The protocol is complete and should not continue
-    if (this.state.mode === 'CLOSE') {
+    // If already in CLOSE mode AND we've already generated the summary, don't process more messages
+    // Allow the FIRST CLOSE mode call to generate the summary
+    if (this.state.mode === 'CLOSE' && this.closeModeTimes > 0) {
       const protocolMetadata = this.registry.getMetadata();
       return `The ${protocolMetadata.title} is complete. You have successfully completed all themes.`;
     }
@@ -173,7 +173,6 @@ export class FieldDiagnosticAgent {
 
       // Generate field diagnosis (no chunk, no theme logic needed)
       console.log(`🤖 AI CALL: Generating field diagnosis (personalized)`);
-      const summaryInstructions = this.registry.getSummaryInstructions();
       const response = await this.composer.compose(
         'CLOSE',
         null,
@@ -181,7 +180,6 @@ export class FieldDiagnosticAgent {
         userMessage,
         {
           themeAnswers: this.themeAnswers,
-          summaryInstructions: summaryInstructions,
         }
       );
 
@@ -773,6 +771,14 @@ export class FieldDiagnosticAgent {
    */
   getState(): SessionState {
     return { ...this.state };
+  }
+
+  /**
+   * Set the current mode (used for forcing CLOSE mode on completion)
+   */
+  setMode(mode: Mode): void {
+    this.state.mode = mode;
+    this.state.updated_at = new Date().toISOString();
   }
 
   /**
