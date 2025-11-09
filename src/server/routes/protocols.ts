@@ -436,9 +436,8 @@ export function createProtocolRouter(
         if (generate_summary) {
           console.log('🎯 COMPLETION: Directly forcing CLOSE mode to generate field diagnosis');
 
-          // Get current state and directly set it to CLOSE mode
-          const state = session.agent.getState();
-          state.mode = 'CLOSE';
+          // Force the agent into CLOSE mode
+          session.agent.setMode('CLOSE');
 
           // Trigger field diagnosis by processing with CLOSE mode
           // The agent's processMessage will see mode=CLOSE and generate the diagnosis

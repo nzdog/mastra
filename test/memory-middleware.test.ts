@@ -71,7 +71,17 @@ function startServer(): ChildProcess {
   return spawn('npm', ['run', 'server'], {
     stdio: 'inherit',
     shell: true,
-    env: { ...process.env, SKIP_API_KEY_CHECK: 'true' },
+    env: {
+      ...process.env,
+      // Test-specific environment variables
+      SKIP_API_KEY_CHECK: 'true',
+      NODE_ENV: 'test', // Enable test mode
+      DISABLE_RATE_LIMIT: 'true', // Disable rate limiting for tests
+      PERSISTENCE: 'memory', // Use in-memory storage (no Postgres)
+      LEDGER_ENABLED: 'false', // Skip ledger initialization
+      ENCRYPTION_ENABLED: 'false', // Skip KMS checks
+      LEDGER_OPTIONAL: 'true', // Make ledger optional
+    },
   });
 }
 

@@ -110,7 +110,7 @@ Awareness allows learning instead of judgment. **Outcomes:**
 - Expected: We notice the pattern but treat it as personal failure.
 - Excellent: We understand its purpose and why it lasted. The pattern begins to lose hold.
 - Transcendent: We see patterns as feedback, not flaws. Growth becomes calm and consistent.
-**Guiding Questions:**
+  **Guiding Questions:**
 - When did this pattern first start?
 - What need or fear was it protecting?
 - How has it helped and limited me?

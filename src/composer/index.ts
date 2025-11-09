@@ -127,6 +127,16 @@ export class Composer {
       `\n📝 COMPOSER: Mode = ${mode}, Theme = ${context?.currentThemeIndex || 'N/A'}, Awaiting = ${context?.awaitingConfirmation || false}`
     );
 
+    // Log the system prompt in CLOSE mode to verify it's being sent
+    if (mode === 'CLOSE') {
+      console.log(
+        `\n🔍 CLOSE MODE SYSTEM PROMPT (first 500 chars):\n${systemPrompt.substring(0, 500)}...`
+      );
+      console.log(
+        `\n🔍 CLOSE MODE SYSTEM PROMPT (last 500 chars):\n...${systemPrompt.substring(systemPrompt.length - 500)}`
+      );
+    }
+
     let response = await this.client.sendMessage(systemPrompt, messages);
 
     if (response.length > 500) {
