@@ -503,7 +503,13 @@ jobs:
 
       - name: 'Gate: Encryption metrics available (Phase 3 Week 3)'
         run: |
-          SKIP_API_KEY_CHECK=true ENCRYPTION_ENABLED=true npm run server &
+          SKIP_API_KEY_CHECK=true \
+          ENCRYPTION_ENABLED=true \
+          PERSISTENCE=memory \
+          LEDGER_ENABLED=false \
+          KEK_ID=kek-202511 \
+          DEV_KEK_BASE64=oIOYHA4XD8asAWQD8G1MBXYNY6CszyEpIsjaLH8nlgk= \
+          npm run server &
           SERVER_PID=$!
 
           # Wait for server
@@ -573,7 +579,16 @@ jobs:
 
       - name: 'Gate: Dual-write metrics available (Phase 3 Week 3)'
         run: |
-          SKIP_API_KEY_CHECK=true PERSISTENCE=dual-write DUAL_WRITE_ENABLED=true npm run server &
+          SKIP_API_KEY_CHECK=true \
+          PERSISTENCE=dual-write \
+          DUAL_WRITE_ENABLED=true \
+          LEDGER_ENABLED=false \
+          PGUSER=postgres \
+          PGHOST=localhost \
+          PGPORT=5432 \
+          PGDATABASE=lichen_memory_test \
+          PGPASSWORD=postgres \
+          npm run server &
           SERVER_PID=$!
 
           # Wait for server
