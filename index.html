@@ -1997,7 +1997,17 @@
                 disabled
                 aria-label="Continue (Ctrl or Cmd + Enter)"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block; margin: 0 auto;">
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  style="display: block; margin: 0 auto"
+                >
                   <polyline points="18 15 12 9 6 15"></polyline>
                 </svg>
               </button>
@@ -2024,7 +2034,7 @@
       // API Integration - automatically detects environment
       const API_BASE =
         window.location.hostname === 'localhost'
-          ? 'http://localhost:3000'
+          ? `http://localhost:${window.location.port || 3000}`
           : 'https://web-production-b6320.up.railway.app'; // Railway backend URL
 
       // API Key for authentication (set to null for local dev if X_API_KEY not required)
@@ -3827,7 +3837,7 @@
           hasPurposeColon: markdown.includes('Purpose:'),
           hasGuidingQuestions: markdown.includes('Guiding Questions:'),
           length: markdown.length,
-          preview: markdown.substring(0, 200)
+          preview: markdown.substring(0, 200),
         });
 
         if (
@@ -3838,7 +3848,8 @@
           markdown.includes('**Type:**') ||
           markdown.includes('## Field Diagnosis') ||
           markdown.includes('## Evidence') ||
-          markdown.includes('## Coherence Assessment')
+          markdown.includes('## Coherence Assessment') ||
+          markdown.includes('## Close Mode Summary')
         ) {
           // For CLOSE mode, treat the entire content as acknowledgment/diagnosis
           console.log('✅ CLOSE mode detected - treating as acknowledgment');
@@ -3898,7 +3909,9 @@
           hasWhyThisMatters: !!sections.why_this_matters,
           hasAcknowledgment: !!sections.acknowledgment,
           hasTransition: !!sections.transition,
-          guidingQuestionPreview: sections.guiding_question ? sections.guiding_question.substring(0, 100) : 'none'
+          guidingQuestionPreview: sections.guiding_question
+            ? sections.guiding_question.substring(0, 100)
+            : 'none',
         });
 
         return sections;

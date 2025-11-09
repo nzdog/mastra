@@ -2,6 +2,7 @@ import * as path from 'path';
 import express from 'express';
 import { loadConfig } from './server/config';
 import { applyMiddleware } from './server/middleware';
+import { traceIdMiddleware } from './server/middleware/trace-id';
 import { createHealthRouter } from './server/routes/health';
 import { createMetricsRouter } from './server/routes/metrics';
 import { createVerificationRouter } from './server/routes/verification';
@@ -70,6 +71,10 @@ const {
 
 // Apply all middleware (security, CORS, body parser)
 applyMiddleware(app, config);
+
+// Apply trace ID middleware FIRST (before any routes/rate limiters)
+// This ensures all responses (including 429 errors) have a trace ID
+app.use(traceIdMiddleware);
 
 // Mount health check routes
 const healthRouter = createHealthRouter(sessionStore, apiLimiter, isReadyRef);

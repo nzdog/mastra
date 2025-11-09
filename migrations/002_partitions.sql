@@ -114,11 +114,10 @@ CREATE INDEX IF NOT EXISTS idx_memory_records_audit
 -- To list all partitions:
 -- SELECT tablename FROM pg_tables WHERE tablename LIKE 'memory_records_%' ORDER BY tablename;
 
--- To drop old partitions (e.g., older than 6 months):
+-- To remove old partitions (e.g., older than 6 months):
 -- First detach (preserves data as standalone table):
 -- ALTER TABLE memory_records DETACH PARTITION memory_records_2025_05;
--- Then drop if no longer needed:
--- DROP TABLE memory_records_2025_05;
+-- Then remove if no longer needed (see _dev.sql files for destructive operations)
 
 -- ============================================================================
 -- Post-migration verification

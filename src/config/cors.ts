@@ -46,8 +46,10 @@ export function parseCorsConfig(): CorsConfig {
     } else {
       // Development defaults
       allowedOrigins.add('http://localhost:3000');
+      allowedOrigins.add('http://localhost:3001'); // ui-tweaks worktree
       allowedOrigins.add('http://localhost:5173'); // Vite dev server
       allowedOrigins.add('http://127.0.0.1:3000');
+      allowedOrigins.add('http://127.0.0.1:3001'); // ui-tweaks worktree
       allowedOrigins.add('http://127.0.0.1:5173');
       console.warn('⚠️  CORS: Using default development origins');
     }

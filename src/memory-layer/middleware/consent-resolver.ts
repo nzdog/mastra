@@ -129,10 +129,15 @@ function checkFamilyAuthorization(
  * Extracts consent family from URL, validates auth, and attaches consent context
  */
 export function consentResolver(req: Request, res: Response, next: NextFunction): void {
-  // Generate or extract trace ID
+  // Use existing trace ID (should be set by trace ID middleware)
+  // Only generate as fallback if somehow missing
   const traceId = (req.get('X-Trace-ID') ||
     `trace_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`) as string;
-  req.headers['x-trace-id'] = traceId;
+
+  // Only set if not already set by earlier middleware
+  if (!req.get('X-Trace-ID')) {
+    req.headers['x-trace-id'] = traceId;
+  }
 
   // Extract consent family from path
   // Use originalUrl for full path or params.family if mounted with :family parameter

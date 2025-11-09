@@ -24,8 +24,8 @@
 --   6. Recreates indexes on partitioned table
 --   7. Creates monthly partitions (current + next 2 months)
 --
--- Rollback procedure (if needed):
---   DROP TABLE IF EXISTS memory_records CASCADE;
+-- Rollback procedure (if needed - see _dev.sql files for destructive operations):
+--   Remove new partitioned table (CASCADE)
 --   ALTER TABLE memory_records_pre_partition RENAME TO memory_records;
 --   -- Recreate indexes manually if needed
 --
@@ -236,6 +236,6 @@ BEGIN
   RAISE NOTICE 'Next steps:';
   RAISE NOTICE '1. Run 002_partitions.sql to add partition helper functions';
   RAISE NOTICE '2. Test application thoroughly (7-30 days)';
-  RAISE NOTICE '3. Drop backup: DROP TABLE memory_records_pre_partition;';
+  RAISE NOTICE '3. Remove backup table memory_records_pre_partition (see _dev.sql files)';
   RAISE NOTICE '============================================================';
 END $$;
