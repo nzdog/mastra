@@ -41,6 +41,9 @@ jobs:
       LEDGER_ENABLED: 'false'
       LEDGER_OPTIONAL: 'true'
 
+      # Phase 3.3: Encryption KEK for tests
+      DEV_KEK_BASE64: oIOYHA4XD8asAWQD8G1MBXYNY6CszyEpIsjaLH8nlgk=
+
       # Anthropic API Expose
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
