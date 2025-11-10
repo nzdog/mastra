@@ -1127,6 +1127,22 @@
               }),
             });
 
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+
+              // Check for API overload (529)
+              if (response.status === 529 || errorData.error?.type === 'overloaded_error') {
+                showError('The AI service is currently experiencing high demand. Please wait a moment and try again.');
+              } else {
+                showError('The field lost connection. Please try again.');
+              }
+
+              askAnotherBtn.classList.remove('clicked');
+              askAnotherBtn.disabled = false;
+              hideLoadingIndicator();
+              return;
+            }
+
             const data = await response.json();
             protocolData = data;
             updateCostDisplay(0.02);
@@ -1160,6 +1176,22 @@
                 generate_summary: true,
               }),
             });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+
+              // Check for API overload (529)
+              if (response.status === 529 || errorData.error?.type === 'overloaded_error') {
+                showError('The AI service is currently experiencing high demand. Please wait a moment and try again.');
+              } else {
+                showError('The field lost connection. Please try again.');
+              }
+
+              completeWalkBtn.classList.remove('clicked');
+              completeWalkBtn.disabled = false;
+              hideLoadingIndicator();
+              return;
+            }
 
             const data = await response.json();
             protocolData = data;
@@ -1205,6 +1237,22 @@
               user_response: userResponse,
             }),
           });
+
+          if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+
+            // Check for API overload (529)
+            if (response.status === 529 || errorData.error?.type === 'overloaded_error') {
+              showError('The AI service is currently experiencing high demand. Please wait a moment and try again.');
+            } else {
+              showError('The field lost connection. Please try again.');
+            }
+
+            continueButton.classList.remove('clicked');
+            continueButton.disabled = false;
+            hideLoadingIndicator();
+            return;
+          }
 
           const data = await response.json();
           protocolData = data;
@@ -1256,6 +1304,22 @@
                 user_response: 'generate field diagnosis',
               }),
             });
+
+            if (!response.ok) {
+              const errorData = await response.json().catch(() => ({}));
+
+              // Check for API overload (529)
+              if (response.status === 529 || errorData.error?.type === 'overloaded_error') {
+                showError('The AI service is currently experiencing high demand. Please wait a moment and try again.');
+              } else {
+                showError('The field lost connection. Please try again.');
+              }
+
+              button.classList.remove('clicked');
+              button.disabled = false;
+              hideLoadingIndicator();
+              return;
+            }
 
             const data = await response.json();
             protocolData = data;

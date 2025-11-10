@@ -4,12 +4,13 @@
  * Provides static asset and page serving endpoints:
  * - GET /test-route - Simple test endpoint
  * - GET /lichen-logo.png - Logo asset
- * - GET /assets/css/*.css - CSS stylesheets
+ * - GET /assets/* - Static assets (CSS, JS)
  * - GET / - Production frontend (index.html)
  * - GET /test - Test interface (test-frontend.html)
  */
 
 import { Router, Request, Response } from 'express';
+import express from 'express';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -20,6 +21,11 @@ import * as fs from 'fs';
  */
 export function createStaticRouter(): Router {
   const router = Router();
+
+  // Serve static assets (CSS, JS) from /assets directory
+  const assetsPath = path.join(process.cwd(), 'assets');
+  console.log(`📁 Serving static assets from: ${assetsPath}`);
+  router.use('/assets', express.static(assetsPath));
 
   // GET /test-route - Simple test endpoint
   router.get('/test-route', (_req: Request, res: Response) => {
@@ -44,36 +50,6 @@ export function createStaticRouter(): Router {
     } catch (error) {
       console.error(`❌ Error serving logo:`, error);
       res.status(404).send('Logo not found');
-    }
-  });
-
-  // GET /assets/css/*.css - CSS files
-  router.get('/assets/css/:filename', (req: Request, res: Response) => {
-    const filename = req.params.filename;
-
-    // Security: Only allow .css files and prevent directory traversal
-    if (!filename.endsWith('.css') || filename.includes('..') || filename.includes('/')) {
-      return res.status(400).send('Invalid filename');
-    }
-
-    const cssPath = path.join(process.cwd(), 'assets', 'css', filename);
-    console.log(`🎨 CSS route hit for: ${filename}`);
-    console.log(`🎨 Serving CSS from: ${cssPath}`);
-
-    if (fs.existsSync(cssPath)) {
-      try {
-        const cssContent = fs.readFileSync(cssPath, 'utf-8');
-        res.setHeader('Content-Type', 'text/css');
-        res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
-        res.send(cssContent);
-        console.log(`✅ CSS served: ${filename}`);
-      } catch (error) {
-        console.error(`❌ Error serving CSS ${filename}:`, error);
-        res.status(500).send('Error loading CSS file');
-      }
-    } else {
-      console.error(`❌ CSS file not found: ${cssPath}`);
-      res.status(404).send(`CSS file not found: ${filename}`);
     }
   });
 

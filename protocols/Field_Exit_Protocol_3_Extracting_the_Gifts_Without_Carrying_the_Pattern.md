@@ -80,16 +80,14 @@ future. It preserves what's useful while releasing what no longer fits.
 
 ### 1. Distinguishing Treasure from Residue _(Stone 4: Clarity Over Cleverness)_
 
-**Purpose:** To tell the difference between what strengthened you and what weakened you. This is the
-first act of separation—naming what's gold and what's leftover weight. **Why this matters:** Without
-clear distinction, residue hides inside the lesson. Separating them prevents you from repeating the
-same friction later. **Outcomes:**
+**Purpose:** To tell the difference between what strengthened you and what weakened you. This is the first act of separation—naming what's gold and what's leftover weight.
+**Why this matters:** Without clear distinction, residue hides inside the lesson. Separating them prevents you from repeating the same friction later.
+**Outcomes:**
 
 - Poor: We confuse treasure with residue; old habits return and slow us down.
 - Expected: We see some difference but hesitate to act on it; clarity begins but isn't yet solid.
 - Excellent: We name the real gifts and what must be released; energy feels steadier and cleaner.
-- Transcendent: Discernment becomes natural. Every ending quickly reveals what's worth carrying
-  forward.
+- Transcendent: Discernment becomes natural. Every ending quickly reveals what's worth carrying forward.
 
 **Guiding Questions:**
 
@@ -101,16 +99,17 @@ same friction later. **Outcomes:**
 
 ### 2. Understanding the Origin of the Pattern _(Stone 5: Presence Is Productivity)_
 
-**Purpose:** To trace where the distortion came from. Often, patterns begin as strategies that once
-worked. Seeing the origin removes shame and gives insight into how it formed. **Why this matters:**
-If you don't understand where a pattern came from, you risk fighting it instead of resolving it.
-Awareness allows learning instead of judgment. **Outcomes:**
+**Purpose:** To trace where the distortion came from. Often, patterns begin as strategies that once worked. Seeing the origin removes shame and gives insight into how it formed.
+**Why this matters:** If you don't understand where a pattern came from, you risk fighting it instead of resolving it. Awareness allows learning instead of judgment.
+**Outcomes:**
 
 - Poor: We blame ourselves and repeat the cycle.
 - Expected: We notice the pattern but treat it as personal failure.
 - Excellent: We understand its purpose and why it lasted. The pattern begins to lose hold.
 - Transcendent: We see patterns as feedback, not flaws. Growth becomes calm and consistent.
-  **Guiding Questions:**
+
+**Guiding Questions:**
+
 - When did this pattern first start?
 - What need or fear was it protecting?
 - How has it helped and limited me?
@@ -119,10 +118,9 @@ Awareness allows learning instead of judgment. **Outcomes:**
 
 ### 3. Naming the Actual Gift _(Stone 1: Light Before Form)_
 
-**Purpose:** To identify the real value gained through the past experience. Gifts can include
-strength, empathy, resilience, or knowledge. Naming them makes the value explicit so it can be used
-consciously. **Why this matters:** When gifts stay vague, they fade. Naming them anchors the
-learning and makes it easier to apply in new contexts. **Outcomes:**
+**Purpose:** To identify the real value gained through the past experience. Gifts can include strength, empathy, resilience, or knowledge. Naming them makes the value explicit so it can be used consciously.
+**Why this matters:** When gifts stay vague, they fade. Naming them anchors the learning and makes it easier to apply in new contexts.
+**Outcomes:**
 
 - Poor: We overlook the gift and remember only the struggle.
 - Expected: We see some value but understate its importance.
@@ -141,10 +139,8 @@ will help going forward.
 
 ### 4. Releasing the Distortion _(Stone 6: Nothing Forced, Nothing Withheld)_
 
-**Purpose:** To actively remove the leftover part of the experience that limits growth—such as
-guilt, defensiveness, or overcompensation. This is the act of cleaning the gift before carrying it
-on. **Why this matters:** Distortion travels easily. If left unaddressed, it shapes how you use the
-gift and reduces its strength. Releasing it prevents new patterns from forming around old wounds.
+**Purpose:** To actively remove the leftover part of the experience that limits growth—such as guilt, defensiveness, or overcompensation. This is the act of cleaning the gift before carrying it on.
+**Why this matters:** Distortion travels easily. If left unaddressed, it shapes how you use the gift and reduces its strength. Releasing it prevents new patterns from forming around old wounds.
 **Outcomes:**
 
 - Poor: We keep both the learning and the emotional baggage. Future work carries a defensive tone.
@@ -164,10 +160,9 @@ strengthens me.
 
 ### 5. Applying the Gift in Real Time _(Stone 8: Integrity Is the Growth Strategy)_
 
-**Purpose:** To practice using the learning in current situations. This theme turns insight into
-action and checks whether the lesson holds under real-world conditions. **Why this matters:**
-Reflection only becomes valuable when it changes behaviour. Practicing the gift ensures it's
-integrated, not just remembered. **Outcomes:**
+**Purpose:** To practice using the learning in current situations. This theme turns insight into action and checks whether the lesson holds under real-world conditions.
+**Why this matters:** Reflection only becomes valuable when it changes behaviour. Practicing the gift ensures it's integrated, not just remembered.
+**Outcomes:**
 
 - Poor: We understand the gift but don't apply it. Patterns reappear unchanged.
 - Expected: We apply it sometimes, noticing partial results.
@@ -186,15 +181,17 @@ work.
 
 ### 6. Checking for Residual Pattern Drift _(Stone 7: Built for Wholeness)_
 
-**Purpose:** To review periodically for traces of the old pattern reappearing. This ensures that
-residue doesn't slowly rebuild over time. **Why this matters:** Patterns often resurface quietly.
-Regular checking keeps your system clean and prevents regression. **Outcomes:**
+**Purpose:** To review periodically for traces of the old pattern reappearing. This ensures that residue doesn't slowly rebuild over time.
+**Why this matters:** Patterns often resurface quietly. Regular checking keeps your system clean and prevents regression.
+**Outcomes:**
 
 - Poor: We assume the work is done and old habits return unnoticed.
 - Expected: We catch drift occasionally but react late.
 - Excellent: We monitor ourselves regularly and correct course quickly.
-- Transcendent: Awareness stays continuous; old patterns no longer take root at all. **Guiding
-  Questions:**
+- Transcendent: Awareness stays continuous; old patterns no longer take root at all.
+
+**Guiding Questions:**
+
 - What signs show the old pattern might be creeping back?
 - How can I stay alert without becoming anxious?
 - What supports help keep this awareness alive?

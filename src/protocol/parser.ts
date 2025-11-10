@@ -14,6 +14,14 @@ export class ProtocolParser {
   }
 
   /**
+   * Clear the parser cache (for testing purposes only)
+   */
+  static clearCacheForTesting(): void {
+    this.parsedProtocolCache.clear();
+    this.cacheTimestamps.clear();
+  }
+
+  /**
    * Parse the markdown protocol file into structured chunks
    * Uses in-memory cache to avoid repeated file I/O and parsing
    */
@@ -218,7 +226,7 @@ export class ProtocolParser {
    */
   parseThemeContent(themeChunk: string): ThemeContent {
     const lines = themeChunk.split('\n');
-    const titleMatch = lines[0].match(/^### (\d+)\.\s+(.+?)\s+\*\((.+)\)\*/);
+    const titleMatch = lines[0].match(/^### (\d+)\.\s+(.+?)\s+_\((.+)\)_/);
 
     const title = titleMatch ? titleMatch[2].trim() : '';
     const stone = titleMatch ? titleMatch[3].trim() : '';
@@ -234,12 +242,44 @@ export class ProtocolParser {
     for (let i = 1; i < lines.length; i++) {
       const line = lines[i];
 
+      // Handle multiple bold sections on the same line by splitting them
+      if (line.includes('**Purpose:**') && line.includes('**Why this matters:**')) {
+        // Split the line at "**Why this matters:**"
+        const parts = line.split('**Why this matters:**');
+        const purposePart = parts[0].replace('**Purpose:**', '').trim();
+        const whyPart = parts[1].split('**Outcomes:**')[0].trim();
+
+        purpose = purposePart;
+        why_matters = whyPart;
+
+        // Check if Outcomes is also on this line
+        if (line.includes('**Outcomes:**')) {
+          currentField = 'outcomes';
+        } else {
+          currentField = 'why_matters';
+        }
+        continue;
+      }
+
       if (line.startsWith('**Purpose:**')) {
         currentField = 'purpose';
         purpose = line.replace('**Purpose:**', '').trim();
+        // Check if this line also contains "**Why this matters:**"
+        if (line.includes('**Why this matters:**')) {
+          const parts = line.split('**Why this matters:**');
+          purpose = parts[0].replace('**Purpose:**', '').trim();
+          why_matters = parts[1].trim();
+          currentField = 'why_matters';
+        }
       } else if (line.startsWith('**Why this matters:**')) {
         currentField = 'why_matters';
         why_matters = line.replace('**Why this matters:**', '').trim();
+        // Check if this line also contains "**Outcomes:**"
+        if (line.includes('**Outcomes:**')) {
+          const parts = line.split('**Outcomes:**');
+          why_matters = parts[0].replace('**Why this matters:**', '').trim();
+          currentField = 'outcomes';
+        }
       } else if (line.startsWith('**Outcomes:**')) {
         currentField = 'outcomes';
         continue;
@@ -254,6 +294,25 @@ export class ProtocolParser {
           questions.push(line.replace('- ', '').trim());
         } else if (currentField === 'outcomes') {
           outcomes += line + '\n';
+        }
+      } else if (line.trim() && currentField === 'purpose') {
+        // Check if this continuation line contains "**Why this matters:**"
+        if (line.includes('**Why this matters:**')) {
+          const parts = line.split('**Why this matters:**');
+          purpose += ' ' + parts[0].trim();
+          why_matters = parts[1].trim();
+          currentField = 'why_matters';
+        } else {
+          purpose += ' ' + line.trim();
+        }
+      } else if (line.trim() && currentField === 'why_matters') {
+        // Check if this continuation line contains "**Outcomes:**"
+        if (line.includes('**Outcomes:**')) {
+          const parts = line.split('**Outcomes:**');
+          why_matters += ' ' + parts[0].trim();
+          currentField = 'outcomes';
+        } else {
+          why_matters += ' ' + line.trim();
         }
       } else if (line.trim() && currentField === 'outcomes') {
         outcomes += line + '\n';
@@ -300,6 +359,23 @@ export class ProtocolParser {
     }
 
     return summaryLines.join('\n').trim();
+  }
+
+  /**
+   * Get parsed content for a specific theme by index
+   *
+   * @param themeIndex - Theme index (1-based)
+   * @returns Parsed theme content or null if not found
+   */
+  getThemeContent(themeIndex: number): ThemeContent | null {
+    const parsed = this.parse();
+    const themeChunk = parsed.theme_chunks.get(themeIndex);
+
+    if (!themeChunk) {
+      return null;
+    }
+
+    return this.parseThemeContent(themeChunk);
   }
 }
 

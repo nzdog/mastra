@@ -46,10 +46,12 @@ RESPONSE TEMPLATES - Choose based on context:
 
 TEMPLATE A: Presenting theme questions (first time entering theme)
 
+**Theme [N] – [Exact Theme Title from protocol]**
+
 **Purpose:** [Extract exact Purpose content from protocol - 1-2 sentences explaining what this theme reveals]
 
 **Why This Matters**
-[Extract exact "Why This Matters" content from protocol]
+[Extract ONLY the text that appears immediately after "**Why this matters:**" and STOP before "**Outcomes:**" or "**Guiding Questions:**". This should be 1-2 sentences maximum. DO NOT include any bullet points or questions here.]
 
 **Guiding Questions:**
 • [Exact Question 1 from protocol]
@@ -62,17 +64,19 @@ Take a moment with those, and when you're ready, share what comes up.
 
 TEMPLATE B: After user provides initial answer to theme questions
 
+**Theme [N] – [Current Theme Title]**
+
 <!-- INTERPRETATION -->
 [2-3 sentence interpretation showing you understand their response. Reflect back the essence of what they said, acknowledging the pattern or insight they've named.]
 
-**Completion Prompt:**
-"[Exact completion prompt from protocol]"
-
-Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Not Last Theme]: Ready to move into **Theme [N+1] – [Next Theme Title]**?
+[IF Last Theme]: [Say nothing after interpretation - buttons will appear automatically]
 
 ═══════════════════════════════════════════════════════════════════
 
 TEMPLATE C: When user asks for elaboration/clarification
+
+**Theme [N] – [Current Theme Title]**
 
 <!-- INTERPRETATION -->
 [Answer their question in 2-3 sentences with helpful clarification.]
@@ -84,6 +88,8 @@ TEMPLATE C: When user asks for elaboration/clarification
 
 TEMPLATE D: When user adds more reflection/thoughts to current theme
 
+**Theme [N] – [Current Theme Title]**
+
 <!-- INTERPRETATION -->
 [Acknowledge and briefly interpret their additional insights in 2-3 sentences. Show you understand what they're adding to their previous response.]
 
@@ -93,6 +99,8 @@ TEMPLATE D: When user adds more reflection/thoughts to current theme
 ═══════════════════════════════════════════════════════════════════
 
 TEMPLATE E: When revisiting a previous theme
+
+**Theme [N] – [Current Theme Title]**
 
 <!-- INTERPRETATION -->
 [Interpretation that includes both their previous answer and new content - 2-3 sentences showing you see the fuller picture.]
@@ -140,15 +148,15 @@ CRITICAL CONSTRAINTS:
 EXAMPLE FLOW:
 
 **Scenario 1: Simple Progression**
-System (Template A): [shows questions with Purpose, Why This Matters, and Guiding Questions]
+System (Template A): [shows theme title, Purpose, Why This Matters, and Guiding Questions]
 User: "I use rushed language and freeze under pressure"
 System (Template B): <!-- INTERPRETATION -->
 [interpretation] Ready for Theme 2?
 User: "yes"
-System (Template A): [shows Theme 2 questions]
+System (Template A): [shows Theme 2 title and questions]
 
 **Scenario 2: Deep Exploration**
-System (Template A): [shows questions with Purpose, Why This Matters, and Guiding Questions]
+System (Template A): [shows theme title, Purpose, Why This Matters, and Guiding Questions]
 User: "I say 'hurry' a lot"
 System (Template B): <!-- INTERPRETATION -->
 [interpretation] Ready for Theme 2?
@@ -159,7 +167,7 @@ User: "I see. I also withdraw when stressed"
 System (Template D): <!-- INTERPRETATION -->
 [updated interpretation] Ready for Theme 2?
 User: "yes"
-System (Template A): [shows Theme 2 questions]`;
+System (Template A): [shows Theme 2 title and questions]`;
 
 export const CLOSE_PROMPT = `# 🜂 Transcendent Close Mode — System Prompt (With Reflective Intake)
 
