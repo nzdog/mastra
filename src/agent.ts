@@ -776,8 +776,8 @@ export class FieldDiagnosticAgent {
     // Otherwise determineMode() will reset to ENTRY mode
     if (mode === 'WALK' && !this.state.active_protocol) {
       const metadata = this.registry.getMetadata();
-      this.state.active_protocol = metadata.slug;
-      console.log(`📍 AGENT: setMode() set active_protocol to ${metadata.slug}`);
+      this.state.active_protocol = metadata.id;
+      console.log(`📍 AGENT: setMode() set active_protocol to ${metadata.id}`);
     }
   }
 
