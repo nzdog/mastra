@@ -23,13 +23,7 @@ import {
   introBeginBtn,
   pageHeader,
 } from './dom.js';
-import {
-  fadeIn,
-  fadeInClean,
-  fadeOut,
-  announceForScreenReader,
-  getHeaders,
-} from './utils.js';
+import { fadeIn, fadeInClean, fadeOut, announceForScreenReader, getHeaders } from './utils.js';
 
 // Timing constants for intro sequence
 const INTRO_TIMING = {
