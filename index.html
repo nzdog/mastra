@@ -623,14 +623,12 @@
         // Scroll to top
         window.scrollTo(0, 0);
 
-        // Fade out the intro logo quickly
+        // Fade out both the intro logo and content together (same duration)
         const introLogoContainer = document.querySelector('.intro-logo-container');
-        if (introLogoContainer) {
-          await fadeOut(introLogoContainer, 400);
-        }
-
-        // Fade out the intro content (quote, embodiment lines, orientation, continue button)
-        await fadeOut(introContent, 800);
+        await Promise.all([
+          fadeOut(introContent, 800),
+          introLogoContainer ? fadeOut(introLogoContainer, 800) : Promise.resolve(),
+        ]);
 
         // Hide intro content
         introContent.style.display = 'none';
