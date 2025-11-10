@@ -44,3 +44,4 @@ coverage/
 # (Everything in packages/code-analysis/reports/ is tracked)
 !packages/code-analysis/reports/**
 .keys/
+index.html.backup

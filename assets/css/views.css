@@ -1,0 +1,401 @@
+/**
+ * View Styles  
+ * Intro flow, entry view, walk view, and completion view
+ */
+
+.intro-continue-btn:focus-visible {
+  outline: 2px solid #57534e;
+  outline-offset: 2px;
+}
+
+.intro-continue-hint {
+  font-size: 0.8125rem;
+  color: #a8a29e;
+  margin-top: 0.5rem;
+}
+
+.intro-protocol-list-page {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  padding-top: calc(33% - 70px + 120px);
+  max-width: 900px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+.intro-protocol-list-page.visible {
+  display: flex;
+}
+
+/* Live region for screen readers */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+
+/* ========================================
+           MOBILE RESPONSIVE STYLES
+           ======================================== */
+
+/* Tablets and small screens */
+@media (max-width: 768px) {
+  /* Show mobile version, hide desktop version */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Logo adjustments */
+  .logo-spin-intro {
+    width: 80px;
+    height: 80px;
+  }
+
+  .intro-logo-container {
+    top: calc(40vh - 40px);
+  }
+
+  /* Typography scaling - mobile version only */
+  .intro-quote.mobile-only {
+    position: relative !important;
+    font-size: 1.0625rem;
+    white-space: normal !important;
+    left: auto !important;
+    right: auto !important;
+    margin-left: 7.5% !important;
+    margin-right: 7.5% !important;
+    transform: none !important;
+    display: block !important;
+    width: auto !important;
+    line-height: 1.5 !important;
+    top: auto !important;
+  }
+
+  .intro-text-line {
+    font-size: 1.0625rem;
+    white-space: normal !important;
+    left: 7.5% !important;
+    right: 7.5% !important;
+    transform: translateX(0) !important;
+    display: block !important;
+    width: auto !important;
+    line-height: 1.5 !important;
+  }
+
+  .intro-orientation {
+    font-size: 1.0625rem;
+    white-space: normal !important;
+    left: 7.5% !important;
+    right: 7.5% !important;
+    transform: none !important;
+    display: block !important;
+    width: auto !important;
+    line-height: 1.5 !important;
+  }
+
+  /* Adjust spacing for smaller screens */
+  .intro-flow-view {
+    padding: 1.5rem;
+  }
+
+  /* Safari fix: Force explicit width calculation for absolutely positioned children */
+  .intro-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .intro-protocol-list-page {
+    padding-top: calc(28vh - 70px + 100px);
+  }
+
+  /* Protocol cards */
+  .intro-protocol-card {
+    max-width: 100%;
+    padding: 1.25rem;
+  }
+
+  .intro-protocol-deck {
+    gap: 1.5rem;
+    margin-top: 2rem;
+  }
+
+  /* Buttons - ensure touch targets */
+  .intro-disclosure-btn,
+  .intro-walk-btn {
+    padding: 0.75rem 1rem;
+    min-height: 44px;
+  }
+
+  .intro-continue-btn {
+    padding: 1rem 2rem;
+    min-height: 44px;
+  }
+
+  /* Adjust vertical spacing */
+  .intro-continue-container {
+    top: calc(28vh + 160px);
+  }
+
+  /* === PROTOCOL WALK INTERFACE === */
+
+  /* Header adjustments for walk mode */
+  .header-center-logo {
+    height: 36px;
+  }
+
+  .page-header {
+    gap: 1rem;
+  }
+
+  .theme-position {
+    font-size: 0.75rem;
+  }
+
+  /* Truncate header title to prevent overlap with center logo */
+  .header-title {
+    max-width: 40%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Content area */
+  .content-area {
+    margin-top: 60px;
+  }
+
+  .field-container {
+    padding: 1.5rem 1.5rem 3rem 1.5rem;
+    gap: 2.5rem;
+  }
+
+  /* Protocol selection page */
+  .protocol-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .protocol-card {
+    padding: 1.25rem;
+  }
+
+  .protocol-selection-title {
+    font-size: 1.375rem;
+  }
+
+  /* Entry view */
+  .entry-input {
+    font-size: 1.25rem;
+    padding: 1.25rem 0;
+  }
+
+  /* Walk interface */
+  .response-input {
+    font-size: 1rem;
+    padding: 1rem 0;
+    min-height: 70px;
+  }
+
+  .theme-title {
+    font-size: 1.5rem;
+  }
+
+  .section-content {
+    font-size: 1rem;
+  }
+
+  /* Buttons */
+  .walk-button {
+    padding: 0.875rem 1.5rem;
+    min-height: 44px;
+    font-size: 0.875rem;
+  }
+
+  /* Summary mode */
+  .composer-output.summary-mode {
+    padding: 2rem;
+  }
+
+  .composer-output.summary-mode .theme-title {
+    font-size: 2rem;
+  }
+
+  .composer-output.summary-mode h2,
+  .composer-output.summary-mode .section-content h2 {
+    font-size: 1.25rem;
+  }
+
+  .composer-output.summary-mode h3,
+  .composer-output.summary-mode .section-content h3 {
+    font-size: 1rem;
+  }
+
+  .composer-output.summary-mode p,
+  .composer-output.summary-mode .section-content p {
+    font-size: 0.9375rem;
+  }
+
+  /* Protocol guidance */
+  .intro-protocol-guidance {
+    font-size: 0.875rem;
+    margin-bottom: 2rem;
+    padding: 0 0.75rem;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  /* Show mobile version, hide desktop version */
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: block !important;
+  }
+
+  /* Further logo reduction */
+  .logo-spin-intro {
+    width: 64px;
+    height: 64px;
+  }
+
+  .intro-logo-container {
+    top: calc(40vh - 32px);
+  }
+
+  /* Typography - even smaller - mobile version only */
+  .intro-quote.mobile-only {
+    position: relative !important;
+    font-size: 1rem;
+    line-height: 1.4 !important;
+    left: auto !important;
+    right: auto !important;
+    margin-left: 5% !important;
+    margin-right: 5% !important;
+    transform: none !important;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+    display: block !important;
+    white-space: normal !important;
+    width: auto !important;
+    top: auto !important;
+  }
+
+  .intro-text-line {
+    font-size: 1rem;
+    line-height: 1.4 !important;
+    left: 5% !important;
+    right: 5% !important;
+    transform: translateX(0) !important;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+    display: block !important;
+    white-space: normal !important;
+    width: auto !important;
+  }
+
+  .intro-orientation {
+    font-size: 1rem;
+    line-height: 1.4 !important;
+    left: 5% !important;
+    right: 5% !important;
+    transform: none !important;
+    padding: 0 0.5rem;
+    box-sizing: border-box;
+    display: block !important;
+    white-space: normal !important;
+    width: auto !important;
+  }
+
+  /* Tighter spacing */
+  .intro-flow-view {
+    padding: 1rem;
+  }
+
+  /* Safari fix: Force explicit width calculation for absolutely positioned children */
+  .intro-content {
+    width: 100vw !important;
+    max-width: 100vw !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+
+  .intro-protocol-list-page {
+    padding-top: calc(25vh - 60px + 90px);
+  }
+
+  /* Cards - full width with minimal padding */
+  .intro-protocol-card {
+    padding: 1rem;
+    font-size: 0.9375rem;
+  }
+
+  .intro-protocol-title {
+    font-size: 1rem;
+  }
+
+  .intro-protocol-deck {
+    gap: 1.25rem;
+    margin-top: 1.5rem;
+  }
+
+  .intro-disclosure-content {
+    font-size: 0.875rem;
+  }
+
+  /* Adjust button text size */
+  .intro-disclosure-btn,
+  .intro-walk-btn {
+    font-size: 0.75rem;
+    padding: 0.875rem 1rem;
+  }
+
+  .intro-continue-btn {
+    font-size: 0.9375rem;
+    padding: 0.875rem 1.5rem;
+  }
+
+  /* Continue button position */
+  .intro-continue-container {
+    top: calc(25vh + 140px);
+  }
+
+  .intro-continue-hint {
+    font-size: 0.75rem;
+  }
+
+  /* Protocol guidance */
+  .intro-protocol-guidance {
+    font-size: 0.8125rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+  }
+
+  /* Header adjustments */
+  .page-header {
+    padding: 1rem 1.25rem;
+  }
+
+  /* Reduce line spacing on mobile */
+  .intro-content {
+    gap: 3rem;
+  }
+}

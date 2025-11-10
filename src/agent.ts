@@ -772,6 +772,13 @@ export class FieldDiagnosticAgent {
     if (themeIndex !== undefined) {
       this.state.theme_index = themeIndex;
     }
+    // CRITICAL: Set active_protocol when entering WALK mode
+    // Otherwise determineMode() will reset to ENTRY mode
+    if (mode === 'WALK' && !this.state.active_protocol) {
+      const metadata = this.registry.getMetadata();
+      this.state.active_protocol = metadata.id;
+      console.log(`📍 AGENT: setMode() set active_protocol to ${metadata.id}`);
+    }
   }
 
   /**

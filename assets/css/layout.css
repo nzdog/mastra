@@ -1,0 +1,448 @@
+/**
+ * Layout Styles
+ * Page structure, headers, containers, and grid layouts
+ */
+
+.page-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  border-bottom: 1px solid #e7e5e4;
+  padding: 1.25rem 2rem;
+  background: #fcfcfb;
+  display: flex; /* Visible during intro flow */
+  gap: 2rem;
+  align-items: baseline;
+  transition: opacity 0.8s ease-out;
+}
+
+.page-header.intro-mode .header-state,
+.page-header.intro-mode .theme-position,
+.page-header.intro-mode .cost-display,
+.page-header.intro-mode .header-center-logo {
+  display: none;
+}
+
+/* Show header logo when protocol list is active */
+.page-header.intro-mode.protocol-list-active .header-center-logo {
+  display: block !important;
+  opacity: 0.85;
+}
+
+/* Spinning animation for header logo */
+.header-center-logo.spinning {
+  animation: spinSlow 20s linear infinite;
+}
+
+.header-center-logo {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  height: 48px;
+  width: auto;
+  opacity: 0;
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+  animation: spin 20s linear infinite;
+  animation-play-state: paused;
+  transition: opacity 1.2s ease-out;
+}
+/* Dev badge next to header logo */
+.header-logo-badge {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(40px, -10px);
+  font-size: 0.85rem;
+  color: #374151;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
+  pointer-events: none;
+  z-index: 200;
+}
+
+.header-center-logo.visible {
+  opacity: 0.85;
+}
+
+.header-center-logo.spinning {
+  animation-play-state: running;
+}
+
+.cost-display {
+  display: none; /* Hidden as requested */
+  margin-left: auto;
+  font-size: 0.75rem;
+  color: #a8a29e;
+  font-variant-numeric: tabular-nums;
+}
+
+.branch-label {
+  position: absolute;
+  top: 1.25rem;
+  right: 2rem;
+  font-size: 0.75rem;
+  color: #78716c;
+  background: #f5f5f4;
+  padding: 0.25rem 0.75rem;
+  border-radius: 4px;
+  font-family:
+    'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+  letter-spacing: 0.02em;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.branch-label:hover {
+  opacity: 1;
+}
+
+.header-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #1c1917;
+  cursor: default;
+}
+
+.header-state {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #78716c;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.theme-position {
+  font-size: 0.8125rem;
+  color: #78716c;
+  margin-left: auto;
+}
+
+/* State Header (legacy - keeping for walk mode) */
+.state-header {
+  border-bottom: 1px solid #e7e5e4;
+  padding: 1.25rem 2rem;
+  background: #fcfcfb;
+  display: none;
+  gap: 2rem;
+  align-items: baseline;
+}
+
+.state-header.active {
+  display: flex;
+}
+
+.mode-indicator {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #57534e;
+}
+
+.protocol-name {
+  font-size: 0.8125rem;
+  color: #78716c;
+  font-weight: 500;
+  cursor: default;
+}
+
+/* Content Area */
+.content-area {
+  flex: 1;
+  overflow-y: auto;
+  display: none; /* Hidden initially during intro flow */
+  justify-content: center;
+  margin-top: 70px; /* Account for fixed header height */
+}
+
+.content-area.visible {
+  display: flex;
+}
+
+.field-container {
+  max-width: 680px;
+  width: 100%;
+  padding: 2rem 2rem 4rem 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 3rem;
+}
+
+/* Wider container for summary mode */
+.field-container.summary-container {
+  max-width: 900px;
+}
+
+/* Protocol Selection */
+.protocol-selection-view {
+  display: flex;
+  flex-direction: column;
+  padding-top: 4rem;
+}
+
+.protocol-selection-view.hidden {
+  display: none;
+}
+
+.protocol-selection-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.protocol-selection-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: #1c1917;
+  margin-bottom: 0.75rem;
+}
+
+.protocol-selection-subtitle {
+  font-size: 1rem;
+  color: #78716c;
+  line-height: 1.6;
+}
+
+.protocol-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.protocol-card {
+  border: 1px solid #e7e5e4;
+  background: #ffffff;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.protocol-card:hover {
+  border-color: #78716c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.protocol-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 1rem;
+}
+
+.protocol-card-title {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #1c1917;
+  line-height: 1.4;
+  flex: 1;
+}
+
+.protocol-card-badge {
+  font-size: 0.6875rem;
+  color: #78716c;
+  background: #f5f5f4;
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.protocol-card-purpose {
+  font-size: 0.9375rem;
+  color: #57534e;
+  line-height: 1.6;
+}
+
+.protocol-card-meta {
+  font-size: 0.8125rem;
+  color: #a8a29e;
+  display: flex;
+  gap: 1rem;
+}
+
+/* Entry State */
+.entry-view {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  min-height: 60vh;
+}
+
+.entry-view.hidden {
+  display: none;
+}
+
+.field-title {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #78716c;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.entry-input {
+  width: 100%;
+  font-size: 1.5rem;
+  line-height: 1.7;
+  padding: 1.5rem 0;
+  border: none;
+  border-bottom: 1px solid #e7e5e4;
+  background: transparent;
+  color: #1c1917;
+  transition: border-color 0.3s ease;
+}
+
+.entry-input:focus {
+  outline: none;
+  border-bottom-color: #78716c;
+}
+
+.entry-input::placeholder {
+  color: #a8a29e;
+}
+
+.entry-hint {
+  font-size: 0.9375rem;
+  line-height: 1.6;
+  color: #a8a29e;
+}
+
+/* Composer Output */
+.composer-output {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Enhanced styling for completion summary */
+.composer-output.summary-mode {
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 8px;
+  padding: 3rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.composer-output.summary-mode .theme-title {
+  font-size: 2.25rem;
+  color: #1c1917;
+  border-bottom: 3px solid #d6d3d1;
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+/* Target h2 tags anywhere in summary mode */
+.composer-output.summary-mode h2,
+.composer-output.summary-mode .section-content h2 {
+  display: block !important;
+  font-size: 1.5rem;
+  color: #1c1917;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  padding-top: 1rem;
+  border-top: 2px solid #f5f5f4;
+}
+
+/* First h2 shouldn't have top margin or border */
+.composer-output.summary-mode h2:first-child,
+.composer-output.summary-mode .section-content h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.composer-output.summary-mode h3,
+.composer-output.summary-mode .section-content h3 {
+  font-size: 1.125rem;
+  color: #57534e;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.composer-output.summary-mode p,
+.composer-output.summary-mode .section-content p {
+  display: block !important;
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #292524;
+  margin-bottom: 1.25rem;
+  text-align: left;
+}
+
+.composer-output.summary-mode strong,
+.composer-output.summary-mode .section-content strong {
+  color: #1c1917;
+  font-weight: 600;
+}
+
+.composer-output.summary-mode ul,
+.composer-output.summary-mode ol,
+.composer-output.summary-mode .section-content ul,
+.composer-output.summary-mode .section-content ol {
+  margin-left: 1.75rem;
+  margin-bottom: 1.5rem;
+  padding-left: 0;
+}
+
+.composer-output.summary-mode li,
+.composer-output.summary-mode .section-content li {
+  font-size: 1rem;
+  line-height: 1.8;
+  color: #292524;
+  margin-bottom: 0.75rem;
+}
+
+.theme-title {
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: #1c1917;
+  margin-bottom: 1rem;
+  line-height: 1.4;
+}
+
+.output-section {
+  line-height: 1.7;
+  color: #292524;
+}
+
+.section-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #78716c;
+  margin-bottom: 0.75rem;
+}
+
+.section-content {
+  font-size: 1.0625rem;
+  line-height: 1.7;
+}
+
+/* Response Area */
+.response-area {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid #e7e5e4;
+}
