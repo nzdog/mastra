@@ -266,7 +266,7 @@
         width: 96px;
         height: 96px;
         opacity: 0.85;
-        animation: spinSlow 20s linear infinite;
+        animation: spinSlowSimple 20s linear infinite;
         cursor: pointer;
         transition: opacity 0.2s ease;
       }
