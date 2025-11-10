@@ -14,40 +14,29 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-  
+    
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '20.19.0'
         cache: 'npm'
-  
+    
     - name: Install Railway CLI
       run: npm install -g @railway/cli
-  
-    - name: Railway Login
-      run: railway login
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-  
+    
     - name: Install dependencies
       run: npm ci
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-  
+    
     - name: Build
       run: npm run build
-  
+    
     - name: Deploy to Railway
       run: |
-        npm install -g @railway/cli
-        railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+        # RAILWAY_TOKEN is provided via job env/secrets; no interactive login required
+        railway link $RAILWAY_PROJECT_ID
         railway up --detach
-      env:
-        RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-  
+    
     - name: Summary
       run: |
         echo "### 🚀 Deployed JS Refactoring Branch" >> $GITHUB_STEP_SUMMARY
         echo "Branch: claude/js-refactoring-011CUwXKgFZCiAZLPufvA3Pb" >> $GITHUB_STEP_SUMMARY
-    
-    
