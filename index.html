@@ -1557,16 +1557,33 @@
 
         // Helper function to format section content
         function formatSectionContent(content) {
-          const lines = content.split('\n');
+          // Split by double newlines to get paragraphs, then process each
+          const paragraphs = content.split(/\n\s*\n/);
           let html = '';
-          for (let line of lines) {
-            const trimmed = line.trim();
+
+          for (let paragraph of paragraphs) {
+            const trimmed = paragraph.trim();
             if (!trimmed) continue;
 
-            if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
-              html += `<div style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: #292524;">${trimmed}</div>`;
+            // Check if this is a list item block
+            const lines = trimmed.split('\n');
+            const isListBlock = lines.every(line => {
+              const l = line.trim();
+              return l.startsWith('- ') || l.startsWith('• ') || !l;
+            });
+
+            if (isListBlock) {
+              // Render list items individually
+              for (let line of lines) {
+                const l = line.trim();
+                if (l && (l.startsWith('- ') || l.startsWith('• '))) {
+                  html += `<div style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: #292524;">${l}</div>`;
+                }
+              }
             } else {
-              html += `<div style="margin-bottom: 1rem; color: #292524; font-size: 1.0625rem;">${trimmed}</div>`;
+              // Join lines into a single paragraph (removes mid-sentence line breaks)
+              const joinedText = lines.map(l => l.trim()).filter(l => l).join(' ');
+              html += `<div style="margin-bottom: 1rem; color: #292524; font-size: 1.0625rem;">${joinedText}</div>`;
             }
           }
           return html;
@@ -1837,16 +1854,33 @@
 
         // Helper function to format section content
         function formatSectionContent(content) {
-          const lines = content.split('\n');
+          // Split by double newlines to get paragraphs, then process each
+          const paragraphs = content.split(/\n\s*\n/);
           let html = '';
-          for (let line of lines) {
-            const trimmed = line.trim();
+
+          for (let paragraph of paragraphs) {
+            const trimmed = paragraph.trim();
             if (!trimmed) continue;
 
-            if (trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
-              html += `<div style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: #292524;">${trimmed}</div>`;
+            // Check if this is a list item block
+            const lines = trimmed.split('\n');
+            const isListBlock = lines.every(line => {
+              const l = line.trim();
+              return l.startsWith('- ') || l.startsWith('• ') || !l;
+            });
+
+            if (isListBlock) {
+              // Render list items individually
+              for (let line of lines) {
+                const l = line.trim();
+                if (l && (l.startsWith('- ') || l.startsWith('• '))) {
+                  html += `<div style="margin-left: 1.5rem; margin-bottom: 0.5rem; color: #292524;">${l}</div>`;
+                }
+              }
             } else {
-              html += `<div style="margin-bottom: 1rem; color: #292524; font-size: 1.0625rem;">${trimmed}</div>`;
+              // Join lines into a single paragraph (removes mid-sentence line breaks)
+              const joinedText = lines.map(l => l.trim()).filter(l => l).join(' ');
+              html += `<div style="margin-bottom: 1rem; color: #292524; font-size: 1.0625rem;">${joinedText}</div>`;
             }
           }
           return html;
