@@ -13,8 +13,18 @@ This directory contains modular JavaScript extracted from `index.html`.
 
 ## Status
 
-✅ **Phase 1 Complete**: Intro flow logic extracted into modules
-⏳ **Phase 2 Pending**: Integration with index.html and walk/protocol logic extraction
+✅ **Phase 1 Complete**: Intro flow logic extracted into modules (6 files, 729 lines)
+⏸️ **Phase 2 Paused**: Integration with index.html requires careful large-scale code removal
+
+### Why Phase 2 is Paused
+
+The integration requires removing ~600 lines of duplicate code from index.html (intro flow DOM elements, utility functions, and all intro animation logic) while keeping walk/protocol logic intact. This is complex and error-prone with manual edits.
+
+**Recommended Approaches for Phase 2:**
+
+1. **Script-based**: Create a Node.js script to parse and reconstruct index.html
+2. **Manual with Testing**: Complete integration in a local development environment with live reload
+3. **Incremental**: Do smaller, testable changes with commits between each step
 
 ## Integration Plan (Phase 2)
 
