@@ -1411,7 +1411,7 @@
 
         // Focus the response input after content is visible
         setTimeout(() => {
-          responseInput.focus();
+          responseInput.focus({ preventScroll: true });
         }, 900);
 
         // Handle completion options (two buttons when final theme is complete)
