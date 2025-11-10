@@ -21,13 +21,13 @@ jobs:
           node-version: '20.19.0'
           cache: 'npm'
 
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
       - name: Railway Login
         run: railway login --token $RAILWAY_TOKEN
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
 
       - name: Install dependencies
         run: npm ci
