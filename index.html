@@ -623,6 +623,12 @@
         // Scroll to top
         window.scrollTo(0, 0);
 
+        // Fade out the intro logo quickly
+        const introLogoContainer = document.querySelector('.intro-logo-container');
+        if (introLogoContainer) {
+          await fadeOut(introLogoContainer, 400);
+        }
+
         // Fade out the intro content (quote, embodiment lines, orientation, continue button)
         await fadeOut(introContent, 800);
 
@@ -630,7 +636,6 @@
         introContent.style.display = 'none';
 
         // Hide the big intro logo
-        const introLogoContainer = document.querySelector('.intro-logo-container');
         if (introLogoContainer) {
           introLogoContainer.style.display = 'none';
         }
