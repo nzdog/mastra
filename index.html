@@ -261,7 +261,7 @@
       const API_BASE =
         window.location.hostname === 'localhost'
           ? `http://localhost:${window.location.port || 3000}`
-          : 'https://web-production-b6320.up.railway.app'; // Railway backend URL
+          : ''; // Use relative URLs for production (same origin)
 
       // API Key for authentication (set to null for local dev if X_API_KEY not required)
       const API_KEY =
