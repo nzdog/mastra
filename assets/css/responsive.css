@@ -3,184 +3,184 @@
  * Media queries and responsive design adjustments
  */
 
-      @media (max-width: 768px) {
-        .header-center-logo {
-          height: 28px;
-        }
+@media (max-width: 768px) {
+  .header-center-logo {
+    height: 28px;
+  }
 
-        .page-header {
-          padding: 0.75rem 1rem;
-          gap: 0.75rem;
-        }
+  .page-header {
+    padding: 0.75rem 1rem;
+    gap: 0.75rem;
+  }
 
-        .header-title {
-          font-size: 0.8125rem;
-          max-width: 35%;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
+  .header-title {
+    font-size: 0.8125rem;
+    max-width: 35%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-        .header-state {
-          font-size: 0.75rem;
-        }
+  .header-state {
+    font-size: 0.75rem;
+  }
 
-        /* Hide theme position on very small screens */
-        .theme-position {
-          display: none;
-        }
+  /* Hide theme position on very small screens */
+  .theme-position {
+    display: none;
+  }
 
-        /* Content area */
-        .content-area {
-          margin-top: 55px;
-        }
+  /* Content area */
+  .content-area {
+    margin-top: 55px;
+  }
 
-        .field-container {
-          padding: 1rem 1rem 2.5rem 1rem;
-          gap: 2rem;
-        }
+  .field-container {
+    padding: 1rem 1rem 2.5rem 1rem;
+    gap: 2rem;
+  }
 
-        .field-container.summary-container {
-          max-width: 100%;
-        }
+  .field-container.summary-container {
+    max-width: 100%;
+  }
 
-        /* Protocol selection */
-        .protocol-grid {
-          grid-template-columns: 1fr;
-          gap: 1rem;
-        }
+  /* Protocol selection */
+  .protocol-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
 
-        .protocol-card {
-          padding: 1rem;
-        }
+  .protocol-card {
+    padding: 1rem;
+  }
 
-        .protocol-card-title {
-          font-size: 1rem;
-        }
+  .protocol-card-title {
+    font-size: 1rem;
+  }
 
-        .protocol-card-purpose {
-          font-size: 0.875rem;
-        }
+  .protocol-card-purpose {
+    font-size: 0.875rem;
+  }
 
-        .protocol-selection-title {
-          font-size: 1.25rem;
-        }
+  .protocol-selection-title {
+    font-size: 1.25rem;
+  }
 
-        .protocol-selection-subtitle {
-          font-size: 0.9375rem;
-        }
+  .protocol-selection-subtitle {
+    font-size: 0.9375rem;
+  }
 
-        /* Entry view */
-        .entry-view {
-          min-height: 50vh;
-        }
+  /* Entry view */
+  .entry-view {
+    min-height: 50vh;
+  }
 
-        .entry-input {
-          font-size: 1.125rem;
-          padding: 1rem 0;
-        }
+  .entry-input {
+    font-size: 1.125rem;
+    padding: 1rem 0;
+  }
 
-        #protocol-title {
-          font-size: 1.25rem !important;
-        }
+  #protocol-title {
+    font-size: 1.25rem !important;
+  }
 
-        /* Walk interface */
-        .response-input {
-          font-size: 0.9375rem;
-          padding: 0.875rem 0;
-          min-height: 60px;
-        }
+  /* Walk interface */
+  .response-input {
+    font-size: 0.9375rem;
+    padding: 0.875rem 0;
+    min-height: 60px;
+  }
 
-        .response-hint {
-          font-size: 0.75rem;
-        }
+  .response-hint {
+    font-size: 0.75rem;
+  }
 
-        .theme-title {
-          font-size: 1.25rem;
-          margin-bottom: 0.875rem;
-        }
+  .theme-title {
+    font-size: 1.25rem;
+    margin-bottom: 0.875rem;
+  }
 
-        .section-label {
-          font-size: 0.75rem;
-        }
+  .section-label {
+    font-size: 0.75rem;
+  }
 
-        .section-content {
-          font-size: 0.9375rem;
-        }
+  .section-content {
+    font-size: 0.9375rem;
+  }
 
-        .output-section {
-          gap: 1rem;
-        }
+  .output-section {
+    gap: 1rem;
+  }
 
-        /* Buttons */
-        .walk-button {
-          padding: 1rem 1.25rem;
-          font-size: 0.8125rem;
-          width: 100%;
-        }
+  /* Buttons */
+  .walk-button {
+    padding: 1rem 1.25rem;
+    font-size: 0.8125rem;
+    width: 100%;
+  }
 
-        .walk-control {
-          flex-direction: column;
-          gap: 0.75rem;
-        }
+  .walk-control {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
 
-        /* Summary mode - compact for mobile */
-        .composer-output.summary-mode {
-          padding: 1.25rem;
-          border-radius: 0;
-        }
+  /* Summary mode - compact for mobile */
+  .composer-output.summary-mode {
+    padding: 1.25rem;
+    border-radius: 0;
+  }
 
-        .composer-output.summary-mode .theme-title {
-          font-size: 1.5rem;
-          margin-bottom: 1.5rem;
-          padding-bottom: 0.75rem;
-        }
+  .composer-output.summary-mode .theme-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+  }
 
-        .composer-output.summary-mode h2,
-        .composer-output.summary-mode .section-content h2 {
-          font-size: 1.125rem;
-          margin-top: 2rem;
-          margin-bottom: 0.75rem;
-        }
+  .composer-output.summary-mode h2,
+  .composer-output.summary-mode .section-content h2 {
+    font-size: 1.125rem;
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+  }
 
-        .composer-output.summary-mode h3,
-        .composer-output.summary-mode .section-content h3 {
-          font-size: 0.9375rem;
-          margin-top: 1.5rem;
-        }
+  .composer-output.summary-mode h3,
+  .composer-output.summary-mode .section-content h3 {
+    font-size: 0.9375rem;
+    margin-top: 1.5rem;
+  }
 
-        .composer-output.summary-mode p,
-        .composer-output.summary-mode .section-content p {
-          font-size: 0.875rem;
-          line-height: 1.7;
-          margin-bottom: 1rem;
-        }
+  .composer-output.summary-mode p,
+  .composer-output.summary-mode .section-content p {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    margin-bottom: 1rem;
+  }
 
-        .composer-output.summary-mode li,
-        .composer-output.summary-mode .section-content li {
-          font-size: 0.875rem;
-        }
+  .composer-output.summary-mode li,
+  .composer-output.summary-mode .section-content li {
+    font-size: 0.875rem;
+  }
 
-        /* Completion buttons - stack on mobile */
-        #walk-control .walk-button,
-        .completion-container .walk-button {
-          width: 100%;
-        }
+  /* Completion buttons - stack on mobile */
+  #walk-control .walk-button,
+  .completion-container .walk-button {
+    width: 100%;
+  }
 
-        /* Entry logo size */
-        #lichen-logo {
-          height: 60px !important;
-        }
+  /* Entry logo size */
+  #lichen-logo {
+    height: 60px !important;
+  }
 
-        /* Section reveal buttons */
-        .section-reveal-btn {
-          font-size: 0.75rem;
-          padding: 0.75rem 0.875rem;
-        }
+  /* Section reveal buttons */
+  .section-reveal-btn {
+    font-size: 0.75rem;
+    padding: 0.75rem 0.875rem;
+  }
 
-        /* Response area */
-        .response-area {
-          margin-top: 1.5rem;
-          padding-top: 1.5rem;
-        }
-      }
+  /* Response area */
+  .response-area {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+  }
+}
