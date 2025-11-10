@@ -3,6 +3,7 @@
  * Media queries and responsive design adjustments
  */
 
+      @media (max-width: 768px) {
         .header-center-logo {
           height: 28px;
         }
