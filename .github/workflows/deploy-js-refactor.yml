@@ -11,32 +11,34 @@ jobs:
     name: Deploy to Railway
     runs-on: ubuntu-latest
 
+    env:
+      RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20.19.0'
-        cache: 'npm'
-    
-    - name: Install Railway CLI
-      run: npm install -g @railway/cli
-    
-    - name: Install dependencies
-      run: npm ci
-    
-    - name: Build
-      run: npm run build
-    
-    - name: Deploy to Railway
-      run: |
-        # RAILWAY_TOKEN is provided via job env/secrets; no interactive login required
-        railway link $RAILWAY_PROJECT_ID
-        railway up --detach
-    
-    - name: Summary
-      run: |
-        echo "### 🚀 Deployed JS Refactoring Branch" >> $GITHUB_STEP_SUMMARY
-        echo "Branch: claude/js-refactoring-011CUwXKgFZCiAZLPufvA3Pb" >> $GITHUB_STEP_SUMMARY
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.0'
+          cache: 'npm'
+
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to Railway
+        run: |
+          railway link ${{ secrets.RAILWAY_PROJECT_ID }}
+          railway up --detach
+
+      - name: Summary
+        run: |
+          echo "### 🚀 Deployed JS Refactoring Branch" >> $GITHUB_STEP_SUMMARY
+          echo "Branch: claude/js-refactoring-011CUwXKgFZCiAZLPufvA3Pb" >> $GITHUB_STEP_SUMMARY
