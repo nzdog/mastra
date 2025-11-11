@@ -256,7 +256,9 @@ export async function showProtocolListPage() {
   const introLogoContainer = document.querySelector('.intro-logo-container');
   await Promise.all([
     fadeOut(introContent, INTRO_TIMING.contentFadeDuration),
-    introLogoContainer ? fadeOut(introLogoContainer, INTRO_TIMING.contentFadeDuration) : Promise.resolve(),
+    introLogoContainer
+      ? fadeOut(introLogoContainer, INTRO_TIMING.contentFadeDuration)
+      : Promise.resolve(),
   ]);
 
   // Hide intro content
