@@ -10,6 +10,7 @@ export const state = {
   protocolData: null,
   selectedProtocol: null,
   skipIntroAnimations: false,
+  animationCancelled: false,
 };
 
 // Helper function to update state
@@ -23,4 +24,10 @@ export function resetState() {
   state.currentMode = 'ENTRY';
   state.protocolData = null;
   state.selectedProtocol = null;
+}
+
+// Cancel all running animations (for race condition prevention)
+export function cancelAnimations() {
+  state.animationCancelled = true;
+  state.skipIntroAnimations = true;
 }

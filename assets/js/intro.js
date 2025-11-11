@@ -4,7 +4,7 @@
  */
 
 import { API_BASE, TIMING, isMac } from './config.js';
-import { state, setState } from './state.js';
+import { state, setState, cancelAnimations } from './state.js';
 import {
   introFlowView,
   introLogo,
@@ -23,16 +23,29 @@ import {
   introBeginBtn,
   pageHeader,
 } from './dom.js';
-import { fadeIn, fadeInClean, fadeOut, announceForScreenReader, getHeaders } from './utils.js';
+import {
+  fadeIn,
+  fadeInClean,
+  fadeOut,
+  announceForScreenReader,
+  getHeaders,
+  showError,
+} from './utils.js';
 
 // Timing constants for intro sequence
 const INTRO_TIMING = {
   initialWait: 2000, // 2s wait before first line
-  jigsawDuration: 400, // 0.4s jigsaw animation
+  jigsawDuration: 860, // 0.86s jigsaw fade animation
   lineDuration: 3000, // 3s line stays visible
   fadeOutDuration: 1000, // 1s fade out
   beforeOrientation: 1200, // 1.2s pause before orientation
   beforeSequence: 1700, // 1.7s pause before sequence
+  greyOutDuration: 500, // 0.5s grey out transition
+  continueFadeDuration: 800, // 0.8s continue button fade
+  contentFadeDuration: 800, // 0.8s content fade out
+  quickRevealWait: 150, // 0.15s wait before quick reveal
+  quickRevealStagger: 100, // 0.1s stagger between quick reveals
+  quickRevealTransition: 300, // 0.3s quick reveal transition
 };
 
 // Check for reduced motion preference
@@ -40,7 +53,7 @@ const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)
 
 // Organically reveal all intro text with quick, staggered transitions
 export async function revealAllIntroText() {
-  setState({ skipIntroAnimations: true });
+  cancelAnimations(); // Use cancellation token to stop running animations
 
   // Reset text content for both desktop and mobile quotes (with inline attribution)
   introQuoteDesktop.textContent =
@@ -49,16 +62,16 @@ export async function revealAllIntroText() {
     '"The field is the sole governing agency of the particle." — Albert Einstein';
 
   // Show quotes with quick fade
-  introQuoteDesktop.style.transition = 'opacity 300ms ease';
+  introQuoteDesktop.style.transition = `opacity ${INTRO_TIMING.quickRevealTransition}ms ease`;
   introQuoteDesktop.style.opacity = '1';
   introQuoteDesktop.style.color = '';
 
-  introQuoteMobile.style.transition = 'opacity 300ms ease';
+  introQuoteMobile.style.transition = `opacity ${INTRO_TIMING.quickRevealTransition}ms ease`;
   introQuoteMobile.style.opacity = '1';
   introQuoteMobile.style.color = '';
 
   // Wait a moment before showing embodiment lines
-  await new Promise((resolve) => setTimeout(resolve, 150));
+  await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.quickRevealWait));
 
   // Create and show all embodiment lines with staggered quick fades
   const embodimentLines = [
@@ -83,20 +96,23 @@ export async function revealAllIntroText() {
     line.style.color = '';
     introEmbodimentLines.appendChild(line);
 
-    // Quick stagger (100ms between each line)
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Quick stagger between each line
+    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.quickRevealStagger));
     line.style.opacity = '1';
   }
 
   // Show continue button with final quick fade
-  await new Promise((resolve) => setTimeout(resolve, 100));
-  introContinueContainer.style.transition = 'opacity 300ms ease';
+  await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.quickRevealStagger));
+  introContinueContainer.style.transition = `opacity ${INTRO_TIMING.quickRevealTransition}ms ease`;
   introContinueContainer.style.opacity = '1';
 }
 
 // Run the intro flow sequence
 export async function runIntroFlow() {
-  console.log('Starting intro flow...');
+  console.log('🎬 Starting intro flow...');
+
+  // Reset cancellation flag at start
+  state.animationCancelled = false;
 
   // Reset all text to plain text for both desktop and mobile versions
   if (introQuoteDesktop) {
@@ -116,38 +132,49 @@ export async function runIntroFlow() {
   // 1. Wait 2 seconds with logo visible and spinning
   await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.initialWait));
 
-  // Check if animations were skipped during the wait
-  if (state.skipIntroAnimations) {
+  // Check if animations were cancelled during the wait
+  if (state.animationCancelled) {
     return; // Exit early if user clicked logo
   }
 
-  // 2. Show quote with simple fade (0.86s) - both desktop and mobile versions
+  // 2. Show quote with jigsaw fade - both desktop and mobile versions
   if (introQuoteDesktop && introQuoteMobile) {
     // Fade in both versions (CSS controls which one is visible)
-    await Promise.all([fadeInClean(introQuoteDesktop, 860), fadeInClean(introQuoteMobile, 860)]);
+    await Promise.all([
+      fadeInClean(introQuoteDesktop, INTRO_TIMING.jigsawDuration),
+      fadeInClean(introQuoteMobile, INTRO_TIMING.jigsawDuration),
+    ]);
+
+    if (state.animationCancelled) {
+      return;
+    }
 
     // Announce for screen readers
     announceForScreenReader(
       '"The field is the sole governing agency of the particle." — Albert Einstein'
     );
 
-    // Wait 3 seconds total before greying out
-    await new Promise((resolve) => setTimeout(resolve, 3000));
+    // Wait before greying out
+    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.lineDuration));
 
-    if (state.skipIntroAnimations) {
+    if (state.animationCancelled) {
       return;
     }
 
     // Grey out both versions
-    introQuoteDesktop.style.transition = 'opacity 500ms ease, color 500ms ease';
+    introQuoteDesktop.style.transition = `opacity ${INTRO_TIMING.greyOutDuration}ms ease, color ${INTRO_TIMING.greyOutDuration}ms ease`;
     introQuoteDesktop.style.opacity = '0.6';
     introQuoteDesktop.style.color = '#78716C';
 
-    introQuoteMobile.style.transition = 'opacity 500ms ease, color 500ms ease';
+    introQuoteMobile.style.transition = `opacity ${INTRO_TIMING.greyOutDuration}ms ease, color ${INTRO_TIMING.greyOutDuration}ms ease`;
     introQuoteMobile.style.opacity = '0.6';
     introQuoteMobile.style.color = '#78716C';
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.greyOutDuration));
+
+    if (state.animationCancelled) {
+      return;
+    }
   }
 
   // 3. Show each embodiment line with jigsaw fade, one at a time
@@ -174,17 +201,22 @@ export async function runIntroFlow() {
 
     // Grey out the previous line BEFORE showing the next one
     if (previousLine) {
-      previousLine.style.transition = 'opacity 500ms ease, color 500ms ease';
+      previousLine.style.transition = `opacity ${INTRO_TIMING.greyOutDuration}ms ease, color ${INTRO_TIMING.greyOutDuration}ms ease`;
       previousLine.style.opacity = '0.6';
       previousLine.style.color = '#78716C';
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.greyOutDuration));
     }
 
-    await fadeInClean(line, 860);
+    await fadeInClean(line, INTRO_TIMING.jigsawDuration);
+
+    if (state.animationCancelled) {
+      return;
+    }
+
     announceForScreenReader(lineText);
     await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.lineDuration));
 
-    if (state.skipIntroAnimations) {
+    if (state.animationCancelled) {
       return;
     }
 
@@ -193,15 +225,23 @@ export async function runIntroFlow() {
 
   // 4. Grey out the last embodiment line
   if (previousLine) {
-    previousLine.style.transition = 'opacity 500ms ease, color 500ms ease';
+    previousLine.style.transition = `opacity ${INTRO_TIMING.greyOutDuration}ms ease, color ${INTRO_TIMING.greyOutDuration}ms ease`;
     previousLine.style.opacity = '0.6';
     previousLine.style.color = '#78716C';
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.greyOutDuration));
+
+    if (state.animationCancelled) {
+      return;
+    }
   }
   await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.beforeOrientation));
 
+  if (state.animationCancelled) {
+    return;
+  }
+
   // 5. Show continue button
-  await fadeIn(introContinueContainer, 800);
+  await fadeIn(introContinueContainer, INTRO_TIMING.continueFadeDuration);
   console.log('Continue button visible, waiting for user action...');
 }
 
@@ -215,8 +255,8 @@ export async function showProtocolListPage() {
   // Fade out both the intro logo and content together (same duration)
   const introLogoContainer = document.querySelector('.intro-logo-container');
   await Promise.all([
-    fadeOut(introContent, 800),
-    introLogoContainer ? fadeOut(introLogoContainer, 800) : Promise.resolve(),
+    fadeOut(introContent, INTRO_TIMING.contentFadeDuration),
+    introLogoContainer ? fadeOut(introLogoContainer, INTRO_TIMING.contentFadeDuration) : Promise.resolve(),
   ]);
 
   // Hide intro content
@@ -253,41 +293,72 @@ export async function showProtocolListPage() {
 async function loadAndRenderProtocolCards() {
   try {
     const response = await fetch(`${API_BASE}/api/protocols`);
+
+    // Check HTTP status
+    if (!response.ok) {
+      throw new Error(`Failed to load protocols: ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
 
-    if (data.protocols && data.protocols.length > 0) {
-      // Sort: Field Diagnostic first, then the 5 Field Exit protocols in order
-      const sortedProtocols = data.protocols
-        .sort((a, b) => {
-          if (a.slug === 'field_diagnostic') return -1;
-          if (b.slug === 'field_diagnostic') return 1;
-          // Extract number from field_exit_protocol_N_...
-          const aNum = parseInt(a.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
-          const bNum = parseInt(b.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
-          return aNum - bNum;
-        })
-        .slice(0, 6); // Take only the first 6
-
-      // Render each protocol card
-      for (const protocol of sortedProtocols) {
-        renderProtocolCard(protocol);
-      }
-
-      // Force browser to render initial state before transition
-      await new Promise((resolve) =>
-        requestAnimationFrame(() => {
-          requestAnimationFrame(resolve);
-        })
-      );
-
-      // Fade in the protocol deck
-      introProtocolDeck.classList.add('visible');
-      announceForScreenReader(
-        'Protocol cards revealed. Use tab to navigate and explore each protocol.'
-      );
+    // Validate response structure
+    if (!data.protocols || !Array.isArray(data.protocols)) {
+      throw new Error('Invalid protocol data structure');
     }
+
+    if (data.protocols.length === 0) {
+      // Show empty state message
+      introProtocolDeck.innerHTML =
+        '<div class="intro-protocol-empty">No protocols available at this time.</div>';
+      introProtocolDeck.classList.add('visible');
+      return;
+    }
+
+    // Sort: Field Diagnostic first, then the 5 Field Exit protocols in order
+    const sortedProtocols = data.protocols
+      .sort((a, b) => {
+        if (a.slug === 'field_diagnostic') return -1;
+        if (b.slug === 'field_diagnostic') return 1;
+        // Extract number from field_exit_protocol_N_...
+        const aNum = parseInt(a.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
+        const bNum = parseInt(b.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
+        return aNum - bNum;
+      })
+      .slice(0, 6); // Take only the first 6
+
+    // Render each protocol card
+    for (const protocol of sortedProtocols) {
+      renderProtocolCard(protocol);
+    }
+
+    // Force browser to render initial state before transition
+    await new Promise((resolve) =>
+      requestAnimationFrame(() => {
+        requestAnimationFrame(resolve);
+      })
+    );
+
+    // Fade in the protocol deck
+    introProtocolDeck.classList.add('visible');
+    announceForScreenReader(
+      'Protocol cards revealed. Use tab to navigate and explore each protocol.'
+    );
   } catch (error) {
     console.error('Error loading protocols for intro:', error);
+
+    // Show user-facing error message
+    const errorMessage =
+      error.message || 'Unable to load protocols. Please refresh the page to try again.';
+    showError(errorMessage);
+
+    // Show fallback UI in the protocol deck
+    introProtocolDeck.innerHTML = `
+      <div class="intro-protocol-error">
+        <p>Unable to load protocols at this time.</p>
+        <p class="intro-protocol-error-hint">Please check your connection and try refreshing the page.</p>
+      </div>
+    `;
+    introProtocolDeck.classList.add('visible');
   }
 }
 
