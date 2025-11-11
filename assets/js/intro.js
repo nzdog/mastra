@@ -32,22 +32,6 @@ import {
   showError,
 } from './utils.js';
 
-// Timing constants for intro sequence
-const INTRO_TIMING = {
-  initialWait: 2000, // 2s wait before first line
-  jigsawDuration: 860, // 0.86s jigsaw fade animation
-  lineDuration: 3000, // 3s line stays visible
-  fadeOutDuration: 1000, // 1s fade out
-  beforeOrientation: 1200, // 1.2s pause before orientation
-  beforeSequence: 1700, // 1.7s pause before sequence
-  greyOutDuration: 500, // 0.5s grey out transition
-  continueFadeDuration: 800, // 0.8s continue button fade
-  contentFadeDuration: 800, // 0.8s content fade out
-  quickRevealWait: 150, // 0.15s wait before quick reveal
-  quickRevealStagger: 100, // 0.1s stagger between quick reveals
-  quickRevealTransition: 300, // 0.3s quick reveal transition
-};
-
 // Check for reduced motion preference
 const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -62,16 +46,16 @@ export async function revealAllIntroText() {
     '"The field is the sole governing agency of the particle." — Albert Einstein';
 
   // Show quotes with quick fade
-  introQuoteDesktop.style.transition = `opacity ${INTRO_TIMING.quickRevealTransition}ms ease`;
+  introQuoteDesktop.style.transition = `opacity ${TIMING.quickRevealTransition}ms ease`;
   introQuoteDesktop.style.opacity = '1';
   introQuoteDesktop.style.color = '';
 
-  introQuoteMobile.style.transition = `opacity ${INTRO_TIMING.quickRevealTransition}ms ease`;
+  introQuoteMobile.style.transition = `opacity ${TIMING.quickRevealTransition}ms ease`;
   introQuoteMobile.style.opacity = '1';
   introQuoteMobile.style.color = '';
 
   // Wait a moment before showing embodiment lines
-  await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.quickRevealWait));
+  await new Promise((resolve) => setTimeout(resolve, TIMING.quickRevealWait));
 
   // Create and show all embodiment lines with staggered quick fades
   const embodimentLines = [
@@ -97,13 +81,13 @@ export async function revealAllIntroText() {
     introEmbodimentLines.appendChild(line);
 
     // Quick stagger between each line
-    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.quickRevealStagger));
+    await new Promise((resolve) => setTimeout(resolve, TIMING.quickRevealStagger));
     line.style.opacity = '1';
   }
 
   // Show continue button with final quick fade
-  await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.quickRevealStagger));
-  introContinueContainer.style.transition = `opacity ${INTRO_TIMING.quickRevealTransition}ms ease`;
+  await new Promise((resolve) => setTimeout(resolve, TIMING.quickRevealStagger));
+  introContinueContainer.style.transition = `opacity ${TIMING.quickRevealTransition}ms ease`;
   introContinueContainer.style.opacity = '1';
 }
 
@@ -130,7 +114,7 @@ export async function runIntroFlow() {
   }
 
   // 1. Wait 2 seconds with logo visible and spinning
-  await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.initialWait));
+  await new Promise((resolve) => setTimeout(resolve, TIMING.initialWait));
 
   // Check if animations were cancelled during the wait
   if (state.animationCancelled) {
@@ -141,8 +125,8 @@ export async function runIntroFlow() {
   if (introQuoteDesktop && introQuoteMobile) {
     // Fade in both versions (CSS controls which one is visible)
     await Promise.all([
-      fadeInClean(introQuoteDesktop, INTRO_TIMING.jigsawDuration),
-      fadeInClean(introQuoteMobile, INTRO_TIMING.jigsawDuration),
+      fadeInClean(introQuoteDesktop, TIMING.jigsawDuration),
+      fadeInClean(introQuoteMobile, TIMING.jigsawDuration),
     ]);
 
     if (state.animationCancelled) {
@@ -155,22 +139,22 @@ export async function runIntroFlow() {
     );
 
     // Wait before greying out
-    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.lineDuration));
+    await new Promise((resolve) => setTimeout(resolve, TIMING.lineDuration));
 
     if (state.animationCancelled) {
       return;
     }
 
     // Grey out both versions
-    introQuoteDesktop.style.transition = `opacity ${INTRO_TIMING.greyOutDuration}ms ease, color ${INTRO_TIMING.greyOutDuration}ms ease`;
+    introQuoteDesktop.style.transition = `opacity ${TIMING.greyOutDuration}ms ease, color ${TIMING.greyOutDuration}ms ease`;
     introQuoteDesktop.style.opacity = '0.6';
     introQuoteDesktop.style.color = '#78716C';
 
-    introQuoteMobile.style.transition = `opacity ${INTRO_TIMING.greyOutDuration}ms ease, color ${INTRO_TIMING.greyOutDuration}ms ease`;
+    introQuoteMobile.style.transition = `opacity ${TIMING.greyOutDuration}ms ease, color ${TIMING.greyOutDuration}ms ease`;
     introQuoteMobile.style.opacity = '0.6';
     introQuoteMobile.style.color = '#78716C';
 
-    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.greyOutDuration));
+    await new Promise((resolve) => setTimeout(resolve, TIMING.greyOutDuration));
 
     if (state.animationCancelled) {
       return;
@@ -201,20 +185,20 @@ export async function runIntroFlow() {
 
     // Grey out the previous line BEFORE showing the next one
     if (previousLine) {
-      previousLine.style.transition = `opacity ${INTRO_TIMING.greyOutDuration}ms ease, color ${INTRO_TIMING.greyOutDuration}ms ease`;
+      previousLine.style.transition = `opacity ${TIMING.greyOutDuration}ms ease, color ${TIMING.greyOutDuration}ms ease`;
       previousLine.style.opacity = '0.6';
       previousLine.style.color = '#78716C';
-      await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.greyOutDuration));
+      await new Promise((resolve) => setTimeout(resolve, TIMING.greyOutDuration));
     }
 
-    await fadeInClean(line, INTRO_TIMING.jigsawDuration);
+    await fadeInClean(line, TIMING.jigsawDuration);
 
     if (state.animationCancelled) {
       return;
     }
 
     announceForScreenReader(lineText);
-    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.lineDuration));
+    await new Promise((resolve) => setTimeout(resolve, TIMING.lineDuration));
 
     if (state.animationCancelled) {
       return;
@@ -225,23 +209,23 @@ export async function runIntroFlow() {
 
   // 4. Grey out the last embodiment line
   if (previousLine) {
-    previousLine.style.transition = `opacity ${INTRO_TIMING.greyOutDuration}ms ease, color ${INTRO_TIMING.greyOutDuration}ms ease`;
+    previousLine.style.transition = `opacity ${TIMING.greyOutDuration}ms ease, color ${TIMING.greyOutDuration}ms ease`;
     previousLine.style.opacity = '0.6';
     previousLine.style.color = '#78716C';
-    await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.greyOutDuration));
+    await new Promise((resolve) => setTimeout(resolve, TIMING.greyOutDuration));
 
     if (state.animationCancelled) {
       return;
     }
   }
-  await new Promise((resolve) => setTimeout(resolve, INTRO_TIMING.beforeOrientation));
+  await new Promise((resolve) => setTimeout(resolve, TIMING.beforeOrientation));
 
   if (state.animationCancelled) {
     return;
   }
 
   // 5. Show continue button
-  await fadeIn(introContinueContainer, INTRO_TIMING.continueFadeDuration);
+  await fadeIn(introContinueContainer, TIMING.continueFadeDuration);
   console.log('Continue button visible, waiting for user action...');
 }
 
@@ -255,9 +239,9 @@ export async function showProtocolListPage() {
   // Fade out both the intro logo and content together (same duration)
   const introLogoContainer = document.querySelector('.intro-logo-container');
   await Promise.all([
-    fadeOut(introContent, INTRO_TIMING.contentFadeDuration),
+    fadeOut(introContent, TIMING.contentFadeDuration),
     introLogoContainer
-      ? fadeOut(introLogoContainer, INTRO_TIMING.contentFadeDuration)
+      ? fadeOut(introLogoContainer, TIMING.contentFadeDuration)
       : Promise.resolve(),
   ]);
 

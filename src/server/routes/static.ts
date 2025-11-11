@@ -53,7 +53,7 @@ export function createStaticRouter(): Router {
     }
   });
 
-  // GET / - Root endpoint - Serve the production frontend
+  // GET / - Root endpoint - Serve the production frontend with injected config
   router.get('/', (_req: Request, res: Response) => {
     // Use process.cwd() to get project root, works regardless of tsx or compiled code
     const indexPath = path.join(process.cwd(), 'index.html');
@@ -62,7 +62,24 @@ export function createStaticRouter(): Router {
     console.log(`📄 process.cwd(): ${process.cwd()}`);
 
     if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
+      // Read index.html and inject server-side config
+      let html = fs.readFileSync(indexPath, 'utf8');
+
+      // Inject API key from environment variable
+      const apiKey = process.env.API_KEY || '';
+      const configScript = `
+    <script>
+      // Server-injected configuration (never commit secrets to source!)
+      window.APP_CONFIG = {
+        apiKey: ${apiKey ? `'${apiKey}'` : 'null'}
+      };
+    </script>`;
+
+      // Inject before </head> tag
+      html = html.replace('</head>', `${configScript}\n  </head>`);
+
+      res.setHeader('Content-Type', 'text/html');
+      res.send(html);
     } else {
       res.status(404).send(`Frontend not found. Checked: ${indexPath}`);
     }

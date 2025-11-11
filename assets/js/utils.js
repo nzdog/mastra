@@ -22,13 +22,22 @@ export function getHeaders() {
 export async function fetchBranch() {
   try {
     const response = await fetch(`${API_BASE}/api/branch`);
+
+    // Check HTTP status
+    if (!response.ok) {
+      throw new Error(`Failed to fetch branch: ${response.status} ${response.statusText}`);
+    }
+
     const data = await response.json();
+
+    // Validate response structure
+    if (!data || typeof data.branch !== 'string') {
+      throw new Error('Invalid branch data structure');
+    }
+
     const branchLabel = document.getElementById('branch-label');
-    if (branchLabel && data.branch) {
+    if (branchLabel) {
       branchLabel.textContent = `branch: ${data.branch}`;
-    } else {
-      console.error('Branch data missing:', data);
-      if (branchLabel) branchLabel.textContent = 'branch: unknown';
     }
   } catch (error) {
     console.error('Error fetching branch:', error);
@@ -36,6 +45,8 @@ export async function fetchBranch() {
     if (branchLabel) {
       branchLabel.textContent = 'branch: error';
     }
+    // Note: Not using showError() here as branch display is non-critical
+    // and shouldn't interrupt the user experience with a modal
   }
 }
 
