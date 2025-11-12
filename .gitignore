@@ -36,6 +36,10 @@ npm-debug.log*
 *.md.bak
 *.json.bak
 
+# Deployment artifacts (debugging/testing only)
+.deployment-trigger
+.railway-deploy
+
 # Test coverage
 coverage/
 .nyc_output/
