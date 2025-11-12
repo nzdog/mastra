@@ -423,7 +423,9 @@ async function beginProtocolWalk(protocol) {
   try {
     // Import necessary modules
     const { API_BASE } = await import('./config.js');
-    const { getHeaders, showLoadingIndicator, hideLoadingIndicator, showError } = await import('./utils.js');
+    const { getHeaders, showLoadingIndicator, hideLoadingIndicator, showError } = await import(
+      './utils.js'
+    );
     const { entryView, protocolSelectionView, protocolTitle } = await import('./dom.js');
     const { renderProtocolEntry } = await import('./entry.js');
 

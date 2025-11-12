@@ -15,7 +15,13 @@ import {
   walkView,
   protocolSelectionView,
 } from './dom.js';
-import { fetchBranch, getHeaders, showLoadingIndicator, hideLoadingIndicator, showError } from './utils.js';
+import {
+  fetchBranch,
+  getHeaders,
+  showLoadingIndicator,
+  hideLoadingIndicator,
+  showError,
+} from './utils.js';
 import { initIntroFlow, runIntroFlow } from './intro.js';
 import { loadProtocols } from './protocols.js';
 import { renderProtocolEntry } from './entry.js';
