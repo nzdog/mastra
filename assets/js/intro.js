@@ -1,6 +1,7 @@
 /**
  * Intro Flow Module
  * Handles the application intro sequence and animations
+ * Updated: 2025-01-12 - Fixed content area visibility
  */
 
 import { API_BASE, TIMING, isMac } from './config.js';
@@ -404,25 +405,137 @@ function renderProtocolCard(protocol) {
 
   // Handle Walk this Protocol button click
   walkBtn.addEventListener('click', async () => {
+    console.log('🖱️ Walk this Protocol clicked for:', protocol.title);
     setState({ selectedProtocol: protocol });
-    console.log('Selected protocol:', protocol);
 
-    // Hide intro flow completely
-    introFlowView.style.display = 'none';
-
-    // Begin the protocol walk
+    // Begin the protocol walk (this will handle hiding intro flow)
     await beginProtocolWalk(protocol);
   });
 
   introProtocolDeck.appendChild(card);
 }
 
-// Begin protocol walk (placeholder - will be handled by walk.js)
+// Begin protocol walk - load and show entry view
 async function beginProtocolWalk(protocol) {
-  console.log('Beginning protocol walk for:', protocol.title);
-  // This will be implemented in walk.js
-  // For now, just dispatch a custom event
-  window.dispatchEvent(new CustomEvent('beginProtocolWalk', { detail: { protocol } }));
+  console.log('🚀 Beginning protocol walk for:', protocol.title);
+  console.log('📋 Protocol data:', protocol);
+
+  try {
+    // Import necessary modules
+    const { API_BASE } = await import('./config.js');
+    const { getHeaders, showLoadingIndicator, hideLoadingIndicator, showError } = await import(
+      './utils.js'
+    );
+    const { entryView, protocolSelectionView, protocolTitle } = await import('./dom.js');
+    const { renderProtocolEntry } = await import('./entry.js');
+
+    console.log('✅ Modules imported successfully');
+
+    // Scroll to top
+    window.scrollTo(0, 0);
+    console.log('⬆️ Scrolled to top');
+
+    // Show loading indicator
+    showLoadingIndicator();
+    console.log('⏳ Loading indicator shown');
+
+    // Hide intro flow
+    if (introFlowView) {
+      introFlowView.classList.add('hidden');
+      console.log('👋 Intro flow hidden');
+    }
+
+    // Show content area (contains entry view, walk view, etc.)
+    const contentArea = document.querySelector('.content-area');
+    if (contentArea) {
+      contentArea.classList.add('visible');
+      console.log('✅ Content area visible');
+    }
+
+    // Remove intro-mode from header to show normal header
+    const pageHeader = document.getElementById('page-header');
+    if (pageHeader) {
+      pageHeader.classList.remove('intro-mode');
+      console.log('✅ Header intro-mode removed');
+    }
+
+    // Update protocol title in entry view
+    if (protocolTitle) {
+      const title = protocol.title;
+      if (title.includes('—')) {
+        const parts = title.split('—');
+        protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
+      } else if (title.includes(' — ')) {
+        const parts = title.split(' — ');
+        protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
+      } else {
+        protocolTitle.textContent = title;
+      }
+      console.log('📝 Protocol title updated:', title);
+    } else {
+      console.warn('⚠️ Protocol title element not found!');
+    }
+
+    // Show entry view
+    if (protocolSelectionView) {
+      protocolSelectionView.classList.add('hidden');
+      console.log('👋 Protocol selection hidden');
+    }
+    if (entryView) {
+      entryView.classList.remove('hidden');
+      console.log('👁️ Entry view shown');
+      console.log('📊 Entry view display:', window.getComputedStyle(entryView).display);
+      console.log('📊 Entry view visibility:', window.getComputedStyle(entryView).visibility);
+    } else {
+      console.error('❌ Entry view element not found!');
+    }
+
+    // Reset entry view elements to visible state
+    const logo = document.getElementById('lichen-logo');
+    const beginButton = document.getElementById('begin-button');
+
+    if (logo) {
+      logo.classList.remove('fade-out');
+      logo.style.opacity = '1';
+      logo.style.display = 'block';
+      console.log('👁️ Logo made visible');
+    }
+
+    if (protocolTitle) {
+      protocolTitle.classList.remove('fade-out');
+      protocolTitle.style.opacity = '1';
+      console.log('👁️ Protocol title made visible');
+    }
+
+    if (beginButton) {
+      beginButton.classList.remove('clicked');
+      beginButton.style.display = 'block';
+      beginButton.disabled = false;
+      beginButton.textContent = 'Begin walk';
+      console.log('👁️ Begin button made visible and enabled');
+    }
+
+    // Show the entry view with big logo and "Begin walk" button
+    // The Begin walk button handler in app.js will fetch the entry data
+    console.log('✅ Entry view ready - showing Begin walk button');
+    console.log('✅ User can now click Begin walk to start protocol');
+
+    // Hide loading indicator
+    hideLoadingIndicator();
+  } catch (error) {
+    console.error('❌ Error in beginProtocolWalk:', error);
+    console.error('❌ Error stack:', error.stack);
+
+    const { showError, hideLoadingIndicator } = await import('./utils.js');
+    showError('Failed to load protocol. Please try again.');
+    hideLoadingIndicator();
+
+    // Show intro flow again
+    if (introFlowView) {
+      introFlowView.style.display = 'block';
+      console.log('🔄 Returned to intro flow due to error');
+    }
+  }
 }
 
 // Initialize intro flow event listeners

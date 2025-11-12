@@ -40,9 +40,24 @@ export function parseCorsConfig(): CorsConfig {
   // If no origins specified, use safe defaults for development
   if (allowedOrigins.size === 0) {
     if (env === 'production') {
-      // Railway production fallback
-      allowedOrigins.add('https://web-production-b6320.up.railway.app');
-      console.warn('⚠️  CORS: Using Railway production default origin');
+      // Add Railway URLs from environment variables
+      const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+      const railwayStaticUrl = process.env.RAILWAY_STATIC_URL;
+
+      if (railwayPublicDomain) {
+        allowedOrigins.add(`https://${railwayPublicDomain}`);
+      }
+      if (railwayStaticUrl) {
+        allowedOrigins.add(railwayStaticUrl);
+      }
+
+      if (allowedOrigins.size === 0) {
+        console.warn(
+          '⚠️  CORS: No origins configured for production. Set CORS_ALLOWED_ORIGINS environment variable.'
+        );
+      } else {
+        console.warn('⚠️  CORS: Using Railway environment origins');
+      }
     } else {
       // Development defaults
       allowedOrigins.add('http://localhost:3000');
@@ -51,6 +66,18 @@ export function parseCorsConfig(): CorsConfig {
       allowedOrigins.add('http://127.0.0.1:3000');
       allowedOrigins.add('http://127.0.0.1:3001'); // ui-tweaks worktree
       allowedOrigins.add('http://127.0.0.1:5173');
+
+      // Add Railway URLs from environment variables (for preview deployments)
+      const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+      const railwayStaticUrl = process.env.RAILWAY_STATIC_URL;
+
+      if (railwayPublicDomain) {
+        allowedOrigins.add(`https://${railwayPublicDomain}`);
+      }
+      if (railwayStaticUrl) {
+        allowedOrigins.add(railwayStaticUrl);
+      }
+
       console.warn('⚠️  CORS: Using default development origins');
     }
   }
