@@ -42,16 +42,20 @@ export function parseCorsConfig(): CorsConfig {
     if (env === 'production') {
       // Railway production fallback
       allowedOrigins.add('https://web-production-b6320.up.railway.app');
-      console.warn('⚠️  CORS: Using Railway production default origin');
+      allowedOrigins.add('https://web-js-refactor.up.railway.app');
+      console.warn('⚠️  CORS: Using Railway production default origins');
     } else {
-      // Development defaults
+      // Development defaults (including Railway deployments)
       allowedOrigins.add('http://localhost:3000');
       allowedOrigins.add('http://localhost:3001'); // ui-tweaks worktree
       allowedOrigins.add('http://localhost:5173'); // Vite dev server
       allowedOrigins.add('http://127.0.0.1:3000');
       allowedOrigins.add('http://127.0.0.1:3001'); // ui-tweaks worktree
       allowedOrigins.add('http://127.0.0.1:5173');
-      console.warn('⚠️  CORS: Using default development origins');
+      // Railway deployment URLs (development mode)
+      allowedOrigins.add('https://web-production-b6320.up.railway.app');
+      allowedOrigins.add('https://web-js-refactor.up.railway.app');
+      console.warn('⚠️  CORS: Using default development origins (including Railway)');
     }
   }
 
