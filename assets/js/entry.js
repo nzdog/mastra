@@ -26,6 +26,11 @@ import {
  * Render protocol entry content (non-AI, static entry content)
  */
 export function renderProtocolEntry(data) {
+  console.log('🔍 renderProtocolEntry called with data:', data);
+  console.log('🔍 data.entry_sections:', data.entry_sections);
+  console.log('🔍 data.theme_1:', data.theme_1);
+  console.log('🔍 entryView:', entryView);
+
   // Hide begin button
   if (beginButton) beginButton.style.display = 'none';
 
@@ -57,10 +62,22 @@ export function renderProtocolEntry(data) {
     entryResponseArea = document.createElement('div');
     entryResponseArea.id = 'entry-response-area';
     entryResponseArea.style.cssText = 'margin-top: 1rem; line-height: 1.7;';
+    console.log('📝 Created new entry-response-area');
+  } else {
+    console.log('📝 Found existing entry-response-area');
   }
 
   const sectionData = data.entry_sections;
-  const firstThemeTitle = data.theme_1.title;
+  const firstThemeTitle = data.theme_1?.title;
+
+  console.log('📋 sectionData:', sectionData);
+  console.log('📋 sectionData length:', sectionData?.length);
+  console.log('📋 firstThemeTitle:', firstThemeTitle);
+
+  if (!sectionData || sectionData.length === 0) {
+    console.error('❌ No section data found!');
+    return;
+  }
 
   // Show first section immediately
   if (sectionData.length > 0) {
@@ -275,14 +292,26 @@ export function renderProtocolEntry(data) {
   }
 
   // Append response area to entry view
+  console.log('📌 About to append entryResponseArea to entryView');
+  console.log('📌 entryView exists:', !!entryView);
+  console.log('📌 entryResponseArea exists:', !!entryResponseArea);
+  console.log('📌 entryResponseArea children count:', entryResponseArea?.children.length);
+
   if (entryView) {
     entryView.appendChild(entryResponseArea);
+    console.log('✅ entryResponseArea appended to entryView');
+    console.log('✅ entryView children count:', entryView.children.length);
+  } else {
+    console.error('❌ entryView not found! Cannot append content.');
   }
 
   // Update header state
   if (headerState) {
     headerState.textContent = 'Protocol Introduction';
+    console.log('✅ Header state updated');
   }
+
+  console.log('✅ renderProtocolEntry completed');
 }
 
 /**
