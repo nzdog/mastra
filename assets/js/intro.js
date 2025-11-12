@@ -469,32 +469,13 @@ async function beginProtocolWalk(protocol) {
       console.error('❌ Entry view element not found!');
     }
 
-    // Fetch full protocol entry data (entry_sections, themes, etc.)
-    console.log('📡 Fetching protocol entry data from API...');
-    const response = await fetch(`${API_BASE}/api/protocols/${protocol.slug}/entry`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
-
-    console.log('📡 Response status:', response.status, response.statusText);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('📦 Entry data received:', data);
-    console.log('📦 data.entry_sections:', data.entry_sections);
-    console.log('📦 data.theme_1:', data.theme_1);
-
-    // Render protocol entry content
-    console.log('🎨 Rendering protocol entry...');
-    renderProtocolEntry(data);
-    console.log('✅ Protocol entry rendered');
+    // Show the entry view with big logo and "Begin walk" button
+    // The Begin walk button handler in app.js will fetch the entry data
+    console.log('✅ Entry view ready - showing Begin walk button');
+    console.log('✅ User can now click Begin walk to start protocol');
 
     // Hide loading indicator
     hideLoadingIndicator();
-    console.log('✅ Loading indicator hidden - protocol walk started!');
   } catch (error) {
     console.error('❌ Error in beginProtocolWalk:', error);
     console.error('❌ Error stack:', error.stack);
