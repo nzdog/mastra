@@ -567,6 +567,10 @@
   margin-top: 0.5rem;
 }
 
+.intro-walk-btn.visible {
+  display: block;
+}
+
 .intro-walk-btn:hover {
   border-color: #78716c;
   background: #fafaf9;
