@@ -469,6 +469,31 @@ async function beginProtocolWalk(protocol) {
       console.error('❌ Entry view element not found!');
     }
 
+    // Reset entry view elements to visible state
+    const logo = document.getElementById('lichen-logo');
+    const beginButton = document.getElementById('begin-button');
+
+    if (logo) {
+      logo.classList.remove('fade-out');
+      logo.style.opacity = '1';
+      logo.style.display = 'block';
+      console.log('👁️ Logo made visible');
+    }
+
+    if (protocolTitle) {
+      protocolTitle.classList.remove('fade-out');
+      protocolTitle.style.opacity = '1';
+      console.log('👁️ Protocol title made visible');
+    }
+
+    if (beginButton) {
+      beginButton.classList.remove('clicked');
+      beginButton.style.display = 'block';
+      beginButton.disabled = false;
+      beginButton.textContent = 'Begin walk';
+      console.log('👁️ Begin button made visible and enabled');
+    }
+
     // Show the entry view with big logo and "Begin walk" button
     // The Begin walk button handler in app.js will fetch the entry data
     console.log('✅ Entry view ready - showing Begin walk button');
