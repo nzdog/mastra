@@ -428,14 +428,32 @@ async function beginProtocolWalk(protocol) {
 
     console.log('✅ Modules imported successfully');
 
+    // Scroll to top
+    window.scrollTo(0, 0);
+    console.log('⬆️ Scrolled to top');
+
     // Show loading indicator
     showLoadingIndicator();
     console.log('⏳ Loading indicator shown');
 
     // Hide intro flow
     if (introFlowView) {
-      introFlowView.style.display = 'none';
+      introFlowView.classList.add('hidden');
       console.log('👋 Intro flow hidden');
+    }
+
+    // Show content area (contains entry view, walk view, etc.)
+    const contentArea = document.querySelector('.content-area');
+    if (contentArea) {
+      contentArea.classList.add('visible');
+      console.log('✅ Content area visible');
+    }
+
+    // Remove intro-mode from header to show normal header
+    const pageHeader = document.getElementById('page-header');
+    if (pageHeader) {
+      pageHeader.classList.remove('intro-mode');
+      console.log('✅ Header intro-mode removed');
     }
 
     // Update protocol title in entry view
