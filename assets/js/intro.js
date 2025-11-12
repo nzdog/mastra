@@ -469,25 +469,12 @@ async function beginProtocolWalk(protocol) {
       console.error('❌ Entry view element not found!');
     }
 
-    // Fetch protocol entry content
-    console.log('🌐 Fetching protocol entry from:', `${API_BASE}/api/protocols/${protocol.slug}/entry`);
-    const response = await fetch(`${API_BASE}/api/protocols/${protocol.slug}/entry`, {
-      method: 'GET',
-      headers: getHeaders(),
-    });
+    // Use the protocol data directly (no API call needed)
+    console.log('📦 Using protocol data directly:', protocol);
 
-    console.log('📡 Response status:', response.status, response.statusText);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data = await response.json();
-    console.log('📦 Entry data received:', data);
-
-    // Render protocol entry content
+    // Render protocol entry content using the protocol object
     console.log('🎨 Rendering protocol entry...');
-    renderProtocolEntry(data);
+    renderProtocolEntry(protocol);
     console.log('✅ Protocol entry rendered');
 
     // Hide loading indicator
