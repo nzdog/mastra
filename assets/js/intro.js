@@ -417,12 +417,63 @@ function renderProtocolCard(protocol) {
   introProtocolDeck.appendChild(card);
 }
 
-// Begin protocol walk (placeholder - will be handled by walk.js)
+// Begin protocol walk - load and show entry view
 async function beginProtocolWalk(protocol) {
   console.log('Beginning protocol walk for:', protocol.title);
-  // This will be implemented in walk.js
-  // For now, just dispatch a custom event
-  window.dispatchEvent(new CustomEvent('beginProtocolWalk', { detail: { protocol } }));
+
+  // Import necessary modules
+  const { API_BASE } = await import('./config.js');
+  const { getHeaders, showLoadingIndicator, hideLoadingIndicator, showError } = await import('./utils.js');
+  const { entryView, protocolSelectionView, protocolTitle } = await import('./dom.js');
+  const { renderProtocolEntry } = await import('./entry.js');
+
+  // Show loading indicator
+  showLoadingIndicator();
+
+  // Update protocol title in entry view
+  if (protocolTitle) {
+    const title = protocol.title;
+    if (title.includes('—')) {
+      const parts = title.split('—');
+      protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
+    } else if (title.includes(' — ')) {
+      const parts = title.split(' — ');
+      protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
+    } else {
+      protocolTitle.textContent = title;
+    }
+  }
+
+  // Show entry view
+  if (protocolSelectionView) protocolSelectionView.classList.add('hidden');
+  if (entryView) entryView.classList.remove('hidden');
+
+  try {
+    // Fetch protocol entry content
+    const response = await fetch(`${API_BASE}/api/protocols/${protocol.slug}/entry`, {
+      method: 'GET',
+      headers: getHeaders(),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Render protocol entry content
+    renderProtocolEntry(data);
+
+    // Hide loading indicator
+    hideLoadingIndicator();
+  } catch (error) {
+    console.error('Error loading protocol:', error);
+    showError('Failed to load protocol. Please try again.');
+    hideLoadingIndicator();
+
+    // Show intro flow again
+    if (introFlowView) introFlowView.style.display = 'block';
+  }
 }
 
 // Initialize intro flow event listeners
