@@ -103,21 +103,6 @@ export function fadeOut(element, duration = TIMING.FADE_DURATION) {
   });
 }
 
-// Animate text reveal with jigsaw effect
-export function animateTextReveal(element, duration = 400) {
-  return new Promise((resolve) => {
-    if (!element) {
-      resolve();
-      return;
-    }
-    element.classList.add('jigsaw');
-    setTimeout(() => {
-      element.classList.remove('jigsaw');
-      resolve();
-    }, duration);
-  });
-}
-
 // Update cost display
 export function updateCostDisplay(increment = 0.01) {
   // Import state to track estimated cost
