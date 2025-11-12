@@ -1,6 +1,7 @@
 /**
  * Intro Flow Module
  * Handles the application intro sequence and animations
+ * Updated: 2025-01-12 - Fixed content area visibility
  */
 
 import { API_BASE, TIMING, isMac } from './config.js';
