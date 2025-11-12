@@ -5,6 +5,7 @@
 
 import { API_BASE } from './config.js';
 import { state, setState } from './state.js';
+import { ANIMATION_DELAYS } from './constants.js';
 import {
   entryView,
   walkView,
@@ -89,7 +90,7 @@ export async function renderWalkState(data) {
           animateTextReveal(el);
         }
       });
-    }, 100);
+    }, ANIMATION_DELAYS.JIGSAW_ANIMATION_START);
   }
 
   // Focus the response input after content is visible

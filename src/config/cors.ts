@@ -40,22 +40,45 @@ export function parseCorsConfig(): CorsConfig {
   // If no origins specified, use safe defaults for development
   if (allowedOrigins.size === 0) {
     if (env === 'production') {
-      // Railway production fallback
-      allowedOrigins.add('https://web-production-b6320.up.railway.app');
-      allowedOrigins.add('https://web-js-refactor.up.railway.app');
-      console.warn('⚠️  CORS: Using Railway production default origins');
+      // Add Railway URLs from environment variables
+      const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+      const railwayStaticUrl = process.env.RAILWAY_STATIC_URL;
+
+      if (railwayPublicDomain) {
+        allowedOrigins.add(`https://${railwayPublicDomain}`);
+      }
+      if (railwayStaticUrl) {
+        allowedOrigins.add(railwayStaticUrl);
+      }
+
+      if (allowedOrigins.size === 0) {
+        console.warn(
+          '⚠️  CORS: No origins configured for production. Set CORS_ALLOWED_ORIGINS environment variable.'
+        );
+      } else {
+        console.warn('⚠️  CORS: Using Railway environment origins');
+      }
     } else {
-      // Development defaults (including Railway deployments)
+      // Development defaults
       allowedOrigins.add('http://localhost:3000');
       allowedOrigins.add('http://localhost:3001'); // ui-tweaks worktree
       allowedOrigins.add('http://localhost:5173'); // Vite dev server
       allowedOrigins.add('http://127.0.0.1:3000');
       allowedOrigins.add('http://127.0.0.1:3001'); // ui-tweaks worktree
       allowedOrigins.add('http://127.0.0.1:5173');
-      // Railway deployment URLs (development mode)
-      allowedOrigins.add('https://web-production-b6320.up.railway.app');
-      allowedOrigins.add('https://web-js-refactor.up.railway.app');
-      console.warn('⚠️  CORS: Using default development origins (including Railway)');
+
+      // Add Railway URLs from environment variables (for preview deployments)
+      const railwayPublicDomain = process.env.RAILWAY_PUBLIC_DOMAIN;
+      const railwayStaticUrl = process.env.RAILWAY_STATIC_URL;
+
+      if (railwayPublicDomain) {
+        allowedOrigins.add(`https://${railwayPublicDomain}`);
+      }
+      if (railwayStaticUrl) {
+        allowedOrigins.add(railwayStaticUrl);
+      }
+
+      console.warn('⚠️  CORS: Using default development origins');
     }
   }
 

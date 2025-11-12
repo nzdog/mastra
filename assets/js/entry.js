@@ -5,6 +5,7 @@
 
 import { API_BASE } from './config.js';
 import { state, setState } from './state.js';
+import { ANIMATION_DELAYS, COST_ESTIMATES } from './constants.js';
 import {
   beginButton,
   headerCenterLogo,
@@ -156,7 +157,7 @@ function createSectionRevealHandlers(
           } else {
             addContinueButton();
           }
-        }, 500);
+        }, ANIMATION_DELAYS.SECTION_REVEAL_TRANSITION);
       }
     }
   }
@@ -241,7 +242,7 @@ function createSectionRevealHandlers(
         if (continueControl) {
           continueControl.scrollIntoView({ behavior: 'smooth', block: 'end' });
         }
-      }, 1000);
+      }, ANIMATION_DELAYS.SECTION_EXPAND_FADE);
     }
   }
 
@@ -303,8 +304,8 @@ export function renderProtocolEntry(data) {
       const walkData = await response.json();
       setState({ sessionId: walkData.session_id, protocolData: walkData });
 
-      // Update cost display (Theme 1 AI call typically costs ~$0.02)
-      updateCostDisplay(0.02);
+      // Update cost display (Theme 1 AI call)
+      updateCostDisplay(COST_ESTIMATES.THEME_AI_CALL);
 
       // Import and call renderWalkState from walk.js
       const { renderWalkState } = await import('./walk.js');
@@ -396,8 +397,8 @@ export function renderEntryResponse(data) {
       const walkData = await response.json();
       setState({ protocolData: walkData });
 
-      // Update cost display (initial walk start typically costs ~$0.02)
-      updateCostDisplay(0.02);
+      // Update cost display (initial walk start)
+      updateCostDisplay(COST_ESTIMATES.THEME_AI_CALL);
 
       // Import and call renderWalkState from walk.js
       const { renderWalkState } = await import('./walk.js');

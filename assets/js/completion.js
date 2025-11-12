@@ -8,6 +8,7 @@ import { state } from './state.js';
 import { composerOutput } from './dom.js';
 import { getHeaders } from './utils.js';
 import { renderComposerOutput } from './markdown.js';
+import { ANIMATION_DELAYS, CONTENT_LIMITS } from './constants.js';
 
 /**
  * Handle completion mode - render summary and provide download/completion options
@@ -34,8 +35,8 @@ export function handleCompletion(data) {
 
     // Log the actual HTML structure
     console.log(
-      '🔧 Composer output HTML (first 500 chars):',
-      composerOutput.innerHTML.substring(0, 500)
+      `🔧 Composer output HTML (first ${CONTENT_LIMITS.SUMMARY_PREVIEW_LENGTH} chars):`,
+      composerOutput.innerHTML.substring(0, CONTENT_LIMITS.SUMMARY_PREVIEW_LENGTH)
     );
 
     // Check if h2 tags exist
@@ -265,7 +266,7 @@ export function handleCompletion(data) {
 
         // Reset to entry
         location.reload();
-      }, 4000);
+      }, ANIMATION_DELAYS.COMPLETION_OVERLAY_DISPLAY);
     };
   }
 

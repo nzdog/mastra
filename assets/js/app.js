@@ -5,6 +5,7 @@
 
 import { API_BASE, isMac } from './config.js';
 import { state, setState } from './state.js';
+import { ANIMATION_DELAYS, COST_ESTIMATES } from './constants.js';
 import {
   beginButton,
   responseInput,
@@ -33,17 +34,33 @@ import { handleContinue, handleGenerateReport } from './walk.js';
 async function init() {
   console.log('Initializing Field Diagnostic Agent...');
 
-  // Fetch and display git branch
-  await fetchBranch();
+  try {
+    // Fetch and display git branch
+    await fetchBranch();
+  } catch (error) {
+    console.error('Failed to fetch branch:', error);
+    // Non-critical, continue initialization
+  }
 
-  // Initialize intro flow event listeners
-  initIntroFlow();
+  try {
+    // Initialize intro flow event listeners
+    initIntroFlow();
 
-  // Start the intro animation sequence
-  await runIntroFlow();
+    // Start the intro animation sequence
+    await runIntroFlow();
+  } catch (error) {
+    console.error('Failed to run intro flow:', error);
+    showError('Failed to initialize application. Please refresh the page.');
+    return; // Stop initialization if intro fails
+  }
 
-  // Load protocols (for the protocol selection view, not used in intro flow)
-  loadProtocols();
+  try {
+    // Load protocols (for the protocol selection view, not used in intro flow)
+    loadProtocols();
+  } catch (error) {
+    console.error('Failed to load protocols:', error);
+    // Non-critical for intro flow, will show error in protocols view
+  }
 
   // Set helper text based on platform
   if (responseHint) {
@@ -141,7 +158,7 @@ async function init() {
       if (title) title.classList.add('fade-out');
 
       // Wait for fade animations to complete
-      await new Promise((resolve) => setTimeout(resolve, 1200));
+      await new Promise((resolve) => setTimeout(resolve, ANIMATION_DELAYS.FADE_COMPLETE));
 
       try {
         // Use non-AI endpoint to get protocol entry content

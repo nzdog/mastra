@@ -1,104 +1,144 @@
-# JavaScript Modules - Phase 1: Intro Flow
+# JavaScript Modules
 
-This directory contains modular JavaScript extracted from `index.html`.
-
-## Files
-
-- **config.js** - API configuration, constants, and platform detection
-- **state.js** - Application state management
-- **dom.js** - Centralized DOM element references
-- **utils.js** - Common utility functions (animations, API calls, formatting)
-- **intro.js** - Complete intro flow logic and animations
-- **main.js** - Application bootstrap and initialization
+This directory contains modular JavaScript for the Field Diagnostic Agent application.
 
 ## Status
 
-✅ **Phase 1 Complete**: Intro flow logic extracted into modules (6 files, 729 lines)
-⏸️ **Phase 2 Paused**: Integration with index.html requires careful large-scale code removal
+✅ **Phase 1 Complete**: Modular extraction (6 modules, 729 lines)
+✅ **Phase 2 Complete**: Integration and deployment (14 modules, 2111 lines)
 
-### Why Phase 2 is Paused
+## Architecture
 
-The integration requires removing ~600 lines of duplicate code from index.html (intro flow DOM elements, utility functions, and all intro animation logic) while keeping walk/protocol logic intact. This is complex and error-prone with manual edits.
-
-**Recommended Approaches for Phase 2:**
-
-1. **Script-based**: Create a Node.js script to parse and reconstruct index.html
-2. **Manual with Testing**: Complete integration in a local development environment with live reload
-3. **Incremental**: Do smaller, testable changes with commits between each step
-
-## Integration Plan (Phase 2)
-
-To integrate these modules into `index.html`:
-
-### Step 1: Add Module Import
-
-Replace the opening `<script type="module">` tag around line 259 with:
+All inline JavaScript has been removed from `index.html` and organized into a clean modular structure with a single entry point:
 
 ```html
-<!-- Modular JavaScript -->
-<script type="module" src="/assets/js/main.js"></script>
-
-<!-- Inline Walk/Protocol Logic (temporary) -->
-<script type="module">
-  // Import from modules
-  import { API_BASE, API_KEY } from './assets/js/config.js';
-  import { state, setState } from './assets/js/state.js';
-  import { getHeaders, showError /* ... */ } from './assets/js/utils.js';
-  import { entryView, walkView /* ... */ } from './assets/js/dom.js';
-
-  // Map state to local variables for compatibility
-  let sessionId = state.sessionId;
-  let selectedProtocol = state.selectedProtocol;
-
-  // Listen for protocol selection from intro flow
-  window.addEventListener('beginProtocolWalk', async (event) => {
-    selectedProtocol = event.detail.protocol;
-    setState({ selectedProtocol });
-    // Start walk logic...
-  });
-
-  // Keep walk/protocol logic here temporarily...
-</script>
+<!-- Single entry point -->
+<script type="module" src="/assets/js/app.js"></script>
 ```
 
-### Step 2: Remove Duplicate Code
+## Module Structure
 
-Delete from the inline script (lines ~260-870):
+### Core Infrastructure
+- **app.js** - Application entry point, orchestrates all modules
+- **config.js** - API configuration, constants, and platform detection
+- **constants.js** - Shared constants for timing, animations, and values
+- **state.js** - Application state management with immutable updates
+- **dom.js** - Centralized DOM element references
 
-- API configuration (now in `config.js`)
-- State variables (now in `state.js`)
-- DOM element declarations (now in `dom.js`)
-- Utility functions (now in `utils.js`)
-- ALL intro flow logic (now in `intro.js` and `main.js`)
+### Feature Modules
+- **intro.js** - Intro flow logic and protocol card rendering
+- **protocols.js** - Protocol loading and selection
+- **entry.js** - Protocol entry view rendering with progressive disclosure
+- **walk.js** - Walk flow logic, user interactions, and state rendering
+- **completion.js** - Completion handling, summary, and PDF generation
+- **markdown.js** - Markdown parsing and conversion to HTML
 
-Keep only the walk/protocol logic (starting around line 870 "MAIN APP LOGIC").
+### Utilities
+- **utils.js** - Common utility functions (animations, API calls, formatting)
 
-### Step 3: Test
+## Module Dependencies
 
-1. Test intro flow animations
-2. Test protocol selection
-3. Test walk functionality
-4. Test all user interactions
+```
+app.js
+├── config.js
+├── constants.js
+├── state.js
+├── dom.js
+├── utils.js
+├── intro.js
+│   ├── protocols.js (protocol cards)
+│   └── entry.js (protocol entry)
+├── entry.js
+│   └── walk.js (start walk)
+└── walk.js
+    ├── markdown.js (render output)
+    └── completion.js (completion mode)
+```
 
-### Step 4: Extract Walk Logic (Phase 3)
+## Key Features
 
-Create additional modules:
+### Clean Separation of Concerns
+- **Config**: API base URL, feature flags, platform detection
+- **State**: Centralized state with immutable updates
+- **DOM**: Single source of truth for element references
+- **Constants**: Magic numbers extracted to named constants
+- **Features**: Each flow (intro, entry, walk, completion) in its own module
 
-- `walk.js` - Protocol walk logic
-- `entry.js` - Entry view logic
-- `completion.js` - Completion view logic
+### Animation Constants
+All timing values are centralized in `constants.js`:
+
+```javascript
+export const ANIMATION_DELAYS = {
+  FADE_COMPLETE: 1200,              // Fade-out animations
+  SECTION_REVEAL_TRANSITION: 500,   // Section reveal
+  SECTION_EXPAND_FADE: 1000,        // Expand all sections
+  JIGSAW_ANIMATION_START: 100,      // Text reveal animation
+  COMPLETION_OVERLAY_DISPLAY: 4000, // Completion overlay
+};
+```
+
+### Error Handling
+Robust error handling with user-friendly messages:
+- Branch fetch errors (non-critical, continues)
+- Intro flow errors (critical, stops initialization)
+- Protocol loading errors (non-critical for intro)
+- API call errors with fallback UI
+
+## Development History
+
+### Phase 1 (Extraction)
+- Created 6 modules from inline JavaScript
+- Extracted intro flow logic
+- Set up module infrastructure
+
+### Phase 2 (Integration & Deployment)
+- Removed 2565 lines from index.html
+- Added 2111 lines across 14 modules
+- Fixed 7 deployment bugs during Railway testing:
+  1. Duplicate function declarations
+  2. CSS visibility issues
+  3. CORS configuration
+  4. Content area visibility
+  5. Header intro-mode state
+  6. Entry view element visibility
+  7. Missing state imports
+- Refactored entry.js to eliminate ~70% code duplication
+- Extracted magic numbers to constants
 
 ## Benefits
 
-- **Maintainability**: Code organized by feature
-- **Testability**: Pure functions easier to test
-- **Reusability**: Utility functions can be shared
-- **Debugging**: Clearer stack traces with named modules
-- **Performance**: Better caching with separate files
+✅ **Maintainability**: Code organized by feature, easy to find and modify
+✅ **Testability**: Pure functions, clear dependencies
+✅ **Reusability**: Utility functions shared across modules
+✅ **Debugging**: Clear stack traces with named modules
+✅ **Performance**: Better caching with separate files
+✅ **Type Safety**: Consistent patterns, easier to add TypeScript later
+✅ **Code Quality**: No duplication, constants instead of magic numbers
+
+## Testing
+
+Tested on Railway deployment: https://web-js-refactor.up.railway.app
+
+**Verified flows:**
+1. Intro animation sequence
+2. Protocol list display and progressive disclosure
+3. Protocol selection and entry view
+4. Walk flow with AI interactions
+5. Completion and summary generation
 
 ## Notes
 
 - All modules use ES6 `import/export` syntax
-- Modules are loaded with `type="module"` for proper scoping
-- State management uses a simple object with helper functions
-- DOM elements are cached once at module load time
+- Modules loaded with `type="module"` for proper scoping
+- State management uses immutable update pattern
+- DOM elements cached once at module load time
+- Error boundaries prevent cascading failures
+- Constants prevent magic number proliferation
+
+## Future Improvements
+
+- Add unit tests for utility functions
+- Add integration tests for user flows
+- Add TypeScript for type safety
+- Add bundler (Vite/esbuild) for optimization
+- Add ESLint for code style enforcement
