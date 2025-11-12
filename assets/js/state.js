@@ -11,6 +11,7 @@ export const state = {
   selectedProtocol: null,
   skipIntroAnimations: false,
   animationCancelled: false,
+  estimatedCost: 0,
 };
 
 // Helper function to update state

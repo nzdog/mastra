@@ -120,9 +120,15 @@ export function animateTextReveal(element, duration = 400) {
 
 // Update cost display
 export function updateCostDisplay(increment = 0.01) {
-  if (costDisplay) {
-    costDisplay.textContent = `~$${increment.toFixed(2)}`;
-  }
+  // Import state to track estimated cost
+  import('./state.js').then(({ state, setState }) => {
+    const newCost = state.estimatedCost + increment;
+    setState({ estimatedCost: newCost });
+
+    if (costDisplay) {
+      costDisplay.textContent = `$${newCost.toFixed(3)}`;
+    }
+  });
 }
 
 // Show loading indicator
@@ -152,6 +158,45 @@ export function showError(message) {
       errorStrip.classList.remove('visible');
     }, 5000);
   }
+}
+
+// Animate text revealing randomly like a jigsaw puzzle
+export function animateTextReveal(element, duration = 400) {
+  if (!element) return Promise.resolve();
+
+  const text = element.textContent;
+  const words = text.split(/(\s+)/); // Split by whitespace but keep the spaces
+
+  // Create spans for each word/space
+  element.textContent = '';
+  const spans = [];
+
+  words.forEach((word) => {
+    const span = document.createElement('span');
+    span.textContent = word;
+    span.style.opacity = '0';
+    span.style.display = 'inline';
+    element.appendChild(span);
+    if (word.trim()) spans.push(span); // Only track non-whitespace spans
+  });
+
+  // Shuffle the order of spans
+  const indices = Array.from({ length: spans.length }, (_, i) => i);
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+
+  // Reveal spans in shuffled order
+  const revealDuration = duration / spans.length;
+  indices.forEach((index, i) => {
+    setTimeout(() => {
+      spans[index].style.transition = `opacity ${revealDuration * 2}ms ease`;
+      spans[index].style.opacity = '1';
+    }, i * revealDuration);
+  });
+
+  return new Promise((resolve) => setTimeout(resolve, duration));
 }
 
 // Format section content for display
