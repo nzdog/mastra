@@ -404,13 +404,10 @@ function renderProtocolCard(protocol) {
 
   // Handle Walk this Protocol button click
   walkBtn.addEventListener('click', async () => {
+    console.log('🖱️ Walk this Protocol clicked for:', protocol.title);
     setState({ selectedProtocol: protocol });
-    console.log('Selected protocol:', protocol);
 
-    // Hide intro flow completely
-    introFlowView.style.display = 'none';
-
-    // Begin the protocol walk
+    // Begin the protocol walk (this will handle hiding intro flow)
     await beginProtocolWalk(protocol);
   });
 
@@ -419,60 +416,96 @@ function renderProtocolCard(protocol) {
 
 // Begin protocol walk - load and show entry view
 async function beginProtocolWalk(protocol) {
-  console.log('Beginning protocol walk for:', protocol.title);
-
-  // Import necessary modules
-  const { API_BASE } = await import('./config.js');
-  const { getHeaders, showLoadingIndicator, hideLoadingIndicator, showError } = await import('./utils.js');
-  const { entryView, protocolSelectionView, protocolTitle } = await import('./dom.js');
-  const { renderProtocolEntry } = await import('./entry.js');
-
-  // Show loading indicator
-  showLoadingIndicator();
-
-  // Update protocol title in entry view
-  if (protocolTitle) {
-    const title = protocol.title;
-    if (title.includes('—')) {
-      const parts = title.split('—');
-      protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
-    } else if (title.includes(' — ')) {
-      const parts = title.split(' — ');
-      protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
-    } else {
-      protocolTitle.textContent = title;
-    }
-  }
-
-  // Show entry view
-  if (protocolSelectionView) protocolSelectionView.classList.add('hidden');
-  if (entryView) entryView.classList.remove('hidden');
+  console.log('🚀 Beginning protocol walk for:', protocol.title);
+  console.log('📋 Protocol data:', protocol);
 
   try {
+    // Import necessary modules
+    const { API_BASE } = await import('./config.js');
+    const { getHeaders, showLoadingIndicator, hideLoadingIndicator, showError } = await import('./utils.js');
+    const { entryView, protocolSelectionView, protocolTitle } = await import('./dom.js');
+    const { renderProtocolEntry } = await import('./entry.js');
+
+    console.log('✅ Modules imported successfully');
+
+    // Show loading indicator
+    showLoadingIndicator();
+    console.log('⏳ Loading indicator shown');
+
+    // Hide intro flow
+    if (introFlowView) {
+      introFlowView.style.display = 'none';
+      console.log('👋 Intro flow hidden');
+    }
+
+    // Update protocol title in entry view
+    if (protocolTitle) {
+      const title = protocol.title;
+      if (title.includes('—')) {
+        const parts = title.split('—');
+        protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
+      } else if (title.includes(' — ')) {
+        const parts = title.split(' — ');
+        protocolTitle.innerHTML = `${parts[0].trim()}<br>${parts[1].trim()}`;
+      } else {
+        protocolTitle.textContent = title;
+      }
+      console.log('📝 Protocol title updated:', title);
+    } else {
+      console.warn('⚠️ Protocol title element not found!');
+    }
+
+    // Show entry view
+    if (protocolSelectionView) {
+      protocolSelectionView.classList.add('hidden');
+      console.log('👋 Protocol selection hidden');
+    }
+    if (entryView) {
+      entryView.classList.remove('hidden');
+      console.log('👁️ Entry view shown');
+      console.log('📊 Entry view display:', window.getComputedStyle(entryView).display);
+      console.log('📊 Entry view visibility:', window.getComputedStyle(entryView).visibility);
+    } else {
+      console.error('❌ Entry view element not found!');
+    }
+
     // Fetch protocol entry content
+    console.log('🌐 Fetching protocol entry from:', `${API_BASE}/api/protocols/${protocol.slug}/entry`);
     const response = await fetch(`${API_BASE}/api/protocols/${protocol.slug}/entry`, {
       method: 'GET',
       headers: getHeaders(),
     });
 
+    console.log('📡 Response status:', response.status, response.statusText);
+
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`);
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
     const data = await response.json();
+    console.log('📦 Entry data received:', data);
 
     // Render protocol entry content
+    console.log('🎨 Rendering protocol entry...');
     renderProtocolEntry(data);
+    console.log('✅ Protocol entry rendered');
 
     // Hide loading indicator
     hideLoadingIndicator();
+    console.log('✅ Loading indicator hidden - protocol walk started!');
   } catch (error) {
-    console.error('Error loading protocol:', error);
+    console.error('❌ Error in beginProtocolWalk:', error);
+    console.error('❌ Error stack:', error.stack);
+
+    const { showError, hideLoadingIndicator } = await import('./utils.js');
     showError('Failed to load protocol. Please try again.');
     hideLoadingIndicator();
 
     // Show intro flow again
-    if (introFlowView) introFlowView.style.display = 'block';
+    if (introFlowView) {
+      introFlowView.style.display = 'block';
+      console.log('🔄 Returned to intro flow due to error');
+    }
   }
 }
 
