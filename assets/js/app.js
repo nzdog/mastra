@@ -4,7 +4,7 @@
  */
 
 import { API_BASE, isMac } from './config.js';
-import { setState } from './state.js';
+import { state, setState } from './state.js';
 import {
   beginButton,
   responseInput,
