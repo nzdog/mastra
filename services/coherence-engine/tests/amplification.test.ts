@@ -19,7 +19,7 @@ describe('Expansion Detection', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const context: DiagnosticContext = {
@@ -133,7 +133,7 @@ describe('False-High Detection', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const result = detectFalseHigh(state);
@@ -152,7 +152,7 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const context: DiagnosticContext = {
@@ -184,7 +184,7 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const expansion = detectExpansion(state);
@@ -211,7 +211,7 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: false // Not ready
+      founder_led_readiness_signal: false // Not ready
     };
 
     const expansion = detectExpansion(state);
@@ -238,7 +238,7 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'excited',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const expansion = detectExpansion(state);
@@ -265,7 +265,7 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const expansion = detectExpansion(state);
@@ -294,7 +294,7 @@ describe('Amplification Safeguards', () => {
       cognitive: 'clear',
       tension_keyword: 'deadline',
       conflict_indicator: 'pressure',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const expansion = detectExpansion(state);
@@ -320,7 +320,7 @@ describe('Amplification Safeguards', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const expansion = detectExpansion(state);
@@ -346,7 +346,7 @@ describe('Amplification Safeguards', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const expansion = detectExpansion(state);
@@ -373,7 +373,7 @@ describe('Upward Block Content', () => {
       cognitive: 'clear',
       tension_keyword: 'focused',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const context: DiagnosticContext = {
@@ -405,7 +405,7 @@ describe('Upward Block Content', () => {
       cognitive: 'clear',
       tension_keyword: 'centered',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     };
 
     const context: DiagnosticContext = {

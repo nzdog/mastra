@@ -13,7 +13,7 @@ export async function stabiliseOnly(founderState: FounderStateInput): Promise<Co
     throw new Error(`API Error: ${response.statusText}`);
   }
 
-  return response.json();
+  return response.json() as Promise<CoherencePacket>;
 }
 
 export async function evaluate(founderState: FounderStateInput, diagnosticContext?: any): Promise<CoherencePacket> {
@@ -30,7 +30,7 @@ export async function evaluate(founderState: FounderStateInput, diagnosticContex
     throw new Error(`API Error: ${response.statusText}`);
   }
 
-  return response.json();
+  return response.json() as Promise<CoherencePacket>;
 }
 
 export async function checkDrift(text: string): Promise<DriftCheckResult> {
@@ -44,7 +44,7 @@ export async function checkDrift(text: string): Promise<DriftCheckResult> {
     throw new Error(`API Error: ${response.statusText}`);
   }
 
-  return response.json();
+  return response.json() as Promise<DriftCheckResult>;
 }
 
 export async function checkHealth(): Promise<{ status: string }> {
@@ -54,6 +54,6 @@ export async function checkHealth(): Promise<{ status: string }> {
     throw new Error('Health check failed');
   }
 
-  return response.json();
+  return response.json() as Promise<{ status: string }>;
 }
 

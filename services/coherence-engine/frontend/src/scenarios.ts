@@ -70,7 +70,7 @@ export const SCENARIOS: Scenario[] = [
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     }
   },
   {
@@ -82,7 +82,7 @@ export const SCENARIOS: Scenario[] = [
       cognitive: 'clear',
       tension_keyword: 'focused',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     }
   },
   {
@@ -94,7 +94,7 @@ export const SCENARIOS: Scenario[] = [
       cognitive: 'looping',
       tension_keyword: 'amazing',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_led_readiness_signal: true
     }
   }
 ];

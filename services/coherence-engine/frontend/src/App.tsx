@@ -11,7 +11,7 @@ function App() {
     cognitive: 'clear',
     tension_keyword: '',
     conflict_indicator: 'none',
-    founder_ready_signal: true
+    founder_led_readiness_signal: true
   });
 
   const [result, setResult] = useState<CoherencePacket | null>(null);
@@ -164,8 +164,8 @@ function App() {
                 <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                   <input
                     type="checkbox"
-                    checked={founderState.founder_ready_signal === true}
-                    onChange={(e) => setFounderState({ ...founderState, founder_ready_signal: e.target.checked })}
+                    checked={founderState.founder_led_readiness_signal === true}
+                    onChange={(e) => setFounderState({ ...founderState, founder_led_readiness_signal: e.target.checked })}
                     style={{ width: 'auto', margin: 0 }}
                   />
                   Founder Ready Signal (Embodied Yes)

@@ -44,7 +44,7 @@ export function detectFalseHigh(
     oscillating_rhythm: founderState.rhythm === 'oscillating',
     racing_thoughts: founderState.cognitive === 'looping' && founderState.rhythm !== 'steady',
     pressured_excitement: founderState.conflict_indicator === 'pressure' && founderState.emotional !== 'fog',
-    disembodied: founderState.founder_ready_signal === false || (
+    disembodied: founderState.founder_led_readiness_signal === false || (
       founderState.physiological !== 'open' && 
       founderState.physiological !== 'steady' &&
       founderState.emotional === 'open'

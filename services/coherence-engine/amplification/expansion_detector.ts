@@ -46,7 +46,7 @@ export function detectExpansion(
     clarity_present: founderState.cognitive === 'clear',
     calm_state: founderState.emotional === 'open',
     no_urgency: founderState.rhythm !== 'urgent' && founderState.conflict_indicator !== 'pressure',
-    embodied_readiness: founderState.founder_ready_signal === true,
+    embodied_readiness: founderState.founder_led_readiness_signal === true,
     available_capacity: checkAvailableCapacity(diagnosticContext)
   };
 
