@@ -1,0 +1,295 @@
+import { useState, useEffect } from 'react';
+import { FounderStateInput, CoherencePacket, DriftCheckResult } from './types';
+import { stabiliseOnly, checkDrift, checkHealth } from './api';
+import { SCENARIOS } from './scenarios';
+
+function App() {
+  const [founderState, setFounderState] = useState<FounderStateInput>({
+    physiological: 'open',
+    rhythm: 'steady',
+    emotional: 'open',
+    cognitive: 'clear',
+    tension_keyword: '',
+    conflict_indicator: 'none'
+  });
+
+  const [result, setResult] = useState<CoherencePacket | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [healthStatus, setHealthStatus] = useState<'healthy' | 'error' | 'checking'>('checking');
+  
+  const [driftText, setDriftText] = useState('');
+  const [driftResult, setDriftResult] = useState<DriftCheckResult | null>(null);
+  const [driftLoading, setDriftLoading] = useState(false);
+
+  useEffect(() => {
+    checkHealth()
+      .then(() => setHealthStatus('healthy'))
+      .catch(() => setHealthStatus('error'));
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await stabiliseOnly(founderState);
+      setResult(response);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadScenario = (state: FounderStateInput) => {
+    setFounderState(state);
+    setResult(null);
+    setError(null);
+  };
+
+  const handleDriftCheck = async () => {
+    if (!driftText.trim()) return;
+    
+    setDriftLoading(true);
+    try {
+      const response = await checkDrift(driftText);
+      setDriftResult(response);
+    } catch (err) {
+      console.error('Drift check failed:', err);
+    } finally {
+      setDriftLoading(false);
+    }
+  };
+
+  const getIntegrityClass = (state: string) => state.toLowerCase().replace('_', '');
+
+  return (
+    <div className="app">
+      <header className="header">
+        <h1>🍄 Lichen Coherence Engine</h1>
+        <p>Phase 1: Stabilisation Dashboard</p>
+        <span className={`status-badge ${healthStatus}`}>
+          {healthStatus === 'healthy' && '● Backend Online'}
+          {healthStatus === 'error' && '● Backend Offline'}
+          {healthStatus === 'checking' && '● Checking...'}
+        </span>
+      </header>
+
+      <div className="container">
+        {/* Left Column: Input */}
+        <div>
+          <div className="card">
+            <h2>⚙️ Founder State Input</h2>
+            
+            <form onSubmit={handleSubmit}>
+              <div className="form-group">
+                <label>Physiological</label>
+                <select
+                  value={founderState.physiological}
+                  onChange={(e) => setFounderState({ ...founderState, physiological: e.target.value as any })}
+                >
+                  <option value="open">Open</option>
+                  <option value="tight">Tight</option>
+                  <option value="numb">Numb</option>
+                  <option value="agitated">Agitated</option>
+                  <option value="steady">Steady</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Rhythm</label>
+                <select
+                  value={founderState.rhythm}
+                  onChange={(e) => setFounderState({ ...founderState, rhythm: e.target.value as any })}
+                >
+                  <option value="steady">Steady</option>
+                  <option value="fragmented">Fragmented</option>
+                  <option value="urgent">Urgent</option>
+                  <option value="oscillating">Oscillating</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Emotional</label>
+                <select
+                  value={founderState.emotional}
+                  onChange={(e) => setFounderState({ ...founderState, emotional: e.target.value as any })}
+                >
+                  <option value="open">Open</option>
+                  <option value="constricted">Constricted</option>
+                  <option value="fog">Fog</option>
+                  <option value="collapse">Collapse</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Cognitive</label>
+                <select
+                  value={founderState.cognitive}
+                  onChange={(e) => setFounderState({ ...founderState, cognitive: e.target.value as any })}
+                >
+                  <option value="clear">Clear</option>
+                  <option value="looping">Looping</option>
+                  <option value="overwhelmed">Overwhelmed</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>Tension Keyword</label>
+                <input
+                  type="text"
+                  value={founderState.tension_keyword}
+                  onChange={(e) => setFounderState({ ...founderState, tension_keyword: e.target.value })}
+                  placeholder="e.g., deadline, failure, calm"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Conflict Indicator</label>
+                <select
+                  value={founderState.conflict_indicator}
+                  onChange={(e) => setFounderState({ ...founderState, conflict_indicator: e.target.value as any })}
+                >
+                  <option value="none">None</option>
+                  <option value="avoidance">Avoidance</option>
+                  <option value="tension">Tension</option>
+                  <option value="pressure">Pressure</option>
+                </select>
+              </div>
+
+              <button type="submit" className="button button-primary" disabled={loading}>
+                {loading ? '⏳ Analyzing...' : '🔍 Classify State'}
+              </button>
+            </form>
+
+            <h3>Quick Test Scenarios</h3>
+            <div className="scenarios">
+              {SCENARIOS.map((scenario, i) => (
+                <button
+                  key={i}
+                  className="button button-small"
+                  onClick={() => loadScenario(scenario.state)}
+                >
+                  {scenario.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Drift Check Section */}
+          <div className="card drift-check">
+            <h2>🔍 Drift Detection Test</h2>
+            <div className="form-group">
+              <label>Test Text for Forbidden Language</label>
+              <input
+                type="text"
+                value={driftText}
+                onChange={(e) => setDriftText(e.target.value)}
+                placeholder="e.g., You should try to relax..."
+              />
+            </div>
+            <button 
+              className="button button-primary" 
+              onClick={handleDriftCheck}
+              disabled={driftLoading || !driftText.trim()}
+            >
+              {driftLoading ? '⏳ Checking...' : '✓ Check for Drift'}
+            </button>
+
+            {driftResult && (
+              <div className={`drift-result ${driftResult.clean ? 'clean' : 'violations'}`}>
+                <strong>{driftResult.clean ? '✅ Clean Output' : '⚠️ Violations Detected'}</strong>
+                {!driftResult.clean && (
+                  <div>
+                    {driftResult.violations.map((v, i) => (
+                      <div key={i} className="violation-item">
+                        <div className="violation-type">{v.type.replace(/_/g, ' ')}</div>
+                        <div>Detected: "{v.detected_in}"</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Results */}
+        <div>
+          <div className="card">
+            <h2>📊 Classification Results</h2>
+
+            {error && <div className="error">{error}</div>}
+
+            {!result && !error && (
+              <div className="empty-state">
+                <div className="empty-state-icon">🎯</div>
+                <p>Submit a founder state to see results</p>
+              </div>
+            )}
+
+            {result && (
+              <div className={`result-card ${getIntegrityClass(result.integrity_state)}`}>
+                <div className="result-header">
+                  <span className={`integrity-badge ${getIntegrityClass(result.integrity_state)}`}>
+                    {result.integrity_state}
+                  </span>
+                </div>
+
+                <div className="result-row">
+                  <span className="result-label">State Reflection</span>
+                  <span className="result-value">{result.state_reflection}</span>
+                </div>
+
+                <div className="result-row">
+                  <span className="result-label">Protocol Route</span>
+                  <span className="result-value">
+                    {result.protocol_route ? (
+                      <code>{result.protocol_route}</code>
+                    ) : (
+                      <span style={{ color: 'var(--color-text-muted)' }}>None</span>
+                    )}
+                  </span>
+                </div>
+
+                {result.stabilisation_cue && (
+                  <div>
+                    <h3>Stabilisation Cue</h3>
+                    <div className="cue-display">{result.stabilisation_cue}</div>
+                  </div>
+                )}
+
+                {result.exit_precursor && (
+                  <div className="exit-warning">
+                    <span className="exit-warning-icon">⚠️</span>
+                    <div>
+                      <strong>Exit Precursor Triggered</strong>
+                      <div style={{ fontSize: '0.875rem', marginTop: '0.25rem' }}>
+                        System approaching collapse - emergency protocols required
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="result-row">
+                  <span className="result-label">Upward Coherence</span>
+                  <span className="result-value">
+                    <code>null</code>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: '0.5rem' }}>
+                      (Phase 2)
+                    </span>
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default App;
+

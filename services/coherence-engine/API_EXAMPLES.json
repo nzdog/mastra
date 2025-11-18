@@ -1,0 +1,182 @@
+{
+  "examples": [
+    {
+      "name": "Urgency Spike (DRIFT)",
+      "request": {
+        "founder_state": {
+          "physiological": "tight",
+          "rhythm": "urgent",
+          "emotional": "constricted",
+          "cognitive": "looping",
+          "tension_keyword": "deadline",
+          "conflict_indicator": "pressure"
+        },
+        "diagnostic_context": {
+          "current_field": "launch_pressure",
+          "coherence_score": 0.4,
+          "field_drift_direction": "contraction"
+        },
+        "memory_snapshot": {
+          "recent_drift_events": ["urgency_2024-11-15"],
+          "founder_drift_signature": ["urgency", "deadline_collapse"]
+        }
+      },
+      "expected_response": {
+        "integrity_state": "DRIFT",
+        "state_reflection": "Urgency detected. Rhythm fragmented.",
+        "protocol_route": "holding_my_rhythm",
+        "stabilisation_cue": "Pause.",
+        "exit_precursor": false,
+        "upward": null
+      }
+    },
+    {
+      "name": "Numbness / Shutdown (PRE_COLLAPSE)",
+      "request": {
+        "founder_state": {
+          "physiological": "numb",
+          "rhythm": "fragmented",
+          "emotional": "fog",
+          "cognitive": "overwhelmed",
+          "tension_keyword": "nothing",
+          "conflict_indicator": "avoidance"
+        },
+        "diagnostic_context": {
+          "current_field": "collapse_edge",
+          "coherence_score": 0.1,
+          "field_drift_direction": "shutdown"
+        },
+        "memory_snapshot": {
+          "recent_drift_events": ["pre_collapse_2024-11-14"],
+          "collapse_precursors": ["shutdown_pattern"]
+        }
+      },
+      "expected_response": {
+        "integrity_state": "PRE_COLLAPSE",
+        "state_reflection": "Numbness detected. System shutdown imminent.",
+        "protocol_route": "emergency_grounding",
+        "stabilisation_cue": "Stop.",
+        "exit_precursor": true,
+        "upward": null
+      }
+    },
+    {
+      "name": "Shame Spike (DISTORTION)",
+      "request": {
+        "founder_state": {
+          "physiological": "tight",
+          "rhythm": "oscillating",
+          "emotional": "constricted",
+          "cognitive": "looping",
+          "tension_keyword": "failure",
+          "conflict_indicator": "tension"
+        },
+        "diagnostic_context": {
+          "current_field": "shame_field",
+          "coherence_score": 0.3,
+          "distortion_map": ["shame_spike"]
+        },
+        "memory_snapshot": {
+          "recent_distortion_events": ["shame_2024-11-12"]
+        }
+      },
+      "expected_response": {
+        "integrity_state": "DISTORTION",
+        "state_reflection": "Shame detected. Field distorted.",
+        "protocol_route": "shame_release",
+        "stabilisation_cue": "Ground.",
+        "exit_precursor": false,
+        "upward": null
+      }
+    },
+    {
+      "name": "Calm and Open (STABLE)",
+      "request": {
+        "founder_state": {
+          "physiological": "open",
+          "rhythm": "steady",
+          "emotional": "open",
+          "cognitive": "clear",
+          "tension_keyword": "calm",
+          "conflict_indicator": "none"
+        },
+        "diagnostic_context": {
+          "current_field": "baseline",
+          "coherence_score": 0.85,
+          "field_drift_direction": "stable"
+        },
+        "memory_snapshot": {
+          "recent_drift_events": [],
+          "stability_duration_hours": 48
+        }
+      },
+      "expected_response": {
+        "integrity_state": "STABLE",
+        "state_reflection": "Coherent. Rhythm steady.",
+        "protocol_route": null,
+        "stabilisation_cue": null,
+        "exit_precursor": false,
+        "upward": null
+      }
+    },
+    {
+      "name": "Avoidance Pattern (DRIFT)",
+      "request": {
+        "founder_state": {
+          "physiological": "tight",
+          "rhythm": "steady",
+          "emotional": "constricted",
+          "cognitive": "clear",
+          "tension_keyword": "busy",
+          "conflict_indicator": "avoidance"
+        },
+        "diagnostic_context": {
+          "current_field": "avoidance_field",
+          "coherence_score": 0.6
+        },
+        "memory_snapshot": {
+          "recent_drift_events": ["avoidance_2024-11-10"],
+          "founder_drift_signature": ["avoidance", "busyness"]
+        }
+      },
+      "expected_response": {
+        "integrity_state": "DRIFT",
+        "state_reflection": "Avoidance detected. Constriction present.",
+        "protocol_route": "what_am_i_avoiding",
+        "stabilisation_cue": "Notice.",
+        "exit_precursor": false,
+        "upward": null
+      }
+    },
+    {
+      "name": "Overwhelm (DISTORTION)",
+      "request": {
+        "founder_state": {
+          "physiological": "agitated",
+          "rhythm": "fragmented",
+          "emotional": "constricted",
+          "cognitive": "overwhelmed",
+          "tension_keyword": "too_much",
+          "conflict_indicator": "pressure"
+        },
+        "diagnostic_context": {
+          "current_field": "capacity_breach",
+          "coherence_score": 0.25,
+          "capacity_edge": "breached"
+        },
+        "memory_snapshot": {
+          "recent_distortion_events": ["overwhelm_2024-11-13"]
+        }
+      },
+      "expected_response": {
+        "integrity_state": "DISTORTION",
+        "state_reflection": "Overwhelm detected. Capacity breached.",
+        "protocol_route": "capacity_reset",
+        "stabilisation_cue": "Breathe.",
+        "exit_precursor": false,
+        "upward": null
+      }
+    }
+  ]
+}
+
