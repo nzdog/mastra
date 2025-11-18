@@ -69,7 +69,32 @@ export const SCENARIOS: Scenario[] = [
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'calm',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
+      founder_ready_signal: true
+    }
+  },
+  {
+    name: '🚀 Ready for Amplification',
+    state: {
+      physiological: 'open',
+      rhythm: 'steady',
+      emotional: 'open',
+      cognitive: 'clear',
+      tension_keyword: 'focused',
+      conflict_indicator: 'none',
+      founder_ready_signal: true
+    }
+  },
+  {
+    name: '⚡ False-High (Hype)',
+    state: {
+      physiological: 'agitated',
+      rhythm: 'oscillating',
+      emotional: 'open',
+      cognitive: 'looping',
+      tension_keyword: 'amazing',
+      conflict_indicator: 'none',
+      founder_ready_signal: true
     }
   }
 ];
