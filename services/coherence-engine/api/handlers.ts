@@ -18,6 +18,9 @@ import { routeToProtocol } from '../protocol_router';
 import { buildCoherencePacket } from '../outputs/output_builder';
 import { validateOutput } from '../outputs/self_correction';
 import { checkForDrift } from '../outputs/drift_guard';
+import { detectExpansion } from '../amplification/expansion_detector';
+import { detectFalseHigh } from '../amplification/false_high_detector';
+import { planAmplification } from '../amplification/amplification_planner';
 
 /**
  * Request body for stabilisation endpoint
@@ -117,13 +120,113 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 
 /**
  * POST /coherence/evaluate
- * Full evaluation endpoint (includes amplification in Phase 2)
- * For Phase 1, this is identical to stabilise-only
+ * Full evaluation endpoint (includes amplification - Phase 2)
  */
 export async function evaluate(req: Request, res: Response): Promise<void> {
-  // In Phase 1, evaluate is the same as stabilise-only
-  // In Phase 2, this will include upward coherence detection
-  await stabiliseOnly(req, res);
+  try {
+    const body: StabiliseRequest = req.body;
+
+    // Validate required fields
+    if (!body.founder_state) {
+      res.status(400).json({
+        error: 'Missing required field: founder_state'
+      });
+      return;
+    }
+
+    // Validate founder_state
+    if (!isValidFounderState(body.founder_state)) {
+      res.status(400).json({
+        error: 'Invalid founder_state format',
+        details: 'Check physiological, rhythm, emotional, cognitive, and conflict_indicator fields'
+      });
+      return;
+    }
+
+    // Validate optional fields
+    if (body.diagnostic_context && !isValidDiagnosticContext(body.diagnostic_context)) {
+      res.status(400).json({
+        error: 'Invalid diagnostic_context format'
+      });
+      return;
+    }
+
+    if (body.memory_snapshot && !isValidMemorySnapshot(body.memory_snapshot)) {
+      res.status(400).json({
+        error: 'Invalid memory_snapshot format'
+      });
+      return;
+    }
+
+    // Step 1: Classify integrity state
+    const classification = classifyIntegrityState(
+      body.founder_state,
+      body.diagnostic_context
+    );
+
+    const route = routeToProtocol(classification);
+
+    // Step 2: Build base coherence packet
+    let coherencePacket = buildCoherencePacket(
+      body.founder_state,
+      classification,
+      route
+    );
+
+    // Step 3: Check for upward coherence (Phase 2)
+    if (classification.integrity_state === 'STABLE') {
+      // Detect expansion signals
+      const expansion = detectExpansion(body.founder_state, body.diagnostic_context);
+
+      // Detect false-high
+      const falseHigh = detectFalseHigh(body.founder_state, body.diagnostic_context);
+
+      // Plan amplification with safeguards
+      const amplificationPlan = planAmplification(
+        body.founder_state,
+        classification.integrity_state,
+        expansion,
+        falseHigh,
+        true // For Phase 2, assume protocol cycle complete
+      );
+
+      // Add upward block if amplification is safe
+      coherencePacket = {
+        ...coherencePacket,
+        upward: amplificationPlan.upward_block
+      };
+    }
+
+    // Validate output for drift
+    const driftViolations = validateOutput(coherencePacket);
+    if (driftViolations.length > 0) {
+      console.error('CRITICAL: Drift detected in output:', driftViolations);
+      res.status(500).json({
+        error: 'Internal error: drift detected in output',
+        violations: driftViolations
+      });
+      return;
+    }
+
+    // Validate packet structure
+    if (!isValidCoherencePacket(coherencePacket)) {
+      console.error('CRITICAL: Invalid CoherencePacket structure:', coherencePacket);
+      res.status(500).json({
+        error: 'Internal error: invalid output structure'
+      });
+      return;
+    }
+
+    // Return successful response
+    res.status(200).json(coherencePacket);
+
+  } catch (error) {
+    console.error('Error in evaluate:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
 }
 
 /**

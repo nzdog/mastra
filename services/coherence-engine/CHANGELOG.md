@@ -2,6 +2,65 @@
 
 All notable changes to the Coherence Engine will be documented in this file.
 
+## [2.0.0] - 2024-11-19
+
+### Phase 2: Amplification - COMPLETE ✅
+
+#### Added
+
+**Amplification Components**
+- Expansion signal detector (7 expansion signals)
+- False-high detector (unsafe positive urgency detection)
+- Amplification planner with all 4 safeguards
+- Upward coherence block generation
+- Magnification notes (non-directive, present-only)
+- Micro-actions generation (max 2, stabilizing)
+
+**Amplification Safeguards**
+- Pace Lock — Cannot increase founder speed
+- Embodiment Gate — Halts if body closes
+- Urgency Kill Switch — Stops if urgency appears
+- Micro-Consent Loop — Requires embodied readiness
+
+**API Enhancements**
+- Enhanced `/coherence/evaluate` endpoint with upward detection
+- Upward coherence included when integrity_state = STABLE
+- Automatic false-high detection and blocking
+- Pre-condition validation (STABLE + protocol_complete + founder_ready)
+
+**Testing**
+- 17 comprehensive Phase 2 tests
+- Expansion detection tests
+- False-high detection tests
+- Amplification planning tests
+- Safeguard validation tests
+- Upward block content tests
+- **Total: 105 tests** (88 Phase 1 + 17 Phase 2)
+
+**Documentation**
+- PHASE2_NOTES.md with implementation details
+- Updated README with Phase 2 features
+- Updated CHANGELOG
+- API documentation for upward coherence
+
+#### Changed
+- Server startup message reflects Phase 2
+- `/coherence/evaluate` now includes upward coherence detection
+- All Phase 1 functionality preserved (no breaking changes)
+
+#### Constraints Enforced
+✅ Amplification cannot increase founder speed (pace lock)
+✅ Amplification halts if body closes (embodiment gate)
+✅ Amplification stops if urgency appears (kill switch)
+✅ Amplification requires continuous micro-consent
+✅ False-high treated as DRIFT
+✅ Present-state only outputs (no future references)
+✅ Zero drift in magnification notes
+✅ Expansion requires ≥5/7 signals
+✅ All safeguards must pass for amplification
+
+---
+
 ## [1.0.0] - 2024-11-17
 
 ### Phase 1: Stabilisation Only - COMPLETE ✅
@@ -93,22 +152,9 @@ All notable changes to the Coherence Engine will be documented in this file.
 ❌ Natural language processing
 ❌ Real-time streaming
 
-## Next Release: Phase 2 (Amplification)
-
-### Planned Features
-- Upward coherence detection
-- Safe amplification logic
-- False-high detection (positive urgency)
-- Pace lock (prevent speed increase)
-- Embodiment gate (halt on body closing)
-- Urgency kill switch
-- Founder-led micro-consent loop
-- Upward block in CoherencePacket
-
-### Timeline
-Phase 2 begins after Phase 1 is deployed and validated in production.
-
 ---
 
-**Status:** Phase 1 Complete and Ready for Deployment
+**Status:** Phase 2 Complete and Ready for Deployment
+
+All 105 tests passing. Stabilisation + Amplification fully implemented.
 

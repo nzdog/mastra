@@ -49,12 +49,12 @@ export function startServer(port: number = 3000): void {
   app.listen(port, () => {
     console.log('═══════════════════════════════════════════════════════');
     console.log('  LICHEN COHERENCE ENGINE');
-    console.log('  Phase 1: Stabilisation Only');
+    console.log('  Phase 2: Stabilisation + Amplification');
     console.log('═══════════════════════════════════════════════════════');
     console.log(`  Server running on port ${port}`);
     console.log('  Endpoints:');
     console.log(`    POST http://localhost:${port}/coherence/stabilise-only`);
-    console.log(`    POST http://localhost:${port}/coherence/evaluate`);
+    console.log(`    POST http://localhost:${port}/coherence/evaluate (with upward)`);
     console.log(`    POST http://localhost:${port}/coherence/debug/drift-check`);
     console.log(`    GET  http://localhost:${port}/health`);
     console.log('═══════════════════════════════════════════════════════');

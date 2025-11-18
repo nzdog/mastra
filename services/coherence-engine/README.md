@@ -1,26 +1,33 @@
 # Lichen Protocol — Coherence Engine
 
-**Phase 1: Stabilisation Only**
+**Phase 2: Stabilisation + Amplification**
 
-The Coherence Engine is the real-time stability and momentum regulation layer of the Lichen Protocol. It detects drift, classifies founder integrity state, routes to protocols, and prevents collapse.
+The Coherence Engine is the real-time stability and momentum regulation layer of the Lichen Protocol. It detects drift, classifies founder integrity state, routes to protocols, prevents collapse, and safely amplifies upward coherence.
 
 ---
 
 ## Architecture Overview
 
-This is a **deterministic, rules-based system** (Phase 1) that implements:
+This is a **deterministic, rules-based system** that implements:
 
+**Phase 1 (Stabilisation):**
 - ✅ **Integrity Classification** (STABLE, DRIFT, DISTORTION, PRE_COLLAPSE)
 - ✅ **Protocol Routing** (deterministic mapping)
 - ✅ **Drift Detection** (6 categories)
 - ✅ **Output Validation** (forbidden language detection)
 - ✅ **Present-State Only Logic** (no prediction, no memory influence)
 
-### What's NOT Implemented (Phase 2+)
-- ❌ Upward coherence detection
-- ❌ Amplification logic
+**Phase 2 (Amplification):**
+- ✅ **Expansion Detection** (7 expansion signals)
+- ✅ **False-High Detection** (unsafe positive urgency)
+- ✅ **Amplification Safeguards** (pace lock, embodiment gate, urgency kill-switch, micro-consent)
+- ✅ **Upward Coherence** (safe momentum release)
+- ✅ **Magnification Notes** (non-directive, present-only)
+
+### What's NOT Implemented (Future Phases)
 - ❌ Natural language processing
 - ❌ Real-time streaming
+- ❌ Protocol cycle tracking integration
 
 ---
 
@@ -58,7 +65,7 @@ npm start
 
 ### `POST /coherence/stabilise-only`
 
-Main stabilisation endpoint.
+Stabilisation-only endpoint (Phase 1 behavior, no upward detection).
 
 **Request:**
 ```json
@@ -90,6 +97,45 @@ Main stabilisation endpoint.
   "stabilisation_cue": "Pause.",
   "exit_precursor": false,
   "upward": null
+}
+```
+
+### `POST /coherence/evaluate`
+
+Full evaluation endpoint with upward coherence detection (Phase 2).
+
+**Request:** Same as stabilise-only, with optional `founder_ready_signal`:
+```json
+{
+  "founder_state": {
+    "physiological": "open",
+    "rhythm": "steady",
+    "emotional": "open",
+    "cognitive": "clear",
+    "tension_keyword": "calm",
+    "conflict_indicator": "none",
+    "founder_ready_signal": true
+  },
+  "diagnostic_context": {
+    "coherence_score": 0.85
+  }
+}
+```
+
+**Response (with amplification):**
+```json
+{
+  "integrity_state": "STABLE",
+  "state_reflection": "Coherent. Rhythm steady. Clear.",
+  "protocol_route": null,
+  "stabilisation_cue": null,
+  "exit_precursor": false,
+  "upward": {
+    "expansion_detected": true,
+    "amplification_safe": true,
+    "magnification_note": "Clarity present. Open and grounded.",
+    "micro_actions": ["Notice the clarity", "Maintain openness"]
+  }
 }
 ```
 
@@ -145,7 +191,7 @@ Health check endpoint.
 ### Run All Tests
 
 ```bash
-npm test
+npm test  # 105 tests
 ```
 
 ### Run Tests in Watch Mode
@@ -162,6 +208,7 @@ npm run test:coverage
 
 ### Test Categories
 
+**Phase 1 (88 tests):**
 - **Classification Tests** (`tests/classification.test.ts`) — Integrity state classification logic
 - **Routing Tests** (`tests/routing.test.ts`) — Protocol routing table
 - **Drift Guard Tests** (`tests/drift_guard.test.ts`) — Forbidden language detection
@@ -169,6 +216,9 @@ npm run test:coverage
 - **Memory Non-Interference Tests** (`tests/memory_noninterference.test.ts`) — Memory cannot influence classification
 - **API Tests** (`tests/api.test.ts`) — HTTP endpoint integration
 - **End-to-End Tests** (`tests/end_to_end.test.ts`) — Full scenarios
+
+**Phase 2 (17 tests):**
+- **Amplification Tests** (`tests/amplification.test.ts`) — Expansion detection, false-high detection, safeguards, upward coherence
 
 ---
 
@@ -339,18 +389,19 @@ console.log(packet.protocol_route);  // "holding_my_rhythm"
 
 ---
 
-## Next Steps (Phase 2)
+## Phase 2 Complete ✅
 
-Phase 2 will add:
-- Upward coherence detection
-- Amplification logic
-- Expansion mode
-- False-high detection
-- Pace lock
-- Embodiment gate
-- Urgency kill switch
+All amplification features implemented:
+- ✅ Upward coherence detection
+- ✅ Expansion signal detection (7 signals)
+- ✅ False-high detection
+- ✅ Amplification safeguards (all 4)
+- ✅ Pace lock
+- ✅ Embodiment gate
+- ✅ Urgency kill switch
+- ✅ Micro-consent loop
 
-Phase 1 must be stable and tested before Phase 2 begins.
+See `PHASE2_NOTES.md` for implementation details.
 
 ---
 
@@ -375,7 +426,7 @@ For questions or issues, contact the Lichen Protocol team.
 
 ---
 
-**Status:** Phase 1 Complete ✅
+**Status:** Phase 2 Complete ✅
 
-All tests passing. Ready for deployment and Phase 2 planning.
+All 105 tests passing. Stabilisation + Amplification fully implemented. Ready for production deployment.
 
