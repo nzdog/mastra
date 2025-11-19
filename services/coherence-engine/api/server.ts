@@ -5,7 +5,9 @@
 
 import express, { Express } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { stabiliseOnly, evaluate, driftCheck, health } from './handlers';
+import { REQUEST_SIZE_LIMIT, RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX_REQUESTS } from '../constants';
 
 /**
  * Create and configure Express app
@@ -13,9 +15,24 @@ import { stabiliseOnly, evaluate, driftCheck, health } from './handlers';
 export function createApp(): Express {
   const app = express();
 
-  // Middleware
-  app.use(cors());
-  app.use(express.json());
+  // CORS configuration - specify allowed origins for production
+  const corsOptions = {
+    origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+    credentials: true,
+  };
+  app.use(cors(corsOptions));
+
+  // Request size limits to prevent abuse
+  app.use(express.json({ limit: REQUEST_SIZE_LIMIT }));
+
+  // Rate limiting for API endpoints
+  const apiLimiter = rateLimit({
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    max: RATE_LIMIT_MAX_REQUESTS,
+    message: 'Too many requests from this IP, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
   // Request logging
   app.use((req, res, next) => {
@@ -25,9 +42,11 @@ export function createApp(): Express {
 
   // Routes
   app.get('/health', health);
-  app.post('/coherence/stabilise-only', stabiliseOnly);
-  app.post('/coherence/evaluate', evaluate);
-  app.post('/coherence/debug/drift-check', driftCheck);
+
+  // Apply rate limiting to coherence endpoints
+  app.post('/coherence/stabilise-only', apiLimiter, stabiliseOnly);
+  app.post('/coherence/evaluate', apiLimiter, evaluate);
+  app.post('/coherence/debug/drift-check', apiLimiter, driftCheck);
 
   // 404 handler
   app.use((req, res) => {
