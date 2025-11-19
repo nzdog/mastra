@@ -7,8 +7,7 @@ export default defineConfig({
     port: 3001,
     proxy: {
       '/coherence': 'http://localhost:3000',
-      '/health': 'http://localhost:3000'
-    }
-  }
+      '/health': 'http://localhost:3000',
+    },
+  },
 });
-

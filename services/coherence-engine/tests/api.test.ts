@@ -26,15 +26,15 @@ describe('POST /coherence/stabilise-only', () => {
           emotional: 'constricted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
+          conflict_indicator: 'pressure',
         },
         diagnostic_context: {
           current_field: 'launch_pressure',
-          coherence_score: 0.4
+          coherence_score: 0.4,
         },
         memory_snapshot: {
-          recent_drift_events: ['urgency_2024-11-15']
-        }
+          recent_drift_events: ['urgency_2024-11-15'],
+        },
       });
 
     expect(response.status).toBe(200);
@@ -48,11 +48,9 @@ describe('POST /coherence/stabilise-only', () => {
   });
 
   it('should return 400 for missing founder_state', async () => {
-    const response = await request(app)
-      .post('/coherence/stabilise-only')
-      .send({
-        diagnostic_context: {}
-      });
+    const response = await request(app).post('/coherence/stabilise-only').send({
+      diagnostic_context: {},
+    });
 
     expect(response.status).toBe(400);
     expect(response.body).toHaveProperty('error');
@@ -68,8 +66,8 @@ describe('POST /coherence/stabilise-only', () => {
           emotional: 'open',
           cognitive: 'clear',
           tension_keyword: 'calm',
-          conflict_indicator: 'none'
-        }
+          conflict_indicator: 'none',
+        },
       });
 
     expect(response.status).toBe(400);
@@ -86,8 +84,8 @@ describe('POST /coherence/stabilise-only', () => {
           emotional: 'constricted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
-        }
+          conflict_indicator: 'pressure',
+        },
       });
 
     expect(response.status).toBe(200);
@@ -106,8 +104,8 @@ describe('POST /coherence/stabilise-only', () => {
           emotional: 'fog',
           cognitive: 'overwhelmed',
           tension_keyword: 'nothing',
-          conflict_indicator: 'avoidance'
-        }
+          conflict_indicator: 'avoidance',
+        },
       });
 
     expect(response.status).toBe(200);
@@ -125,8 +123,8 @@ describe('POST /coherence/stabilise-only', () => {
           emotional: 'constricted',
           cognitive: 'looping',
           tension_keyword: 'failure',
-          conflict_indicator: 'tension'
-        }
+          conflict_indicator: 'tension',
+        },
       });
 
     expect(response.status).toBe(200);
@@ -144,8 +142,8 @@ describe('POST /coherence/stabilise-only', () => {
           emotional: 'open',
           cognitive: 'clear',
           tension_keyword: 'calm',
-          conflict_indicator: 'none'
-        }
+          conflict_indicator: 'none',
+        },
       });
 
     expect(response.status).toBe(200);
@@ -157,11 +155,9 @@ describe('POST /coherence/stabilise-only', () => {
 
 describe('POST /coherence/debug/drift-check', () => {
   it('should return clean: true for clean text', async () => {
-    const response = await request(app)
-      .post('/coherence/debug/drift-check')
-      .send({
-        text: 'Urgency detected. Rhythm fragmented.'
-      });
+    const response = await request(app).post('/coherence/debug/drift-check').send({
+      text: 'Urgency detected. Rhythm fragmented.',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.clean).toBe(true);
@@ -169,11 +165,9 @@ describe('POST /coherence/debug/drift-check', () => {
   });
 
   it('should detect violations in text with "you should"', async () => {
-    const response = await request(app)
-      .post('/coherence/debug/drift-check')
-      .send({
-        text: 'You should take a break now.'
-      });
+    const response = await request(app).post('/coherence/debug/drift-check').send({
+      text: 'You should take a break now.',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.clean).toBe(false);
@@ -181,19 +175,15 @@ describe('POST /coherence/debug/drift-check', () => {
   });
 
   it('should return 400 for missing text field', async () => {
-    const response = await request(app)
-      .post('/coherence/debug/drift-check')
-      .send({});
+    const response = await request(app).post('/coherence/debug/drift-check').send({});
 
     expect(response.status).toBe(400);
   });
 
   it('should return list of detected violations', async () => {
-    const response = await request(app)
-      .post('/coherence/debug/drift-check')
-      .send({
-        text: 'You should try to relax. Soon you will feel better.'
-      });
+    const response = await request(app).post('/coherence/debug/drift-check').send({
+      text: 'You should try to relax. Soon you will feel better.',
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.violations).toBeInstanceOf(Array);
@@ -219,4 +209,3 @@ describe('404 Handler', () => {
     expect(response.body).toHaveProperty('error');
   });
 });
-

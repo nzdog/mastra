@@ -2,7 +2,7 @@
  * AMPLIFICATION PLANNER
  * Plans safe amplification with safeguards
  * As per SPEC.md Section 6
- * 
+ *
  * Safeguards:
  * - Pace Lock: Cannot increase founder speed
  * - Embodiment Gate: Halts if body closes
@@ -52,7 +52,7 @@ export function planAmplification(
       can_amplify: false,
       safeguards: buildSafeguards(founderState, expansion, falseHigh),
       upward_block: null,
-      block_reason: preConditionsMet.reason
+      block_reason: preConditionsMet.reason,
     };
   }
 
@@ -62,7 +62,7 @@ export function planAmplification(
       can_amplify: false,
       safeguards: buildSafeguards(founderState, expansion, falseHigh),
       upward_block: null,
-      block_reason: `False-high detected: ${falseHigh.reason}`
+      block_reason: `False-high detected: ${falseHigh.reason}`,
     };
   }
 
@@ -72,7 +72,7 @@ export function planAmplification(
       can_amplify: false,
       safeguards: buildSafeguards(founderState, expansion, falseHigh),
       upward_block: null,
-      block_reason: 'Insufficient expansion signals for safe amplification'
+      block_reason: 'Insufficient expansion signals for safe amplification',
     };
   }
 
@@ -80,7 +80,7 @@ export function planAmplification(
   const safeguards = buildSafeguards(founderState, expansion, falseHigh);
 
   // Check all safeguards
-  const allSafeguardsPass = 
+  const allSafeguardsPass =
     !safeguards.urgency_kill_switch_triggered &&
     safeguards.embodiment_gate_open &&
     safeguards.micro_consent_present;
@@ -90,7 +90,7 @@ export function planAmplification(
       can_amplify: false,
       safeguards,
       upward_block: null,
-      block_reason: getSafeguardBlockReason(safeguards)
+      block_reason: getSafeguardBlockReason(safeguards),
     };
   }
 
@@ -100,7 +100,7 @@ export function planAmplification(
   return {
     can_amplify: true,
     safeguards,
-    upward_block
+    upward_block,
   };
 }
 
@@ -143,18 +143,17 @@ function buildSafeguards(
     pace_lock_active: founderState.rhythm === 'steady',
 
     // Embodiment Gate: Body must be open or steady
-    embodiment_gate_open: 
-      founderState.physiological === 'open' || 
-      founderState.physiological === 'steady',
+    embodiment_gate_open:
+      founderState.physiological === 'open' || founderState.physiological === 'steady',
 
     // Urgency Kill Switch: No urgency signals
-    urgency_kill_switch_triggered: 
-      founderState.rhythm === 'urgent' || 
+    urgency_kill_switch_triggered:
+      founderState.rhythm === 'urgent' ||
       founderState.conflict_indicator === 'pressure' ||
       falseHigh.signals.urgency_present,
 
     // Micro-consent: Founder ready signal present
-    micro_consent_present: founderState.founder_ready_signal === true
+    micro_consent_present: founderState.founder_ready_signal === true,
   };
 }
 
@@ -170,7 +169,7 @@ function buildUpwardBlock(
     expansion_detected: true,
     amplification_safe: true,
     magnification_note: buildMagnificationNote(founderState, expansion),
-    micro_actions: buildMicroActions(founderState, expansion)
+    micro_actions: buildMicroActions(founderState, expansion),
   };
 }
 
@@ -237,4 +236,3 @@ function getSafeguardBlockReason(safeguards: AmplificationSafeguards): string {
 
   return 'Safeguard check failed';
 }
-

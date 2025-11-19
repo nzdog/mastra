@@ -8,6 +8,7 @@ This document defines the minimal viable slice for Phase 1 implementation:
 ## Scope
 
 ### In Scope (Phase 1)
+
 - Founder state input processing
 - Diagnostic context integration (basic)
 - Memory snapshot integration (read-only, non-predictive)
@@ -18,6 +19,7 @@ This document defines the minimal viable slice for Phase 1 implementation:
 - Basic self-correction for drift violations
 
 ### Out of Scope (Phase 1)
+
 - Upward coherence detection
 - Amplification logic
 - Expansion mode
@@ -29,25 +31,30 @@ This document defines the minimal viable slice for Phase 1 implementation:
 ## Core Components (MVP)
 
 ### 1. Data Models
+
 - `FounderStateInput`
 - `DiagnosticContext` (simplified)
 - `MemorySnapshot` (event list only)
 - `CoherencePacket` (without upward block)
 
 ### 2. Classification Engine
+
 - Drift detector (6 categories)
 - Integrity classifier (deterministic rules)
 
 ### 3. Protocol Router
+
 - Simple mapping table
 - Deterministic routing based on state + signals
 
 ### 4. Output Builder
+
 - State reflection generator
 - Stabilisation cue generator
 - Drift guard (forbidden phrase checker)
 
 ### 5. API Endpoints (MVP)
+
 - `POST /coherence/stabilise-only`
 - `POST /coherence/debug/drift-check` (test helper)
 
@@ -62,21 +69,22 @@ else: STABLE
 
 ## Protocol Routing Table (MVP)
 
-| Integrity State | Primary Signal | Protocol Route |
-|-----------------|----------------|----------------|
-| DRIFT | urgency | holding_my_rhythm |
-| DRIFT | avoidance | what_am_i_avoiding |
-| DRIFT | oscillating | grounding_sequence |
-| DISTORTION | shame | shame_release |
-| DISTORTION | fear | fear_mapping |
-| DISTORTION | overwhelm | capacity_reset |
-| PRE_COLLAPSE | numbness | emergency_grounding |
-| PRE_COLLAPSE | shutdown | exit_precursor |
-| STABLE | none | none |
+| Integrity State | Primary Signal | Protocol Route      |
+| --------------- | -------------- | ------------------- |
+| DRIFT           | urgency        | holding_my_rhythm   |
+| DRIFT           | avoidance      | what_am_i_avoiding  |
+| DRIFT           | oscillating    | grounding_sequence  |
+| DISTORTION      | shame          | shame_release       |
+| DISTORTION      | fear           | fear_mapping        |
+| DISTORTION      | overwhelm      | capacity_reset      |
+| PRE_COLLAPSE    | numbness       | emergency_grounding |
+| PRE_COLLAPSE    | shutdown       | exit_precursor      |
+| STABLE          | none           | none                |
 
 ## API Contract (MVP)
 
 ### Request
+
 ```json
 {
   "founder_state": {
@@ -99,6 +107,7 @@ else: STABLE
 ```
 
 ### Response
+
 ```json
 {
   "integrity_state": "DRIFT",
@@ -125,4 +134,3 @@ else: STABLE
 - No future references, advice, or motivation in outputs
 - Tests pass for all routing scenarios
 - Drift guard catches forbidden phrases
-

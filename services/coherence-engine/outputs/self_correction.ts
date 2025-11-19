@@ -2,7 +2,7 @@
  * SELF-CORRECTION SYSTEM
  * Handles drift detection and output regeneration
  * As per SPEC.md Section 9.2
- * 
+ *
  * Self-correction sequence:
  * 1. reject_output()
  * 2. reset_engine_state()
@@ -38,13 +38,13 @@ function enforceRoleContract(): void {
   // This is a conceptual reset - in a more complex system,
   // this would reset any internal LLM context or state
   // For now, it's a documentation of the contract
-  
+
   const CONTRACT = {
     allowed: [
       'Present-state reflection only',
       'Integrity classification',
       'Protocol routing',
-      'One-line stabilisation cues'
+      'One-line stabilisation cues',
     ],
     forbidden: [
       'Future references',
@@ -52,8 +52,8 @@ function enforceRoleContract(): void {
       'Motivation',
       'Emotional validation',
       'Strategy',
-      'Therapy'
-    ]
+      'Therapy',
+    ],
   };
 
   // In production, this would be logged or used to reset AI context
@@ -70,7 +70,7 @@ function resetEngineState(state: EngineState): void {
 
 /**
  * Attempt self-correction on drift violations
- * 
+ *
  * NOTE: In this deterministic implementation, the output builder
  * should never produce drift. This is a safety net for future
  * AI-powered implementations or bugs in the output generator.
@@ -80,7 +80,7 @@ export async function attemptSelfCorrection(
 ): Promise<CorrectionResult> {
   const state: EngineState = {
     attempt_count: 0,
-    role_contract_enforced: false
+    role_contract_enforced: false,
   };
 
   const violations_history: DriftViolation[][] = [];
@@ -102,7 +102,7 @@ export async function attemptSelfCorrection(
         success: true,
         attempts: state.attempt_count,
         final_output: output,
-        violations_history
+        violations_history,
       };
     }
 
@@ -113,7 +113,7 @@ export async function attemptSelfCorrection(
       // Reject output
       // Reset state
       resetEngineState(state);
-      
+
       // Enforce role contract
       enforceRoleContract();
       state.role_contract_enforced = true;
@@ -128,7 +128,7 @@ export async function attemptSelfCorrection(
     success: false,
     attempts: state.attempt_count,
     final_output: null,
-    violations_history
+    violations_history,
   };
 }
 
@@ -139,7 +139,6 @@ export async function attemptSelfCorrection(
 export function validateOutput(output: CoherencePacket): DriftViolation[] {
   const stateReflectionDrift = checkForDrift(output.state_reflection);
   const cueDrift = output.stabilisation_cue ? checkForDrift(output.stabilisation_cue) : [];
-  
+
   return [...stateReflectionDrift, ...cueDrift];
 }
-

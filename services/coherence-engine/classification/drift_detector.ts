@@ -2,14 +2,14 @@
  * DRIFT DETECTOR
  * Detects 6 categories of drift from founder state
  * As per SPEC.md Section 4.1
- * 
+ *
  * CRITICAL: This is present-state only detection, no prediction
  */
 
 import { FounderStateInput } from '../models/founder_state';
 import { DiagnosticContext } from '../models/diagnostic_context';
 
-export type DriftCategory = 
+export type DriftCategory =
   | 'emotional_drift'
   | 'rhythm_drift'
   | 'cognitive_drift'
@@ -63,7 +63,7 @@ function detectEmotionalDrift(state: FounderStateInput): DriftSignal {
   return {
     category: 'emotional_drift',
     detected,
-    signal: detected ? `emotional_state: ${state.emotional}` : ''
+    signal: detected ? `emotional_state: ${state.emotional}` : '',
   };
 }
 
@@ -77,7 +77,7 @@ function detectRhythmDrift(state: FounderStateInput): DriftSignal {
   return {
     category: 'rhythm_drift',
     detected,
-    signal: detected ? `rhythm: ${state.rhythm}` : ''
+    signal: detected ? `rhythm: ${state.rhythm}` : '',
   };
 }
 
@@ -91,17 +91,14 @@ function detectCognitiveDrift(state: FounderStateInput): DriftSignal {
   return {
     category: 'cognitive_drift',
     detected,
-    signal: detected ? `cognitive_state: ${state.cognitive}` : ''
+    signal: detected ? `cognitive_state: ${state.cognitive}` : '',
   };
 }
 
 /**
  * Field Drift Detection
  */
-function detectFieldDrift(
-  state: FounderStateInput,
-  context?: DiagnosticContext
-): DriftSignal {
+function detectFieldDrift(state: FounderStateInput, context?: DiagnosticContext): DriftSignal {
   let detected = false;
   let signal = '';
 
@@ -114,13 +111,15 @@ function detectFieldDrift(
   // Check coherence score
   if (context?.coherence_score !== undefined && context.coherence_score < 0.5) {
     detected = true;
-    signal = signal ? `${signal}, low_coherence: ${context.coherence_score}` : `low_coherence: ${context.coherence_score}`;
+    signal = signal
+      ? `${signal}, low_coherence: ${context.coherence_score}`
+      : `low_coherence: ${context.coherence_score}`;
   }
 
   return {
     category: 'field_drift',
     detected,
-    signal
+    signal,
   };
 }
 
@@ -134,7 +133,7 @@ function detectRelationalDrift(state: FounderStateInput): DriftSignal {
   return {
     category: 'relational_drift',
     detected,
-    signal: detected ? `conflict: ${state.conflict_indicator}` : ''
+    signal: detected ? `conflict: ${state.conflict_indicator}` : '',
   };
 }
 
@@ -143,20 +142,26 @@ function detectRelationalDrift(state: FounderStateInput): DriftSignal {
  */
 function detectPressureDrift(state: FounderStateInput): DriftSignal {
   const pressureKeywords = [
-    'deadline', 'urgent', 'rushed', 'pressure', 'stressed',
-    'overwhelmed', 'too_much', 'behind', 'late', 'hurry'
+    'deadline',
+    'urgent',
+    'rushed',
+    'pressure',
+    'stressed',
+    'overwhelmed',
+    'too_much',
+    'behind',
+    'late',
+    'hurry',
   ];
 
-  const detected = 
+  const detected =
     state.conflict_indicator === 'pressure' ||
-    pressureKeywords.some(keyword => 
-      state.tension_keyword.toLowerCase().includes(keyword)
-    );
+    pressureKeywords.some((keyword) => state.tension_keyword.toLowerCase().includes(keyword));
 
   return {
     category: 'pressure_drift',
     detected,
-    signal: detected ? `pressure: ${state.tension_keyword}` : ''
+    signal: detected ? `pressure: ${state.tension_keyword}` : '',
   };
 }
 
@@ -164,13 +169,12 @@ function detectPressureDrift(state: FounderStateInput): DriftSignal {
  * Check if any drift is detected
  */
 export function hasDrift(signals: DriftSignal[]): boolean {
-  return signals.some(signal => signal.detected);
+  return signals.some((signal) => signal.detected);
 }
 
 /**
  * Get all active drift signals
  */
 export function getActiveDriftSignals(signals: DriftSignal[]): DriftSignal[] {
-  return signals.filter(signal => signal.detected);
+  return signals.filter((signal) => signal.detected);
 }
-

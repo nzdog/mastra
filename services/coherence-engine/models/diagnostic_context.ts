@@ -21,14 +21,25 @@ export function isValidDiagnosticContext(context: any): context is DiagnosticCon
   if (!context || typeof context !== 'object') return false;
 
   // All fields are optional, but if present must be correct types
-  if (context.current_field !== undefined && typeof context.current_field !== 'string') return false;
-  if (context.origin_field_residue !== undefined && typeof context.origin_field_residue !== 'string') return false;
-  if (context.emerging_field !== undefined && typeof context.emerging_field !== 'string') return false;
+  if (context.current_field !== undefined && typeof context.current_field !== 'string')
+    return false;
+  if (
+    context.origin_field_residue !== undefined &&
+    typeof context.origin_field_residue !== 'string'
+  )
+    return false;
+  if (context.emerging_field !== undefined && typeof context.emerging_field !== 'string')
+    return false;
   if (context.distortion_map !== undefined && !Array.isArray(context.distortion_map)) return false;
-  if (context.capacity_edge !== undefined && typeof context.capacity_edge !== 'string') return false;
-  if (context.coherence_score !== undefined && typeof context.coherence_score !== 'number') return false;
-  if (context.field_drift_direction !== undefined && typeof context.field_drift_direction !== 'string') return false;
+  if (context.capacity_edge !== undefined && typeof context.capacity_edge !== 'string')
+    return false;
+  if (context.coherence_score !== undefined && typeof context.coherence_score !== 'number')
+    return false;
+  if (
+    context.field_drift_direction !== undefined &&
+    typeof context.field_drift_direction !== 'string'
+  )
+    return false;
 
   return true;
 }
-

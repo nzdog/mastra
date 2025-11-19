@@ -20,7 +20,7 @@ describe('End-to-End Scenarios', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     // Process
@@ -45,7 +45,7 @@ describe('End-to-End Scenarios', () => {
       emotional: 'fog',
       cognitive: 'overwhelmed',
       tension_keyword: 'nothing',
-      conflict_indicator: 'avoidance'
+      conflict_indicator: 'avoidance',
     };
 
     // Process
@@ -70,7 +70,7 @@ describe('End-to-End Scenarios', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'failure',
-      conflict_indicator: 'tension'
+      conflict_indicator: 'tension',
     };
 
     // Process
@@ -94,7 +94,7 @@ describe('End-to-End Scenarios', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'calm',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     // Process
@@ -119,7 +119,7 @@ describe('End-to-End Scenarios', () => {
       emotional: 'constricted',
       cognitive: 'clear',
       tension_keyword: 'busy',
-      conflict_indicator: 'avoidance'
+      conflict_indicator: 'avoidance',
     };
 
     // Process
@@ -142,7 +142,7 @@ describe('End-to-End Scenarios', () => {
       emotional: 'constricted',
       cognitive: 'overwhelmed',
       tension_keyword: 'too_much',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     // Process
@@ -167,7 +167,7 @@ describe('Output Drift Verification', () => {
         emotional: 'constricted',
         cognitive: 'looping',
         tension_keyword: 'deadline',
-        conflict_indicator: 'pressure'
+        conflict_indicator: 'pressure',
       },
       {
         physiological: 'numb',
@@ -175,7 +175,7 @@ describe('Output Drift Verification', () => {
         emotional: 'fog',
         cognitive: 'overwhelmed',
         tension_keyword: 'nothing',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       },
       {
         physiological: 'tight',
@@ -183,7 +183,7 @@ describe('Output Drift Verification', () => {
         emotional: 'constricted',
         cognitive: 'looping',
         tension_keyword: 'failure',
-        conflict_indicator: 'tension'
+        conflict_indicator: 'tension',
       },
       {
         physiological: 'open',
@@ -191,22 +191,21 @@ describe('Output Drift Verification', () => {
         emotional: 'open',
         cognitive: 'clear',
         tension_keyword: 'calm',
-        conflict_indicator: 'none'
-      }
+        conflict_indicator: 'none',
+      },
     ];
 
-    scenarios.forEach(state => {
+    scenarios.forEach((state) => {
       const classification = classifyIntegrityState(state);
       const route = routeToProtocol(classification);
       const packet = buildCoherencePacket(state, classification, route);
 
       // All outputs must be clean
       expect(isCleanOutput(packet.state_reflection)).toBe(true);
-      
+
       if (packet.stabilisation_cue) {
         expect(isCleanOutput(packet.stabilisation_cue)).toBe(true);
       }
     });
   });
 });
-

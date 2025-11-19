@@ -7,6 +7,7 @@ A complete, production-ready Coherence Engine implementing the full Phase 1 spec
 ## Architecture Delivered
 
 ### 1. Data Models ✅
+
 - `FounderStateInput` — Real-time founder state with 6 signal types
 - `DiagnosticContext` — Field diagnostic inputs
 - `MemorySnapshot` — Event-only, non-predictive memory context
@@ -16,6 +17,7 @@ A complete, production-ready Coherence Engine implementing the full Phase 1 spec
 **Files:** `models/*.ts` (5 files)
 
 ### 2. Classification Engine ✅
+
 - **Drift Detector** — 6 categories (emotional, rhythm, cognitive, field, relational, pressure)
 - **Integrity Classifier** — Deterministic rules for STABLE/DRIFT/DISTORTION/PRE_COLLAPSE
 - Priority-based classification logic
@@ -24,6 +26,7 @@ A complete, production-ready Coherence Engine implementing the full Phase 1 spec
 **Files:** `classification/*.ts` (3 files)
 
 ### 3. Protocol Router ✅
+
 - Deterministic routing table with 9 routes
 - Exit precursor flag handling
 - Fallback logic for unmapped signals
@@ -32,6 +35,7 @@ A complete, production-ready Coherence Engine implementing the full Phase 1 spec
 **File:** `protocol_router.ts`
 
 ### 4. Output System ✅
+
 - **Output Builder** — Constructs CoherencePacket from classification + routing
 - **Drift Guard** — Detects 7 categories of forbidden language
 - **Self-Correction** — Reject → reset → re-enforce → reclassify loop
@@ -41,6 +45,7 @@ A complete, production-ready Coherence Engine implementing the full Phase 1 spec
 **Files:** `outputs/*.ts` (4 files)
 
 ### 5. HTTP API ✅
+
 - `POST /coherence/stabilise-only` — Main endpoint
 - `POST /coherence/evaluate` — Full evaluation (Phase 2 ready)
 - `POST /coherence/debug/drift-check` — Debug endpoint
@@ -52,6 +57,7 @@ A complete, production-ready Coherence Engine implementing the full Phase 1 spec
 **Files:** `api/*.ts` (3 files)
 
 ### 6. Test Suite ✅
+
 - 50+ tests across all components
 - Classification tests (all states)
 - Routing tests (all routes)
@@ -65,6 +71,7 @@ A complete, production-ready Coherence Engine implementing the full Phase 1 spec
 **Files:** `tests/*.test.ts` (6 files)
 
 ### 7. Documentation ✅
+
 - **README.md** — Complete setup and usage guide
 - **SPEC.md** — Architectural specification (provided)
 - **MVP_SLICE.md** — Phase 1 scope definition
@@ -75,6 +82,7 @@ A complete, production-ready Coherence Engine implementing the full Phase 1 spec
 - **IMPLEMENTATION_SUMMARY.md** — This file
 
 ### 8. Developer Experience ✅
+
 - TypeScript with strict mode
 - Vitest test runner
 - Development watch mode
@@ -158,6 +166,7 @@ As specified, these are deliberately excluded from Phase 1:
 ## How to Use
 
 ### Install & Run
+
 ```bash
 cd services/coherence-engine
 npm install
@@ -165,16 +174,19 @@ npm run dev  # Starts server on port 3000
 ```
 
 ### Run Tests
+
 ```bash
 npm test
 ```
 
 ### Run Example
+
 ```bash
 npm run example
 ```
 
 ### Make API Call
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -231,4 +243,3 @@ This implementation is production-ready:
 All requirements from the specification have been implemented, tested, and documented.
 
 The Coherence Engine is ready for deployment and real-world usage.
-

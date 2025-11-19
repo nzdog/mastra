@@ -4,14 +4,14 @@
  */
 
 import { Request, Response } from 'express';
-import { 
-  FounderStateInput, 
-  DiagnosticContext, 
+import {
+  FounderStateInput,
+  DiagnosticContext,
   MemorySnapshot,
   isValidFounderState,
   isValidDiagnosticContext,
   isValidMemorySnapshot,
-  isValidCoherencePacket
+  isValidCoherencePacket,
 } from '../models';
 import { classifyIntegrityState } from '../classification';
 import { routeToProtocol } from '../protocol_router';
@@ -42,7 +42,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     // Validate required fields
     if (!body.founder_state) {
       res.status(400).json({
-        error: 'Missing required field: founder_state'
+        error: 'Missing required field: founder_state',
       });
       return;
     }
@@ -51,7 +51,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     if (!isValidFounderState(body.founder_state)) {
       res.status(400).json({
         error: 'Invalid founder_state format',
-        details: 'Check physiological, rhythm, emotional, cognitive, and conflict_indicator fields'
+        details: 'Check physiological, rhythm, emotional, cognitive, and conflict_indicator fields',
       });
       return;
     }
@@ -59,31 +59,24 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     // Validate optional fields
     if (body.diagnostic_context && !isValidDiagnosticContext(body.diagnostic_context)) {
       res.status(400).json({
-        error: 'Invalid diagnostic_context format'
+        error: 'Invalid diagnostic_context format',
       });
       return;
     }
 
     if (body.memory_snapshot && !isValidMemorySnapshot(body.memory_snapshot)) {
       res.status(400).json({
-        error: 'Invalid memory_snapshot format'
+        error: 'Invalid memory_snapshot format',
       });
       return;
     }
 
     // Process: Classify -> Route -> Build Output
-    const classification = classifyIntegrityState(
-      body.founder_state,
-      body.diagnostic_context
-    );
+    const classification = classifyIntegrityState(body.founder_state, body.diagnostic_context);
 
     const route = routeToProtocol(classification);
 
-    const coherencePacket = buildCoherencePacket(
-      body.founder_state,
-      classification,
-      route
-    );
+    const coherencePacket = buildCoherencePacket(body.founder_state, classification, route);
 
     // Validate output for drift (should never happen in deterministic system, but safety check)
     const driftViolations = validateOutput(coherencePacket);
@@ -92,7 +85,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
       console.error('CRITICAL: Drift detected in output:', driftViolations);
       res.status(500).json({
         error: 'Internal error: drift detected in output',
-        violations: driftViolations
+        violations: driftViolations,
       });
       return;
     }
@@ -101,19 +94,18 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     if (!isValidCoherencePacket(coherencePacket)) {
       console.error('CRITICAL: Invalid CoherencePacket structure:', coherencePacket);
       res.status(500).json({
-        error: 'Internal error: invalid output structure'
+        error: 'Internal error: invalid output structure',
       });
       return;
     }
 
     // Return successful response
     res.status(200).json(coherencePacket);
-
   } catch (error) {
     console.error('Error in stabiliseOnly:', error);
     res.status(500).json({
       error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
@@ -129,7 +121,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     // Validate required fields
     if (!body.founder_state) {
       res.status(400).json({
-        error: 'Missing required field: founder_state'
+        error: 'Missing required field: founder_state',
       });
       return;
     }
@@ -138,7 +130,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     if (!isValidFounderState(body.founder_state)) {
       res.status(400).json({
         error: 'Invalid founder_state format',
-        details: 'Check physiological, rhythm, emotional, cognitive, and conflict_indicator fields'
+        details: 'Check physiological, rhythm, emotional, cognitive, and conflict_indicator fields',
       });
       return;
     }
@@ -146,32 +138,25 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     // Validate optional fields
     if (body.diagnostic_context && !isValidDiagnosticContext(body.diagnostic_context)) {
       res.status(400).json({
-        error: 'Invalid diagnostic_context format'
+        error: 'Invalid diagnostic_context format',
       });
       return;
     }
 
     if (body.memory_snapshot && !isValidMemorySnapshot(body.memory_snapshot)) {
       res.status(400).json({
-        error: 'Invalid memory_snapshot format'
+        error: 'Invalid memory_snapshot format',
       });
       return;
     }
 
     // Step 1: Classify integrity state
-    const classification = classifyIntegrityState(
-      body.founder_state,
-      body.diagnostic_context
-    );
+    const classification = classifyIntegrityState(body.founder_state, body.diagnostic_context);
 
     const route = routeToProtocol(classification);
 
     // Step 2: Build base coherence packet
-    let coherencePacket = buildCoherencePacket(
-      body.founder_state,
-      classification,
-      route
-    );
+    let coherencePacket = buildCoherencePacket(body.founder_state, classification, route);
 
     // Step 3: Check for upward coherence (Phase 2)
     if (classification.integrity_state === 'STABLE') {
@@ -193,7 +178,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
       // Add upward block if amplification is safe
       coherencePacket = {
         ...coherencePacket,
-        upward: amplificationPlan.upward_block
+        upward: amplificationPlan.upward_block,
       };
     }
 
@@ -203,7 +188,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
       console.error('CRITICAL: Drift detected in output:', driftViolations);
       res.status(500).json({
         error: 'Internal error: drift detected in output',
-        violations: driftViolations
+        violations: driftViolations,
       });
       return;
     }
@@ -212,19 +197,18 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     if (!isValidCoherencePacket(coherencePacket)) {
       console.error('CRITICAL: Invalid CoherencePacket structure:', coherencePacket);
       res.status(500).json({
-        error: 'Internal error: invalid output structure'
+        error: 'Internal error: invalid output structure',
       });
       return;
     }
 
     // Return successful response
     res.status(200).json(coherencePacket);
-
   } catch (error) {
     console.error('Error in evaluate:', error);
     res.status(500).json({
       error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
@@ -239,7 +223,7 @@ export async function driftCheck(req: Request, res: Response): Promise<void> {
 
     if (!text || typeof text !== 'string') {
       res.status(400).json({
-        error: 'Missing or invalid required field: text (string)'
+        error: 'Missing or invalid required field: text (string)',
       });
       return;
     }
@@ -249,14 +233,13 @@ export async function driftCheck(req: Request, res: Response): Promise<void> {
     res.status(200).json({
       clean: violations.length === 0,
       violations,
-      text
+      text,
     });
-
   } catch (error) {
     console.error('Error in driftCheck:', error);
     res.status(500).json({
       error: 'Internal server error',
-      message: error instanceof Error ? error.message : 'Unknown error'
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }
@@ -270,7 +253,6 @@ export function health(req: Request, res: Response): void {
     status: 'healthy',
     service: 'coherence-engine',
     version: '1.0.0',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   });
 }
-

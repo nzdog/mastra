@@ -42,4 +42,3 @@ export function isValidFounderState(state: any): state is FounderStateInput {
     (state.founder_ready_signal === undefined || typeof state.founder_ready_signal === 'boolean')
   );
 }
-

@@ -13,7 +13,7 @@ describe('Protocol Routing - DRIFT', () => {
     const classification: ClassificationResult = {
       integrity_state: 'DRIFT',
       primary_signal: 'urgency',
-      classification_reason: 'Urgency detected'
+      classification_reason: 'Urgency detected',
     };
 
     const route = routeToProtocol(classification);
@@ -25,7 +25,7 @@ describe('Protocol Routing - DRIFT', () => {
     const classification: ClassificationResult = {
       integrity_state: 'DRIFT',
       primary_signal: 'avoidance',
-      classification_reason: 'Avoidance detected'
+      classification_reason: 'Avoidance detected',
     };
 
     const route = routeToProtocol(classification);
@@ -37,7 +37,7 @@ describe('Protocol Routing - DRIFT', () => {
     const classification: ClassificationResult = {
       integrity_state: 'DRIFT',
       primary_signal: 'oscillating',
-      classification_reason: 'Oscillating rhythm'
+      classification_reason: 'Oscillating rhythm',
     };
 
     const route = routeToProtocol(classification);
@@ -49,7 +49,7 @@ describe('Protocol Routing - DRIFT', () => {
     const classification: ClassificationResult = {
       integrity_state: 'DRIFT',
       primary_signal: 'pressure',
-      classification_reason: 'Pressure detected'
+      classification_reason: 'Pressure detected',
     };
 
     const route = routeToProtocol(classification);
@@ -63,7 +63,7 @@ describe('Protocol Routing - DISTORTION', () => {
     const classification: ClassificationResult = {
       integrity_state: 'DISTORTION',
       primary_signal: 'shame',
-      classification_reason: 'Shame detected'
+      classification_reason: 'Shame detected',
     };
 
     const route = routeToProtocol(classification);
@@ -75,7 +75,7 @@ describe('Protocol Routing - DISTORTION', () => {
     const classification: ClassificationResult = {
       integrity_state: 'DISTORTION',
       primary_signal: 'fear',
-      classification_reason: 'Fear detected'
+      classification_reason: 'Fear detected',
     };
 
     const route = routeToProtocol(classification);
@@ -87,7 +87,7 @@ describe('Protocol Routing - DISTORTION', () => {
     const classification: ClassificationResult = {
       integrity_state: 'DISTORTION',
       primary_signal: 'overwhelm',
-      classification_reason: 'Overwhelm detected'
+      classification_reason: 'Overwhelm detected',
     };
 
     const route = routeToProtocol(classification);
@@ -101,7 +101,7 @@ describe('Protocol Routing - PRE_COLLAPSE', () => {
     const classification: ClassificationResult = {
       integrity_state: 'PRE_COLLAPSE',
       primary_signal: 'numbness',
-      classification_reason: 'Numbness detected'
+      classification_reason: 'Numbness detected',
     };
 
     const route = routeToProtocol(classification);
@@ -113,7 +113,7 @@ describe('Protocol Routing - PRE_COLLAPSE', () => {
     const classification: ClassificationResult = {
       integrity_state: 'PRE_COLLAPSE',
       primary_signal: 'shutdown',
-      classification_reason: 'Shutdown detected'
+      classification_reason: 'Shutdown detected',
     };
 
     const route = routeToProtocol(classification);
@@ -125,7 +125,7 @@ describe('Protocol Routing - PRE_COLLAPSE', () => {
     const classification: ClassificationResult = {
       integrity_state: 'PRE_COLLAPSE',
       primary_signal: 'fog',
-      classification_reason: 'Fog detected'
+      classification_reason: 'Fog detected',
     };
 
     const route = routeToProtocol(classification);
@@ -139,7 +139,7 @@ describe('Protocol Routing - STABLE', () => {
     const classification: ClassificationResult = {
       integrity_state: 'STABLE',
       primary_signal: 'none',
-      classification_reason: 'No drift detected'
+      classification_reason: 'No drift detected',
     };
 
     const route = routeToProtocol(classification);
@@ -147,4 +147,3 @@ describe('Protocol Routing - STABLE', () => {
     expect(route.exit_precursor).toBe(false);
   });
 });
-
