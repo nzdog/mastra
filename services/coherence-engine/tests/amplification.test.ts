@@ -19,11 +19,11 @@ describe('Expansion Detection', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const context: DiagnosticContext = {
-      coherence_score: 0.85
+      coherence_score: 0.85,
     };
 
     const result = detectExpansion(state, context);
@@ -44,7 +44,7 @@ describe('Expansion Detection', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'stressed',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const result = detectExpansion(state);
@@ -61,14 +61,14 @@ describe('Expansion Detection', () => {
       calm_state: true,
       no_urgency: true,
       embodied_readiness: true,
-      available_capacity: true
+      available_capacity: true,
     };
 
     expect(isExpansionSafe(safeSignals)).toBe(true);
 
     const unsafeSignals = {
       ...safeSignals,
-      no_urgency: false // Critical signal missing
+      no_urgency: false, // Critical signal missing
     };
 
     expect(isExpansionSafe(unsafeSignals)).toBe(false);
@@ -83,7 +83,7 @@ describe('False-High Detection', () => {
       emotional: 'open',
       cognitive: 'looping',
       tension_keyword: 'excited',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const result = detectFalseHigh(state);
@@ -99,7 +99,7 @@ describe('False-High Detection', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'motivated',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const result = detectFalseHigh(state);
@@ -116,7 +116,7 @@ describe('False-High Detection', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'amazing',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const result = detectFalseHigh(state);
@@ -133,7 +133,7 @@ describe('False-High Detection', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const result = detectFalseHigh(state);
@@ -152,23 +152,17 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const context: DiagnosticContext = {
-      coherence_score: 0.85
+      coherence_score: 0.85,
     };
 
     const expansion = detectExpansion(state, context);
     const falseHigh = detectFalseHigh(state, context);
 
-    const plan = planAmplification(
-      state,
-      'STABLE',
-      expansion,
-      falseHigh,
-      true
-    );
+    const plan = planAmplification(state, 'STABLE', expansion, falseHigh, true);
 
     expect(plan.can_amplify).toBe(true);
     expect(plan.upward_block).not.toBeNull();
@@ -184,7 +178,7 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const expansion = detectExpansion(state);
@@ -211,19 +205,13 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: false // Not ready
+      founder_ready_signal: false, // Not ready
     };
 
     const expansion = detectExpansion(state);
     const falseHigh = detectFalseHigh(state);
 
-    const plan = planAmplification(
-      state,
-      'STABLE',
-      expansion,
-      falseHigh,
-      true
-    );
+    const plan = planAmplification(state, 'STABLE', expansion, falseHigh, true);
 
     expect(plan.can_amplify).toBe(false);
     expect(plan.upward_block).toBeNull();
@@ -238,19 +226,13 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'excited',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const expansion = detectExpansion(state);
     const falseHigh = detectFalseHigh(state);
 
-    const plan = planAmplification(
-      state,
-      'STABLE',
-      expansion,
-      falseHigh,
-      true
-    );
+    const plan = planAmplification(state, 'STABLE', expansion, falseHigh, true);
 
     expect(plan.can_amplify).toBe(false);
     expect(plan.upward_block).toBeNull();
@@ -265,7 +247,7 @@ describe('Amplification Planning', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const expansion = detectExpansion(state);
@@ -294,19 +276,13 @@ describe('Amplification Safeguards', () => {
       cognitive: 'clear',
       tension_keyword: 'deadline',
       conflict_indicator: 'pressure',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const expansion = detectExpansion(state);
     const falseHigh = detectFalseHigh(state);
 
-    const plan = planAmplification(
-      state,
-      'STABLE',
-      expansion,
-      falseHigh,
-      true
-    );
+    const plan = planAmplification(state, 'STABLE', expansion, falseHigh, true);
 
     expect(plan.safeguards.urgency_kill_switch_triggered).toBe(true);
     expect(plan.can_amplify).toBe(false);
@@ -320,19 +296,13 @@ describe('Amplification Safeguards', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const expansion = detectExpansion(state);
     const falseHigh = detectFalseHigh(state);
 
-    const plan = planAmplification(
-      state,
-      'STABLE',
-      expansion,
-      falseHigh,
-      true
-    );
+    const plan = planAmplification(state, 'STABLE', expansion, falseHigh, true);
 
     expect(plan.safeguards.embodiment_gate_open).toBe(false);
     expect(plan.can_amplify).toBe(false);
@@ -346,19 +316,13 @@ describe('Amplification Safeguards', () => {
       cognitive: 'clear',
       tension_keyword: 'calm',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const expansion = detectExpansion(state);
     const falseHigh = detectFalseHigh(state);
 
-    const plan = planAmplification(
-      state,
-      'STABLE',
-      expansion,
-      falseHigh,
-      true
-    );
+    const plan = planAmplification(state, 'STABLE', expansion, falseHigh, true);
 
     expect(plan.safeguards.pace_lock_active).toBe(true);
   });
@@ -373,23 +337,17 @@ describe('Upward Block Content', () => {
       cognitive: 'clear',
       tension_keyword: 'focused',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const context: DiagnosticContext = {
-      coherence_score: 0.9
+      coherence_score: 0.9,
     };
 
     const expansion = detectExpansion(state, context);
     const falseHigh = detectFalseHigh(state, context);
 
-    const plan = planAmplification(
-      state,
-      'STABLE',
-      expansion,
-      falseHigh,
-      true
-    );
+    const plan = planAmplification(state, 'STABLE', expansion, falseHigh, true);
 
     expect(plan.upward_block).not.toBeNull();
     expect(plan.upward_block?.magnification_note).toBeTruthy();
@@ -405,27 +363,20 @@ describe('Upward Block Content', () => {
       cognitive: 'clear',
       tension_keyword: 'centered',
       conflict_indicator: 'none',
-      founder_ready_signal: true
+      founder_ready_signal: true,
     };
 
     const context: DiagnosticContext = {
-      coherence_score: 0.95
+      coherence_score: 0.95,
     };
 
     const expansion = detectExpansion(state, context);
     const falseHigh = detectFalseHigh(state, context);
 
-    const plan = planAmplification(
-      state,
-      'STABLE',
-      expansion,
-      falseHigh,
-      true
-    );
+    const plan = planAmplification(state, 'STABLE', expansion, falseHigh, true);
 
     expect(plan.upward_block).not.toBeNull();
     expect(plan.upward_block?.micro_actions).toBeDefined();
     expect(plan.upward_block?.micro_actions?.length).toBeLessThanOrEqual(2);
   });
 });
-

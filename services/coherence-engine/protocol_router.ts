@@ -2,7 +2,7 @@
  * PROTOCOL ROUTER
  * Maps integrity state + primary signal to protocol routes
  * As per MVP_SLICE.md routing table
- * 
+ *
  * CRITICAL: This is deterministic routing based on present state only
  */
 
@@ -39,7 +39,7 @@ const ROUTING_TABLE: Record<string, string> = {
   'PRE_COLLAPSE:fog': 'emergency_grounding',
 
   // STABLE has no protocol route
-  'STABLE:none': 'none'
+  'STABLE:none': 'none',
 };
 
 /**
@@ -52,7 +52,7 @@ export function routeToProtocol(classification: ClassificationResult): ProtocolR
   if (integrity_state === 'STABLE') {
     return {
       protocol: null,
-      exit_precursor: false
+      exit_precursor: false,
     };
   }
 
@@ -71,7 +71,7 @@ export function routeToProtocol(classification: ClassificationResult): ProtocolR
   if (route === 'exit_precursor') {
     return {
       protocol: 'emergency_grounding',
-      exit_precursor: true
+      exit_precursor: true,
     };
   }
 
@@ -79,13 +79,13 @@ export function routeToProtocol(classification: ClassificationResult): ProtocolR
   if (route === 'none') {
     return {
       protocol: null,
-      exit_precursor: false
+      exit_precursor: false,
     };
   }
 
   return {
     protocol: route,
-    exit_precursor: integrity_state === 'PRE_COLLAPSE'
+    exit_precursor: integrity_state === 'PRE_COLLAPSE',
   };
 }
 
@@ -97,22 +97,22 @@ function getFallbackRoute(integrityState: IntegrityState): ProtocolRoute {
     case 'DRIFT':
       return {
         protocol: 'grounding_sequence',
-        exit_precursor: false
+        exit_precursor: false,
       };
     case 'DISTORTION':
       return {
         protocol: 'capacity_reset',
-        exit_precursor: false
+        exit_precursor: false,
       };
     case 'PRE_COLLAPSE':
       return {
         protocol: 'emergency_grounding',
-        exit_precursor: true
+        exit_precursor: true,
       };
     case 'STABLE':
       return {
         protocol: null,
-        exit_precursor: false
+        exit_precursor: false,
       };
   }
 }
@@ -122,15 +122,14 @@ function getFallbackRoute(integrityState: IntegrityState): ProtocolRoute {
  */
 export function getProtocolDescription(protocolSlug: string | null): string {
   const descriptions: Record<string, string> = {
-    'holding_my_rhythm': 'Restore founder rhythm and reduce urgency',
-    'what_am_i_avoiding': 'Surface and address avoidance patterns',
-    'grounding_sequence': 'Ground and stabilise present-state awareness',
-    'shame_release': 'Release shame without bypassing',
-    'fear_mapping': 'Map and contain fear without collapsing',
-    'capacity_reset': 'Reset to sustainable capacity baseline',
-    'emergency_grounding': 'Emergency stabilisation for collapse prevention'
+    holding_my_rhythm: 'Restore founder rhythm and reduce urgency',
+    what_am_i_avoiding: 'Surface and address avoidance patterns',
+    grounding_sequence: 'Ground and stabilise present-state awareness',
+    shame_release: 'Release shame without bypassing',
+    fear_mapping: 'Map and contain fear without collapsing',
+    capacity_reset: 'Reset to sustainable capacity baseline',
+    emergency_grounding: 'Emergency stabilisation for collapse prevention',
   };
 
   return protocolSlug ? descriptions[protocolSlug] || 'Unknown protocol' : 'No protocol required';
 }
-

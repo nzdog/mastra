@@ -9,6 +9,7 @@ All notable changes to the Coherence Engine will be documented in this file.
 #### Added
 
 **Amplification Components**
+
 - Expansion signal detector (7 expansion signals)
 - False-high detector (unsafe positive urgency detection)
 - Amplification planner with all 4 safeguards
@@ -17,18 +18,21 @@ All notable changes to the Coherence Engine will be documented in this file.
 - Micro-actions generation (max 2, stabilizing)
 
 **Amplification Safeguards**
+
 - Pace Lock — Cannot increase founder speed
 - Embodiment Gate — Halts if body closes
 - Urgency Kill Switch — Stops if urgency appears
 - Micro-Consent Loop — Requires embodied readiness
 
 **API Enhancements**
+
 - Enhanced `/coherence/evaluate` endpoint with upward detection
 - Upward coherence included when integrity_state = STABLE
 - Automatic false-high detection and blocking
 - Pre-condition validation (STABLE + protocol_complete + founder_ready)
 
 **Testing**
+
 - 17 comprehensive Phase 2 tests
 - Expansion detection tests
 - False-high detection tests
@@ -38,17 +42,20 @@ All notable changes to the Coherence Engine will be documented in this file.
 - **Total: 105 tests** (88 Phase 1 + 17 Phase 2)
 
 **Documentation**
+
 - PHASE2_NOTES.md with implementation details
 - Updated README with Phase 2 features
 - Updated CHANGELOG
 - API documentation for upward coherence
 
 #### Changed
+
 - Server startup message reflects Phase 2
 - `/coherence/evaluate` now includes upward coherence detection
 - All Phase 1 functionality preserved (no breaking changes)
 
 #### Constraints Enforced
+
 ✅ Amplification cannot increase founder speed (pace lock)
 ✅ Amplification halts if body closes (embodiment gate)
 ✅ Amplification stops if urgency appears (kill switch)
@@ -68,6 +75,7 @@ All notable changes to the Coherence Engine will be documented in this file.
 #### Added
 
 **Core Architecture**
+
 - Deterministic integrity state classification (STABLE, DRIFT, DISTORTION, PRE_COLLAPSE)
 - Protocol routing table with 9 protocol routes
 - Drift detection across 6 categories (emotional, rhythm, cognitive, field, relational, pressure)
@@ -75,6 +83,7 @@ All notable changes to the Coherence Engine will be documented in this file.
 - Memory integration (non-predictive, event-only)
 
 **Data Models**
+
 - `FounderStateInput` — Real-time founder state signals
 - `DiagnosticContext` — Field diagnostic inputs
 - `MemorySnapshot` — Event-only memory context
@@ -82,28 +91,33 @@ All notable changes to the Coherence Engine will be documented in this file.
 - Full TypeScript type safety with validation helpers
 
 **Classification Engine**
+
 - Drift detector with 6 category detection
 - Integrity classifier with deterministic rules
 - Priority-based classification (PRE_COLLAPSE > DISTORTION > DRIFT > STABLE)
 
 **Protocol Router**
+
 - Deterministic routing table
 - Exit precursor flag handling
 - Fallback routing logic
 
 **Output System**
+
 - State reflection builder (present-state only)
 - Stabilisation cue generator (one-line, non-directive)
 - Drift guard with forbidden language detection
 - Self-correction loop (reject → reset → re-enforce → reclassify)
 
 **API Endpoints**
+
 - `POST /coherence/stabilise-only` — Main stabilisation endpoint
 - `POST /coherence/evaluate` — Full evaluation (identical to stabilise-only in Phase 1)
 - `POST /coherence/debug/drift-check` — Drift detection test endpoint
 - `GET /health` — Health check
 
 **Testing**
+
 - 50+ unit tests across all components
 - Classification tests (PRE_COLLAPSE, DISTORTION, DRIFT, STABLE)
 - Routing tests (all protocol routes)
@@ -114,6 +128,7 @@ All notable changes to the Coherence Engine will be documented in this file.
 - End-to-end scenario tests
 
 **Documentation**
+
 - Complete README.md with quick start
 - SPEC.md (architectural specification)
 - MVP_SLICE.md (Phase 1 scope)
@@ -123,6 +138,7 @@ All notable changes to the Coherence Engine will be documented in this file.
 - Example usage script
 
 **Development Tools**
+
 - TypeScript configuration
 - Vitest test runner
 - Express HTTP server
@@ -157,4 +173,3 @@ All notable changes to the Coherence Engine will be documented in this file.
 **Status:** Phase 2 Complete and Ready for Deployment
 
 All 105 tests passing. Stabilisation + Amplification fully implemented.
-

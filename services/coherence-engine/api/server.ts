@@ -18,11 +18,9 @@ export function createApp(): Express {
   app.use(
     cors({
       origin:
-        process.env.NODE_ENV === 'production'
-          ? process.env.CORS_ORIGIN?.split(',') || []
-          : '*',
+        process.env.NODE_ENV === 'production' ? process.env.CORS_ORIGIN?.split(',') || [] : '*',
       credentials: true,
-    }),
+    })
   );
 
   // Security: Request size limits
@@ -45,10 +43,10 @@ export function createApp(): Express {
 
   // Routes
   app.get('/health', health);
-  
+
   // Apply rate limiting to coherence endpoints
   app.use('/coherence', apiLimiter);
-  
+
   app.post('/coherence/stabilise-only', stabiliseOnly);
   app.post('/coherence/evaluate', evaluate);
   app.post('/coherence/debug/drift-check', driftCheck);

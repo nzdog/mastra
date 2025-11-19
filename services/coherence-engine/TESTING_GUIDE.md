@@ -7,12 +7,15 @@ The server is running on **http://localhost:3000**
 ## 🎯 4 Ways to Test
 
 ### 1. Run Example Script (Recommended)
+
 ```bash
 npm run example
 ```
+
 Shows 4 complete scenarios with output.
 
 ### 2. Run Test Suite
+
 ```bash
 npm test              # Run all 88 tests
 npm run test:watch    # Watch mode
@@ -20,9 +23,11 @@ npm run test:coverage # With coverage report
 ```
 
 ### 3. Use cURL Commands
+
 Copy and paste these into your terminal.
 
 ### 4. Use API Client
+
 Import into Postman, Insomnia, or use HTTPie.
 
 ---
@@ -30,6 +35,7 @@ Import into Postman, Insomnia, or use HTTPie.
 ## 📋 Test Scenarios (cURL)
 
 ### Scenario 1: Urgency Spike → DRIFT
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -46,6 +52,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ```
 
 **Expected:**
+
 - `integrity_state`: "DRIFT"
 - `protocol_route`: "holding_my_rhythm"
 - `stabilisation_cue`: "Pause."
@@ -54,6 +61,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ---
 
 ### Scenario 2: Avoidance → DRIFT
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -70,6 +78,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ```
 
 **Expected:**
+
 - `integrity_state`: "DRIFT"
 - `protocol_route`: "what_am_i_avoiding"
 - `stabilisation_cue`: "Notice."
@@ -77,6 +86,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ---
 
 ### Scenario 3: Shame → DISTORTION
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -93,6 +103,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ```
 
 **Expected:**
+
 - `integrity_state`: "DISTORTION"
 - `protocol_route`: "shame_release"
 - `stabilisation_cue`: "Ground."
@@ -100,6 +111,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ---
 
 ### Scenario 4: Overwhelm → DISTORTION
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -116,6 +128,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ```
 
 **Expected:**
+
 - `integrity_state`: "DISTORTION"
 - `protocol_route`: "capacity_reset"
 - `stabilisation_cue`: "Breathe."
@@ -123,6 +136,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ---
 
 ### Scenario 5: Numbness → PRE_COLLAPSE
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -139,6 +153,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ```
 
 **Expected:**
+
 - `integrity_state`: "PRE_COLLAPSE"
 - `protocol_route`: "emergency_grounding"
 - `stabilisation_cue`: "Stop."
@@ -147,6 +162,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ---
 
 ### Scenario 6: Calm Founder → STABLE
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -163,6 +179,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ```
 
 **Expected:**
+
 - `integrity_state`: "STABLE"
 - `protocol_route`: null
 - `stabilisation_cue`: null
@@ -173,6 +190,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ## 🔍 Test Drift Detection
 
 ### Test Dirty Text (Should Fail)
+
 ```bash
 curl -X POST http://localhost:3000/coherence/debug/drift-check \
   -H "Content-Type: application/json" \
@@ -182,6 +200,7 @@ curl -X POST http://localhost:3000/coherence/debug/drift-check \
 **Expected:** 4+ violations (future refs, advisory language)
 
 ### Test Clean Text (Should Pass)
+
 ```bash
 curl -X POST http://localhost:3000/coherence/debug/drift-check \
   -H "Content-Type: application/json" \
@@ -199,6 +218,7 @@ curl http://localhost:3000/health | jq
 ```
 
 **Expected:**
+
 ```json
 {
   "status": "healthy",
@@ -213,6 +233,7 @@ curl http://localhost:3000/health | jq
 ## 🧪 Edge Cases to Test
 
 ### Invalid Input (Should Return 400)
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -229,6 +250,7 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 ```
 
 ### Missing Required Field (Should Return 400)
+
 ```bash
 curl -X POST http://localhost:3000/coherence/stabilise-only \
   -H "Content-Type: application/json" \
@@ -242,23 +264,28 @@ curl -X POST http://localhost:3000/coherence/stabilise-only \
 For every response, check:
 
 ✅ **Structure**
+
 - Has `integrity_state`, `state_reflection`, `protocol_route`, `stabilisation_cue`, `exit_precursor`, `upward`
 - `upward` is always `null` in Phase 1
 
 ✅ **Classification**
+
 - Correct integrity state for input signals
 - Logical primary signal detection
 
 ✅ **Routing**
+
 - Correct protocol route for state + signal
 - Exit precursor flag set for PRE_COLLAPSE
 
 ✅ **Drift Guard**
+
 - No "you should", "you will", "try to", "soon", etc.
 - No advice or motivation
 - Only present-state reflection
 
 ✅ **Cues**
+
 - One word + period only ("Pause.", "Stop.", "Ground.", "Notice.", "Breathe.")
 - Or null for STABLE
 
@@ -298,4 +325,3 @@ If you see ANY of these, it's a bug:
 ---
 
 **Happy Testing!** 🎉
-

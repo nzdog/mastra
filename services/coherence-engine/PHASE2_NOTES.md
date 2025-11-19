@@ -44,6 +44,7 @@
 ### Pre-Conditions for Amplification
 
 All must be true:
+
 1. ✅ integrity_state == STABLE
 2. ✅ protocol_cycle_complete == true
 3. ✅ founder_ready_signal == true
@@ -69,6 +70,7 @@ All must be true:
 Now includes upward coherence detection when state is STABLE.
 
 **Example Response with Amplification:**
+
 ```json
 {
   "integrity_state": "STABLE",
@@ -80,10 +82,7 @@ Now includes upward coherence detection when state is STABLE.
     "expansion_detected": true,
     "amplification_safe": true,
     "magnification_note": "Clarity present. Open and grounded. Capacity available.",
-    "micro_actions": [
-      "Notice the clarity",
-      "Maintain openness"
-    ]
+    "micro_actions": ["Notice the clarity", "Maintain openness"]
   }
 }
 ```
@@ -95,6 +94,7 @@ Still returns `upward: null` - Phase 1 behavior preserved.
 ### Expansion Signals
 
 All 7 signals:
+
 1. Physiological openness (open or steady)
 2. Stable rhythm
 3. Clarity present (cognitive: clear)
@@ -119,6 +119,7 @@ All 7 signals:
 ### Test Coverage
 
 17 new tests covering:
+
 - Expansion detection (3 tests)
 - False-high detection (4 tests)
 - Amplification planning (5 tests)
@@ -130,6 +131,7 @@ All 7 signals:
 ### Drift Protection
 
 All outputs from amplification are validated:
+
 - Magnification notes: Present-state only
 - Micro-actions: Stabilizing, not accelerating
 - Zero future references
@@ -139,6 +141,7 @@ All outputs from amplification are validated:
 ### Example Scenarios
 
 #### Safe Amplification
+
 ```typescript
 {
   founder_state: {
@@ -155,6 +158,7 @@ All outputs from amplification are validated:
 ```
 
 #### Blocked: False-High
+
 ```typescript
 {
   founder_state: {
@@ -171,6 +175,7 @@ All outputs from amplification are validated:
 ```
 
 #### Blocked: Urgency Kill Switch
+
 ```typescript
 {
   founder_state: {
@@ -206,6 +211,7 @@ All outputs from amplification are validated:
 ### Integration with Phase 1
 
 Phase 2 is additive:
+
 - Phase 1 stabilisation: Still works identically
 - `/coherence/stabilise-only`: Unchanged
 - `/coherence/evaluate`: Enhanced with upward detection
@@ -217,6 +223,7 @@ Phase 2 is additive:
 ## Next Steps (Future Phases)
 
 ### Phase 3 Candidates
+
 - Real-time streaming support
 - Natural language input processing
 - Protocol cycle completion tracking
@@ -224,6 +231,7 @@ Phase 2 is additive:
 - Memory-based founder drift signatures
 
 ### Not Planned
+
 - ML-based prediction (violates present-state constraint)
 - Automatic goal setting (violates non-directive constraint)
 - Emotional intervention (violates role boundary)
@@ -234,4 +242,3 @@ Phase 2 is additive:
 
 All amplification safeguards implemented and tested.
 Ready for production deployment.
-

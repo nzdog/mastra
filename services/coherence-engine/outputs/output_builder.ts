@@ -2,7 +2,7 @@
  * OUTPUT BUILDER
  * Constructs CoherencePacket outputs from classification + routing
  * As per SPEC.md Section 2
- * 
+ *
  * CRITICAL: All outputs must be:
  * - Present-state only
  * - No future references
@@ -26,9 +26,12 @@ export function buildCoherencePacket(
     integrity_state: classification.integrity_state,
     state_reflection: buildStateReflection(founderState, classification),
     protocol_route: route.protocol,
-    stabilisation_cue: buildStabilisationCue(classification.integrity_state, classification.primary_signal),
+    stabilisation_cue: buildStabilisationCue(
+      classification.integrity_state,
+      classification.primary_signal
+    ),
     exit_precursor: route.exit_precursor,
-    upward: null // Always null in Phase 1
+    upward: null, // Always null in Phase 1
   };
 }
 
@@ -46,13 +49,13 @@ function buildStateReflection(
   switch (integrity_state) {
     case 'PRE_COLLAPSE':
       return buildPreCollapseReflection(state, primary_signal);
-    
+
     case 'DISTORTION':
       return buildDistortionReflection(state, primary_signal);
-    
+
     case 'DRIFT':
       return buildDriftReflection(state, primary_signal);
-    
+
     case 'STABLE':
       return buildStableReflection(state);
   }
@@ -174,7 +177,10 @@ function buildStableReflection(state: FounderStateInput): string {
  * Build one-line stabilisation cue
  * CRITICAL: Must be extremely minimal, present-only, non-directive
  */
-function buildStabilisationCue(integrityState: IntegrityState, primarySignal: string): string | null {
+function buildStabilisationCue(
+  integrityState: IntegrityState,
+  primarySignal: string
+): string | null {
   // No cue for STABLE state
   if (integrityState === 'STABLE') {
     return null;
@@ -206,4 +212,3 @@ function buildStabilisationCue(integrityState: IntegrityState, primarySignal: st
 
   return null;
 }
-

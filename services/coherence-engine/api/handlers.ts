@@ -114,11 +114,11 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 /**
  * POST /coherence/evaluate
  * Full evaluation endpoint (includes amplification - Phase 2)
- * 
+ *
  * Phase 1: Stabilisation only
  * Phase 2: Adds upward coherence detection and amplification
  * Phase 3: Adds self-correction loop for drift detection
- * 
+ *
  * This endpoint includes all three phases of the Coherence Engine
  */
 export async function evaluate(req: Request, res: Response): Promise<void> {

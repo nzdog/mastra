@@ -17,7 +17,7 @@ describe('Classification - PRE_COLLAPSE Detection', () => {
       emotional: 'fog',
       cognitive: 'overwhelmed',
       tension_keyword: 'nothing',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const result = classifyIntegrityState(state);
@@ -32,7 +32,7 @@ describe('Classification - PRE_COLLAPSE Detection', () => {
       emotional: 'collapse',
       cognitive: 'overwhelmed',
       tension_keyword: 'shutdown',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const result = classifyIntegrityState(state);
@@ -46,7 +46,7 @@ describe('Classification - PRE_COLLAPSE Detection', () => {
       emotional: 'fog',
       cognitive: 'overwhelmed',
       tension_keyword: 'empty',
-      conflict_indicator: 'avoidance'
+      conflict_indicator: 'avoidance',
     };
 
     const result = classifyIntegrityState(state);
@@ -62,7 +62,7 @@ describe('Classification - DISTORTION Detection', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'failure',
-      conflict_indicator: 'tension'
+      conflict_indicator: 'tension',
     };
 
     const result = classifyIntegrityState(state);
@@ -77,7 +77,7 @@ describe('Classification - DISTORTION Detection', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'fear',
-      conflict_indicator: 'tension'
+      conflict_indicator: 'tension',
     };
 
     const result = classifyIntegrityState(state);
@@ -92,7 +92,7 @@ describe('Classification - DISTORTION Detection', () => {
       emotional: 'constricted',
       cognitive: 'overwhelmed',
       tension_keyword: 'too_much',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const result = classifyIntegrityState(state);
@@ -107,11 +107,11 @@ describe('Classification - DISTORTION Detection', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'pressure',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const context: DiagnosticContext = {
-      capacity_edge: 'breached'
+      capacity_edge: 'breached',
     };
 
     const result = classifyIntegrityState(state, context);
@@ -127,7 +127,7 @@ describe('Classification - DRIFT Detection', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const result = classifyIntegrityState(state);
@@ -142,7 +142,7 @@ describe('Classification - DRIFT Detection', () => {
       emotional: 'constricted',
       cognitive: 'clear',
       tension_keyword: 'scattered',
-      conflict_indicator: 'tension'
+      conflict_indicator: 'tension',
     };
 
     const result = classifyIntegrityState(state);
@@ -157,7 +157,7 @@ describe('Classification - DRIFT Detection', () => {
       emotional: 'constricted',
       cognitive: 'clear',
       tension_keyword: 'busy',
-      conflict_indicator: 'avoidance'
+      conflict_indicator: 'avoidance',
     };
 
     const result = classifyIntegrityState(state);
@@ -172,7 +172,7 @@ describe('Classification - DRIFT Detection', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'scattered',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const result = classifyIntegrityState(state);
@@ -188,7 +188,7 @@ describe('Classification - STABLE Detection', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'calm',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const result = classifyIntegrityState(state);
@@ -203,7 +203,7 @@ describe('Classification - STABLE Detection', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'focused',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const result = classifyIntegrityState(state);
@@ -219,7 +219,7 @@ describe('Classification Priority Rules', () => {
       emotional: 'fog',
       cognitive: 'overwhelmed', // Would be DISTORTION on its own
       tension_keyword: 'nothing',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const result = classifyIntegrityState(state);
@@ -233,11 +233,10 @@ describe('Classification Priority Rules', () => {
       emotional: 'constricted',
       cognitive: 'overwhelmed', // DISTORTION
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const result = classifyIntegrityState(state);
     expect(result.integrity_state).toBe('DISTORTION');
   });
 });
-
