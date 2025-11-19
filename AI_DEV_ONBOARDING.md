@@ -5,6 +5,7 @@
 **Field Diagnostic Agent** is a TypeScript-based conversational AI system built on the **Lichen Protocol**. It guides users through structured diagnostic conversations to help them understand the invisible systemic fields shaping their behavior and decisions.
 
 The project combines:
+
 - **Conversational AI Agent**: Multi-mode dialogue system powered by Anthropic's Claude
 - **Memory Layer**: Cryptographically audited memory system with privacy guarantees
 - **Web Frontend**: Polished SPA interface with intro flows and conversation UI
@@ -24,6 +25,7 @@ The agent walks users through **6 themes** to surface the "field" they're operat
 6. **Naming the Field** - Pattern synthesis (e.g., "Velocity Over Depth")
 
 The agent operates in **3 modes**:
+
 - **ENTRY**: Orientation and context-setting
 - **WALK**: Step-by-step theme exploration (one question per turn)
 - **CLOSE**: Field synthesis and diagnosis
@@ -72,6 +74,7 @@ The agent operates in **3 modes**:
 **Purpose**: Main orchestrator for the conversational flow
 
 **Key Responsibilities**:
+
 - Maintain session state (mode, theme_index, conversation history)
 - Process user messages through classification → retrieval → composition
 - Track theme progression and completion
@@ -80,6 +83,7 @@ The agent operates in **3 modes**:
 - Cost tracking across API calls
 
 **Key Methods**:
+
 - `processMessage(userMessage: string)`: Main entry point
 - `determineModeTransition()`: State machine for mode transitions
 - `compressConversationHistory()`: Prune old turns to manage token count
@@ -89,12 +93,14 @@ The agent operates in **3 modes**:
 **Purpose**: AI-powered intent detection before retrieval
 
 **Classification Intents**:
+
 - `discover`: User wants orientation ("What field am I in?")
 - `walk`: User wants to begin/continue stepping through protocol
 - `memory`: User is continuing from prior context ("continue", "next")
 - `none`: Greetings or off-topic
 
 **How it Works**:
+
 - Uses Claude API with structured prompt
 - Falls back safely on low confidence
 - Influences mode transitions and chunk retrieval
@@ -105,6 +111,7 @@ The agent operates in **3 modes**:
 
 **Input**: `protocols/field_diagnostic.md` with YAML frontmatter
 **Output**: Array of `ProtocolChunk` objects with metadata:
+
 - `chunkId`: Unique identifier
 - `section`: Theme number or "ENTRY"
 - `tags`: ["ENTRY"] or ["WALK", "Theme 1"], etc.
@@ -115,6 +122,7 @@ The agent operates in **3 modes**:
 **Purpose**: Retrieval system for protocol content
 
 **Key Methods**:
+
 - `getEntryChunks()`: All ENTRY-tagged chunks
 - `getWalkChunksForTheme(themeNumber)`: Theme-specific WALK chunks
 - `getAllChunks()`: Everything for CLOSE mode
@@ -126,6 +134,7 @@ The agent operates in **3 modes**:
 **Purpose**: Generate AI responses using Claude API
 
 **Flow**:
+
 1. Build system prompt based on mode (ENTRY/WALK/CLOSE)
 2. Include retrieved protocol chunks as context
 3. Add conversation history for continuity
@@ -134,6 +143,7 @@ The agent operates in **3 modes**:
 6. Return response + cost
 
 **Validation** (`src/validator.ts`):
+
 - Ensures WALK responses end with exactly one question
 - Checks for theme advancement signals
 - Validates mirroring of user's answer
@@ -143,6 +153,7 @@ The agent operates in **3 modes**:
 **Purpose**: Privacy-preserving, cryptographically audited memory system
 
 **Architecture**:
+
 ```
 API Layer (operations.ts, memory-router.ts)
     │
@@ -154,6 +165,7 @@ API Layer (operations.ts, memory-router.ts)
 ```
 
 **Core Operations**:
+
 - `POST /api/memory/store`: Store memory with consent
 - `POST /api/memory/recall`: Retrieve memories
 - `POST /api/memory/distill`: Aggregate across users (k-anonymity enforced)
@@ -161,6 +173,7 @@ API Layer (operations.ts, memory-router.ts)
 - `POST /api/memory/export`: Export user data
 
 **Key Features**:
+
 - Ed25519 cryptographic signatures for all operations
 - Merkle tree ledger for tamper-evident audit trail
 - JWKS endpoint for public key distribution
@@ -175,11 +188,13 @@ API Layer (operations.ts, memory-router.ts)
 ## Technology Stack
 
 **Runtime**:
+
 - Node.js ≥ 20.0.0
 - TypeScript 5.9.3
 - CommonJS module system
 
 **Core Dependencies**:
+
 - `@anthropic-ai/sdk`: Claude API client
 - `@mastra/core`: Mastra framework integration
 - `express`: HTTP server
@@ -189,12 +204,14 @@ API Layer (operations.ts, memory-router.ts)
 - `ajv`: JSON schema validation
 
 **Security & Observability**:
+
 - `helmet`: Security headers
 - `cors`: CORS configuration
 - `express-rate-limit`: Rate limiting
 - `prom-client`: Prometheus metrics
 
 **Development**:
+
 - `tsx`: TypeScript execution
 - `vitest`: Testing framework
 - `eslint`: Linting
@@ -266,6 +283,7 @@ field-diagnostic-agent/
 ### 1. Stone Alignment
 
 The agent's voice follows **Lichen Stones**:
+
 - **Stone 4**: Clarity Over Cleverness
 - **Stone 5**: Presence Is Productivity
 - **Stone 8**: Integrity Is the Growth Strategy
@@ -275,6 +293,7 @@ This means: simple language, no rushing, pattern-level insights (not surface-lev
 ### 2. State Machine
 
 Mode transitions are deterministic:
+
 ```
 ENTRY → WALK (intent: walk)
 WALK → WALK (theme progression)
@@ -289,6 +308,7 @@ Critical constraint: WALK mode responses MUST end with exactly one question. The
 ### 4. Conversation History Compression
 
 To stay under Claude's context limits:
+
 - Keep first 2 turns (grounding)
 - Keep last 8 turns (recent context)
 - Prune middle turns
@@ -307,6 +327,7 @@ Memory provides context but NEVER overrides current conversation flow. The agent
 ### 7. Consent-Driven Privacy
 
 All memory operations require explicit consent:
+
 - `personal`: User's own data
 - `cohort`: Aggregated group data (k ≥ 5)
 - `population`: Public aggregations
@@ -316,6 +337,7 @@ Consent resolver middleware fails closed (deny by default).
 ### 8. Cryptographic Audit Trail
 
 Every memory operation:
+
 1. Generates a canonical JSON payload
 2. Signs with Ed25519 private key
 3. Appends to Merkle tree
@@ -385,12 +407,14 @@ npm run test:smoke
 ### Code Quality
 
 Git hooks (via Husky):
+
 - Pre-commit: Linting and formatting (lint-staged)
 - Commit-msg: Conventional commits (commitlint)
 
 ### Deployment
 
 See `PRODUCTION_DEPLOYMENT.md` for:
+
 - Railway deployment configuration
 - Environment variable setup
 - Health check endpoints
@@ -422,6 +446,7 @@ See `PRODUCTION_DEPLOYMENT.md` for:
 ### Modifying System Prompts
 
 Edit `src/composer/prompts.ts`:
+
 - `getSystemPromptForMode()`: Mode-specific instructions
 - Include Stone alignment principles
 - Add retrieval context formatting
@@ -438,11 +463,13 @@ Edit `src/composer/prompts.ts`:
 ### Debugging Session State
 
 In API:
+
 ```bash
 curl http://localhost:3000/api/protocol/session/<session-id>/state
 ```
 
 In CLI:
+
 ```
 > state
 ```
@@ -540,6 +567,7 @@ See `PERFORMANCE-OPTIMIZATIONS.md` for detailed analysis.
 ### Agent keeps repeating questions
 
 Check:
+
 1. Validator is passing (WALK mode)
 2. Theme completion confirmation logic
 3. `resume_hint` state field
@@ -547,6 +575,7 @@ Check:
 ### Session state not advancing
 
 Check:
+
 1. Classification result (intent detection)
 2. Mode transition logic in `determineModeTransition()`
 3. Theme completion criteria
@@ -554,6 +583,7 @@ Check:
 ### Memory operations failing
 
 Check:
+
 1. Consent headers in request
 2. Schema validation errors (check response body)
 3. Audit ledger corruption (verify Merkle root)
@@ -562,6 +592,7 @@ Check:
 ### High API costs
 
 Check:
+
 1. Conversation history size (enable compression)
 2. ENTRY caching (should reduce repeated calls)
 3. Classification frequency (should be once per turn)
