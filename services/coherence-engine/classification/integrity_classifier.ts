@@ -2,13 +2,13 @@
  * INTEGRITY CLASSIFIER
  * Deterministic classification of founder state into integrity levels
  * As per SPEC.md Section 4.2
- * 
+ *
  * CRITICAL RULE:
  * if numbness or shutdown: PRE-COLLAPSE
  * if acute fear or shame or overwhelm: DISTORTION
  * if urgency or wobble or avoidance: DRIFT
  * else: STABLE
- * 
+ *
  * Classification is PRESENT-STATE ONLY
  * Memory CANNOT influence classification
  */
@@ -37,7 +37,7 @@ export function classifyIntegrityState(
     return {
       integrity_state: 'PRE_COLLAPSE',
       primary_signal: getPrimaryPreCollapseSignal(founderState),
-      classification_reason: 'Numbness or shutdown detected'
+      classification_reason: 'Numbness or shutdown detected',
     };
   }
 
@@ -46,7 +46,7 @@ export function classifyIntegrityState(
     return {
       integrity_state: 'DISTORTION',
       primary_signal: getPrimaryDistortionSignal(founderState, diagnosticContext),
-      classification_reason: 'Acute fear, shame, or overwhelm detected'
+      classification_reason: 'Acute fear, shame, or overwhelm detected',
     };
   }
 
@@ -56,7 +56,7 @@ export function classifyIntegrityState(
     return {
       integrity_state: 'DRIFT',
       primary_signal: getPrimaryDriftSignal(founderState, driftSignals),
-      classification_reason: 'Urgency, wobble, or avoidance detected'
+      classification_reason: 'Urgency, wobble, or avoidance detected',
     };
   }
 
@@ -64,7 +64,7 @@ export function classifyIntegrityState(
   return {
     integrity_state: 'STABLE',
     primary_signal: 'none',
-    classification_reason: 'No drift signals detected'
+    classification_reason: 'No drift signals detected',
   };
 }
 
@@ -72,10 +72,7 @@ export function classifyIntegrityState(
  * PRE-COLLAPSE Detection
  * Numbness or shutdown
  */
-function isPreCollapse(
-  state: FounderStateInput,
-  context?: DiagnosticContext
-): boolean {
+function isPreCollapse(state: FounderStateInput, context?: DiagnosticContext): boolean {
   // Check physiological numbness
   if (state.physiological === 'numb') return true;
 
@@ -83,7 +80,7 @@ function isPreCollapse(
   if (state.emotional === 'collapse' || state.emotional === 'fog') {
     // If also numb or have shutdown keywords, it's pre-collapse
     const shutdownKeywords = ['nothing', 'numb', 'empty', 'blank', 'shutdown', 'gone'];
-    if (shutdownKeywords.some(kw => state.tension_keyword.toLowerCase().includes(kw))) {
+    if (shutdownKeywords.some((kw) => state.tension_keyword.toLowerCase().includes(kw))) {
       return true;
     }
   }
@@ -99,29 +96,26 @@ function isPreCollapse(
  * DISTORTION Detection
  * Acute fear, shame, or overwhelm
  */
-function isDistortion(
-  state: FounderStateInput,
-  context?: DiagnosticContext
-): boolean {
+function isDistortion(state: FounderStateInput, context?: DiagnosticContext): boolean {
   // Check cognitive overwhelm
   if (state.cognitive === 'overwhelmed') return true;
 
   // Check for shame keywords
   const shameKeywords = ['shame', 'failure', 'inadequate', 'worthless', 'bad', 'wrong'];
-  if (shameKeywords.some(kw => state.tension_keyword.toLowerCase().includes(kw))) {
+  if (shameKeywords.some((kw) => state.tension_keyword.toLowerCase().includes(kw))) {
     return true;
   }
 
   // Check for fear keywords
   const fearKeywords = ['fear', 'terror', 'panic', 'dread', 'scared'];
-  if (fearKeywords.some(kw => state.tension_keyword.toLowerCase().includes(kw))) {
+  if (fearKeywords.some((kw) => state.tension_keyword.toLowerCase().includes(kw))) {
     return true;
   }
 
   // Check distortion in diagnostic context
   if (context?.distortion_map && context.distortion_map.length > 0) {
     const distortionTypes = ['shame_spike', 'fear_spike', 'overwhelm'];
-    if (distortionTypes.some(type => context.distortion_map!.includes(type))) {
+    if (distortionTypes.some((type) => context.distortion_map!.includes(type))) {
       return true;
     }
   }
@@ -162,19 +156,16 @@ function getPrimaryPreCollapseSignal(state: FounderStateInput): string {
 /**
  * Get primary signal for DISTORTION state
  */
-function getPrimaryDistortionSignal(
-  state: FounderStateInput,
-  context?: DiagnosticContext
-): string {
+function getPrimaryDistortionSignal(state: FounderStateInput, context?: DiagnosticContext): string {
   if (state.cognitive === 'overwhelmed') return 'overwhelm';
 
   const shameKeywords = ['shame', 'failure', 'inadequate', 'worthless'];
-  if (shameKeywords.some(kw => state.tension_keyword.toLowerCase().includes(kw))) {
+  if (shameKeywords.some((kw) => state.tension_keyword.toLowerCase().includes(kw))) {
     return 'shame';
   }
 
   const fearKeywords = ['fear', 'terror', 'panic', 'dread'];
-  if (fearKeywords.some(kw => state.tension_keyword.toLowerCase().includes(kw))) {
+  if (fearKeywords.some((kw) => state.tension_keyword.toLowerCase().includes(kw))) {
     return 'fear';
   }
 
@@ -186,16 +177,13 @@ function getPrimaryDistortionSignal(
 /**
  * Get primary signal for DRIFT state
  */
-function getPrimaryDriftSignal(
-  state: FounderStateInput,
-  driftSignals: any[]
-): string {
+function getPrimaryDriftSignal(state: FounderStateInput, driftSignals: any[]): string {
   if (state.rhythm === 'urgent') return 'urgency';
   if (state.rhythm === 'oscillating') return 'oscillating';
   if (state.conflict_indicator === 'avoidance') return 'avoidance';
 
   // Check drift signals for primary category
-  const activeDrift = driftSignals.find(s => s.detected);
+  const activeDrift = driftSignals.find((s) => s.detected);
   if (activeDrift) {
     if (activeDrift.category === 'rhythm_drift') return 'rhythm_drift';
     if (activeDrift.category === 'pressure_drift') return 'pressure';
@@ -204,4 +192,3 @@ function getPrimaryDriftSignal(
 
   return 'drift';
 }
-

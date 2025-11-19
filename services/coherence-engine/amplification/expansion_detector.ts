@@ -2,7 +2,7 @@
  * EXPANSION DETECTOR
  * Detects clean upward coherence signals
  * As per SPEC.md Section 5.1
- * 
+ *
  * Expansion Signals:
  * - Physiological openness
  * - Grounded breath
@@ -41,13 +41,14 @@ export function detectExpansion(
   diagnosticContext?: DiagnosticContext
 ): ExpansionDetectionResult {
   const signals: ExpansionSignals = {
-    physiological_openness: founderState.physiological === 'open' || founderState.physiological === 'steady',
+    physiological_openness:
+      founderState.physiological === 'open' || founderState.physiological === 'steady',
     stable_rhythm: founderState.rhythm === 'steady',
     clarity_present: founderState.cognitive === 'clear',
     calm_state: founderState.emotional === 'open',
     no_urgency: founderState.rhythm !== 'urgent' && founderState.conflict_indicator !== 'pressure',
     embodied_readiness: founderState.founder_ready_signal === true,
-    available_capacity: checkAvailableCapacity(diagnosticContext)
+    available_capacity: checkAvailableCapacity(diagnosticContext),
   };
 
   // Count active signals
@@ -62,7 +63,7 @@ export function detectExpansion(
     expansion_detected,
     signals,
     signal_count: signalCount,
-    signal_strength: signalStrength
+    signal_strength: signalStrength,
   };
 }
 
@@ -91,12 +92,7 @@ function checkAvailableCapacity(context?: DiagnosticContext): boolean {
  */
 export function isExpansionSafe(signals: ExpansionSignals): boolean {
   // Critical signals that MUST be present for safe amplification
-  const criticalSignals = [
-    signals.stable_rhythm,
-    signals.no_urgency,
-    signals.calm_state
-  ];
+  const criticalSignals = [signals.stable_rhythm, signals.no_urgency, signals.calm_state];
 
   return criticalSignals.every(Boolean);
 }
-

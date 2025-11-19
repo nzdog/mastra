@@ -14,8 +14,8 @@ export const SCENARIOS: Scenario[] = [
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
-    }
+      conflict_indicator: 'pressure',
+    },
   },
   {
     name: '🔄 Avoidance',
@@ -25,8 +25,8 @@ export const SCENARIOS: Scenario[] = [
       emotional: 'constricted',
       cognitive: 'clear',
       tension_keyword: 'busy',
-      conflict_indicator: 'avoidance'
-    }
+      conflict_indicator: 'avoidance',
+    },
   },
   {
     name: '😔 Shame Spike',
@@ -36,8 +36,8 @@ export const SCENARIOS: Scenario[] = [
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'failure',
-      conflict_indicator: 'tension'
-    }
+      conflict_indicator: 'tension',
+    },
   },
   {
     name: '🌊 Overwhelm',
@@ -47,8 +47,8 @@ export const SCENARIOS: Scenario[] = [
       emotional: 'constricted',
       cognitive: 'overwhelmed',
       tension_keyword: 'too_much',
-      conflict_indicator: 'pressure'
-    }
+      conflict_indicator: 'pressure',
+    },
   },
   {
     name: '❄️ Numbness',
@@ -58,8 +58,8 @@ export const SCENARIOS: Scenario[] = [
       emotional: 'fog',
       cognitive: 'overwhelmed',
       tension_keyword: 'nothing',
-      conflict_indicator: 'avoidance'
-    }
+      conflict_indicator: 'avoidance',
+    },
   },
   {
     name: '✨ Calm & Coherent',
@@ -69,8 +69,7 @@ export const SCENARIOS: Scenario[] = [
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'calm',
-      conflict_indicator: 'none'
-    }
-  }
+      conflict_indicator: 'none',
+    },
+  },
 ];
-

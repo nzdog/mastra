@@ -14,9 +14,11 @@ Before deploying to any environment, verify:
 ## Environment Variables
 
 ### Required
+
 None (all defaults work out of the box)
 
 ### Optional
+
 - `PORT` — HTTP server port (default: 3000)
 - `NODE_ENV` — Environment (development/production)
 
@@ -90,6 +92,7 @@ curl http://localhost:3000/health
 ```
 
 Expected response:
+
 ```json
 {
   "status": "healthy",
@@ -126,6 +129,7 @@ Expected response:
 ### Logging
 
 The service logs:
+
 - All HTTP requests with timestamps
 - CRITICAL errors if drift is detected in outputs
 - Server startup info
@@ -145,6 +149,7 @@ artillery quick --count 100 --num 10 http://localhost:3000/coherence/stabilise-o
 ```
 
 Expected performance:
+
 - Latency: < 50ms p95
 - Throughput: > 100 req/sec (single instance)
 
@@ -166,9 +171,11 @@ CORS is enabled by default. In production, configure allowed origins:
 Edit `api/server.ts`:
 
 ```typescript
-app.use(cors({
-  origin: ['https://your-app.com', 'https://app.lichen.protocol']
-}));
+app.use(
+  cors({
+    origin: ['https://your-app.com', 'https://app.lichen.protocol'],
+  })
+);
 ```
 
 ### Rate Limiting
@@ -180,7 +187,7 @@ import rateLimit from 'express-rate-limit';
 
 const limiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
-  max: 100 // 100 requests per minute
+  max: 100, // 100 requests per minute
 });
 
 app.use('/coherence', limiter);
@@ -246,4 +253,3 @@ For deployment issues, contact the Lichen Protocol engineering team.
 ---
 
 **Status:** Phase 1 Deployment Ready ✅
-

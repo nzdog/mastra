@@ -10,14 +10,14 @@ function App() {
     emotional: 'open',
     cognitive: 'clear',
     tension_keyword: '',
-    conflict_indicator: 'none'
+    conflict_indicator: 'none',
   });
 
   const [result, setResult] = useState<CoherencePacket | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<'healthy' | 'error' | 'checking'>('checking');
-  
+
   const [driftText, setDriftText] = useState('');
   const [driftResult, setDriftResult] = useState<DriftCheckResult | null>(null);
   const [driftLoading, setDriftLoading] = useState(false);
@@ -51,7 +51,7 @@ function App() {
 
   const handleDriftCheck = async () => {
     if (!driftText.trim()) return;
-    
+
     setDriftLoading(true);
     try {
       const response = await checkDrift(driftText);
@@ -82,13 +82,15 @@ function App() {
         <div>
           <div className="card">
             <h2>⚙️ Founder State Input</h2>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Physiological</label>
                 <select
                   value={founderState.physiological}
-                  onChange={(e) => setFounderState({ ...founderState, physiological: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, physiological: e.target.value as any })
+                  }
                 >
                   <option value="open">Open</option>
                   <option value="tight">Tight</option>
@@ -102,7 +104,9 @@ function App() {
                 <label>Rhythm</label>
                 <select
                   value={founderState.rhythm}
-                  onChange={(e) => setFounderState({ ...founderState, rhythm: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, rhythm: e.target.value as any })
+                  }
                 >
                   <option value="steady">Steady</option>
                   <option value="fragmented">Fragmented</option>
@@ -115,7 +119,9 @@ function App() {
                 <label>Emotional</label>
                 <select
                   value={founderState.emotional}
-                  onChange={(e) => setFounderState({ ...founderState, emotional: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, emotional: e.target.value as any })
+                  }
                 >
                   <option value="open">Open</option>
                   <option value="constricted">Constricted</option>
@@ -128,7 +134,9 @@ function App() {
                 <label>Cognitive</label>
                 <select
                   value={founderState.cognitive}
-                  onChange={(e) => setFounderState({ ...founderState, cognitive: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, cognitive: e.target.value as any })
+                  }
                 >
                   <option value="clear">Clear</option>
                   <option value="looping">Looping</option>
@@ -141,7 +149,9 @@ function App() {
                 <input
                   type="text"
                   value={founderState.tension_keyword}
-                  onChange={(e) => setFounderState({ ...founderState, tension_keyword: e.target.value })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, tension_keyword: e.target.value })
+                  }
                   placeholder="e.g., deadline, failure, calm"
                 />
               </div>
@@ -150,7 +160,9 @@ function App() {
                 <label>Conflict Indicator</label>
                 <select
                   value={founderState.conflict_indicator}
-                  onChange={(e) => setFounderState({ ...founderState, conflict_indicator: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, conflict_indicator: e.target.value as any })
+                  }
                 >
                   <option value="none">None</option>
                   <option value="avoidance">Avoidance</option>
@@ -190,8 +202,8 @@ function App() {
                 placeholder="e.g., You should try to relax..."
               />
             </div>
-            <button 
-              className="button button-primary" 
+            <button
+              className="button button-primary"
               onClick={handleDriftCheck}
               disabled={driftLoading || !driftText.trim()}
             >
@@ -277,7 +289,13 @@ function App() {
                   <span className="result-label">Upward Coherence</span>
                   <span className="result-value">
                     <code>null</code>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--color-text-muted)', marginLeft: '0.5rem' }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        color: 'var(--color-text-muted)',
+                        marginLeft: '0.5rem',
+                      }}
+                    >
                       (Phase 2)
                     </span>
                   </span>
@@ -292,4 +310,3 @@ function App() {
 }
 
 export default App;
-

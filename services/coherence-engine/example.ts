@@ -23,12 +23,12 @@ const urgencyState: FounderStateInput = {
   emotional: 'constricted',
   cognitive: 'looping',
   tension_keyword: 'deadline',
-  conflict_indicator: 'pressure'
+  conflict_indicator: 'pressure',
 };
 
 const urgencyContext: DiagnosticContext = {
   current_field: 'launch_pressure',
-  coherence_score: 0.4
+  coherence_score: 0.4,
 };
 
 let classification = classifyIntegrityState(urgencyState, urgencyContext);
@@ -54,7 +54,7 @@ const collapseState: FounderStateInput = {
   emotional: 'fog',
   cognitive: 'overwhelmed',
   tension_keyword: 'nothing',
-  conflict_indicator: 'avoidance'
+  conflict_indicator: 'avoidance',
 };
 
 classification = classifyIntegrityState(collapseState);
@@ -80,7 +80,7 @@ const shameState: FounderStateInput = {
   emotional: 'constricted',
   cognitive: 'looping',
   tension_keyword: 'failure',
-  conflict_indicator: 'tension'
+  conflict_indicator: 'tension',
 };
 
 classification = classifyIntegrityState(shameState);
@@ -106,7 +106,7 @@ const stableState: FounderStateInput = {
   emotional: 'open',
   cognitive: 'clear',
   tension_keyword: 'calm',
-  conflict_indicator: 'none'
+  conflict_indicator: 'none',
 };
 
 classification = classifyIntegrityState(stableState);
@@ -125,4 +125,3 @@ console.log('  Drift Violations:', violations.length === 0 ? 'None (Clean)' : vi
 console.log('\n' + '═'.repeat(60));
 console.log('All examples completed successfully!');
 console.log('═'.repeat(60));
-
