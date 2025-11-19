@@ -319,5 +319,3 @@ It is the part of Lichen that YC and all accelerators cannot replicate.
 ⸻
 
 THE SPEC IS COMPLETE
-
-
