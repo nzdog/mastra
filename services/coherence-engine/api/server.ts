@@ -5,6 +5,7 @@
 
 import express, { Express } from 'express';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import { stabiliseOnly, evaluate, driftCheck, health } from './handlers';
 
 /**
@@ -13,9 +14,28 @@ import { stabiliseOnly, evaluate, driftCheck, health } from './handlers';
 export function createApp(): Express {
   const app = express();
 
-  // Middleware
-  app.use(cors());
-  app.use(express.json());
+  // Security: Configure CORS
+  app.use(
+    cors({
+      origin:
+        process.env.NODE_ENV === 'production'
+          ? process.env.CORS_ORIGIN?.split(',') || []
+          : '*',
+      credentials: true,
+    }),
+  );
+
+  // Security: Request size limits
+  app.use(express.json({ limit: '1mb' }));
+
+  // Security: Rate limiting for API endpoints
+  const apiLimiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 100, // 100 requests per minute
+    message: 'Too many requests, please try again later.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
 
   // Request logging
   app.use((req, res, next) => {
@@ -25,6 +45,10 @@ export function createApp(): Express {
 
   // Routes
   app.get('/health', health);
+  
+  // Apply rate limiting to coherence endpoints
+  app.use('/coherence', apiLimiter);
+  
   app.post('/coherence/stabilise-only', stabiliseOnly);
   app.post('/coherence/evaluate', evaluate);
   app.post('/coherence/debug/drift-check', driftCheck);

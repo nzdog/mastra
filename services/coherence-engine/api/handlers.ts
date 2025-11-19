@@ -4,6 +4,7 @@
  */
 
 import { Request, Response } from 'express';
+import { version } from '../package.json';
 import {
   FounderStateInput,
   DiagnosticContext,
@@ -113,6 +114,12 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 /**
  * POST /coherence/evaluate
  * Full evaluation endpoint (includes amplification - Phase 2)
+ * 
+ * Phase 1: Stabilisation only
+ * Phase 2: Adds upward coherence detection and amplification
+ * Phase 3: Adds self-correction loop for drift detection
+ * 
+ * This endpoint includes all three phases of the Coherence Engine
  */
 export async function evaluate(req: Request, res: Response): Promise<void> {
   try {
@@ -246,13 +253,13 @@ export async function driftCheck(req: Request, res: Response): Promise<void> {
 
 /**
  * GET /health
- * Health check endpoint
+ * Health check endpoint with dynamic version from package.json
  */
 export function health(req: Request, res: Response): void {
   res.status(200).json({
     status: 'healthy',
     service: 'coherence-engine',
-    version: '1.0.0',
+    version,
     timestamp: new Date().toISOString(),
   });
 }
