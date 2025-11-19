@@ -25,7 +25,7 @@ export interface FounderStateInput {
 /**
  * Validation helper
  */
-export function isValidFounderState(state: any): state is FounderStateInput {
+export function isValidFounderState(state: unknown): state is FounderStateInput {
   if (!state || typeof state !== 'object') return false;
 
   const validPhysiological = ['open', 'tight', 'numb', 'agitated', 'steady'];

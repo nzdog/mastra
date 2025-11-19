@@ -21,7 +21,7 @@ export interface MemorySnapshot {
 /**
  * Validation helper
  */
-export function isValidMemorySnapshot(snapshot: any): snapshot is MemorySnapshot {
+export function isValidMemorySnapshot(snapshot: unknown): snapshot is MemorySnapshot {
   if (!snapshot || typeof snapshot !== 'object') return false;
 
   // All fields are optional arrays or numbers

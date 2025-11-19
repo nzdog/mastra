@@ -4,6 +4,7 @@
  */
 
 import { Request, Response } from 'express';
+import { logger } from '../utils/logger';
 import {
   FounderStateInput,
   DiagnosticContext,
@@ -82,7 +83,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     const driftViolations = validateOutput(coherencePacket);
     if (driftViolations.length > 0) {
       // Log error and return 500 - this is a system bug
-      console.error('CRITICAL: Drift detected in output:', driftViolations);
+      logger.error('CRITICAL: Drift detected in output', { violations: driftViolations });
       res.status(500).json({
         error: 'Internal error: drift detected in output',
         violations: driftViolations,
@@ -92,7 +93,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 
     // Validate packet structure
     if (!isValidCoherencePacket(coherencePacket)) {
-      console.error('CRITICAL: Invalid CoherencePacket structure:', coherencePacket);
+      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: coherencePacket });
       res.status(500).json({
         error: 'Internal error: invalid output structure',
       });
@@ -102,7 +103,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     // Return successful response
     res.status(200).json(coherencePacket);
   } catch (error) {
-    console.error('Error in stabiliseOnly:', error);
+    logger.error('Error in stabiliseOnly', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -185,7 +186,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     // Validate output for drift
     const driftViolations = validateOutput(coherencePacket);
     if (driftViolations.length > 0) {
-      console.error('CRITICAL: Drift detected in output:', driftViolations);
+      logger.error('CRITICAL: Drift detected in output', { violations: driftViolations });
       res.status(500).json({
         error: 'Internal error: drift detected in output',
         violations: driftViolations,
@@ -195,7 +196,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
 
     // Validate packet structure
     if (!isValidCoherencePacket(coherencePacket)) {
-      console.error('CRITICAL: Invalid CoherencePacket structure:', coherencePacket);
+      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: coherencePacket });
       res.status(500).json({
         error: 'Internal error: invalid output structure',
       });
@@ -205,7 +206,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     // Return successful response
     res.status(200).json(coherencePacket);
   } catch (error) {
-    console.error('Error in evaluate:', error);
+    logger.error('Error in evaluate', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -236,7 +237,7 @@ export async function driftCheck(req: Request, res: Response): Promise<void> {
       text,
     });
   } catch (error) {
-    console.error('Error in driftCheck:', error);
+    logger.error('Error in driftCheck', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',

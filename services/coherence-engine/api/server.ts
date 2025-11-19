@@ -15,6 +15,9 @@ import { REQUEST_SIZE_LIMIT, RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX_REQUESTS } fro
 export function createApp(): Express {
   const app = express();
 
+  // Trust proxy for accurate rate limiting behind load balancers
+  app.set('trust proxy', 1);
+
   // CORS configuration - specify allowed origins for production
   const corsOptions = {
     origin: process.env.CORS_ORIGIN || 'http://localhost:3001',

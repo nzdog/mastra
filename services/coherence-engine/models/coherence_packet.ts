@@ -31,7 +31,7 @@ export interface CoherencePacket {
 /**
  * Validation helper
  */
-export function isValidCoherencePacket(packet: any): packet is CoherencePacket {
+export function isValidCoherencePacket(packet: unknown): packet is CoherencePacket {
   if (!packet || typeof packet !== 'object') return false;
 
   const validIntegrityStates = ['STABLE', 'DRIFT', 'DISTORTION', 'PRE_COLLAPSE'];
@@ -46,7 +46,7 @@ export function isValidCoherencePacket(packet: any): packet is CoherencePacket {
   );
 }
 
-function isValidUpwardCoherence(upward: any): upward is UpwardCoherence {
+function isValidUpwardCoherence(upward: unknown): upward is UpwardCoherence {
   if (!upward || typeof upward !== 'object') return false;
 
   return (

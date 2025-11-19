@@ -17,7 +17,7 @@ export interface DiagnosticContext {
 /**
  * Validation helper
  */
-export function isValidDiagnosticContext(context: any): context is DiagnosticContext {
+export function isValidDiagnosticContext(context: unknown): context is DiagnosticContext {
   if (!context || typeof context !== 'object') return false;
 
   // All fields are optional, but if present must be correct types
