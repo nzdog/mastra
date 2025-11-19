@@ -5,22 +5,26 @@ React-based testing dashboard for the Coherence Engine.
 ## Features
 
 ✨ **Interactive State Builder**
+
 - Visual dropdowns for all founder state fields
 - Real-time input validation
 - Custom tension keyword input
 
 🎯 **Quick Test Scenarios**
+
 - Pre-loaded test cases (urgency, shame, overwhelm, etc.)
 - One-click scenario loading
 - 6 common founder states
 
 📊 **Visual Classification Results**
+
 - Color-coded integrity states
 - Protocol routing display
 - Stabilisation cue highlighting
 - Exit precursor warnings
 
 🔍 **Drift Detection Test**
+
 - Test any text for forbidden language
 - Real-time violation detection
 - Detailed violation breakdown
@@ -73,6 +77,7 @@ Dashboard runs on **http://localhost:3001**
 ## API Integration
 
 All requests proxy through Vite to the backend:
+
 - `/coherence/stabilise-only` → Classification
 - `/coherence/debug/drift-check` → Drift detection
 - `/health` → Health check
@@ -89,4 +94,3 @@ Outputs to `dist/` directory.
 ---
 
 **Status:** Fully Functional ✅
-

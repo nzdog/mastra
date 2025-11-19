@@ -48,6 +48,7 @@ This function wraps the entire output generation pipeline and ensures clean outp
 ### 2. Drift Monitoring
 
 The system tracks:
+
 - Total drift detections
 - Total successful corrections
 - Total correction failures
@@ -61,10 +62,12 @@ Access via: `GET /coherence/debug/drift-monitoring`
 Both endpoints now use self-correction:
 
 **POST /coherence/stabilise-only**
+
 - Generates output with `generateWithSelfCorrection()`
 - Returns clean output or 500 error if correction fails
 
 **POST /coherence/evaluate**
+
 - Determines amplification requirements
 - Generates output with self-correction
 - Includes upward block validation
@@ -74,6 +77,7 @@ Both endpoints now use self-correction:
 21 new tests in `tests/self_correction.test.ts`:
 
 #### Drift Detection Tests
+
 - Detects future references
 - Detects advisory language
 - Detects motivational language
@@ -81,25 +85,30 @@ Both endpoints now use self-correction:
 - No false positives on clean outputs
 
 #### Self-Correction Loop Tests
+
 - Generates clean output on first attempt (deterministic system)
 - Handles all integrity states without drift
 - Validates all founder states produce clean outputs
 
 #### Monitoring Tests
+
 - Tracks drift detections
 - Resets monitoring state
 - Tracks successful corrections
 
 #### Contract Enforcement Tests
+
 - Enforces no future references
 - Enforces no advice
 - Enforces no motivation
 
 #### Founder Protection Tests
+
 - Founders never see drift outputs
 - All outputs pass validation across multiple states
 
 #### Phase 2 Integration Tests
+
 - Validates upward block for drift
 - Detects drift in magnification notes
 - Detects drift in micro-actions
@@ -178,6 +187,7 @@ curl http://localhost:3000/coherence/debug/drift-monitoring
 ```
 
 Response:
+
 ```json
 {
   "monitoring": {
@@ -194,6 +204,7 @@ Response:
 ## Next Steps
 
 ### Phase 4 (Future)
+
 - Natural language AI-powered output generation
 - LLM context management for role contract enforcement
 - Adaptive drift pattern learning
@@ -225,16 +236,19 @@ Phase 3 enforces this guarantee at the API level. Any output that violates the r
 ## Testing Phase 3
 
 Run all tests:
+
 ```bash
 npm test
 ```
 
 Run only self-correction tests:
+
 ```bash
 npm test -- self_correction
 ```
 
 Test drift monitoring:
+
 ```bash
 npm run dev
 # In another terminal:
@@ -250,4 +264,3 @@ Phase 3 completes the Coherence Engine's core safety system by ensuring **zero d
 3. **Self-Corrects**: Prevents any drift from reaching founders
 
 The system is now production-ready for deterministic classification and prepared for future AI-powered enhancements.
-

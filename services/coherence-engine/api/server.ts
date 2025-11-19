@@ -34,7 +34,7 @@ export function createApp(): Express {
   app.use((req, res) => {
     res.status(404).json({
       error: 'Not found',
-      path: req.path
+      path: req.path,
     });
   });
 
@@ -62,4 +62,3 @@ export function startServer(port: number = 3000): void {
     console.log('═══════════════════════════════════════════════════════');
   });
 }
-

@@ -17,18 +17,18 @@ describe('Memory Non-Interference', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const memory1: MemorySnapshot = {
       recent_drift_events: [],
-      stability_duration_hours: 48
+      stability_duration_hours: 48,
     };
 
     const memory2: MemorySnapshot = {
       recent_drift_events: ['urgency_2024-11-01', 'urgency_2024-11-05'],
       founder_drift_signature: ['urgency', 'collapse'],
-      collapse_precursors: ['shutdown_pattern']
+      collapse_precursors: ['shutdown_pattern'],
     };
 
     // Classification should be identical regardless of memory
@@ -47,13 +47,13 @@ describe('Memory Non-Interference', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const positiveMemory: MemorySnapshot = {
       recent_drift_events: [],
       stability_duration_hours: 168, // 1 week stable
-      protocol_usage_history: []
+      protocol_usage_history: [],
     };
 
     const result = classifyIntegrityState(driftState);
@@ -67,14 +67,14 @@ describe('Memory Non-Interference', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'calm',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const negativeMemory: MemorySnapshot = {
       recent_drift_events: ['urgency_spike', 'collapse_event'],
       recent_pre_collapse_events: ['shutdown_2024-11-10'],
       founder_drift_signature: ['urgency', 'shame', 'collapse'],
-      collapse_precursors: ['shutdown_pattern', 'numbness_pattern']
+      collapse_precursors: ['shutdown_pattern', 'numbness_pattern'],
     };
 
     const result = classifyIntegrityState(stableState);
@@ -89,18 +89,18 @@ describe('Memory Non-Interference', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'failure',
-      conflict_indicator: 'tension'
+      conflict_indicator: 'tension',
     };
 
     const founderAMemory: MemorySnapshot = {
       recent_drift_events: [],
-      stability_duration_hours: 240
+      stability_duration_hours: 240,
     };
 
     const founderBMemory: MemorySnapshot = {
       recent_drift_events: ['drift_daily_for_2_weeks'],
       recent_distortion_events: ['shame_spike_yesterday'],
-      collapse_precursors: ['multiple_patterns']
+      collapse_precursors: ['multiple_patterns'],
     };
 
     // Both should classify identically
@@ -112,4 +112,3 @@ describe('Memory Non-Interference', () => {
     expect(resultA.integrity_state).toBe('DISTORTION');
   });
 });
-

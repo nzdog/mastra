@@ -2,7 +2,7 @@
  * DRIFT GUARD
  * Detects forbidden language patterns in outputs
  * As per SPEC.md Section 9.1
- * 
+ *
  * CRITICAL: These patterns MUST be caught before outputs reach founders
  */
 
@@ -31,7 +31,7 @@ const FORBIDDEN_PATTERNS = {
     /\bthis will\b/i,
     /\bin the future\b/i,
     /\beventually\b/i,
-    /\bcoming up\b/i
+    /\bcoming up\b/i,
   ],
 
   // Advisory verbs
@@ -48,7 +48,7 @@ const FORBIDDEN_PATTERNS = {
     /\byou might want to\b/i,
     /\byou could\b/i,
     /\bit would be good\b/i,
-    /\byou ought to\b/i
+    /\byou ought to\b/i,
   ],
 
   // Motivational language
@@ -64,7 +64,7 @@ const FORBIDDEN_PATTERNS = {
     /\bdon't give up\b/i,
     /\bpush through\b/i,
     /\byou're doing great\b/i,
-    /\bproud of you\b/i
+    /\bproud of you\b/i,
   ],
 
   // Emotional validation
@@ -79,7 +79,7 @@ const FORBIDDEN_PATTERNS = {
     /\byou're safe\b/i,
     /\bit'll be okay\b/i,
     /\beverything will be\b/i,
-    /\byou're not alone\b/i
+    /\byou're not alone\b/i,
   ],
 
   // Therapeutic language
@@ -92,7 +92,7 @@ const FORBIDDEN_PATTERNS = {
     /\bwhat do you think\b/i,
     /\bwhat are your thoughts\b/i,
     /\bprocess this\b/i,
-    /\bwork through\b/i
+    /\bwork through\b/i,
   ],
 
   // Strategy and planning
@@ -105,7 +105,7 @@ const FORBIDDEN_PATTERNS = {
     /\bsteps? to\b/i,
     /\baction plan\b/i,
     /\bmove forward\b/i,
-    /\bpath forward\b/i
+    /\bpath forward\b/i,
   ],
 
   // Reassurance
@@ -116,8 +116,8 @@ const FORBIDDEN_PATTERNS = {
     /\bwell done\b/i,
     /\bthat's great\b/i,
     /\bperfect\b/i,
-    /\bexcellent\b/i
-  ]
+    /\bexcellent\b/i,
+  ],
 };
 
 /**
@@ -133,7 +133,7 @@ export function checkForDrift(text: string): DriftViolation[] {
         violations.push({
           type,
           pattern: pattern.source,
-          detected_in: match[0]
+          detected_in: match[0],
         });
       }
     }
@@ -152,16 +152,20 @@ export function isCleanOutput(text: string): boolean {
 /**
  * Check multiple text fields
  */
-export function checkOutputFields(fields: Record<string, string | null | undefined>): DriftViolation[] {
+export function checkOutputFields(
+  fields: Record<string, string | null | undefined>
+): DriftViolation[] {
   const allViolations: DriftViolation[] = [];
 
   for (const [fieldName, value] of Object.entries(fields)) {
     if (value && typeof value === 'string') {
       const violations = checkForDrift(value);
-      allViolations.push(...violations.map(v => ({
-        ...v,
-        detected_in: `${fieldName}: ${v.detected_in}`
-      })));
+      allViolations.push(
+        ...violations.map((v) => ({
+          ...v,
+          detected_in: `${fieldName}: ${v.detected_in}`,
+        }))
+      );
     }
   }
 
@@ -171,18 +175,20 @@ export function checkOutputFields(fields: Record<string, string | null | undefin
 /**
  * Validate entire output packet for drift
  */
-export function validateOutputPacket(packet: any): { clean: boolean; violations: DriftViolation[] } {
+export function validateOutputPacket(packet: any): {
+  clean: boolean;
+  violations: DriftViolation[];
+} {
   const fields = {
     state_reflection: packet.state_reflection,
     stabilisation_cue: packet.stabilisation_cue,
-    protocol_route: packet.protocol_route
+    protocol_route: packet.protocol_route,
   };
 
   const violations = checkOutputFields(fields);
 
   return {
     clean: violations.length === 0,
-    violations
+    violations,
   };
 }
-

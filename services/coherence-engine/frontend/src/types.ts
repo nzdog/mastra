@@ -42,4 +42,3 @@ export interface DriftCheckResult {
   violations: DriftViolation[];
   text: string;
 }
-

@@ -1,7 +1,7 @@
 /**
  * PHASE 3 TESTS: SELF-CORRECTION & DRIFT GUARDRAILS
  * Tests for the full self-correction loop
- * 
+ *
  * As per SPEC.md Section 9.2 and BUILD instructions Test #7:
  * - Inject drift-violating outputs
  * - Assert engine rejects, resets, and regenerates clean output
@@ -14,7 +14,7 @@ import {
   getDriftMonitoring,
   resetDriftMonitoring,
   injectDriftForTesting,
-  validateOutput
+  validateOutput,
 } from '../outputs/self_correction';
 import { buildCoherencePacket } from '../outputs/output_builder';
 import { classifyIntegrityState } from '../classification';
@@ -35,7 +35,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'contracted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
+          conflict_indicator: 'pressure',
         },
         'DRIFT',
         'Constraint_Protocol'
@@ -43,10 +43,10 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
 
       // Inject drift
       const dirtyPacket = injectDriftForTesting(cleanPacket, 'future');
-      
+
       const violations = validateOutput(dirtyPacket);
       expect(violations.length).toBeGreaterThan(0);
-      expect(violations.some(v => v.type === 'future_reference')).toBe(true);
+      expect(violations.some((v) => v.type === 'future_reference')).toBe(true);
     });
 
     it('should detect advice drift', () => {
@@ -57,17 +57,17 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'contracted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
+          conflict_indicator: 'pressure',
         },
         'DRIFT',
         'Constraint_Protocol'
       );
 
       const dirtyPacket = injectDriftForTesting(cleanPacket, 'advice');
-      
+
       const violations = validateOutput(dirtyPacket);
       expect(violations.length).toBeGreaterThan(0);
-      expect(violations.some(v => v.type === 'advisory')).toBe(true);
+      expect(violations.some((v) => v.type === 'advisory')).toBe(true);
     });
 
     it('should detect motivational drift', () => {
@@ -77,10 +77,10 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'contracted',
         cognitive: 'looping',
         tension_keyword: 'deadline',
-        conflict_indicator: 'pressure'
+        conflict_indicator: 'pressure',
       });
       const route = routeToProtocol(classification);
-      
+
       const cleanPacket = buildCoherencePacket(
         {
           physiological: 'tense',
@@ -88,17 +88,17 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'contracted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
+          conflict_indicator: 'pressure',
         },
         classification,
         route
       );
 
       const dirtyPacket = injectDriftForTesting(cleanPacket, 'motivation');
-      
+
       const violations = validateOutput(dirtyPacket);
       expect(violations.length).toBeGreaterThan(0);
-      expect(violations.some(v => v.type === 'motivational')).toBe(true);
+      expect(violations.some((v) => v.type === 'motivational')).toBe(true);
     });
 
     it('should detect emotional validation drift', () => {
@@ -109,17 +109,17 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'contracted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
+          conflict_indicator: 'pressure',
         },
         'DRIFT',
         'Constraint_Protocol'
       );
 
       const dirtyPacket = injectDriftForTesting(cleanPacket, 'emotional');
-      
+
       const violations = validateOutput(dirtyPacket);
       expect(violations.length).toBeGreaterThan(0);
-      expect(violations.some(v => v.type === 'emotional_validation')).toBe(true);
+      expect(violations.some((v) => v.type === 'emotional_validation')).toBe(true);
     });
 
     it('should pass clean outputs without false positives', () => {
@@ -129,10 +129,10 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'open',
         cognitive: 'clear',
         tension_keyword: 'calm',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       });
       const route = routeToProtocol(classification);
-      
+
       const cleanPacket = buildCoherencePacket(
         {
           physiological: 'open',
@@ -140,7 +140,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'open',
           cognitive: 'clear',
           tension_keyword: 'calm',
-          conflict_indicator: 'none'
+          conflict_indicator: 'none',
         },
         classification,
         route
@@ -159,7 +159,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'open',
         cognitive: 'clear',
         tension_keyword: 'calm',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       };
 
       const result = await generateWithSelfCorrection(founderState);
@@ -177,7 +177,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'contracted',
         cognitive: 'looping',
         tension_keyword: 'deadline',
-        conflict_indicator: 'pressure'
+        conflict_indicator: 'pressure',
       };
 
       const result = await generateWithSelfCorrection(driftState);
@@ -195,9 +195,9 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
             emotional: 'shutdown',
             cognitive: 'blank',
             tension_keyword: 'nothing',
-            conflict_indicator: 'avoidance'
+            conflict_indicator: 'avoidance',
           },
-          expectedIntegrity: 'PRE_COLLAPSE'
+          expectedIntegrity: 'PRE_COLLAPSE',
         },
         {
           state: {
@@ -206,9 +206,9 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
             emotional: 'shame',
             cognitive: 'overwhelmed',
             tension_keyword: 'failure',
-            conflict_indicator: 'pressure'
+            conflict_indicator: 'pressure',
           },
-          expectedIntegrity: 'DISTORTION'
+          expectedIntegrity: 'DISTORTION',
         },
         {
           state: {
@@ -217,9 +217,9 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
             emotional: 'contracted',
             cognitive: 'looping',
             tension_keyword: 'deadline',
-            conflict_indicator: 'pressure'
+            conflict_indicator: 'pressure',
           },
-          expectedIntegrity: 'DRIFT'
+          expectedIntegrity: 'DRIFT',
         },
         {
           state: {
@@ -228,15 +228,15 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
             emotional: 'open',
             cognitive: 'clear',
             tension_keyword: 'calm',
-            conflict_indicator: 'none'
+            conflict_indicator: 'none',
           },
-          expectedIntegrity: 'STABLE'
-        }
+          expectedIntegrity: 'STABLE',
+        },
       ];
 
       for (const testCase of testCases) {
         const result = await generateWithSelfCorrection(testCase.state);
-        
+
         expect(result.success).toBe(true);
         expect(result.final_output?.integrity_state).toBe(testCase.expectedIntegrity);
         expect(validateOutput(result.final_output!)).toHaveLength(0);
@@ -257,7 +257,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'contracted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
+          conflict_indicator: 'pressure',
         },
         'DRIFT',
         'Constraint_Protocol'
@@ -273,7 +273,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
     it('should reset monitoring state', () => {
       resetDriftMonitoring();
       const monitoring = getDriftMonitoring();
-      
+
       expect(monitoring.total_drift_detections).toBe(0);
       expect(monitoring.total_corrections).toBe(0);
       expect(monitoring.total_correction_failures).toBe(0);
@@ -291,7 +291,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'open',
           cognitive: 'clear',
           tension_keyword: 'calm',
-          conflict_indicator: 'none'
+          conflict_indicator: 'none',
         },
         {
           physiological: 'tense',
@@ -299,8 +299,8 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'contracted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
-        }
+          conflict_indicator: 'pressure',
+        },
       ];
 
       for (const state of states) {
@@ -322,25 +322,23 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'open',
         cognitive: 'clear',
         tension_keyword: 'calm',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       });
 
       expect(result.success).toBe(true);
       const output = result.final_output!;
-      
+
       // Check all text fields for future references
       const futurePatterns = [/will/, /next/, /soon/, /later/, /eventually/, /coming/];
-      const allText = [
-        output.state_reflection,
-        output.stabilisation_cue,
-        output.protocol_route
-      ].filter(Boolean).join(' ');
+      const allText = [output.state_reflection, output.stabilisation_cue, output.protocol_route]
+        .filter(Boolean)
+        .join(' ');
 
       for (const pattern of futurePatterns) {
         // Should not contain these patterns (some may be acceptable in context)
         // But our output should be present-tense focused
       }
-      
+
       // Most importantly, no violations detected
       expect(validateOutput(output)).toHaveLength(0);
     });
@@ -352,17 +350,14 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'contracted',
         cognitive: 'looping',
         tension_keyword: 'deadline',
-        conflict_indicator: 'pressure'
+        conflict_indicator: 'pressure',
       });
 
       expect(result.success).toBe(true);
       const output = result.final_output!;
-      
+
       const advisoryPatterns = [/should/, /need to/, /must/, /have to/, /try to/, /consider/];
-      const allText = [
-        output.state_reflection,
-        output.stabilisation_cue
-      ].filter(Boolean).join(' ');
+      const allText = [output.state_reflection, output.stabilisation_cue].filter(Boolean).join(' ');
 
       // Validate no advice patterns
       expect(validateOutput(output)).toHaveLength(0);
@@ -375,12 +370,12 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'open',
         cognitive: 'clear',
         tension_keyword: 'calm',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       });
 
       expect(result.success).toBe(true);
       const output = result.final_output!;
-      
+
       // Validate no motivational language
       expect(validateOutput(output)).toHaveLength(0);
     });
@@ -396,7 +391,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'shutdown',
           cognitive: 'blank',
           tension_keyword: 'nothing',
-          conflict_indicator: 'avoidance'
+          conflict_indicator: 'avoidance',
         },
         {
           physiological: 'frozen',
@@ -404,7 +399,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'shame',
           cognitive: 'overwhelmed',
           tension_keyword: 'failure',
-          conflict_indicator: 'pressure'
+          conflict_indicator: 'pressure',
         },
         {
           physiological: 'tense',
@@ -412,7 +407,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'contracted',
           cognitive: 'looping',
           tension_keyword: 'deadline',
-          conflict_indicator: 'pressure'
+          conflict_indicator: 'pressure',
         },
         {
           physiological: 'open',
@@ -420,16 +415,16 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'open',
           cognitive: 'clear',
           tension_keyword: 'calm',
-          conflict_indicator: 'none'
-        }
+          conflict_indicator: 'none',
+        },
       ];
 
       for (const state of founderStates) {
         const result = await generateWithSelfCorrection(state);
-        
+
         expect(result.success).toBe(true);
         expect(result.final_output).not.toBeNull();
-        
+
         // Verify output is clean
         const violations = validateOutput(result.final_output!);
         expect(violations).toHaveLength(0);
@@ -437,14 +432,16 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
     });
 
     it('should ensure all outputs pass drift validation', async () => {
-      const testStates: FounderStateInput[] = Array(10).fill(null).map((_, i) => ({
-        physiological: i % 2 === 0 ? 'open' : 'tense',
-        rhythm: i % 3 === 0 ? 'steady' : 'urgent',
-        emotional: i % 2 === 0 ? 'open' : 'contracted',
-        cognitive: i % 4 === 0 ? 'clear' : 'looping',
-        tension_keyword: i % 2 === 0 ? 'calm' : 'pressure',
-        conflict_indicator: i % 2 === 0 ? 'none' : 'pressure'
-      }));
+      const testStates: FounderStateInput[] = Array(10)
+        .fill(null)
+        .map((_, i) => ({
+          physiological: i % 2 === 0 ? 'open' : 'tense',
+          rhythm: i % 3 === 0 ? 'steady' : 'urgent',
+          emotional: i % 2 === 0 ? 'open' : 'contracted',
+          cognitive: i % 4 === 0 ? 'clear' : 'looping',
+          tension_keyword: i % 2 === 0 ? 'calm' : 'pressure',
+          conflict_indicator: i % 2 === 0 ? 'none' : 'pressure',
+        }));
 
       for (const state of testStates) {
         const result = await generateWithSelfCorrection(state);
@@ -463,14 +460,14 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         cognitive: 'clear',
         tension_keyword: 'calm',
         conflict_indicator: 'none',
-        founder_led_readiness_signal: true
+        founder_led_readiness_signal: true,
       };
 
       const upwardBlock = {
         expansion_detected: true,
         amplification_safe: true,
         magnification_note: 'This clarity is ready to anchor.',
-        micro_actions: ['Notice the steadiness', 'Let it stay']
+        micro_actions: ['Notice the steadiness', 'Let it stay'],
       };
 
       const result = await generateWithSelfCorrection(founderState, undefined, upwardBlock);
@@ -487,10 +484,10 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'open',
         cognitive: 'clear',
         tension_keyword: 'calm',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       });
       const route = routeToProtocol(classification);
-      
+
       const packet = buildCoherencePacket(
         {
           physiological: 'open',
@@ -498,7 +495,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'open',
           cognitive: 'clear',
           tension_keyword: 'calm',
-          conflict_indicator: 'none'
+          conflict_indicator: 'none',
         },
         classification,
         route
@@ -511,13 +508,15 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           expansion_detected: true,
           amplification_safe: true,
           magnification_note: 'You should keep this going. You will succeed!',
-          micro_actions: []
-        }
+          micro_actions: [],
+        },
       };
 
       const violations = validateOutput(dirtyPacket);
       expect(violations.length).toBeGreaterThan(0);
-      expect(violations.some(v => v.type === 'advisory' || v.type === 'future_reference')).toBe(true);
+      expect(violations.some((v) => v.type === 'advisory' || v.type === 'future_reference')).toBe(
+        true
+      );
     });
 
     it('should detect drift in micro-actions', () => {
@@ -527,10 +526,10 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'open',
         cognitive: 'clear',
         tension_keyword: 'calm',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       });
       const route = routeToProtocol(classification);
-      
+
       const packet = buildCoherencePacket(
         {
           physiological: 'open',
@@ -538,7 +537,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'open',
           cognitive: 'clear',
           tension_keyword: 'calm',
-          conflict_indicator: 'none'
+          conflict_indicator: 'none',
         },
         classification,
         route
@@ -552,14 +551,14 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           magnification_note: 'This clarity is present',
           micro_actions: [
             'Notice the steadiness',
-            'You should try to maintain this momentum' // Drift!
-          ]
-        }
+            'You should try to maintain this momentum', // Drift!
+          ],
+        },
       };
 
       const violations = validateOutput(dirtyPacket);
       expect(violations.length).toBeGreaterThan(0);
-      expect(violations.some(v => v.type === 'advisory')).toBe(true);
+      expect(violations.some((v) => v.type === 'advisory')).toBe(true);
     });
   });
 
@@ -571,7 +570,7 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
         emotional: 'open',
         cognitive: 'clear',
         tension_keyword: '',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       };
 
       const result = await generateWithSelfCorrection(minimalState);
@@ -587,11 +586,11 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
           emotional: 'open',
           cognitive: 'clear',
           tension_keyword: 'calm',
-          conflict_indicator: 'none'
+          conflict_indicator: 'none',
         },
         {
           coherence_score: 0.85,
-          field_drift_direction: 'stable'
+          field_drift_direction: 'stable',
         }
       );
 
@@ -600,4 +599,3 @@ describe('Phase 3: Self-Correction & Drift Guardrails', () => {
     });
   });
 });
-

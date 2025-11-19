@@ -11,14 +11,14 @@ function App() {
     cognitive: 'clear',
     tension_keyword: '',
     conflict_indicator: 'none',
-    founder_led_readiness_signal: true
+    founder_led_readiness_signal: true,
   });
 
   const [result, setResult] = useState<CoherencePacket | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [healthStatus, setHealthStatus] = useState<'healthy' | 'error' | 'checking'>('checking');
-  
+
   const [driftText, setDriftText] = useState('');
   const [driftResult, setDriftResult] = useState<DriftCheckResult | null>(null);
   const [driftLoading, setDriftLoading] = useState(false);
@@ -52,7 +52,7 @@ function App() {
 
   const handleDriftCheck = async () => {
     if (!driftText.trim()) return;
-    
+
     setDriftLoading(true);
     try {
       const response = await checkDrift(driftText);
@@ -83,13 +83,15 @@ function App() {
         <div>
           <div className="card">
             <h2>⚙️ Founder State Input</h2>
-            
+
             <form onSubmit={handleSubmit}>
               <div className="form-group">
                 <label>Physiological</label>
                 <select
                   value={founderState.physiological}
-                  onChange={(e) => setFounderState({ ...founderState, physiological: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, physiological: e.target.value as any })
+                  }
                 >
                   <option value="open">Open</option>
                   <option value="tight">Tight</option>
@@ -103,7 +105,9 @@ function App() {
                 <label>Rhythm</label>
                 <select
                   value={founderState.rhythm}
-                  onChange={(e) => setFounderState({ ...founderState, rhythm: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, rhythm: e.target.value as any })
+                  }
                 >
                   <option value="steady">Steady</option>
                   <option value="fragmented">Fragmented</option>
@@ -116,7 +120,9 @@ function App() {
                 <label>Emotional</label>
                 <select
                   value={founderState.emotional}
-                  onChange={(e) => setFounderState({ ...founderState, emotional: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, emotional: e.target.value as any })
+                  }
                 >
                   <option value="open">Open</option>
                   <option value="constricted">Constricted</option>
@@ -129,7 +135,9 @@ function App() {
                 <label>Cognitive</label>
                 <select
                   value={founderState.cognitive}
-                  onChange={(e) => setFounderState({ ...founderState, cognitive: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, cognitive: e.target.value as any })
+                  }
                 >
                   <option value="clear">Clear</option>
                   <option value="looping">Looping</option>
@@ -142,7 +150,9 @@ function App() {
                 <input
                   type="text"
                   value={founderState.tension_keyword}
-                  onChange={(e) => setFounderState({ ...founderState, tension_keyword: e.target.value })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, tension_keyword: e.target.value })
+                  }
                   placeholder="e.g., deadline, failure, calm"
                 />
               </div>
@@ -151,7 +161,9 @@ function App() {
                 <label>Conflict Indicator</label>
                 <select
                   value={founderState.conflict_indicator}
-                  onChange={(e) => setFounderState({ ...founderState, conflict_indicator: e.target.value as any })}
+                  onChange={(e) =>
+                    setFounderState({ ...founderState, conflict_indicator: e.target.value as any })
+                  }
                 >
                   <option value="none">None</option>
                   <option value="avoidance">Avoidance</option>
@@ -165,7 +177,12 @@ function App() {
                   <input
                     type="checkbox"
                     checked={founderState.founder_led_readiness_signal === true}
-                    onChange={(e) => setFounderState({ ...founderState, founder_led_readiness_signal: e.target.checked })}
+                    onChange={(e) =>
+                      setFounderState({
+                        ...founderState,
+                        founder_led_readiness_signal: e.target.checked,
+                      })
+                    }
                     style={{ width: 'auto', margin: 0 }}
                   />
                   Founder Ready Signal (Embodied Yes)
@@ -203,8 +220,8 @@ function App() {
                 placeholder="e.g., You should try to relax..."
               />
             </div>
-            <button 
-              className="button button-primary" 
+            <button
+              className="button button-primary"
               onClick={handleDriftCheck}
               disabled={driftLoading || !driftText.trim()}
             >
@@ -291,14 +308,16 @@ function App() {
                     <h3 style={{ color: 'var(--color-success)', marginTop: '1.5rem' }}>
                       ✨ Upward Coherence Detected
                     </h3>
-                    
-                    <div style={{ 
-                      background: 'rgba(16, 185, 129, 0.1)', 
-                      border: '2px solid var(--color-success)',
-                      borderRadius: '0.75rem',
-                      padding: '1.25rem',
-                      marginTop: '1rem'
-                    }}>
+
+                    <div
+                      style={{
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        border: '2px solid var(--color-success)',
+                        borderRadius: '0.75rem',
+                        padding: '1.25rem',
+                        marginTop: '1rem',
+                      }}
+                    >
                       <div className="result-row">
                         <span className="result-label">Expansion Detected</span>
                         <span className="result-value">
@@ -315,17 +334,21 @@ function App() {
 
                       {result.upward.magnification_note && (
                         <div style={{ marginTop: '1rem' }}>
-                          <strong style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                          <strong
+                            style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}
+                          >
                             Magnification Note:
                           </strong>
-                          <div style={{ 
-                            marginTop: '0.5rem',
-                            padding: '0.75rem',
-                            background: 'var(--color-surface-hover)',
-                            borderRadius: '0.5rem',
-                            fontSize: '1rem',
-                            fontStyle: 'italic'
-                          }}>
+                          <div
+                            style={{
+                              marginTop: '0.5rem',
+                              padding: '0.75rem',
+                              background: 'var(--color-surface-hover)',
+                              borderRadius: '0.5rem',
+                              fontSize: '1rem',
+                              fontStyle: 'italic',
+                            }}
+                          >
                             "{result.upward.magnification_note}"
                           </div>
                         </div>
@@ -333,16 +356,22 @@ function App() {
 
                       {result.upward.micro_actions && result.upward.micro_actions.length > 0 && (
                         <div style={{ marginTop: '1rem' }}>
-                          <strong style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}>
+                          <strong
+                            style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}
+                          >
                             Micro-Actions:
                           </strong>
-                          <ul style={{ 
-                            marginTop: '0.5rem',
-                            paddingLeft: '1.5rem',
-                            listStyleType: 'disc'
-                          }}>
+                          <ul
+                            style={{
+                              marginTop: '0.5rem',
+                              paddingLeft: '1.5rem',
+                              listStyleType: 'disc',
+                            }}
+                          >
                             {result.upward.micro_actions.map((action, i) => (
-                              <li key={i} style={{ marginTop: '0.25rem' }}>{action}</li>
+                              <li key={i} style={{ marginTop: '0.25rem' }}>
+                                {action}
+                              </li>
                             ))}
                           </ul>
                         </div>
@@ -352,10 +381,24 @@ function App() {
                 )}
 
                 {!result.upward && result.integrity_state === 'STABLE' && (
-                  <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'var(--color-surface-hover)', borderRadius: '0.5rem' }}>
+                  <div
+                    style={{
+                      marginTop: '1.5rem',
+                      padding: '1rem',
+                      background: 'var(--color-surface-hover)',
+                      borderRadius: '0.5rem',
+                    }}
+                  >
                     <strong>ℹ️ No Amplification</strong>
-                    <p style={{ fontSize: '0.875rem', marginTop: '0.5rem', color: 'var(--color-text-muted)' }}>
-                      State is STABLE but amplification conditions not met. Check founder ready signal and expansion signals.
+                    <p
+                      style={{
+                        fontSize: '0.875rem',
+                        marginTop: '0.5rem',
+                        color: 'var(--color-text-muted)',
+                      }}
+                    >
+                      State is STABLE but amplification conditions not met. Check founder ready
+                      signal and expansion signals.
                     </p>
                   </div>
                 )}
@@ -369,4 +412,3 @@ function App() {
 }
 
 export default App;
-

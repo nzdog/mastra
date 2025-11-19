@@ -19,7 +19,7 @@ describe('Output Schema Integrity', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const classification = classifyIntegrityState(state);
@@ -41,7 +41,7 @@ describe('Output Schema Integrity', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'calm',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const classification = classifyIntegrityState(state);
@@ -58,7 +58,7 @@ describe('Output Schema Integrity', () => {
       emotional: 'fog',
       cognitive: 'overwhelmed',
       tension_keyword: 'nothing',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const classification = classifyIntegrityState(state);
@@ -77,7 +77,7 @@ describe('State Reflection Output', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const classification = classifyIntegrityState(state);
@@ -95,7 +95,7 @@ describe('State Reflection Output', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'failure',
-      conflict_indicator: 'tension'
+      conflict_indicator: 'tension',
     };
 
     const classification = classifyIntegrityState(state);
@@ -113,7 +113,7 @@ describe('State Reflection Output', () => {
       emotional: 'fog',
       cognitive: 'overwhelmed',
       tension_keyword: 'nothing',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const classification = classifyIntegrityState(state);
@@ -131,7 +131,7 @@ describe('State Reflection Output', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'calm',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const classification = classifyIntegrityState(state);
@@ -150,7 +150,7 @@ describe('Stabilisation Cue Output', () => {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
+      conflict_indicator: 'pressure',
     };
 
     const classification = classifyIntegrityState(state);
@@ -167,7 +167,7 @@ describe('Stabilisation Cue Output', () => {
       emotional: 'fog',
       cognitive: 'overwhelmed',
       tension_keyword: 'nothing',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const classification = classifyIntegrityState(state);
@@ -184,7 +184,7 @@ describe('Stabilisation Cue Output', () => {
       emotional: 'open',
       cognitive: 'clear',
       tension_keyword: 'calm',
-      conflict_indicator: 'none'
+      conflict_indicator: 'none',
     };
 
     const classification = classifyIntegrityState(state);
@@ -202,7 +202,7 @@ describe('Stabilisation Cue Output', () => {
         emotional: 'constricted',
         cognitive: 'looping',
         tension_keyword: 'deadline',
-        conflict_indicator: 'pressure'
+        conflict_indicator: 'pressure',
       },
       {
         physiological: 'numb',
@@ -210,7 +210,7 @@ describe('Stabilisation Cue Output', () => {
         emotional: 'fog',
         cognitive: 'overwhelmed',
         tension_keyword: 'nothing',
-        conflict_indicator: 'none'
+        conflict_indicator: 'none',
       },
       {
         physiological: 'tight',
@@ -218,11 +218,11 @@ describe('Stabilisation Cue Output', () => {
         emotional: 'constricted',
         cognitive: 'looping',
         tension_keyword: 'failure',
-        conflict_indicator: 'tension'
-      }
+        conflict_indicator: 'tension',
+      },
     ];
 
-    testStates.forEach(state => {
+    testStates.forEach((state) => {
       const classification = classifyIntegrityState(state);
       const route = routeToProtocol(classification);
       const packet = buildCoherencePacket(state, classification, route);
@@ -233,4 +233,3 @@ describe('Stabilisation Cue Output', () => {
     });
   });
 });
-

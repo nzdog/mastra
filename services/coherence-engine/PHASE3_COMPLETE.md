@@ -11,12 +11,14 @@
 ## 🎯 What Was Built
 
 ### 1. Self-Correction Loop
+
 - ✅ Automatic drift detection in all outputs
 - ✅ Reject → Reset → Enforce Contract → Reclassify → Regenerate sequence
 - ✅ Maximum 3 attempts before failure
 - ✅ Founders never see drift outputs
 
 ### 2. Drift Detection (7 Categories)
+
 - ✅ Future references (`will`, `soon`, `next`, etc.)
 - ✅ Advisory language (`should`, `must`, `try to`, etc.)
 - ✅ Motivational language (`you can do it`, `keep going`, etc.)
@@ -26,6 +28,7 @@
 - ✅ Reassurance (`you're doing well`, `good job`, etc.)
 
 ### 3. Monitoring & Observability
+
 - ✅ Drift statistics tracking
 - ✅ Total detections, corrections, failures
 - ✅ Drift categorized by type
@@ -33,12 +36,14 @@
 - ✅ Debug endpoint: `GET /coherence/debug/drift-monitoring`
 
 ### 4. API Integration
+
 - ✅ `POST /coherence/stabilise-only` uses self-correction
 - ✅ `POST /coherence/evaluate` uses self-correction
 - ✅ Upward block (Phase 2) validated for drift
 - ✅ 500 error on correction failure (system bug detection)
 
 ### 5. Testing
+
 - ✅ 21 comprehensive Phase 3 tests
 - ✅ Drift detection tests
 - ✅ Self-correction loop tests
@@ -48,6 +53,7 @@
 - ✅ Upward block validation tests
 
 ### 6. Documentation
+
 - ✅ PHASE3_NOTES.md (implementation details)
 - ✅ Updated README with Phase 3 features
 - ✅ Updated CHANGELOG
@@ -65,6 +71,7 @@ Duration   554ms
 ```
 
 ### Test Breakdown
+
 - **Phase 1:** 88 tests (classification, routing, drift guard, output builder, memory, API, end-to-end)
 - **Phase 2:** 17 tests (amplification, expansion, false-high, safeguards)
 - **Phase 3:** 21 tests (self-correction, drift detection, founder protection, monitoring)
@@ -130,6 +137,7 @@ Phase 3 maintains and enhances all constraints from Phase 1 & 2:
 > **"Founder never sees drift outputs."** — SPEC.md Section 9.2
 
 This guarantee is now **enforced at the API level** through:
+
 1. Automatic output validation
 2. Drift rejection on detection
 3. Fresh regeneration with role contract enforcement
@@ -138,6 +146,7 @@ This guarantee is now **enforced at the API level** through:
 ### Zero Drift Outputs
 
 In our deterministic system:
+
 - First-attempt success expected (output builder doesn't produce drift)
 - Self-correction acts as a **safety net**
 - Prepares for future AI-powered output generation
@@ -155,6 +164,7 @@ In our deterministic system:
 ## 📈 What's Next
 
 ### Phase 4 (Future)
+
 - Natural language AI-powered output generation
 - LLM context management
 - Adaptive drift pattern learning
@@ -163,6 +173,7 @@ In our deterministic system:
 ### Production Readiness
 
 Phase 3 completes the core Coherence Engine:
+
 - ✅ **Stabilisation** (Phase 1): Detect and route integrity states
 - ✅ **Amplification** (Phase 2): Safely magnify upward coherence
 - ✅ **Self-Correction** (Phase 3): Prevent drift outputs
@@ -176,11 +187,13 @@ The system is now **production-ready** for deterministic classification with all
 ### Files Modified/Created
 
 **New Files:**
+
 - `tests/self_correction.test.ts` (21 tests)
 - `PHASE3_NOTES.md` (implementation details)
 - `PHASE3_COMPLETE.md` (this file)
 
 **Modified Files:**
+
 - `outputs/self_correction.ts` (enhanced with regeneration loop)
 - `api/handlers.ts` (integrated self-correction)
 - `api/server.ts` (added drift monitoring endpoint)
@@ -243,4 +256,3 @@ injectDriftForTesting(
 **Founders are guaranteed clean, non-directive, present-state outputs.**
 
 🍄 **Lichen Protocol Coherence Engine — Phase 3 Complete** 🍄
-

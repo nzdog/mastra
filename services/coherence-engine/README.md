@@ -11,6 +11,7 @@ The Coherence Engine is the real-time stability and momentum regulation layer of
 This is a **deterministic, rules-based system** that implements:
 
 **Phase 1 (Stabilisation):**
+
 - ✅ **Integrity Classification** (STABLE, DRIFT, DISTORTION, PRE_COLLAPSE)
 - ✅ **Protocol Routing** (deterministic mapping)
 - ✅ **Drift Detection** (6 categories)
@@ -18,6 +19,7 @@ This is a **deterministic, rules-based system** that implements:
 - ✅ **Present-State Only Logic** (no prediction, no memory influence)
 
 **Phase 2 (Amplification):**
+
 - ✅ **Expansion Detection** (7 expansion signals)
 - ✅ **False-High Detection** (unsafe positive urgency)
 - ✅ **Amplification Safeguards** (pace lock, embodiment gate, urgency kill-switch, micro-consent)
@@ -25,6 +27,7 @@ This is a **deterministic, rules-based system** that implements:
 - ✅ **Magnification Notes** (non-directive, present-only)
 
 **Phase 3 (Self-Correction):**
+
 - ✅ **Automatic Drift Detection** (7 forbidden pattern categories)
 - ✅ **Self-Correction Loop** (reject, reset, enforce contract, reclassify, regenerate)
 - ✅ **Founder Protection** (zero drift outputs reach founders)
@@ -32,6 +35,7 @@ This is a **deterministic, rules-based system** that implements:
 - ✅ **Upward Block Validation** (magnification notes & micro-actions checked for drift)
 
 ### What's NOT Implemented (Future Phases)
+
 - ❌ Natural language processing
 - ❌ Real-time streaming
 - ❌ Protocol cycle tracking integration
@@ -75,6 +79,7 @@ npm start
 Stabilisation-only endpoint (Phase 1 behavior, no upward detection).
 
 **Request:**
+
 ```json
 {
   "founder_state": {
@@ -96,6 +101,7 @@ Stabilisation-only endpoint (Phase 1 behavior, no upward detection).
 ```
 
 **Response:**
+
 ```json
 {
   "integrity_state": "DRIFT",
@@ -112,6 +118,7 @@ Stabilisation-only endpoint (Phase 1 behavior, no upward detection).
 Full evaluation endpoint with upward coherence detection (Phase 2).
 
 **Request:** Same as stabilise-only, with optional `founder_ready_signal`:
+
 ```json
 {
   "founder_state": {
@@ -130,6 +137,7 @@ Full evaluation endpoint with upward coherence detection (Phase 2).
 ```
 
 **Response (with amplification):**
+
 ```json
 {
   "integrity_state": "STABLE",
@@ -151,6 +159,7 @@ Full evaluation endpoint with upward coherence detection (Phase 2).
 Test drift detection on arbitrary text.
 
 **Request:**
+
 ```json
 {
   "text": "You should try to relax. Soon you will feel better."
@@ -158,6 +167,7 @@ Test drift detection on arbitrary text.
 ```
 
 **Response:**
+
 ```json
 {
   "clean": false,
@@ -182,6 +192,7 @@ Test drift detection on arbitrary text.
 **Phase 3:** Monitor drift detection statistics.
 
 **Response:**
+
 ```json
 {
   "monitoring": {
@@ -200,6 +211,7 @@ Test drift detection on arbitrary text.
 Health check endpoint.
 
 **Response:**
+
 ```json
 {
   "status": "healthy",
@@ -234,6 +246,7 @@ npm run test:coverage
 ### Test Categories
 
 **Phase 1 (88 tests):**
+
 - **Classification Tests** (`tests/classification.test.ts`) — Integrity state classification logic
 - **Routing Tests** (`tests/routing.test.ts`) — Protocol routing table
 - **Drift Guard Tests** (`tests/drift_guard.test.ts`) — Forbidden language detection
@@ -243,9 +256,11 @@ npm run test:coverage
 - **End-to-End Tests** (`tests/end_to_end.test.ts`) — Full scenarios
 
 **Phase 2 (17 tests):**
+
 - **Amplification Tests** (`tests/amplification.test.ts`) — Expansion detection, false-high detection, safeguards, upward coherence
 
 **Phase 3 (21 tests):**
+
 - **Self-Correction Tests** (`tests/self_correction.test.ts`) — Drift detection, self-correction loop, founder protection, monitoring, upward block validation
 
 ---
@@ -296,12 +311,14 @@ Memory is an event log for context only. It **cannot** influence classification.
 ### 3. Output Schema Lock
 
 Allowed outputs:
+
 - State reflection (present only)
 - Integrity classification
 - Protocol route
 - One-line stabilisation cue
 
 Forbidden outputs:
+
 - Advice
 - Motivation
 - Future references
@@ -329,17 +346,17 @@ else:                             STABLE
 
 ## Protocol Routing Table
 
-| Integrity State | Primary Signal | Protocol Route |
-|-----------------|----------------|----------------|
-| DRIFT | urgency | holding_my_rhythm |
-| DRIFT | avoidance | what_am_i_avoiding |
-| DRIFT | oscillating | grounding_sequence |
-| DISTORTION | shame | shame_release |
-| DISTORTION | fear | fear_mapping |
-| DISTORTION | overwhelm | capacity_reset |
-| PRE_COLLAPSE | numbness | emergency_grounding |
-| PRE_COLLAPSE | shutdown | exit_precursor flag |
-| STABLE | none | none |
+| Integrity State | Primary Signal | Protocol Route      |
+| --------------- | -------------- | ------------------- |
+| DRIFT           | urgency        | holding_my_rhythm   |
+| DRIFT           | avoidance      | what_am_i_avoiding  |
+| DRIFT           | oscillating    | grounding_sequence  |
+| DISTORTION      | shame          | shame_release       |
+| DISTORTION      | fear           | fear_mapping        |
+| DISTORTION      | overwhelm      | capacity_reset      |
+| PRE_COLLAPSE    | numbness       | emergency_grounding |
+| PRE_COLLAPSE    | shutdown       | exit_precursor flag |
+| STABLE          | none           | none                |
 
 ---
 
@@ -405,14 +422,14 @@ const response = await fetch('http://localhost:3000/coherence/stabilise-only', {
       emotional: 'constricted',
       cognitive: 'looping',
       tension_keyword: 'deadline',
-      conflict_indicator: 'pressure'
-    }
-  })
+      conflict_indicator: 'pressure',
+    },
+  }),
 });
 
 const packet = await response.json();
 console.log(packet.integrity_state); // "DRIFT"
-console.log(packet.protocol_route);  // "holding_my_rhythm"
+console.log(packet.protocol_route); // "holding_my_rhythm"
 ```
 
 ---
@@ -420,6 +437,7 @@ console.log(packet.protocol_route);  // "holding_my_rhythm"
 ## Phase 2 Complete ✅
 
 All amplification features implemented:
+
 - ✅ Upward coherence detection
 - ✅ Expansion signal detection (7 signals)
 - ✅ False-high detection
@@ -457,4 +475,3 @@ For questions or issues, contact the Lichen Protocol team.
 **Status:** Phase 2 Complete ✅
 
 All 105 tests passing. Stabilisation + Amplification fully implemented. Ready for production deployment.
-

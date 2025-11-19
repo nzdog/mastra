@@ -2,7 +2,7 @@
  * FALSE-HIGH DETECTOR
  * Detects unsafe "positive urgency" and hype
  * As per SPEC.md Section 5.2
- * 
+ *
  * False-High Signals (Unsafe):
  * - Hype
  * - Pressured excitement
@@ -10,7 +10,7 @@
  * - Racing thoughts
  * - Disembodied uplift
  * - Positive urgency
- * 
+ *
  * CRITICAL: False-high → treat as DRIFT
  */
 
@@ -43,14 +43,16 @@ export function detectFalseHigh(
   const signals: FalseHighSignals = {
     oscillating_rhythm: founderState.rhythm === 'oscillating',
     racing_thoughts: founderState.cognitive === 'looping' && founderState.rhythm !== 'steady',
-    pressured_excitement: founderState.conflict_indicator === 'pressure' && founderState.emotional !== 'fog',
-    disembodied: founderState.founder_led_readiness_signal === false || (
-      founderState.physiological !== 'open' && 
-      founderState.physiological !== 'steady' &&
-      founderState.emotional === 'open'
-    ),
-    urgency_present: founderState.rhythm === 'urgent' || founderState.conflict_indicator === 'pressure',
-    hype_keywords: checkHypeKeywords(founderState.tension_keyword)
+    pressured_excitement:
+      founderState.conflict_indicator === 'pressure' && founderState.emotional !== 'fog',
+    disembodied:
+      founderState.founder_led_readiness_signal === false ||
+      (founderState.physiological !== 'open' &&
+        founderState.physiological !== 'steady' &&
+        founderState.emotional === 'open'),
+    urgency_present:
+      founderState.rhythm === 'urgent' || founderState.conflict_indicator === 'pressure',
+    hype_keywords: checkHypeKeywords(founderState.tension_keyword),
   };
 
   const signalCount = Object.values(signals).filter(Boolean).length;
@@ -66,7 +68,7 @@ export function detectFalseHigh(
     false_high_detected,
     signals,
     signal_count: signalCount,
-    reason
+    reason,
   };
 }
 
@@ -75,12 +77,22 @@ export function detectFalseHigh(
  */
 function checkHypeKeywords(keyword: string): boolean {
   const hypeKeywords = [
-    'amazing', 'incredible', 'unstoppable', 'crushing',
-    'dominating', 'epic', 'legendary', 'explosive',
-    'massive', 'huge', 'insane', 'crazy', 'wild'
+    'amazing',
+    'incredible',
+    'unstoppable',
+    'crushing',
+    'dominating',
+    'epic',
+    'legendary',
+    'explosive',
+    'massive',
+    'huge',
+    'insane',
+    'crazy',
+    'wild',
   ];
 
-  return hypeKeywords.some(kw => keyword.toLowerCase().includes(kw));
+  return hypeKeywords.some((kw) => keyword.toLowerCase().includes(kw));
 }
 
 /**
@@ -107,13 +119,12 @@ export function isUnsafePositive(
   falseHigh: FalseHighDetectionResult
 ): boolean {
   // Appears positive (open emotions, excited keywords)
-  const appearsPositive = 
-    founderState.emotional === 'open' || 
-    ['excited', 'energized', 'motivated', 'pumped'].some(kw => 
+  const appearsPositive =
+    founderState.emotional === 'open' ||
+    ['excited', 'energized', 'motivated', 'pumped'].some((kw) =>
       founderState.tension_keyword.toLowerCase().includes(kw)
     );
 
   // But has false-high signals
   return appearsPositive && falseHigh.false_high_detected;
 }
-

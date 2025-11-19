@@ -56,4 +56,3 @@ function isValidUpwardCoherence(upward: any): upward is UpwardCoherence {
     (upward.micro_actions === undefined || Array.isArray(upward.micro_actions))
   );
 }
-

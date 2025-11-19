@@ -35,7 +35,7 @@ describe('Drift Detection - Future References', () => {
   });
 
   it('should reject "when you\'re ready"', () => {
-    const violations = checkForDrift('When you\'re ready, move forward.');
+    const violations = checkForDrift("When you're ready, move forward.");
     expect(violations.length).toBeGreaterThan(0);
   });
 });
@@ -72,16 +72,16 @@ describe('Drift Detection - Motivational Language', () => {
   it('should reject "you can do it"', () => {
     const violations = checkForDrift('You can do it! Keep going.');
     expect(violations.length).toBeGreaterThan(0);
-    expect(violations.some(v => v.type === 'motivational')).toBe(true);
+    expect(violations.some((v) => v.type === 'motivational')).toBe(true);
   });
 
   it('should reject "you\'ve got this"', () => {
-    const violations = checkForDrift('You\'ve got this.');
+    const violations = checkForDrift("You've got this.");
     expect(violations.length).toBeGreaterThan(0);
   });
 
   it('should reject "keep going"', () => {
-    const violations = checkForDrift('Keep going, you\'re almost there.');
+    const violations = checkForDrift("Keep going, you're almost there.");
     expect(violations.length).toBeGreaterThan(0);
   });
 
@@ -98,18 +98,18 @@ describe('Drift Detection - Motivational Language', () => {
 
 describe('Drift Detection - Emotional Validation', () => {
   it('should reject "it\'s okay"', () => {
-    const violations = checkForDrift('It\'s okay to feel this way.');
+    const violations = checkForDrift("It's okay to feel this way.");
     expect(violations.length).toBeGreaterThan(0);
     expect(violations[0].type).toBe('emotional_validation');
   });
 
   it('should reject "that\'s normal"', () => {
-    const violations = checkForDrift('That\'s normal for founders.');
+    const violations = checkForDrift("That's normal for founders.");
     expect(violations.length).toBeGreaterThan(0);
   });
 
   it('should reject "don\'t worry"', () => {
-    const violations = checkForDrift('Don\'t worry about it.');
+    const violations = checkForDrift("Don't worry about it.");
     expect(violations.length).toBeGreaterThan(0);
   });
 });
@@ -122,7 +122,7 @@ describe('Drift Detection - Therapeutic Language', () => {
   });
 
   it('should reject "let\'s explore"', () => {
-    const violations = checkForDrift('Let\'s explore this feeling.');
+    const violations = checkForDrift("Let's explore this feeling.");
     expect(violations.length).toBeGreaterThan(0);
   });
 
@@ -151,10 +151,10 @@ describe('Clean Output Detection', () => {
       'Ground.',
       'Stop.',
       'Notice.',
-      'Breathe.'
+      'Breathe.',
     ];
 
-    texts.forEach(text => {
+    texts.forEach((text) => {
       expect(isCleanOutput(text)).toBe(true);
     });
   });
@@ -169,13 +169,12 @@ describe('Multiple Violations Detection', () => {
   it('should detect multiple violations in single text', () => {
     const text = 'You should try to relax. Soon you will feel better. Keep going!';
     const violations = checkForDrift(text);
-    
+
     expect(violations.length).toBeGreaterThan(2);
-    
-    const types = violations.map(v => v.type);
+
+    const types = violations.map((v) => v.type);
     expect(types).toContain('advisory');
     expect(types).toContain('future_reference');
     expect(types).toContain('motivational');
   });
 });
-

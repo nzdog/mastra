@@ -10,4 +10,3 @@ const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 // Start the server
 startServer(PORT);
-
