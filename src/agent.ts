@@ -847,7 +847,10 @@ export class FieldDiagnosticAgent {
    * Create initial session state
    */
   private createInitialState(): SessionState {
+    // MVE: Generate session_id for event logging
+    const { randomUUID } = require('crypto');
     return {
+      session_id: randomUUID(),
       active_protocol: null,
       mode: 'ENTRY',
       theme_index: null,

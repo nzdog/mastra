@@ -45,6 +45,7 @@ export type LastResponse = 'theme_questions' | 'interpretation_and_completion' |
  * including current position in protocol, user progress, and conversation depth.
  */
 export interface SessionState {
+  session_id: string; // MVE: Session identifier for event logging
   active_protocol: string | null;
   mode: Mode;
   theme_index: number | null;
