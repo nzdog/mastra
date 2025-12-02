@@ -20,6 +20,8 @@ import { SessionStore, Session } from '../../session-store';
 import { validateUserInput, validateProtocolSlug, validateSessionId } from '../validation';
 import { validateApiKey } from '../middleware';
 import type { SessionState } from '../../types';
+// MVE: Import Observer type for session creation
+import type { Observer } from '../../observability/mve-types';
 
 /**
  * Support type for protocol content
@@ -58,11 +60,13 @@ async function getSession(sessionStore: SessionStore, sessionId: string): Promis
 
 /**
  * Helper: Create new session (async)
+ * MVE: Added optional observer parameter
  */
 async function createSession(
   apiKey: string,
   sessionStore: SessionStore,
-  protocolSlug?: string
+  protocolSlug?: string,
+  observer?: Observer
 ): Promise<Session> {
   const loader = new ProtocolLoader();
 
@@ -86,7 +90,8 @@ async function createSession(
 
   const session: Session = {
     id: randomUUID(),
-    agent: new FieldDiagnosticAgent(apiKey, registry, protocolPath),
+    // MVE: Pass observer to agent constructor
+    agent: new FieldDiagnosticAgent(apiKey, registry, protocolPath, observer),
     registry,
     parser,
     created_at: new Date().toISOString(),
@@ -213,6 +218,7 @@ function formatResponse(
  * @param apiLimiter - Rate limiter for API endpoints
  * @param aiEndpointLimiter - Rate limiter for AI endpoints
  * @param sessionCreationLimiter - Rate limiter for session creation
+ * @param observer - MVE observer for session creation (optional)
  * @returns Express router with protocol endpoints
  */
 export function createProtocolRouter(
@@ -223,7 +229,8 @@ export function createProtocolRouter(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   aiEndpointLimiter: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sessionCreationLimiter: any
+  sessionCreationLimiter: any,
+  observer?: Observer // MVE: Observer parameter
 ): Router {
   const router = Router();
 
@@ -358,7 +365,8 @@ export function createProtocolRouter(
         }
 
         // Create new session with specified protocol
-        const session = await createSession(apiKey, sessionStore, protocol_slug);
+        // MVE: Pass observer to session
+        const session = await createSession(apiKey, sessionStore, protocol_slug, observer);
 
         // If mode is WALK, skip ENTRY mode and go directly to Theme 1
         if (mode === 'WALK') {

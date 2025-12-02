@@ -12,6 +12,9 @@ import { startServer, setupGracefulShutdown } from './server/lifecycle';
 import memoryRouter from './memory-layer/api/memory-router';
 import { getMemoryStore } from './memory-layer/storage/in-memory-store';
 import { errorHandler } from './memory-layer/middleware/error-handler';
+// MVE: Import observer for observability experiment
+import { JsonSink } from './observability/mve-json-sink';
+import type { Observer } from './observability/mve-types';
 
 // Load configuration
 const config = loadConfig();
@@ -32,6 +35,19 @@ setInterval(
 
 // Initialize memory store (singleton)
 const memoryStore = getMemoryStore();
+
+// MVE: Start - Initialize global observer for observability experiment
+let globalObserver: Observer | undefined;
+if (process.env.OBSERVABILITY_ENABLED === 'true') {
+  globalObserver = new JsonSink({
+    outputDir: './mve-data',
+    filename: `server-${Date.now()}.jsonl`,
+    bufferSize: 10,
+    autoFlushIntervalMs: 5000, // Flush every 5 seconds
+  });
+  console.log('📊 MVE: Observability enabled - logging to ./mve-data');
+}
+// MVE: End
 
 // Cleanup expired memory records every 60 seconds (TTL enforcement)
 setInterval(
@@ -89,12 +105,14 @@ const metricsRouter = createMetricsRouter(apiLimiter, metricsLimiter);
 app.use(metricsRouter);
 
 // Mount protocol routes
+// MVE: Pass global observer to protocol router
 const protocolRouter = createProtocolRouter(
   API_KEY,
   sessionStore,
   apiLimiter,
   aiEndpointLimiter,
-  sessionCreationLimiter
+  sessionCreationLimiter,
+  globalObserver // MVE: Observer parameter
 );
 app.use(protocolRouter);
 
@@ -147,7 +165,8 @@ app.use(errorHandler);
 (async () => {
   try {
     await startServer(app, config.port, isReadyRef);
-    setupGracefulShutdown(sessionStore);
+    // MVE: Register observer cleanup in shutdown handler
+    setupGracefulShutdown(sessionStore, globalObserver);
   } catch (error) {
     console.error('❌ Fatal error starting server:', error);
     process.exit(1);

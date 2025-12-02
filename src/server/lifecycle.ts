@@ -9,6 +9,8 @@
 import { Express } from 'express';
 import { SessionStore } from '../session-store';
 import { getLedgerSink } from '../memory-layer/storage/ledger-sink';
+// MVE: Import Observer type for cleanup
+import type { Observer } from '../observability/mve-types';
 
 /**
  * Start the server with initialization and health checks
@@ -131,11 +133,24 @@ Ready to accept connections.
  *
  * @param signal - Signal name (SIGTERM or SIGINT)
  * @param sessionStore - Session store instance for cleanup
+ * @param observer - MVE observer instance for cleanup (optional)
  */
-async function gracefulShutdown(signal: string, sessionStore: SessionStore): Promise<void> {
+async function gracefulShutdown(
+  signal: string,
+  sessionStore: SessionStore,
+  observer?: Observer
+): Promise<void> {
   console.log(`\n⚠️  Received ${signal} - starting graceful shutdown...`);
 
   try {
+    // MVE: Start - Flush observer before shutdown
+    if (observer) {
+      console.log('📊 MVE: Flushing observation buffer...');
+      await observer.flush();
+      console.log('✅ MVE: Observer flushed');
+    }
+    // MVE: End
+
     // 1. Close PostgreSQL pool if using Postgres persistence
     if (process.env.PERSISTENCE === 'postgres') {
       const { getPostgresStore } = require('../memory-layer/storage/postgres-store');
@@ -171,8 +186,9 @@ async function gracefulShutdown(signal: string, sessionStore: SessionStore): Pro
  * Setup graceful shutdown handlers for SIGTERM and SIGINT
  *
  * @param sessionStore - Session store instance for cleanup
+ * @param observer - MVE observer instance for cleanup (optional)
  */
-export function setupGracefulShutdown(sessionStore: SessionStore): void {
-  process.on('SIGTERM', () => gracefulShutdown('SIGTERM', sessionStore));
-  process.on('SIGINT', () => gracefulShutdown('SIGINT', sessionStore));
+export function setupGracefulShutdown(sessionStore: SessionStore, observer?: Observer): void {
+  process.on('SIGTERM', () => gracefulShutdown('SIGTERM', sessionStore, observer));
+  process.on('SIGINT', () => gracefulShutdown('SIGINT', sessionStore, observer));
 }
