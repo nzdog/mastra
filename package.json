@@ -30,7 +30,8 @@
     "typecheck": "tsc --noEmit",
     "analyze": "cd packages/code-analysis && bash ./analyze.sh",
     "analyze:latest": "cat packages/code-analysis/reports/latest/SYN-executive-summary.md",
-    "prepare": "husky"
+    "prepare": "husky",
+    "mve:analyze": "tsx scripts/mve-analyze.ts"
   },
   "keywords": [],
   "author": "",
