@@ -9,6 +9,7 @@ import rateLimit from 'express-rate-limit';
 import { stabiliseOnly, evaluate, driftCheck, health } from './handlers';
 import { REQUEST_SIZE_LIMIT, RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX_REQUESTS } from '../constants';
 import { apiKeyAuth } from '../middleware/auth';
+import { logger } from '../utils/logger';
 
 /**
  * Create and configure Express app
@@ -20,8 +21,17 @@ export function createApp(): Express {
   app.set('trust proxy', 1);
 
   // CORS configuration - specify allowed origins for production
+  const corsOrigin =
+    process.env.CORS_ORIGIN ||
+    (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3001');
+
+  // Fail fast in production if CORS_ORIGIN not set
+  if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
+    throw new Error('CORS_ORIGIN must be set in production environment');
+  }
+
   const corsOptions = {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+    origin: corsOrigin,
     credentials: true,
   };
   app.use(cors(corsOptions));
@@ -40,7 +50,7 @@ export function createApp(): Express {
 
   // Request logging
   app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} ${req.method} ${req.path}`);
+    logger.info('HTTP Request', { method: req.method, path: req.path });
     next();
   });
 
@@ -77,7 +87,9 @@ export function startServer(port: number = 3000): void {
     console.log('  Phase 2: Stabilisation + Amplification');
     console.log('═══════════════════════════════════════════════════════');
     console.log(`  Server running on port ${port}`);
-    console.log(`  Authentication: ${authEnabled ? '✅ ENABLED' : '⚠️  DISABLED (set COHERENCE_API_KEY)'}`);
+    console.log(
+      `  Authentication: ${authEnabled ? '✅ ENABLED' : '⚠️  DISABLED (set COHERENCE_API_KEY)'}`
+    );
     console.log('  Endpoints:');
     console.log(`    POST http://localhost:${port}/coherence/stabilise-only`);
     console.log(`    POST http://localhost:${port}/coherence/evaluate (with upward)`);

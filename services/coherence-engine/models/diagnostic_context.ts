@@ -20,25 +20,18 @@ export interface DiagnosticContext {
 export function isValidDiagnosticContext(context: unknown): context is DiagnosticContext {
   if (!context || typeof context !== 'object') return false;
 
+  // Type assertion after object check
+  const c = context as Record<string, unknown>;
+
   // All fields are optional, but if present must be correct types
-  if (context.current_field !== undefined && typeof context.current_field !== 'string')
+  if (c.current_field !== undefined && typeof c.current_field !== 'string') return false;
+  if (c.origin_field_residue !== undefined && typeof c.origin_field_residue !== 'string')
     return false;
-  if (
-    context.origin_field_residue !== undefined &&
-    typeof context.origin_field_residue !== 'string'
-  )
-    return false;
-  if (context.emerging_field !== undefined && typeof context.emerging_field !== 'string')
-    return false;
-  if (context.distortion_map !== undefined && !Array.isArray(context.distortion_map)) return false;
-  if (context.capacity_edge !== undefined && typeof context.capacity_edge !== 'string')
-    return false;
-  if (context.coherence_score !== undefined && typeof context.coherence_score !== 'number')
-    return false;
-  if (
-    context.field_drift_direction !== undefined &&
-    typeof context.field_drift_direction !== 'string'
-  )
+  if (c.emerging_field !== undefined && typeof c.emerging_field !== 'string') return false;
+  if (c.distortion_map !== undefined && !Array.isArray(c.distortion_map)) return false;
+  if (c.capacity_edge !== undefined && typeof c.capacity_edge !== 'string') return false;
+  if (c.coherence_score !== undefined && typeof c.coherence_score !== 'number') return false;
+  if (c.field_drift_direction !== undefined && typeof c.field_drift_direction !== 'string')
     return false;
 
   return true;

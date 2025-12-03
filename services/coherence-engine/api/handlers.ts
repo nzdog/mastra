@@ -18,6 +18,7 @@ import { classifyIntegrityState } from '../classification';
 import { routeToProtocol } from '../protocol_router';
 import { buildCoherencePacket } from '../outputs/output_builder';
 import { validateOutput } from '../outputs/self_correction';
+import packageJson from '../package.json';
 import { checkForDrift } from '../outputs/drift_guard';
 import { detectExpansion } from '../amplification/expansion_detector';
 import { detectFalseHigh } from '../amplification/false_high_detector';
@@ -253,7 +254,7 @@ export function health(req: Request, res: Response): void {
   res.status(200).json({
     status: 'healthy',
     service: 'coherence-engine',
-    version: '1.0.0',
+    version: packageJson.version,
     timestamp: new Date().toISOString(),
   });
 }

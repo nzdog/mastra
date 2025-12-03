@@ -7,6 +7,7 @@ interface EnvConfig {
   PORT?: string;
   NODE_ENV?: string;
   CORS_ORIGIN?: string;
+  COHERENCE_API_KEY?: string;
 }
 
 /**
@@ -18,12 +19,32 @@ export function validateEnv(): EnvConfig {
     PORT: process.env.PORT || '3000',
     NODE_ENV: process.env.NODE_ENV || 'development',
     CORS_ORIGIN: process.env.CORS_ORIGIN,
+    COHERENCE_API_KEY: process.env.COHERENCE_API_KEY,
   };
 
-  // Optional: Add warnings for production without certain variables
-  if (config.NODE_ENV === 'production' && !config.CORS_ORIGIN) {
+  // Production environment validation - fail fast on missing critical config
+  if (config.NODE_ENV === 'production') {
+    const missingVars: string[] = [];
+
+    if (!config.COHERENCE_API_KEY) {
+      missingVars.push('COHERENCE_API_KEY');
+    }
+
+    if (!config.CORS_ORIGIN) {
+      missingVars.push('CORS_ORIGIN');
+    }
+
+    if (missingVars.length > 0) {
+      throw new Error(
+        `CRITICAL: Production deployment requires the following environment variables: ${missingVars.join(', ')}`
+      );
+    }
+  }
+
+  // Warning for development if API key is not set
+  if (config.NODE_ENV === 'development' && !config.COHERENCE_API_KEY) {
     console.warn(
-      'WARNING: CORS_ORIGIN not set in production. Using default: http://localhost:3001'
+      'INFO: COHERENCE_API_KEY not set. API endpoints will return 500 errors. Set COHERENCE_API_KEY to enable authentication.'
     );
   }
 

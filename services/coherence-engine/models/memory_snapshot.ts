@@ -24,40 +24,26 @@ export interface MemorySnapshot {
 export function isValidMemorySnapshot(snapshot: unknown): snapshot is MemorySnapshot {
   if (!snapshot || typeof snapshot !== 'object') return false;
 
+  // Type assertion after object check
+  const s = snapshot as Record<string, unknown>;
+
   // All fields are optional arrays or numbers
-  if (snapshot.recent_drift_events !== undefined && !Array.isArray(snapshot.recent_drift_events))
+  if (s.recent_drift_events !== undefined && !Array.isArray(s.recent_drift_events)) return false;
+  if (s.recent_distortion_events !== undefined && !Array.isArray(s.recent_distortion_events))
+    return false;
+  if (s.recent_pre_collapse_events !== undefined && !Array.isArray(s.recent_pre_collapse_events))
     return false;
   if (
-    snapshot.recent_distortion_events !== undefined &&
-    !Array.isArray(snapshot.recent_distortion_events)
+    s.stability_restoration_durations !== undefined &&
+    !Array.isArray(s.stability_restoration_durations)
   )
     return false;
-  if (
-    snapshot.recent_pre_collapse_events !== undefined &&
-    !Array.isArray(snapshot.recent_pre_collapse_events)
-  )
+  if (s.collapse_precursors !== undefined && !Array.isArray(s.collapse_precursors)) return false;
+  if (s.protocol_usage_history !== undefined && !Array.isArray(s.protocol_usage_history))
     return false;
-  if (
-    snapshot.stability_restoration_durations !== undefined &&
-    !Array.isArray(snapshot.stability_restoration_durations)
-  )
+  if (s.founder_drift_signature !== undefined && !Array.isArray(s.founder_drift_signature))
     return false;
-  if (snapshot.collapse_precursors !== undefined && !Array.isArray(snapshot.collapse_precursors))
-    return false;
-  if (
-    snapshot.protocol_usage_history !== undefined &&
-    !Array.isArray(snapshot.protocol_usage_history)
-  )
-    return false;
-  if (
-    snapshot.founder_drift_signature !== undefined &&
-    !Array.isArray(snapshot.founder_drift_signature)
-  )
-    return false;
-  if (
-    snapshot.stability_duration_hours !== undefined &&
-    typeof snapshot.stability_duration_hours !== 'number'
-  )
+  if (s.stability_duration_hours !== undefined && typeof s.stability_duration_hours !== 'number')
     return false;
 
   return true;

@@ -20,24 +20,42 @@ function log(level: LogLevel, message: string, data?: unknown): void {
     timestamp: new Date().toISOString(),
     level,
     message,
-    ...(data && { data }),
   };
 
-  // In production, this could be sent to a logging service
-  // For now, output to console with appropriate method
-  const output = JSON.stringify(entry);
+  if (data !== undefined) {
+    entry.data = data;
+  }
 
-  switch (level) {
-    case 'error':
-      console.error(output);
-      break;
-    case 'warn':
-      console.warn(output);
-      break;
-    case 'info':
-    case 'debug':
-      console.log(output);
-      break;
+  if (process.env.NODE_ENV === 'production') {
+    // JSON for log aggregation services
+    const output = JSON.stringify(entry);
+    switch (level) {
+      case 'error':
+        console.error(output);
+        break;
+      case 'warn':
+        console.warn(output);
+        break;
+      case 'info':
+      case 'debug':
+        console.log(output);
+        break;
+    }
+  } else {
+    // Human-readable for development
+    const colors = {
+      error: '\x1b[31m', // Red
+      warn: '\x1b[33m', // Yellow
+      info: '\x1b[36m', // Cyan
+      debug: '\x1b[90m', // Gray
+    };
+    const reset = '\x1b[0m';
+    const color = colors[level];
+
+    const timestamp = new Date().toISOString().split('T')[1].slice(0, 12); // Just time portion
+    const dataStr = data ? ` ${JSON.stringify(data, null, 2)}` : '';
+
+    console.log(`${color}[${level.toUpperCase()}]${reset} ${timestamp} ${message}${dataStr}`);
   }
 }
 
