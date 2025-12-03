@@ -5,7 +5,7 @@
  * Safe to remove after: Memory layer implementation complete
  */
 
-import { writeFile, appendFile, mkdir } from 'fs/promises';
+import { appendFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import { join } from 'path';
 import { Observer, ObservationEvent } from './mve-types';
@@ -61,7 +61,9 @@ export class JsonSink implements Observer {
   }
 
   async observe(event: ObservationEvent): Promise<void> {
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      return;
+    }
 
     this.buffer.push(event);
 
@@ -72,7 +74,9 @@ export class JsonSink implements Observer {
   }
 
   async flush(): Promise<void> {
-    if (!this.enabled || this.buffer.length === 0) return;
+    if (!this.enabled || this.buffer.length === 0) {
+      return;
+    }
 
     const filePath = join(this.outputDir, this.filename);
     const lines = this.buffer.map((event) => JSON.stringify(event)).join('\n') + '\n';
