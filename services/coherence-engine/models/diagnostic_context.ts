@@ -21,7 +21,7 @@ export function isValidDiagnosticContext(context: unknown): context is Diagnosti
   if (!context || typeof context !== 'object') return false;
 
   // Type assertion after object check
-  const c = context as Record<string, any>;
+  const c = context as Record<string, unknown>;
 
   // All fields are optional, but if present must be correct types
   if (c.current_field !== undefined && typeof c.current_field !== 'string') return false;

@@ -35,11 +35,12 @@ export function isValidCoherencePacket(packet: unknown): packet is CoherencePack
   if (!packet || typeof packet !== 'object') return false;
 
   // Type assertion after object check
-  const p = packet as Record<string, any>;
+  const p = packet as Record<string, unknown>;
 
   const validIntegrityStates = ['STABLE', 'DRIFT', 'DISTORTION', 'PRE_COLLAPSE'];
 
   return (
+    typeof p.integrity_state === 'string' &&
     validIntegrityStates.includes(p.integrity_state) &&
     typeof p.state_reflection === 'string' &&
     (p.protocol_route === null || typeof p.protocol_route === 'string') &&
@@ -53,7 +54,7 @@ function isValidUpwardCoherence(upward: unknown): upward is UpwardCoherence {
   if (!upward || typeof upward !== 'object') return false;
 
   // Type assertion after object check
-  const u = upward as Record<string, any>;
+  const u = upward as Record<string, unknown>;
 
   return (
     typeof u.expansion_detected === 'boolean' &&

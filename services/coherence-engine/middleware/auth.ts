@@ -4,6 +4,7 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
+import { logger } from '../utils/logger';
 
 /**
  * API Key Authentication Middleware
@@ -31,7 +32,7 @@ export function apiKeyAuth(req: Request, res: Response, next: NextFunction): voi
   const validApiKey = process.env.COHERENCE_API_KEY;
 
   if (!validApiKey) {
-    console.error('⚠️  COHERENCE_API_KEY not configured in environment');
+    logger.error('COHERENCE_API_KEY not configured in environment');
     res.status(500).json({
       error: 'Server configuration error',
       message: 'API authentication not properly configured',

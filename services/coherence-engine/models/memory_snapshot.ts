@@ -25,7 +25,7 @@ export function isValidMemorySnapshot(snapshot: unknown): snapshot is MemorySnap
   if (!snapshot || typeof snapshot !== 'object') return false;
 
   // Type assertion after object check
-  const s = snapshot as Record<string, any>;
+  const s = snapshot as Record<string, unknown>;
 
   // All fields are optional arrays or numbers
   if (s.recent_drift_events !== undefined && !Array.isArray(s.recent_drift_events)) return false;

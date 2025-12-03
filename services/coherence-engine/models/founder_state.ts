@@ -29,7 +29,7 @@ export function isValidFounderState(state: unknown): state is FounderStateInput 
   if (!state || typeof state !== 'object') return false;
 
   // Type assertion after object check
-  const s = state as Record<string, any>;
+  const s = state as Record<string, unknown>;
 
   const validPhysiological = ['open', 'tight', 'numb', 'agitated', 'steady'];
   const validRhythm = ['steady', 'fragmented', 'urgent', 'oscillating'];
@@ -45,10 +45,15 @@ export function isValidFounderState(state: unknown): state is FounderStateInput 
   }
 
   return (
+    typeof s.physiological === 'string' &&
     validPhysiological.includes(s.physiological) &&
+    typeof s.rhythm === 'string' &&
     validRhythm.includes(s.rhythm) &&
+    typeof s.emotional === 'string' &&
     validEmotional.includes(s.emotional) &&
+    typeof s.cognitive === 'string' &&
     validCognitive.includes(s.cognitive) &&
+    typeof s.conflict_indicator === 'string' &&
     validConflict.includes(s.conflict_indicator) &&
     (s.founder_ready_signal === undefined || typeof s.founder_ready_signal === 'boolean')
   );
