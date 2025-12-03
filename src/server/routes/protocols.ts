@@ -382,7 +382,13 @@ export function createProtocolRouter(
         // Create new session with specified protocol
         // MVE: Pass observer to session
         // Pass email notifier for session notification
-        const session = await createSession(apiKey, sessionStore, protocol_slug, observer, emailNotifier);
+        const session = await createSession(
+          apiKey,
+          sessionStore,
+          protocol_slug,
+          observer,
+          emailNotifier
+        );
 
         // If mode is WALK, skip ENTRY mode and go directly to Theme 1
         if (mode === 'WALK') {

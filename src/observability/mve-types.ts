@@ -9,8 +9,8 @@
  * Core fields present in every observation event
  */
 interface ObservationEventCore {
-  timestamp: string;      // ISO 8601
-  session_id: string;     // UUID
+  timestamp: string; // ISO 8601
+  session_id: string; // UUID
   event_type: 'classification' | 'mode_decision' | 'theme_answer';
 }
 
@@ -20,7 +20,7 @@ interface ObservationEventCore {
 interface ClassificationEvent extends ObservationEventCore {
   event_type: 'classification';
   classification_label: 'discover' | 'walk' | 'memory' | 'none';
-  confidence: number;     // 0-1
+  confidence: number; // 0-1
 }
 
 /**
@@ -36,18 +36,15 @@ interface ModeDecisionEvent extends ObservationEventCore {
  */
 interface ThemeAnswerEvent extends ObservationEventCore {
   event_type: 'theme_answer';
-  theme_index: number;           // 1-6
-  raw_text: string;              // Full user response
-  spotlight_flags: string[];     // ["should", "rushing", etc.]
+  theme_index: number; // 1-6
+  raw_text: string; // Full user response
+  spotlight_flags: string[]; // ["should", "rushing", etc.]
 }
 
 /**
  * Union type of all possible observation events
  */
-export type ObservationEvent =
-  | ClassificationEvent
-  | ModeDecisionEvent
-  | ThemeAnswerEvent;
+export type ObservationEvent = ClassificationEvent | ModeDecisionEvent | ThemeAnswerEvent;
 
 /**
  * Observer interface - implementers write events to storage

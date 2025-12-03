@@ -22,12 +22,14 @@ export class JsonSink implements Observer {
   private enabled: boolean;
   private flushInterval: NodeJS.Timeout | null = null;
 
-  constructor(options: {
-    outputDir?: string;
-    filename?: string;
-    bufferSize?: number;
-    autoFlushIntervalMs?: number;
-  } = {}) {
+  constructor(
+    options: {
+      outputDir?: string;
+      filename?: string;
+      bufferSize?: number;
+      autoFlushIntervalMs?: number;
+    } = {}
+  ) {
     this.outputDir = options.outputDir || './mve-data';
     this.filename = options.filename || `session-${Date.now()}.jsonl`;
     this.bufferSize = options.bufferSize || 10;
@@ -36,15 +38,13 @@ export class JsonSink implements Observer {
     // Auto-flush every N milliseconds
     if (options.autoFlushIntervalMs && this.enabled) {
       this.flushInterval = setInterval(() => {
-        this.flush().catch(err =>
-          console.error('[MVE] Auto-flush error:', err)
-        );
+        this.flush().catch((err) => console.error('[MVE] Auto-flush error:', err));
       }, options.autoFlushIntervalMs);
     }
 
     // Ensure output directory exists
     if (this.enabled) {
-      this.ensureOutputDir().catch(err =>
+      this.ensureOutputDir().catch((err) =>
         console.error('[MVE] Failed to create output directory:', err)
       );
     }
@@ -75,7 +75,7 @@ export class JsonSink implements Observer {
     if (!this.enabled || this.buffer.length === 0) return;
 
     const filePath = join(this.outputDir, this.filename);
-    const lines = this.buffer.map(event => JSON.stringify(event)).join('\n') + '\n';
+    const lines = this.buffer.map((event) => JSON.stringify(event)).join('\n') + '\n';
 
     try {
       // Append to file (or create if doesn't exist)

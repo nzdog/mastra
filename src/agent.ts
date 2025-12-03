@@ -73,7 +73,12 @@ export class FieldDiagnosticAgent {
    * );
    * ```
    */
-  constructor(apiKey: string, registry?: ProtocolRegistry, protocolPath?: string, observer?: Observer) {
+  constructor(
+    apiKey: string,
+    registry?: ProtocolRegistry,
+    protocolPath?: string,
+    observer?: Observer
+  ) {
     this.classifier = new IntentClassifier(apiKey);
 
     // Use provided registry or load default field diagnostic protocol
