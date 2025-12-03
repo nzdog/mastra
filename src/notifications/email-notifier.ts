@@ -24,13 +24,20 @@ function escapeHtml(unsafe: string): string {
 }
 
 export class EmailNotifier {
+  private static readonly MIN_PORT = 1;
+  private static readonly MAX_PORT = 65535;
+  private static readonly DEFAULT_PORT = 587;
+
   private transporter: Transporter | null = null;
   private enabled: boolean;
   private recipient: string;
+  private fromAddress: string;
 
   constructor() {
     this.enabled = process.env.EMAIL_NOTIFICATIONS_ENABLED === 'true';
-    this.recipient = process.env.EMAIL_NOTIFICATION_RECIPIENT || 'coherence@lichenprotocol.com';
+    this.recipient =
+      process.env.EMAIL_NOTIFICATION_RECIPIENT || 'coherence@lichenprotocol.com';
+    this.fromAddress = process.env.SMTP_USER || 'noreply@lichenprotocol.com';
 
     if (this.enabled) {
       this.initializeTransporter();
@@ -39,15 +46,17 @@ export class EmailNotifier {
 
   private initializeTransporter(): void {
     const host = process.env.SMTP_HOST;
-    const portStr = process.env.SMTP_PORT || '587';
+    const portStr = process.env.SMTP_PORT || String(EmailNotifier.DEFAULT_PORT);
     const port = parseInt(portStr, 10);
     const secure = process.env.SMTP_SECURE === 'true'; // true for 465, false for other ports
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
     // Validate SMTP_PORT is a valid number
-    if (isNaN(port) || port < 1 || port > 65535) {
-      console.warn(`⚠️  Invalid SMTP_PORT value: ${portStr}. Using default: 587`);
+    if (isNaN(port) || port < EmailNotifier.MIN_PORT || port > EmailNotifier.MAX_PORT) {
+      console.warn(
+        `⚠️  Invalid SMTP_PORT value: ${portStr}. Using default: ${EmailNotifier.DEFAULT_PORT}`
+      );
       this.enabled = false;
       return;
     }
@@ -159,7 +168,7 @@ Lichen Protocol Diagnostic Engine
       `.trim();
 
       await this.transporter.sendMail({
-        from: `"Lichen Diagnostic Engine" <${process.env.SMTP_USER}>`,
+        from: `"Lichen Diagnostic Engine" <${this.fromAddress}>`,
         to: this.recipient,
         subject,
         text,

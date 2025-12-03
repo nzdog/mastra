@@ -20,6 +20,7 @@ import { SessionStore, Session } from '../../session-store';
 import { validateUserInput, validateProtocolSlug, validateSessionId } from '../validation';
 import { validateApiKey } from '../middleware';
 import type { SessionState } from '../../types';
+import { EmailNotifier } from '../../notifications/email-notifier';
 
 /**
  * Support type for protocol content
@@ -98,6 +99,15 @@ async function createSession(
   console.log(
     `✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`
   );
+
+  // Send email notification if enabled
+  const emailNotifier = new EmailNotifier();
+  if (emailNotifier.isEnabled()) {
+    await emailNotifier.notifySessionStart({
+      session_id: session.id,
+      timestamp: new Date(),
+    });
+  }
   return session;
 }
 
