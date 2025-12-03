@@ -16,11 +16,7 @@
 
 import { FounderStateInput } from '../models/founder_state';
 import { DiagnosticContext } from '../models/diagnostic_context';
-import {
-  FALSE_HIGH_SIGNAL_THRESHOLD,
-  HYPE_KEYWORDS,
-  EXCITED_KEYWORDS,
-} from '../constants';
+import { FALSE_HIGH_SIGNAL_THRESHOLD, HYPE_KEYWORDS, EXCITED_KEYWORDS } from '../constants';
 
 export interface FalseHighSignals {
   oscillating_rhythm: boolean;
