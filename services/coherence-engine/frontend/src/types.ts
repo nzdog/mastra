@@ -12,7 +12,14 @@ export interface FounderStateInput {
   cognitive: CognitiveState;
   tension_keyword: string;
   conflict_indicator: ConflictIndicator;
-  founder_ready_signal?: boolean;
+  founder_led_readiness_signal?: boolean;
+}
+
+export interface UpwardCoherence {
+  expansion_detected: boolean;
+  amplification_safe: boolean;
+  magnification_note: string | null;
+  micro_actions: string[];
 }
 
 export interface CoherencePacket {
@@ -21,7 +28,7 @@ export interface CoherencePacket {
   protocol_route: string | null;
   stabilisation_cue: string | null;
   exit_precursor: boolean;
-  upward: null;
+  upward: UpwardCoherence | null;
 }
 
 export interface DriftViolation {

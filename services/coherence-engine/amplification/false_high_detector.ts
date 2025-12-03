@@ -47,7 +47,7 @@ export function detectFalseHigh(
     pressured_excitement:
       founderState.conflict_indicator === 'pressure' && founderState.emotional !== 'fog',
     disembodied:
-      founderState.founder_ready_signal === false ||
+      founderState.founder_led_readiness_signal === false ||
       (founderState.physiological !== 'open' &&
         founderState.physiological !== 'steady' &&
         founderState.emotional === 'open'),

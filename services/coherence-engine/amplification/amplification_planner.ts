@@ -44,7 +44,7 @@ export function planAmplification(
   const preConditionsMet = checkPreConditions(
     integrityState,
     protocolCycleComplete,
-    founderState.founder_ready_signal
+    founderState.founder_led_readiness_signal
   );
 
   if (!preConditionsMet.met) {
@@ -153,7 +153,7 @@ function buildSafeguards(
       falseHigh.signals.urgency_present,
 
     // Micro-consent: Founder ready signal present
-    micro_consent_present: founderState.founder_ready_signal === true,
+    micro_consent_present: founderState.founder_led_readiness_signal === true,
   };
 }
 

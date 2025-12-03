@@ -6,7 +6,7 @@
 import express, { Express } from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { stabiliseOnly, evaluate, driftCheck, health } from './handlers';
+import { stabiliseOnly, evaluate, driftCheck, health, driftMonitoring } from './handlers';
 import { REQUEST_SIZE_LIMIT, RATE_LIMIT_WINDOW_MS, RATE_LIMIT_MAX_REQUESTS } from '../constants';
 import { apiKeyAuth } from '../middleware/auth';
 import { logger } from '../utils/logger';
@@ -61,6 +61,7 @@ export function createApp(): Express {
   app.post('/coherence/stabilise-only', apiKeyAuth, apiLimiter, stabiliseOnly);
   app.post('/coherence/evaluate', apiKeyAuth, apiLimiter, evaluate);
   app.post('/coherence/debug/drift-check', apiKeyAuth, apiLimiter, driftCheck);
+  app.get('/coherence/debug/drift-monitoring', driftMonitoring);
 
   // 404 handler
   app.use((req, res) => {
@@ -84,7 +85,7 @@ export function startServer(port: number = 3000): void {
 
     console.log('═══════════════════════════════════════════════════════');
     console.log('  LICHEN COHERENCE ENGINE');
-    console.log('  Phase 2: Stabilisation + Amplification');
+    console.log('  Phase 3: Stabilisation + Amplification + Self-Correction');
     console.log('═══════════════════════════════════════════════════════');
     console.log(`  Server running on port ${port}`);
     console.log(
@@ -94,6 +95,7 @@ export function startServer(port: number = 3000): void {
     console.log(`    POST http://localhost:${port}/coherence/stabilise-only`);
     console.log(`    POST http://localhost:${port}/coherence/evaluate (with upward)`);
     console.log(`    POST http://localhost:${port}/coherence/debug/drift-check`);
+    console.log(`    GET  http://localhost:${port}/coherence/debug/drift-monitoring`);
     console.log(`    GET  http://localhost:${port}/health`);
     if (authEnabled) {
       console.log('');

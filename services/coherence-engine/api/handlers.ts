@@ -17,7 +17,11 @@ import {
 import { classifyIntegrityState } from '../classification';
 import { routeToProtocol } from '../protocol_router';
 import { buildCoherencePacket } from '../outputs/output_builder';
-import { validateOutput } from '../outputs/self_correction';
+import {
+  validateOutput,
+  generateWithSelfCorrection,
+  getDriftMonitoring,
+} from '../outputs/self_correction';
 import packageJson from '../package.json';
 import { checkForDrift } from '../outputs/drift_guard';
 import { detectExpansion } from '../amplification/expansion_detector';
@@ -36,6 +40,7 @@ interface StabiliseRequest {
 /**
  * POST /coherence/stabilise-only
  * Main stabilisation endpoint (Phase 1 MVP)
+ * Now with Phase 3 self-correction
  */
 export async function stabiliseOnly(req: Request, res: Response): Promise<void> {
   try {
@@ -73,36 +78,33 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
       return;
     }
 
-    // Process: Classify -> Route -> Build Output
-    const classification = classifyIntegrityState(body.founder_state, body.diagnostic_context);
+    // PHASE 3: Generate with self-correction
+    const result = await generateWithSelfCorrection(body.founder_state, body.diagnostic_context);
 
-    const route = routeToProtocol(classification);
-
-    const coherencePacket = buildCoherencePacket(body.founder_state, classification, route);
-
-    // Validate output for drift (should never happen in deterministic system, but safety check)
-    const driftViolations = validateOutput(coherencePacket);
-    if (driftViolations.length > 0) {
-      // Log error and return 500 - this is a system bug
-      logger.error('CRITICAL: Drift detected in output', { violations: driftViolations });
+    if (!result.success || !result.final_output) {
+      // Self-correction failed after max attempts
+      logger.error('CRITICAL: Self-correction failed', {
+        attempts: result.attempts,
+        violations: result.violations_history,
+      });
       res.status(500).json({
-        error: 'Internal error: drift detected in output',
-        violations: driftViolations,
+        error: 'Internal error: unable to generate clean output after self-correction',
+        attempts: result.attempts,
       });
       return;
     }
 
     // Validate packet structure
-    if (!isValidCoherencePacket(coherencePacket)) {
-      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: coherencePacket });
+    if (!isValidCoherencePacket(result.final_output)) {
+      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: result.final_output });
       res.status(500).json({
         error: 'Internal error: invalid output structure',
       });
       return;
     }
 
-    // Return successful response
-    res.status(200).json(coherencePacket);
+    // Return successful response (founder never sees drift)
+    res.status(200).json(result.final_output);
   } catch (error) {
     logger.error('Error in stabiliseOnly', { error });
     res.status(500).json({
@@ -115,6 +117,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 /**
  * POST /coherence/evaluate
  * Full evaluation endpoint (includes amplification - Phase 2)
+ * Now with Phase 3 self-correction
  */
 export async function evaluate(req: Request, res: Response): Promise<void> {
   try {
@@ -152,15 +155,12 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
       return;
     }
 
-    // Step 1: Classify integrity state
+    // Step 1: Classify integrity state for amplification check
     const classification = classifyIntegrityState(body.founder_state, body.diagnostic_context);
 
-    const route = routeToProtocol(classification);
+    // Step 2: Determine upward block (Phase 2)
+    let upwardBlock = null;
 
-    // Step 2: Build base coherence packet
-    let coherencePacket = buildCoherencePacket(body.founder_state, classification, route);
-
-    // Step 3: Check for upward coherence (Phase 2)
     if (classification.integrity_state === 'STABLE') {
       // Detect expansion signals
       const expansion = detectExpansion(body.founder_state, body.diagnostic_context);
@@ -177,35 +177,40 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
         true // For Phase 2, assume protocol cycle complete
       );
 
-      // Add upward block if amplification is safe
-      coherencePacket = {
-        ...coherencePacket,
-        upward: amplificationPlan.upward_block,
-      };
+      upwardBlock = amplificationPlan.upward_block;
     }
 
-    // Validate output for drift
-    const driftViolations = validateOutput(coherencePacket);
-    if (driftViolations.length > 0) {
-      logger.error('CRITICAL: Drift detected in output', { violations: driftViolations });
+    // Step 3: PHASE 3 - Generate with self-correction (includes upward block)
+    const result = await generateWithSelfCorrection(
+      body.founder_state,
+      body.diagnostic_context,
+      upwardBlock
+    );
+
+    if (!result.success || !result.final_output) {
+      // Self-correction failed after max attempts
+      logger.error('CRITICAL: Self-correction failed', {
+        attempts: result.attempts,
+        violations: result.violations_history,
+      });
       res.status(500).json({
-        error: 'Internal error: drift detected in output',
-        violations: driftViolations,
+        error: 'Internal error: unable to generate clean output after self-correction',
+        attempts: result.attempts,
       });
       return;
     }
 
     // Validate packet structure
-    if (!isValidCoherencePacket(coherencePacket)) {
-      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: coherencePacket });
+    if (!isValidCoherencePacket(result.final_output)) {
+      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: result.final_output });
       res.status(500).json({
         error: 'Internal error: invalid output structure',
       });
       return;
     }
 
-    // Return successful response
-    res.status(200).json(coherencePacket);
+    // Return successful response (founder never sees drift)
+    res.status(200).json(result.final_output);
   } catch (error) {
     logger.error('Error in evaluate', { error });
     res.status(500).json({
@@ -256,5 +261,17 @@ export function health(req: Request, res: Response): void {
     service: 'coherence-engine',
     version: packageJson.version,
     timestamp: new Date().toISOString(),
+  });
+}
+
+/**
+ * GET /coherence/debug/drift-monitoring
+ * Phase 3: Drift monitoring statistics
+ */
+export function driftMonitoring(req: Request, res: Response): void {
+  const stats = getDriftMonitoring();
+  res.status(200).json({
+    monitoring: stats,
+    message: 'Phase 3 drift monitoring active',
   });
 }
