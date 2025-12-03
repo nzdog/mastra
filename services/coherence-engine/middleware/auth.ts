@@ -17,6 +17,25 @@ import { logger } from '../utils/logger';
  * @param next - Express next function
  */
 export function apiKeyAuth(req: Request, res: Response, next: NextFunction): void {
+  const validApiKey = process.env.COHERENCE_API_KEY;
+
+  // Allow unauthenticated access if no API key configured (development mode)
+  if (!validApiKey) {
+    if (process.env.NODE_ENV === 'production') {
+      logger.error('COHERENCE_API_KEY not configured in production');
+      res.status(500).json({
+        error: 'Server configuration error',
+        message: 'API authentication not properly configured',
+      });
+      return;
+    }
+    // Development: warn but allow
+    logger.warn('COHERENCE_API_KEY not set - authentication bypassed');
+    next();
+    return;
+  }
+
+  // API key is configured, validate it
   const apiKey = req.headers['x-api-key'];
 
   // Check if API key is provided
@@ -28,18 +47,7 @@ export function apiKeyAuth(req: Request, res: Response, next: NextFunction): voi
     return;
   }
 
-  // Check if API key is valid
-  const validApiKey = process.env.COHERENCE_API_KEY;
-
-  if (!validApiKey) {
-    logger.error('COHERENCE_API_KEY not configured in environment');
-    res.status(500).json({
-      error: 'Server configuration error',
-      message: 'API authentication not properly configured',
-    });
-    return;
-  }
-
+  // Check if API key matches
   if (apiKey !== validApiKey) {
     res.status(401).json({
       error: 'Unauthorized',
