@@ -1,9 +1,4 @@
-import {
-  FounderStateInput,
-  CoherencePacket,
-  DriftCheckResult,
-  DiagnosticContext,
-} from './types';
+import { FounderStateInput, CoherencePacket, DriftCheckResult, DiagnosticContext } from './types';
 
 const API_BASE = 'http://localhost:3000';
 

@@ -78,7 +78,9 @@ export function startServer(port: number = 3000): void {
     console.log('  Phase 2: Stabilisation + Amplification');
     console.log('═══════════════════════════════════════════════════════');
     console.log(`  Server running on port ${port}`);
-    console.log(`  Authentication: ${authEnabled ? '✅ ENABLED' : '⚠️  DISABLED (set COHERENCE_API_KEY)'}`);
+    console.log(
+      `  Authentication: ${authEnabled ? '✅ ENABLED' : '⚠️  DISABLED (set COHERENCE_API_KEY)'}`
+    );
     console.log('  Endpoints:');
     console.log(`    POST http://localhost:${port}/coherence/stabilise-only`);
     console.log(`    POST http://localhost:${port}/coherence/evaluate (with upward)`);
