@@ -22,17 +22,21 @@ export function validateEnv(): EnvConfig {
     COHERENCE_API_KEY: process.env.COHERENCE_API_KEY,
   };
 
-  // Warnings for production without certain variables
+  // Production environment validation - fail fast on missing critical config
   if (config.NODE_ENV === 'production') {
-    if (!config.CORS_ORIGIN) {
-      console.warn(
-        'WARNING: CORS_ORIGIN not set in production. Using default: http://localhost:3001'
-      );
-    }
+    const missingVars: string[] = [];
 
     if (!config.COHERENCE_API_KEY) {
-      console.warn(
-        'WARNING: COHERENCE_API_KEY not set in production. API endpoints will be unprotected!'
+      missingVars.push('COHERENCE_API_KEY');
+    }
+
+    if (!config.CORS_ORIGIN) {
+      missingVars.push('CORS_ORIGIN');
+    }
+
+    if (missingVars.length > 0) {
+      throw new Error(
+        `CRITICAL: Production deployment requires the following environment variables: ${missingVars.join(', ')}`
       );
     }
   }
