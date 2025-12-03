@@ -21,8 +21,17 @@ export function createApp(): Express {
   app.set('trust proxy', 1);
 
   // CORS configuration - specify allowed origins for production
+  const corsOrigin =
+    process.env.CORS_ORIGIN ||
+    (process.env.NODE_ENV === 'production' ? undefined : 'http://localhost:3001');
+
+  // Fail fast in production if CORS_ORIGIN not set
+  if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
+    throw new Error('CORS_ORIGIN must be set in production environment');
+  }
+
   const corsOptions = {
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3001',
+    origin: corsOrigin,
     credentials: true,
   };
   app.use(cors(corsOptions));
