@@ -11,7 +11,7 @@ import { ObservationEvent } from '../src/observability/mve-types';
 
 interface AnnotatedEvent extends ObservationEvent {
   annotation?: {
-    tags: string[];  // e.g., ["field_emergence", "breakthrough"]
+    tags: string[]; // e.g., ["field_emergence", "breakthrough"]
     note?: string;
   };
 }
@@ -21,8 +21,8 @@ interface AnnotatedEvent extends ObservationEvent {
  */
 function parseJsonl(filePath: string): AnnotatedEvent[] {
   const content = readFileSync(filePath, 'utf-8');
-  const lines = content.split('\n').filter(line => line.trim());
-  return lines.map(line => JSON.parse(line));
+  const lines = content.split('\n').filter((line) => line.trim());
+  return lines.map((line) => JSON.parse(line));
 }
 
 /**
@@ -31,8 +31,8 @@ function parseJsonl(filePath: string): AnnotatedEvent[] {
 function printTimeline(events: AnnotatedEvent[]) {
   console.log('\n=== SESSION TIMELINE ===\n');
 
-  const modeEvents = events.filter(e => e.event_type === 'mode_decision');
-  const themeEvents = events.filter(e => e.event_type === 'theme_answer');
+  const modeEvents = events.filter((e) => e.event_type === 'mode_decision');
+  const themeEvents = events.filter((e) => e.event_type === 'theme_answer');
 
   console.log('Mode Progression:');
   modeEvents.forEach((e, i) => {
@@ -44,9 +44,8 @@ function printTimeline(events: AnnotatedEvent[]) {
   console.log('\nTheme Progression:');
   themeEvents.forEach((e, i) => {
     if (e.event_type === 'theme_answer') {
-      const spotlights = e.spotlight_flags.length > 0
-        ? ` 🔦 [${e.spotlight_flags.join(', ')}]`
-        : '';
+      const spotlights =
+        e.spotlight_flags.length > 0 ? ` 🔦 [${e.spotlight_flags.join(', ')}]` : '';
       console.log(`  ${i + 1}. Theme ${e.theme_index}${spotlights}`);
     }
   });
@@ -58,8 +57,8 @@ function printTimeline(events: AnnotatedEvent[]) {
 function printSpotlights(events: AnnotatedEvent[]) {
   console.log('\n=== SPOTLIGHT HITS ===\n');
 
-  const themeEvents = events.filter(e =>
-    e.event_type === 'theme_answer' && e.spotlight_flags.length > 0
+  const themeEvents = events.filter(
+    (e) => e.event_type === 'theme_answer' && e.spotlight_flags.length > 0
   );
 
   if (themeEvents.length === 0) {
@@ -67,7 +66,7 @@ function printSpotlights(events: AnnotatedEvent[]) {
     return;
   }
 
-  themeEvents.forEach(e => {
+  themeEvents.forEach((e) => {
     if (e.event_type === 'theme_answer') {
       console.log(`Theme ${e.theme_index} - ${e.timestamp}`);
       console.log(`Flags: ${e.spotlight_flags.join(', ')}`);
@@ -83,7 +82,7 @@ function printSpotlights(events: AnnotatedEvent[]) {
 function printAnnotations(events: AnnotatedEvent[]) {
   console.log('\n=== MANUAL ANNOTATIONS ===\n');
 
-  const annotated = events.filter(e => e.annotation);
+  const annotated = events.filter((e) => e.annotation);
 
   if (annotated.length === 0) {
     console.log('No manual annotations found.');
@@ -92,7 +91,7 @@ function printAnnotations(events: AnnotatedEvent[]) {
     return;
   }
 
-  annotated.forEach(e => {
+  annotated.forEach((e) => {
     console.log(`Event: ${e.event_type} at ${e.timestamp}`);
     console.log(`Tags: ${e.annotation!.tags.join(', ')}`);
     if (e.annotation!.note) {
@@ -108,7 +107,7 @@ function printAnnotations(events: AnnotatedEvent[]) {
 function printClassifications(events: AnnotatedEvent[]) {
   console.log('\n=== CLASSIFICATION SUMMARY ===\n');
 
-  const classEvents = events.filter(e => e.event_type === 'classification');
+  const classEvents = events.filter((e) => e.event_type === 'classification');
 
   if (classEvents.length === 0) {
     console.log('No classification events found.');
@@ -118,7 +117,7 @@ function printClassifications(events: AnnotatedEvent[]) {
   const labelCounts: Record<string, number> = {};
   let totalConfidence = 0;
 
-  classEvents.forEach(e => {
+  classEvents.forEach((e) => {
     if (e.event_type === 'classification') {
       labelCounts[e.classification_label] = (labelCounts[e.classification_label] || 0) + 1;
       totalConfidence += e.confidence;
@@ -154,8 +153,8 @@ function main() {
     const stat = require('fs').statSync(input);
     if (stat.isDirectory()) {
       files = readdirSync(input)
-        .filter(f => f.endsWith('.jsonl'))
-        .map(f => join(input, f));
+        .filter((f) => f.endsWith('.jsonl'))
+        .map((f) => join(input, f));
     } else {
       files = [input];
     }
@@ -171,7 +170,7 @@ function main() {
 
   console.log(`\nAnalyzing ${files.length} session(s)...\n`);
 
-  files.forEach(file => {
+  files.forEach((file) => {
     console.log(`\n${'='.repeat(60)}`);
     console.log(`FILE: ${file}`);
     console.log('='.repeat(60));

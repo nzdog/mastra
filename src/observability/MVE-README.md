@@ -7,6 +7,7 @@
 ## What This Is
 
 A lightweight observability system that logs three types of events during diagnostic walks:
+
 1. **Classification** - What intent the agent detected
 2. **Mode Decision** - Which mode the agent entered (ENTRY/WALK/CLOSE)
 3. **Theme Answer** - User's response to theme questions, with spotlight pattern detection
@@ -28,6 +29,7 @@ A lightweight observability system that logs three types of events during diagno
 ### 1. Enable Observability
 
 Create/edit `.env`:
+
 ```bash
 OBSERVABILITY_ENABLED=true
 ```
@@ -49,7 +51,7 @@ const agent = new FieldDiagnosticAgent(
   process.env.ANTHROPIC_API_KEY!,
   undefined, // registry
   undefined, // protocolPath
-  observer   // observer
+  observer // observer
 );
 
 // Run diagnostic session...
@@ -75,6 +77,7 @@ npm run mve:analyze ./mve-data
 ## Event Schema
 
 ### Classification Event
+
 ```json
 {
   "timestamp": "2025-12-02T10:30:00.000Z",
@@ -86,6 +89,7 @@ npm run mve:analyze ./mve-data
 ```
 
 ### Mode Decision Event
+
 ```json
 {
   "timestamp": "2025-12-02T10:30:01.000Z",
@@ -96,6 +100,7 @@ npm run mve:analyze ./mve-data
 ```
 
 ### Theme Answer Event
+
 ```json
 {
   "timestamp": "2025-12-02T10:35:00.000Z",
@@ -110,6 +115,7 @@ npm run mve:analyze ./mve-data
 ## Spotlight Patterns
 
 The system detects these field emergence indicators:
+
 - `should` - Obligation language
 - `always` - Absolute language
 - `dont_know` - Uncertainty markers
@@ -138,6 +144,7 @@ To tag interesting moments, edit the JSONL file and add an `annotation` field:
 ## Week 1 Goal
 
 After 3-5 sessions, answer:
+
 1. **What memory structures are required?**
    - What should memory store about classification patterns?
    - What should memory store about field emergence?
@@ -152,11 +159,13 @@ After 3-5 sessions, answer:
 When the experiment is complete:
 
 1. Find all MVE files:
+
 ```bash
 find . -name "*mve*" -type f
 ```
 
 2. Find all MVE code:
+
 ```bash
 grep -r "MVE:" src/
 ```
@@ -173,6 +182,7 @@ grep -r "MVE:" src/
 ## Next Steps
 
 See `~/.claude/plans/parsed-swimming-avalanche.md` for optional modules:
+
 - Module 1: State Transition Deep Dive
 - Module 2: Plan-Execution Delta Analysis
 - Module 3: Field Archetype Clustering
