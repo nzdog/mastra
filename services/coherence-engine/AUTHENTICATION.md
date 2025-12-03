@@ -2,13 +2,44 @@
 
 ## Current State
 
-⚠️ **WARNING**: The Coherence Engine API currently has **NO authentication**. All endpoints are publicly accessible.
+✅ **API Key Authentication is IMPLEMENTED**
 
-## Production Requirements
+The Coherence Engine API now uses API key authentication to protect all coherence endpoints.
 
-Before deploying to production, you **MUST** implement authentication. Here are recommended approaches:
+## Quick Start
 
-### Option 1: API Key Authentication (Simplest)
+### 1. Generate an API Key
+
+```bash
+# Generate a secure random API key (Linux/Mac)
+openssl rand -hex 32
+
+# Or use Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+### 2. Configure Environment Variable
+
+Add to your `.env` file or environment:
+
+```bash
+COHERENCE_API_KEY=your_generated_api_key_here
+```
+
+### 3. Use the API Key
+
+Include the API key in your requests via the `x-api-key` header:
+
+```bash
+curl -X POST http://localhost:3000/coherence/evaluate \
+  -H "x-api-key: your_generated_api_key_here" \
+  -H "Content-Type: application/json" \
+  -d '{"founder_state": {...}}'
+```
+
+## Implementation Details
+
+### Option 1: API Key Authentication (Currently Implemented)
 
 ```typescript
 // middleware/auth.ts
@@ -89,15 +120,15 @@ For enterprise deployments, consider integrating with:
 
 ## Implementation Checklist
 
-- [ ] Choose authentication method
-- [ ] Install required dependencies
-- [ ] Create authentication middleware
-- [ ] Apply middleware to protected routes
-- [ ] Set up environment variables
-- [ ] Update documentation for API consumers
+- [x] Choose authentication method
+- [x] Install required dependencies (none needed - uses built-in)
+- [x] Create authentication middleware (`middleware/auth.ts`)
+- [x] Apply middleware to protected routes
+- [x] Set up environment variables (`COHERENCE_API_KEY`)
+- [x] Update documentation for API consumers
 - [ ] Test authentication flow
-- [ ] Configure HTTPS certificates
-- [ ] Set up monitoring and alerts
+- [ ] Configure HTTPS certificates (production)
+- [ ] Set up monitoring and alerts (production)
 
 ## Example Usage
 
