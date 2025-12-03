@@ -1,6 +1,15 @@
 import { useState, useEffect } from 'react';
-import { FounderStateInput, CoherencePacket, DriftCheckResult } from './types';
-import { stabiliseOnly, checkDrift, checkHealth } from './api';
+import {
+  FounderStateInput,
+  CoherencePacket,
+  DriftCheckResult,
+  PhysiologicalState,
+  Rhythm,
+  EmotionalState,
+  CognitiveState,
+  ConflictIndicator,
+} from './types';
+import { evaluate, checkDrift, checkHealth } from './api';
 import { SCENARIOS } from './scenarios';
 
 function App() {
@@ -11,6 +20,7 @@ function App() {
     cognitive: 'clear',
     tension_keyword: '',
     conflict_indicator: 'none',
+    founder_ready_signal: true,
   });
 
   const [result, setResult] = useState<CoherencePacket | null>(null);
@@ -34,7 +44,7 @@ function App() {
     setError(null);
 
     try {
-      const response = await stabiliseOnly(founderState);
+      const response = await evaluate(founderState);
       setResult(response);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -69,7 +79,7 @@ function App() {
     <div className="app">
       <header className="header">
         <h1>🍄 Lichen Coherence Engine</h1>
-        <p>Phase 1: Stabilisation Dashboard</p>
+        <p>Phase 2: Stabilisation + Amplification Dashboard</p>
         <span className={`status-badge ${healthStatus}`}>
           {healthStatus === 'healthy' && '● Backend Online'}
           {healthStatus === 'error' && '● Backend Offline'}
@@ -89,7 +99,10 @@ function App() {
                 <select
                   value={founderState.physiological}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, physiological: e.target.value as any })
+                    setFounderState({
+                      ...founderState,
+                      physiological: e.target.value as PhysiologicalState,
+                    })
                   }
                 >
                   <option value="open">Open</option>
@@ -105,7 +118,7 @@ function App() {
                 <select
                   value={founderState.rhythm}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, rhythm: e.target.value as any })
+                    setFounderState({ ...founderState, rhythm: e.target.value as Rhythm })
                   }
                 >
                   <option value="steady">Steady</option>
@@ -120,7 +133,10 @@ function App() {
                 <select
                   value={founderState.emotional}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, emotional: e.target.value as any })
+                    setFounderState({
+                      ...founderState,
+                      emotional: e.target.value as EmotionalState,
+                    })
                   }
                 >
                   <option value="open">Open</option>
@@ -135,7 +151,10 @@ function App() {
                 <select
                   value={founderState.cognitive}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, cognitive: e.target.value as any })
+                    setFounderState({
+                      ...founderState,
+                      cognitive: e.target.value as CognitiveState,
+                    })
                   }
                 >
                   <option value="clear">Clear</option>
@@ -161,7 +180,10 @@ function App() {
                 <select
                   value={founderState.conflict_indicator}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, conflict_indicator: e.target.value as any })
+                    setFounderState({
+                      ...founderState,
+                      conflict_indicator: e.target.value as ConflictIndicator,
+                    })
                   }
                 >
                   <option value="none">None</option>
@@ -171,8 +193,22 @@ function App() {
                 </select>
               </div>
 
+              <div className="form-group">
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <input
+                    type="checkbox"
+                    checked={founderState.founder_ready_signal === true}
+                    onChange={(e) =>
+                      setFounderState({ ...founderState, founder_ready_signal: e.target.checked })
+                    }
+                    style={{ width: 'auto', margin: 0 }}
+                  />
+                  Founder Ready Signal (Embodied Yes)
+                </label>
+              </div>
+
               <button type="submit" className="button button-primary" disabled={loading}>
-                {loading ? '⏳ Analyzing...' : '🔍 Classify State'}
+                {loading ? '⏳ Analyzing...' : '🔍 Evaluate'}
               </button>
             </form>
 
@@ -285,21 +321,105 @@ function App() {
                   </div>
                 )}
 
-                <div className="result-row">
-                  <span className="result-label">Upward Coherence</span>
-                  <span className="result-value">
-                    <code>null</code>
-                    <span
+                {result.upward && (
+                  <div>
+                    <h3 style={{ color: 'var(--color-success)', marginTop: '1.5rem' }}>
+                      ✨ Upward Coherence Detected
+                    </h3>
+
+                    <div
                       style={{
-                        fontSize: '0.75rem',
-                        color: 'var(--color-text-muted)',
-                        marginLeft: '0.5rem',
+                        background: 'rgba(16, 185, 129, 0.1)',
+                        border: '2px solid var(--color-success)',
+                        borderRadius: '0.75rem',
+                        padding: '1.25rem',
+                        marginTop: '1rem',
                       }}
                     >
-                      (Phase 2)
-                    </span>
-                  </span>
-                </div>
+                      <div className="result-row">
+                        <span className="result-label">Expansion Detected</span>
+                        <span className="result-value">
+                          {result.upward.expansion_detected ? '✅ Yes' : '❌ No'}
+                        </span>
+                      </div>
+
+                      <div className="result-row">
+                        <span className="result-label">Amplification Safe</span>
+                        <span className="result-value">
+                          {result.upward.amplification_safe ? '✅ Yes' : '❌ No'}
+                        </span>
+                      </div>
+
+                      {result.upward.magnification_note && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <strong
+                            style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}
+                          >
+                            Magnification Note:
+                          </strong>
+                          <div
+                            style={{
+                              marginTop: '0.5rem',
+                              padding: '0.75rem',
+                              background: 'var(--color-surface-hover)',
+                              borderRadius: '0.5rem',
+                              fontSize: '1rem',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            "{result.upward.magnification_note}"
+                          </div>
+                        </div>
+                      )}
+
+                      {result.upward.micro_actions && result.upward.micro_actions.length > 0 && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <strong
+                            style={{ fontSize: '0.875rem', color: 'var(--color-text-muted)' }}
+                          >
+                            Micro-Actions:
+                          </strong>
+                          <ul
+                            style={{
+                              marginTop: '0.5rem',
+                              paddingLeft: '1.5rem',
+                              listStyleType: 'disc',
+                            }}
+                          >
+                            {result.upward.micro_actions.map((action, i) => (
+                              <li key={i} style={{ marginTop: '0.25rem' }}>
+                                {action}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!result.upward && result.integrity_state === 'STABLE' && (
+                  <div
+                    style={{
+                      marginTop: '1.5rem',
+                      padding: '1rem',
+                      background: 'var(--color-surface-hover)',
+                      borderRadius: '0.5rem',
+                    }}
+                  >
+                    <strong>ℹ️ No Amplification</strong>
+                    <p
+                      style={{
+                        fontSize: '0.875rem',
+                        marginTop: '0.5rem',
+                        color: 'var(--color-text-muted)',
+                      }}
+                    >
+                      State is STABLE but amplification conditions not met. Check founder ready
+                      signal and expansion signals.
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>

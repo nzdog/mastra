@@ -1,6 +1,6 @@
-import { FounderStateInput, CoherencePacket, DriftCheckResult } from './types';
+import { FounderStateInput, CoherencePacket, DriftCheckResult, DiagnosticContext } from './types';
 
-const API_BASE = '';
+const API_BASE = 'http://localhost:3000';
 
 export async function stabiliseOnly(founderState: FounderStateInput): Promise<CoherencePacket> {
   const response = await fetch(`${API_BASE}/coherence/stabilise-only`, {
@@ -13,7 +13,27 @@ export async function stabiliseOnly(founderState: FounderStateInput): Promise<Co
     throw new Error(`API Error: ${response.statusText}`);
   }
 
-  return response.json();
+  return (await response.json()) as CoherencePacket;
+}
+
+export async function evaluate(
+  founderState: FounderStateInput,
+  diagnosticContext?: DiagnosticContext
+): Promise<CoherencePacket> {
+  const response = await fetch(`${API_BASE}/coherence/evaluate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      founder_state: founderState,
+      diagnostic_context: diagnosticContext || { coherence_score: 0.85 },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`API Error: ${response.statusText}`);
+  }
+
+  return (await response.json()) as CoherencePacket;
 }
 
 export async function checkDrift(text: string): Promise<DriftCheckResult> {
@@ -27,7 +47,7 @@ export async function checkDrift(text: string): Promise<DriftCheckResult> {
     throw new Error(`API Error: ${response.statusText}`);
   }
 
-  return response.json();
+  return (await response.json()) as DriftCheckResult;
 }
 
 export async function checkHealth(): Promise<{ status: string }> {
@@ -37,5 +57,5 @@ export async function checkHealth(): Promise<{ status: string }> {
     throw new Error('Health check failed');
   }
 
-  return response.json();
+  return (await response.json()) as { status: string };
 }

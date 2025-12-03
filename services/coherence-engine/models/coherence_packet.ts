@@ -31,28 +31,35 @@ export interface CoherencePacket {
 /**
  * Validation helper
  */
-export function isValidCoherencePacket(packet: any): packet is CoherencePacket {
+export function isValidCoherencePacket(packet: unknown): packet is CoherencePacket {
   if (!packet || typeof packet !== 'object') return false;
+
+  // Type assertion after object check
+  const p = packet as Record<string, unknown>;
 
   const validIntegrityStates = ['STABLE', 'DRIFT', 'DISTORTION', 'PRE_COLLAPSE'];
 
   return (
-    validIntegrityStates.includes(packet.integrity_state) &&
-    typeof packet.state_reflection === 'string' &&
-    (packet.protocol_route === null || typeof packet.protocol_route === 'string') &&
-    (packet.stabilisation_cue === null || typeof packet.stabilisation_cue === 'string') &&
-    typeof packet.exit_precursor === 'boolean' &&
-    (packet.upward === null || isValidUpwardCoherence(packet.upward))
+    typeof p.integrity_state === 'string' &&
+    validIntegrityStates.includes(p.integrity_state) &&
+    typeof p.state_reflection === 'string' &&
+    (p.protocol_route === null || typeof p.protocol_route === 'string') &&
+    (p.stabilisation_cue === null || typeof p.stabilisation_cue === 'string') &&
+    typeof p.exit_precursor === 'boolean' &&
+    (p.upward === null || isValidUpwardCoherence(p.upward))
   );
 }
 
-function isValidUpwardCoherence(upward: any): upward is UpwardCoherence {
+function isValidUpwardCoherence(upward: unknown): upward is UpwardCoherence {
   if (!upward || typeof upward !== 'object') return false;
 
+  // Type assertion after object check
+  const u = upward as Record<string, unknown>;
+
   return (
-    typeof upward.expansion_detected === 'boolean' &&
-    typeof upward.amplification_safe === 'boolean' &&
-    (upward.magnification_note === undefined || typeof upward.magnification_note === 'string') &&
-    (upward.micro_actions === undefined || Array.isArray(upward.micro_actions))
+    typeof u.expansion_detected === 'boolean' &&
+    typeof u.amplification_safe === 'boolean' &&
+    (u.magnification_note === undefined || typeof u.magnification_note === 'string') &&
+    (u.micro_actions === undefined || Array.isArray(u.micro_actions))
   );
 }

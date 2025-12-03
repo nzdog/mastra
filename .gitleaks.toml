@@ -1,0 +1,31 @@
+# Gitleaks Configuration
+# Allows test tokens and documented example keys
+
+title = "Gitleaks Config for Mastra Lichen Agent"
+
+# Allowlist test tokens with clear test indicators
+[allowlist]
+description = "Allow test tokens and example keys"
+
+# Allow test tokens in test files
+regexes = [
+  '''hs_[a-zA-Z0-9_]+_test''',  # Test user tokens ending in _test
+  '''USER_TOKEN.*test''',        # USER_TOKEN variables in test files
+  '''your-(secret|api)-key''',   # Placeholder keys in documentation
+  '''your_generated_api_key_here''', # Placeholder keys in documentation
+]
+
+# Allow specific files that contain only example/documentation keys
+paths = [
+  '''services/coherence-engine/AUTHENTICATION\.md''',
+  '''.env.example''',
+]
+
+# Allow common test patterns
+stopwords = [
+  'test',
+  'example',
+  'placeholder',
+  'your-secret-key',
+  'your_generated_api_key_here',
+]

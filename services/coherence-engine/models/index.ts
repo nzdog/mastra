@@ -1,6 +1,6 @@
 /**
- * MODELS MODULE
- * Central export point for all data models
+ * COHERENCE ENGINE DATA MODELS
+ * Central export point for all data types
  */
 
 export * from './founder_state';

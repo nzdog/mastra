@@ -15,6 +15,7 @@
 
 import { FounderStateInput } from '../models/founder_state';
 import { DiagnosticContext } from '../models/diagnostic_context';
+import { EXPANSION_SIGNAL_THRESHOLD, MIN_COHERENCE_FOR_EXPANSION } from '../constants';
 
 export interface ExpansionSignals {
   physiological_openness: boolean;
@@ -56,8 +57,8 @@ export function detectExpansion(
   const totalSignals = Object.keys(signals).length;
   const signalStrength = signalCount / totalSignals;
 
-  // Expansion detected if most signals are present (threshold: 5/7 = 0.71)
-  const expansion_detected = signalCount >= 5;
+  // Expansion detected if most signals are present
+  const expansion_detected = signalCount >= EXPANSION_SIGNAL_THRESHOLD;
 
   return {
     expansion_detected,
@@ -74,7 +75,10 @@ function checkAvailableCapacity(context?: DiagnosticContext): boolean {
   if (!context) return true; // Assume capacity if no diagnostic context
 
   // Check coherence score
-  if (context.coherence_score !== undefined && context.coherence_score < 0.6) {
+  if (
+    context.coherence_score !== undefined &&
+    context.coherence_score < MIN_COHERENCE_FOR_EXPANSION
+  ) {
     return false;
   }
 

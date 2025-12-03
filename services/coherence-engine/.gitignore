@@ -31,3 +31,6 @@ Thumbs.db
 # Test artifacts
 .vitest/
 
+# Development/Documentation (not for production)
+BUILD THE LICHEN COHERENCE ENGINE (NO CO.ini
+

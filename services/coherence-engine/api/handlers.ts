@@ -4,7 +4,7 @@
  */
 
 import { Request, Response } from 'express';
-import { version } from '../package.json';
+import { logger } from '../utils/logger';
 import {
   FounderStateInput,
   DiagnosticContext,
@@ -18,6 +18,7 @@ import { classifyIntegrityState } from '../classification';
 import { routeToProtocol } from '../protocol_router';
 import { buildCoherencePacket } from '../outputs/output_builder';
 import { validateOutput } from '../outputs/self_correction';
+import packageJson from '../package.json';
 import { checkForDrift } from '../outputs/drift_guard';
 import { detectExpansion } from '../amplification/expansion_detector';
 import { detectFalseHigh } from '../amplification/false_high_detector';
@@ -83,7 +84,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     const driftViolations = validateOutput(coherencePacket);
     if (driftViolations.length > 0) {
       // Log error and return 500 - this is a system bug
-      console.error('CRITICAL: Drift detected in output:', driftViolations);
+      logger.error('CRITICAL: Drift detected in output', { violations: driftViolations });
       res.status(500).json({
         error: 'Internal error: drift detected in output',
         violations: driftViolations,
@@ -93,7 +94,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 
     // Validate packet structure
     if (!isValidCoherencePacket(coherencePacket)) {
-      console.error('CRITICAL: Invalid CoherencePacket structure:', coherencePacket);
+      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: coherencePacket });
       res.status(500).json({
         error: 'Internal error: invalid output structure',
       });
@@ -103,7 +104,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     // Return successful response
     res.status(200).json(coherencePacket);
   } catch (error) {
-    console.error('Error in stabiliseOnly:', error);
+    logger.error('Error in stabiliseOnly', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -114,12 +115,6 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 /**
  * POST /coherence/evaluate
  * Full evaluation endpoint (includes amplification - Phase 2)
- *
- * Phase 1: Stabilisation only
- * Phase 2: Adds upward coherence detection and amplification
- * Phase 3: Adds self-correction loop for drift detection
- *
- * This endpoint includes all three phases of the Coherence Engine
  */
 export async function evaluate(req: Request, res: Response): Promise<void> {
   try {
@@ -192,7 +187,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     // Validate output for drift
     const driftViolations = validateOutput(coherencePacket);
     if (driftViolations.length > 0) {
-      console.error('CRITICAL: Drift detected in output:', driftViolations);
+      logger.error('CRITICAL: Drift detected in output', { violations: driftViolations });
       res.status(500).json({
         error: 'Internal error: drift detected in output',
         violations: driftViolations,
@@ -202,7 +197,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
 
     // Validate packet structure
     if (!isValidCoherencePacket(coherencePacket)) {
-      console.error('CRITICAL: Invalid CoherencePacket structure:', coherencePacket);
+      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: coherencePacket });
       res.status(500).json({
         error: 'Internal error: invalid output structure',
       });
@@ -212,7 +207,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     // Return successful response
     res.status(200).json(coherencePacket);
   } catch (error) {
-    console.error('Error in evaluate:', error);
+    logger.error('Error in evaluate', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -243,7 +238,7 @@ export async function driftCheck(req: Request, res: Response): Promise<void> {
       text,
     });
   } catch (error) {
-    console.error('Error in driftCheck:', error);
+    logger.error('Error in driftCheck', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -253,13 +248,13 @@ export async function driftCheck(req: Request, res: Response): Promise<void> {
 
 /**
  * GET /health
- * Health check endpoint with dynamic version from package.json
+ * Health check endpoint
  */
 export function health(req: Request, res: Response): void {
   res.status(200).json({
     status: 'healthy',
     service: 'coherence-engine',
-    version,
+    version: packageJson.version,
     timestamp: new Date().toISOString(),
   });
 }

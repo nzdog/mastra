@@ -109,12 +109,6 @@ export async function attemptSelfCorrection(
     // Drift detected - record and attempt correction
     violations_history.push(allViolations);
 
-    // Log violations for debugging
-    console.warn(
-      `Drift violations detected (attempt ${state.attempt_count}/${MAX_CORRECTION_ATTEMPTS}):`,
-      allViolations.map((v) => ({ type: v.type, detected: v.detected_in }))
-    );
-
     if (state.attempt_count < MAX_CORRECTION_ATTEMPTS) {
       // Reject output
       // Reset state
