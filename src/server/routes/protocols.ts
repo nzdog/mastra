@@ -22,6 +22,8 @@ import { validateApiKey } from '../middleware';
 import type { SessionState } from '../../types';
 // MVE: Import Observer type for session creation
 import type { Observer } from '../../observability/mve-types';
+// Email notifications for session events
+import type { EmailNotifier } from '../../notifications/email-notifier';
 
 /**
  * Support type for protocol content
@@ -61,12 +63,14 @@ async function getSession(sessionStore: SessionStore, sessionId: string): Promis
 /**
  * Helper: Create new session (async)
  * MVE: Added optional observer parameter
+ * Added optional emailNotifier parameter for session notifications
  */
 async function createSession(
   apiKey: string,
   sessionStore: SessionStore,
   protocolSlug?: string,
-  observer?: Observer
+  observer?: Observer,
+  emailNotifier?: EmailNotifier
 ): Promise<Session> {
   const loader = new ProtocolLoader();
 
@@ -103,6 +107,15 @@ async function createSession(
   console.log(
     `✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`
   );
+
+  // Send email notification if enabled
+  if (emailNotifier?.isEnabled()) {
+    await emailNotifier.notifySessionStart({
+      session_id: session.id,
+      timestamp: new Date(),
+    });
+  }
+
   return session;
 }
 
@@ -219,6 +232,7 @@ function formatResponse(
  * @param aiEndpointLimiter - Rate limiter for AI endpoints
  * @param sessionCreationLimiter - Rate limiter for session creation
  * @param observer - MVE observer for session creation (optional)
+ * @param emailNotifier - Email notifier for session events (optional)
  * @returns Express router with protocol endpoints
  */
 export function createProtocolRouter(
@@ -230,7 +244,8 @@ export function createProtocolRouter(
   aiEndpointLimiter: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   sessionCreationLimiter: any,
-  observer?: Observer // MVE: Observer parameter
+  observer?: Observer, // MVE: Observer parameter
+  emailNotifier?: EmailNotifier // Email notifier for session events
 ): Router {
   const router = Router();
 
@@ -366,7 +381,8 @@ export function createProtocolRouter(
 
         // Create new session with specified protocol
         // MVE: Pass observer to session
-        const session = await createSession(apiKey, sessionStore, protocol_slug, observer);
+        // Pass email notifier for session notification
+        const session = await createSession(apiKey, sessionStore, protocol_slug, observer, emailNotifier);
 
         // If mode is WALK, skip ENTRY mode and go directly to Theme 1
         if (mode === 'WALK') {

@@ -15,6 +15,8 @@ import { errorHandler } from './memory-layer/middleware/error-handler';
 // MVE: Import observer for observability experiment
 import { JsonSink } from './observability/mve-json-sink';
 import type { Observer } from './observability/mve-types';
+// Email notifications for session events
+import { EmailNotifier } from './notifications/email-notifier';
 
 // Load configuration
 const config = loadConfig();
@@ -48,6 +50,9 @@ if (process.env.OBSERVABILITY_ENABLED === 'true') {
   console.log('📊 MVE: Observability enabled - logging to ./mve-data');
 }
 // MVE: End
+
+// Initialize email notifier for session events
+const emailNotifier = new EmailNotifier();
 
 // Cleanup expired memory records every 60 seconds (TTL enforcement)
 setInterval(
@@ -106,13 +111,15 @@ app.use(metricsRouter);
 
 // Mount protocol routes
 // MVE: Pass global observer to protocol router
+// Pass email notifier for session notifications
 const protocolRouter = createProtocolRouter(
   API_KEY,
   sessionStore,
   apiLimiter,
   aiEndpointLimiter,
   sessionCreationLimiter,
-  globalObserver // MVE: Observer parameter
+  globalObserver, // MVE: Observer parameter
+  emailNotifier // Email notifier for session events
 );
 app.use(protocolRouter);
 
