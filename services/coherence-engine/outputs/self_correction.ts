@@ -173,7 +173,8 @@ export async function attemptSelfCorrection(
  * Returns violations if found
  */
 export function validateOutput(output: CoherencePacket): DriftViolation[] {
-  const result = validateOutputPacket(output);
+  const stateReflectionDrift = checkForDrift(output.state_reflection);
+  const cueDrift = output.stabilisation_cue ? checkForDrift(output.stabilisation_cue) : [];
 
   // Also check upward block if present
   if (output.upward) {
@@ -184,10 +185,10 @@ export function validateOutput(output: CoherencePacket): DriftViolation[] {
       ? output.upward.micro_actions.flatMap((action) => checkForDrift(action))
       : [];
 
-    return [...result.violations, ...magnificationDrift, ...microActionsDrift];
+    return [...stateReflectionDrift, ...cueDrift, ...magnificationDrift, ...microActionsDrift];
   }
 
-  return result.violations;
+  return [...stateReflectionDrift, ...cueDrift];
 }
 
 /**

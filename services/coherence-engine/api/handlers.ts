@@ -4,6 +4,7 @@
  */
 
 import { Request, Response } from 'express';
+import { logger } from '../utils/logger';
 import {
   FounderStateInput,
   DiagnosticContext,
@@ -21,6 +22,7 @@ import {
   generateWithSelfCorrection,
   getDriftMonitoring,
 } from '../outputs/self_correction';
+import packageJson from '../package.json';
 import { checkForDrift } from '../outputs/drift_guard';
 import { detectExpansion } from '../amplification/expansion_detector';
 import { detectFalseHigh } from '../amplification/false_high_detector';
@@ -81,7 +83,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 
     if (!result.success || !result.final_output) {
       // Self-correction failed after max attempts
-      console.error('CRITICAL: Self-correction failed:', {
+      logger.error('CRITICAL: Self-correction failed', {
         attempts: result.attempts,
         violations: result.violations_history,
       });
@@ -94,7 +96,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
 
     // Validate packet structure
     if (!isValidCoherencePacket(result.final_output)) {
-      console.error('CRITICAL: Invalid CoherencePacket structure:', result.final_output);
+      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: result.final_output });
       res.status(500).json({
         error: 'Internal error: invalid output structure',
       });
@@ -104,7 +106,7 @@ export async function stabiliseOnly(req: Request, res: Response): Promise<void> 
     // Return successful response (founder never sees drift)
     res.status(200).json(result.final_output);
   } catch (error) {
-    console.error('Error in stabiliseOnly:', error);
+    logger.error('Error in stabiliseOnly', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -187,7 +189,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
 
     if (!result.success || !result.final_output) {
       // Self-correction failed after max attempts
-      console.error('CRITICAL: Self-correction failed:', {
+      logger.error('CRITICAL: Self-correction failed', {
         attempts: result.attempts,
         violations: result.violations_history,
       });
@@ -200,7 +202,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
 
     // Validate packet structure
     if (!isValidCoherencePacket(result.final_output)) {
-      console.error('CRITICAL: Invalid CoherencePacket structure:', result.final_output);
+      logger.error('CRITICAL: Invalid CoherencePacket structure', { packet: result.final_output });
       res.status(500).json({
         error: 'Internal error: invalid output structure',
       });
@@ -210,7 +212,7 @@ export async function evaluate(req: Request, res: Response): Promise<void> {
     // Return successful response (founder never sees drift)
     res.status(200).json(result.final_output);
   } catch (error) {
-    console.error('Error in evaluate:', error);
+    logger.error('Error in evaluate', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -241,7 +243,7 @@ export async function driftCheck(req: Request, res: Response): Promise<void> {
       text,
     });
   } catch (error) {
-    console.error('Error in driftCheck:', error);
+    logger.error('Error in driftCheck', { error });
     res.status(500).json({
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',
@@ -257,7 +259,7 @@ export function health(req: Request, res: Response): void {
   res.status(200).json({
     status: 'healthy',
     service: 'coherence-engine',
-    version: '1.0.0',
+    version: packageJson.version,
     timestamp: new Date().toISOString(),
   });
 }

@@ -16,6 +16,7 @@
 
 import { FounderStateInput } from '../models/founder_state';
 import { DiagnosticContext } from '../models/diagnostic_context';
+import { FALSE_HIGH_SIGNAL_THRESHOLD, HYPE_KEYWORDS, EXCITED_KEYWORDS } from '../constants';
 
 export interface FalseHighSignals {
   oscillating_rhythm: boolean;
@@ -58,7 +59,7 @@ export function detectFalseHigh(
   const signalCount = Object.values(signals).filter(Boolean).length;
 
   // Even ONE false-high signal means unsafe for amplification
-  const false_high_detected = signalCount > 0;
+  const false_high_detected = signalCount > FALSE_HIGH_SIGNAL_THRESHOLD;
 
   const reason = false_high_detected
     ? `False-high detected: ${getActiveSignals(signals).join(', ')}`
@@ -76,23 +77,7 @@ export function detectFalseHigh(
  * Check for hype-related keywords
  */
 function checkHypeKeywords(keyword: string): boolean {
-  const hypeKeywords = [
-    'amazing',
-    'incredible',
-    'unstoppable',
-    'crushing',
-    'dominating',
-    'epic',
-    'legendary',
-    'explosive',
-    'massive',
-    'huge',
-    'insane',
-    'crazy',
-    'wild',
-  ];
-
-  return hypeKeywords.some((kw) => keyword.toLowerCase().includes(kw));
+  return HYPE_KEYWORDS.some((kw) => keyword.toLowerCase().includes(kw));
 }
 
 /**
@@ -121,9 +106,7 @@ export function isUnsafePositive(
   // Appears positive (open emotions, excited keywords)
   const appearsPositive =
     founderState.emotional === 'open' ||
-    ['excited', 'energized', 'motivated', 'pumped'].some((kw) =>
-      founderState.tension_keyword.toLowerCase().includes(kw)
-    );
+    EXCITED_KEYWORDS.some((kw) => founderState.tension_keyword.toLowerCase().includes(kw));
 
   // But has false-high signals
   return appearsPositive && falseHigh.false_high_detected;

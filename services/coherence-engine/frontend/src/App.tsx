@@ -1,5 +1,14 @@
 import { useState, useEffect } from 'react';
-import { FounderStateInput, CoherencePacket, DriftCheckResult } from './types';
+import {
+  FounderStateInput,
+  CoherencePacket,
+  DriftCheckResult,
+  PhysiologicalState,
+  Rhythm,
+  EmotionalState,
+  CognitiveState,
+  ConflictIndicator,
+} from './types';
 import { evaluate, checkDrift, checkHealth } from './api';
 import { SCENARIOS } from './scenarios';
 
@@ -90,7 +99,10 @@ function App() {
                 <select
                   value={founderState.physiological}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, physiological: e.target.value as any })
+                    setFounderState({
+                      ...founderState,
+                      physiological: e.target.value as PhysiologicalState,
+                    })
                   }
                 >
                   <option value="open">Open</option>
@@ -106,7 +118,7 @@ function App() {
                 <select
                   value={founderState.rhythm}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, rhythm: e.target.value as any })
+                    setFounderState({ ...founderState, rhythm: e.target.value as Rhythm })
                   }
                 >
                   <option value="steady">Steady</option>
@@ -121,7 +133,10 @@ function App() {
                 <select
                   value={founderState.emotional}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, emotional: e.target.value as any })
+                    setFounderState({
+                      ...founderState,
+                      emotional: e.target.value as EmotionalState,
+                    })
                   }
                 >
                   <option value="open">Open</option>
@@ -136,7 +151,10 @@ function App() {
                 <select
                   value={founderState.cognitive}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, cognitive: e.target.value as any })
+                    setFounderState({
+                      ...founderState,
+                      cognitive: e.target.value as CognitiveState,
+                    })
                   }
                 >
                   <option value="clear">Clear</option>
@@ -162,7 +180,10 @@ function App() {
                 <select
                   value={founderState.conflict_indicator}
                   onChange={(e) =>
-                    setFounderState({ ...founderState, conflict_indicator: e.target.value as any })
+                    setFounderState({
+                      ...founderState,
+                      conflict_indicator: e.target.value as ConflictIndicator,
+                    })
                   }
                 >
                   <option value="none">None</option>

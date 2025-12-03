@@ -16,7 +16,7 @@
 import { FounderStateInput } from '../models/founder_state';
 import { DiagnosticContext } from '../models/diagnostic_context';
 import { IntegrityState } from '../models/coherence_packet';
-import { detectDrift, hasDrift } from './drift_detector';
+import { detectDrift, hasDrift, DriftSignal } from './drift_detector';
 
 export interface ClassificationResult {
   integrity_state: IntegrityState;
@@ -177,7 +177,7 @@ function getPrimaryDistortionSignal(state: FounderStateInput, context?: Diagnost
 /**
  * Get primary signal for DRIFT state
  */
-function getPrimaryDriftSignal(state: FounderStateInput, driftSignals: any[]): string {
+function getPrimaryDriftSignal(state: FounderStateInput, driftSignals: DriftSignal[]): string {
   if (state.rhythm === 'urgent') return 'urgency';
   if (state.rhythm === 'oscillating') return 'oscillating';
   if (state.conflict_indicator === 'avoidance') return 'avoidance';

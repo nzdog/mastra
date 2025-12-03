@@ -42,3 +42,13 @@ export interface DriftCheckResult {
   violations: DriftViolation[];
   text: string;
 }
+
+export interface DiagnosticContext {
+  current_field?: string;
+  origin_field_residue?: string;
+  emerging_field?: string;
+  distortion_map?: string[];
+  capacity_edge?: string;
+  coherence_score?: number;
+  field_drift_direction?: string;
+}

@@ -8,6 +8,7 @@
 
 import { FounderStateInput } from '../models/founder_state';
 import { DiagnosticContext } from '../models/diagnostic_context';
+import { MIN_COHERENCE_THRESHOLD } from '../constants';
 
 export type DriftCategory =
   | 'emotional_drift'
@@ -109,7 +110,7 @@ function detectFieldDrift(state: FounderStateInput, context?: DiagnosticContext)
   }
 
   // Check coherence score
-  if (context?.coherence_score !== undefined && context.coherence_score < 0.5) {
+  if (context?.coherence_score !== undefined && context.coherence_score < MIN_COHERENCE_THRESHOLD) {
     detected = true;
     signal = signal
       ? `${signal}, low_coherence: ${context.coherence_score}`
