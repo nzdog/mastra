@@ -237,9 +237,7 @@ describe('EmailNotifier', () => {
       new EmailNotifier();
 
       // Verify password is not in any log output
-      expect(consoleSpy).not.toHaveBeenCalledWith(
-        expect.stringContaining('super-secret-password')
-      );
+      expect(consoleSpy).not.toHaveBeenCalledWith(expect.stringContaining('super-secret-password'));
 
       consoleSpy.mockRestore();
     });

@@ -17,6 +17,7 @@ Email notification service for Lichen Protocol diagnostic walk sessions.
 ### 1. Install Dependencies
 
 Dependencies are already included in package.json:
+
 - `nodemailer` - Email sending library
 - `@types/nodemailer` - TypeScript types
 
@@ -51,6 +52,7 @@ SMTP_PASS=your-app-specific-password
 3. Use the app-specific password as `SMTP_PASS`
 
 **Gmail Configuration:**
+
 ```bash
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -62,6 +64,7 @@ SMTP_PASS=your-16-char-app-password
 #### Other Providers
 
 **SendGrid:**
+
 ```bash
 SMTP_HOST=smtp.sendgrid.net
 SMTP_PORT=587
@@ -71,6 +74,7 @@ SMTP_PASS=your-sendgrid-api-key
 ```
 
 **Mailgun:**
+
 ```bash
 SMTP_HOST=smtp.mailgun.org
 SMTP_PORT=587
@@ -80,6 +84,7 @@ SMTP_PASS=your-mailgun-smtp-password
 ```
 
 **AWS SES:**
+
 ```bash
 SMTP_HOST=email-smtp.us-east-1.amazonaws.com
 SMTP_PORT=587
@@ -111,18 +116,22 @@ await notifier.notifySessionStart({
 ## Email Content
 
 ### Subject
+
 ```
 New Diagnostic Walk Session Started
 ```
 
 ### Body
+
 The email includes:
+
 - Session ID
 - Timestamp in NZ timezone (NZST/NZDT)
 - UTC timestamp
 - Lichen Protocol branding
 
 ### HTML Template
+
 - Responsive design
 - Clean, professional layout
 - Color gradient header
@@ -154,6 +163,7 @@ npm test src/notifications/email-notifier.test.ts
 ```
 
 Tests cover:
+
 - Initialization with/without credentials
 - SMTP port validation
 - HTML escaping
@@ -190,6 +200,7 @@ Tests cover:
 ```
 
 This is expected behavior - the application continues running. Check:
+
 - SMTP credentials are correct
 - Network connectivity to SMTP server
 - SMTP server is not blocking connections
@@ -216,12 +227,14 @@ SMTP_PASS=your-production-smtp-password
 The notifier logs all important events:
 
 **Success:**
+
 ```
 📧 Email notifier initialized (recipient: coherence@lichenprotocol.com)
 📧 Session start notification sent: diagnostic-walk-123
 ```
 
 **Failures:**
+
 ```
 ⚠️  Email notifications enabled but SMTP credentials missing
 ⚠️  Invalid SMTP_PORT value: not-a-number. Using default: 587
@@ -241,6 +254,7 @@ Monitor these logs to ensure notifications are working correctly.
 ## Future Enhancements
 
 Potential improvements:
+
 - Session end notifications
 - Session summary emails
 - Multiple recipients
