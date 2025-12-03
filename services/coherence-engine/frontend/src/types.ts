@@ -12,6 +12,7 @@ export interface FounderStateInput {
   cognitive: CognitiveState;
   tension_keyword: string;
   conflict_indicator: ConflictIndicator;
+  founder_ready_signal?: boolean;
 }
 
 export interface CoherencePacket {
@@ -33,4 +34,14 @@ export interface DriftCheckResult {
   clean: boolean;
   violations: DriftViolation[];
   text: string;
+}
+
+export interface DiagnosticContext {
+  current_field?: string;
+  origin_field_residue?: string;
+  emerging_field?: string;
+  distortion_map?: string[];
+  capacity_edge?: string;
+  coherence_score?: number;
+  field_drift_direction?: string;
 }

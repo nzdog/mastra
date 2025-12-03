@@ -20,8 +20,11 @@ function log(level: LogLevel, message: string, data?: unknown): void {
     timestamp: new Date().toISOString(),
     level,
     message,
-    ...(data && { data }),
   };
+
+  if (data !== undefined) {
+    entry.data = data;
+  }
 
   // In production, this could be sent to a logging service
   // For now, output to console with appropriate method

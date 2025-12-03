@@ -28,6 +28,9 @@ export interface FounderStateInput {
 export function isValidFounderState(state: unknown): state is FounderStateInput {
   if (!state || typeof state !== 'object') return false;
 
+  // Type assertion after object check
+  const s = state as Record<string, any>;
+
   const validPhysiological = ['open', 'tight', 'numb', 'agitated', 'steady'];
   const validRhythm = ['steady', 'fragmented', 'urgent', 'oscillating'];
   const validEmotional = ['open', 'constricted', 'fog', 'collapse'];
@@ -35,18 +38,18 @@ export function isValidFounderState(state: unknown): state is FounderStateInput 
   const validConflict = ['none', 'avoidance', 'tension', 'pressure'];
 
   // Validate tension_keyword: must be string, trimmed, and within length limit
-  if (typeof state.tension_keyword !== 'string') return false;
-  const trimmedKeyword = state.tension_keyword.trim();
+  if (typeof s.tension_keyword !== 'string') return false;
+  const trimmedKeyword = s.tension_keyword.trim();
   if (trimmedKeyword.length === 0 || trimmedKeyword.length > MAX_TENSION_KEYWORD_LENGTH) {
     return false;
   }
 
   return (
-    validPhysiological.includes(state.physiological) &&
-    validRhythm.includes(state.rhythm) &&
-    validEmotional.includes(state.emotional) &&
-    validCognitive.includes(state.cognitive) &&
-    validConflict.includes(state.conflict_indicator) &&
-    (state.founder_ready_signal === undefined || typeof state.founder_ready_signal === 'boolean')
+    validPhysiological.includes(s.physiological) &&
+    validRhythm.includes(s.rhythm) &&
+    validEmotional.includes(s.emotional) &&
+    validCognitive.includes(s.cognitive) &&
+    validConflict.includes(s.conflict_indicator) &&
+    (s.founder_ready_signal === undefined || typeof s.founder_ready_signal === 'boolean')
   );
 }
