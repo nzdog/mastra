@@ -184,6 +184,16 @@ Lichen Protocol Diagnostic Engine
 
   /**
    * Format timestamp in NZ time (NZST/NZDT)
+   *
+   * NOTE: This method uses Node.js's Intl.DateTimeFormat (via toLocaleString)
+   * which depends on ICU (International Components for Unicode) data.
+   *
+   * Requirements:
+   * - Node.js must be built with full ICU support (default in Node.js 13+)
+   * - For minimal Docker images, ensure ICU data is included or use full Node.js base image
+   *
+   * If running in environments with limited ICU support, consider using
+   * a library like date-fns-tz for guaranteed timezone formatting.
    */
   private formatNZTime(date: Date): string {
     return date.toLocaleString('en-NZ', {

@@ -100,14 +100,6 @@ async function createSession(
     `✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`
   );
 
-  // Send email notification if enabled
-  const emailNotifier = new EmailNotifier();
-  if (emailNotifier.isEnabled()) {
-    await emailNotifier.notifySessionStart({
-      session_id: session.id,
-      timestamp: new Date(),
-    });
-  }
   return session;
 }
 
@@ -236,6 +228,9 @@ export function createProtocolRouter(
   sessionCreationLimiter: any
 ): Router {
   const router = Router();
+
+  // Create singleton EmailNotifier instance for this router
+  const emailNotifier = new EmailNotifier();
 
   // GET /api/protocols - List available protocols (rate-limited)
   router.get('/api/protocols', apiLimiter, (_req: Request, res: Response) => {
@@ -369,6 +364,18 @@ export function createProtocolRouter(
 
         // Create new session with specified protocol
         const session = await createSession(apiKey, sessionStore, protocol_slug);
+
+        // Send email notification if enabled (fire-and-forget, non-blocking)
+        if (emailNotifier.isEnabled()) {
+          emailNotifier
+            .notifySessionStart({
+              session_id: session.id,
+              timestamp: new Date(),
+            })
+            .catch((err) => {
+              console.error('❌ Failed to send email notification:', err);
+            });
+        }
 
         // If mode is WALK, skip ENTRY mode and go directly to Theme 1
         if (mode === 'WALK') {
