@@ -35,8 +35,7 @@ export class EmailNotifier {
 
   constructor() {
     this.enabled = process.env.EMAIL_NOTIFICATIONS_ENABLED === 'true';
-    this.recipient =
-      process.env.EMAIL_NOTIFICATION_RECIPIENT || 'coherence@lichenprotocol.com';
+    this.recipient = process.env.EMAIL_NOTIFICATION_RECIPIENT || 'coherence@lichenprotocol.com';
     this.fromAddress = process.env.SMTP_USER || 'noreply@lichenprotocol.com';
 
     if (this.enabled) {
