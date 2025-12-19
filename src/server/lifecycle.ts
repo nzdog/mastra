@@ -27,6 +27,60 @@ export async function startServer(
   try {
     console.log('🔧 Initializing server components...');
 
+    // OPTIONAL: Protocol validation at startup (fast-fail guard for production)
+    // NOTE: This is redundant - loader also validates per-request
+    // Purpose: Fail fast in production before accepting traffic
+    console.log('📋 Validating protocol files at startup...');
+    const path = require('path');
+    const { ProtocolValidator } = require('../protocol/validation');
+    const protocolValidator = new ProtocolValidator();
+    const protocolDir = path.join(__dirname, '../../protocols');
+    const validationResults = protocolValidator.validateDirectory(protocolDir);
+
+    const hasErrors = validationResults.some((r: { hasErrors: boolean }) => r.hasErrors);
+    const erroredProtocols = validationResults.filter((r: { hasErrors: boolean }) => r.hasErrors);
+
+    if (hasErrors) {
+      console.error('❌ Protocol validation errors at startup:');
+      erroredProtocols.forEach((r: { filename: string; errorCount: number; errors: { message: string }[] }) => {
+        console.error(`  - ${r.filename}: ${r.errorCount} error(s)`);
+        r.errors.slice(0, 3).forEach((e: { message: string }) => {
+          console.error(`    • ${e.message}`);
+        });
+        if (r.errorCount > 3) {
+          console.error(`    ... and ${r.errorCount - 3} more`);
+        }
+      });
+
+      // Environment-aware strictness
+      const isProduction = process.env.NODE_ENV === 'production';
+      const strictModeOverride = process.env.PROTOCOL_VALIDATION_STRICT;
+
+      const strictMode =
+        strictModeOverride !== undefined ? strictModeOverride === 'true' : isProduction;
+
+      if (strictMode) {
+        // STRICT MODE: Block startup
+        console.error('\n❌ Server startup aborted due to invalid protocols');
+        console.error(`   Environment: ${isProduction ? 'production' : 'development'}`);
+        console.error(`   Mode: STRICT`);
+        console.error('   Run "npm run validate:protocols" for detailed diagnostics');
+        console.error('   Set PROTOCOL_VALIDATION_STRICT=false to allow startup');
+        process.exit(1);
+      } else {
+        // PERMISSIVE MODE: Warn but continue
+        console.warn('\n⚠️  STARTUP VALIDATION (PERMISSIVE): Invalid protocols detected');
+        console.warn(`   Invalid protocols will be skipped by the loader`);
+        console.warn(`   Skipped (invalid): ${erroredProtocols.length}`);
+        erroredProtocols.forEach((r: { filename: string; errorCount: number }) => {
+          console.warn(`     - ${r.filename} (${r.errorCount} errors)`);
+        });
+        console.warn('   Run "npm run validate:protocols" for detailed diagnostics');
+      }
+    } else {
+      console.log('✅ All protocol files passed validation');
+    }
+
     // Initialize ledger sink conditionally (Phase 3.2: Graceful degradation)
     const ledgerEnabled = process.env.LEDGER_ENABLED !== 'false';
     const ledgerOptional = process.env.LEDGER_OPTIONAL === 'true';

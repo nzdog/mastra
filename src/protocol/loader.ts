@@ -1,6 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import matter from 'gray-matter';
+import { ProtocolValidator } from './validation';
+import { ValidationResult } from './validation/types';
 
 export interface ProtocolMetadata {
   id: string;
@@ -19,6 +21,9 @@ export class ProtocolLoader {
   private static metadataCache: Map<string, ProtocolMetadata[]> | null = null;
   private static metadataCacheTime: number = 0;
   private static CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
+  // Validation cache (shares same TTL timestamp as metadata cache)
+  private static validationCache: Map<string, ValidationResult> | null = null;
 
   constructor(protocolsDir?: string) {
     this.protocolsDir = protocolsDir || path.join(__dirname, '../../protocols');
@@ -48,6 +53,15 @@ export class ProtocolLoader {
     console.log('💾 CACHE MISS: Loading protocol metadata from disk');
     const protocols: ProtocolMetadata[] = [];
 
+    // Initialize validator for discovery-time validation
+    const validator = new ProtocolValidator();
+
+    // Determine validation mode (environment-aware)
+    const isProduction = process.env.NODE_ENV === 'production';
+    const strictModeOverride = process.env.PROTOCOL_VALIDATION_STRICT;
+    const strictMode =
+      strictModeOverride !== undefined ? strictModeOverride === 'true' : isProduction;
+
     try {
       const files = fs.readdirSync(this.protocolsDir);
 
@@ -58,6 +72,24 @@ export class ProtocolLoader {
         }
 
         const filePath = path.join(this.protocolsDir, file);
+
+        // CRITICAL: Validate file before loading metadata (discovery-time validation)
+        const validationResult = this.validateProtocolFile(filePath, validator, now);
+
+        // Skip invalid protocols in both modes (primary enforcement)
+        if (validationResult.hasErrors) {
+          if (strictMode) {
+            console.error(`❌ LOADER (STRICT): Skipping invalid protocol: ${file}`);
+            console.error(`   Errors: ${validationResult.errorCount}`);
+          } else {
+            console.warn(`⚠️  LOADER (PERMISSIVE): Skipping invalid protocol: ${file}`);
+            console.warn(`   Errors: ${validationResult.errorCount}`);
+            console.warn(`   Run "npm run validate:protocols -- --file ${filePath}" for details`);
+          }
+          continue; // Skip this protocol - NEVER appears in /api/protocols
+        }
+
+        // Protocol is valid - load metadata
         const metadata = this.getProtocolMetadata(filePath);
 
         if (metadata) {
@@ -142,5 +174,41 @@ export class ProtocolLoader {
   public getProtocolPath(slug: string): string | null {
     const protocol = this.getProtocolBySlug(slug);
     return protocol ? protocol.file_path : null;
+  }
+
+  /**
+   * Validate a single protocol file and cache the result
+   * Uses same cache timestamp as metadata cache for coherence
+   */
+  private validateProtocolFile(
+    filePath: string,
+    validator: ProtocolValidator,
+    cacheTime: number
+  ): ValidationResult {
+    // Check validation cache (shares same timestamp as metadata cache)
+    if (
+      ProtocolLoader.validationCache &&
+      ProtocolLoader.metadataCacheTime > 0 &&
+      cacheTime - ProtocolLoader.metadataCacheTime < ProtocolLoader.CACHE_TTL_MS
+    ) {
+      const cached = ProtocolLoader.validationCache.get(filePath);
+      if (cached) {
+        return cached;
+      }
+    }
+
+    // Validate file (not cached or cache expired)
+    const result = validator.validateFile(filePath);
+
+    // Update validation cache
+    if (!ProtocolLoader.validationCache) {
+      ProtocolLoader.validationCache = new Map();
+    }
+    ProtocolLoader.validationCache.set(filePath, result);
+
+    // Note: We do NOT update metadataCacheTime here - it's updated once per cache rebuild
+    // This ensures validation cache and metadata cache are rebuilt together
+
+    return result;
   }
 }
