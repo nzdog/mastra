@@ -51,6 +51,7 @@ export class ProtocolLoader {
     }
 
     console.log('💾 CACHE MISS: Loading protocol metadata from disk');
+    console.log('📁 Scanning directory:', this.protocolsDir);
     const protocols: ProtocolMetadata[] = [];
 
     // Initialize validator for discovery-time validation
@@ -64,17 +65,25 @@ export class ProtocolLoader {
 
     try {
       const files = fs.readdirSync(this.protocolsDir);
+      console.log(`📋 Found ${files.length} files in protocols directory:`, files);
 
       for (const file of files) {
+        console.log(`🔍 Processing file: ${file}`);
+
         // Only process .md files, skip template and README
         if (!file.endsWith('.md') || file === 'PROTOCOL_TEMPLATE.md' || file === 'README.md') {
+          console.log(`   ⏭️  Skipped (not a protocol): ${file}`);
           continue;
         }
 
         const filePath = path.join(this.protocolsDir, file);
+        console.log(`   📄 Protocol file: ${filePath}`);
 
         // CRITICAL: Validate file before loading metadata (discovery-time validation)
         const validationResult = this.validateProtocolFile(filePath, validator, now);
+        console.log(
+          `   🔬 Validation result: errors=${validationResult.errorCount}, warnings=${validationResult.warningCount}`
+        );
 
         // Skip invalid protocols in both modes (primary enforcement)
         if (validationResult.hasErrors) {
@@ -93,9 +102,15 @@ export class ProtocolLoader {
         const metadata = this.getProtocolMetadata(filePath);
 
         if (metadata) {
+          console.log(`   ✅ Loaded protocol: ${metadata.title} (slug: ${metadata.slug})`);
           protocols.push(metadata);
+        } else {
+          console.log(`   ❌ Failed to extract metadata from: ${file}`);
         }
       }
+
+      console.log(`\n📊 FINAL PROTOCOL LIST (${protocols.length} protocols):`);
+      protocols.forEach((p) => console.log(`   - ${p.slug}: ${p.title}`));
 
       // Update cache
       if (!ProtocolLoader.metadataCache) {
