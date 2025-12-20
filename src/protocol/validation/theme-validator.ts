@@ -68,6 +68,7 @@ function extractThemeBlocks(
           endLine: i - 1,
           lines: lines.slice(currentBlockStart, i),
         });
+        currentBlockStart = -1; // Reset to prevent duplicate save after loop
       }
       break;
     }

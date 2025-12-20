@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: field_exit_protocol_1_knowing_when_a_field_must_end
 title: Field Exit Protocol 1 — Knowing When a Field Must End
 version: 1.0.0
@@ -130,9 +131,11 @@ in place.
 
 **Purpose:** To separate true faith from attachment disguised as optimism. False hope sustains
 decaying systems and delays new beginnings. This theme helps you discern when perseverance serves
-alignment—and when it merely prolongs decline. **Why this matters:** When we cling to fantasy, we
+alignment—and when it merely prolongs decline.
+**Why this matters:** When we cling to fantasy, we
 block emergence. Letting go of false hope enacts Nothing Forced, Nothing Withheld, allowing genuine
-possibility to return in its own time. **Outcomes:**
+possibility to return in its own time.
+**Outcomes:**
 
 - Poor: We confuse denial with faith; energy stagnates and disappointment deepens.
 - Expected: We start to see illusion but can't release it; the field grows quieter, preparing for
@@ -155,9 +158,11 @@ reality's rhythm.
 
 **Purpose:** To name precisely what has finished its purpose and what, if anything, remains alive.
 This discernment is a boundary-setting act—ensuring that gratitude, learning, and closure are
-separated from ongoing distortion. **Why this matters:** Completion brings containment. Without it,
+separated from ongoing distortion.
+**Why this matters:** Completion brings containment. Without it,
 grief leaks into the future. This theme upholds Integrity Is the Growth Strategy, teaching that
-defining what's complete creates space for regeneration. **Outcomes:**
+defining what's complete creates space for regeneration.
+**Outcomes:**
 
 - Poor: We let endings blur into half-connections; the past keeps interrupting the present.
 - Expected: We name some parts complete but hesitate to seal the whole; partial relief arrives as
@@ -179,7 +184,8 @@ defining what's complete creates space for regeneration. **Outcomes:**
 
 **Purpose:** To acknowledge the field for all it offered—growth, challenge, companionship, or
 lesson. Gratitude transforms separation into integration, letting endings carry dignity rather than
-regret. **Why this matters:** Gratitude metabolises pain into coherence. It enacts Stewardship, Not
+regret.
+**Why this matters:** Gratitude metabolises pain into coherence. It enacts Stewardship, Not
 Ownership—recognising that what passed through us was never ours to keep, only to tend.
 **Outcomes:**
 
@@ -202,9 +208,11 @@ grace.
 
 **Purpose:** To release the old field and consciously create space for the new. This is not rushing
 forward but allowing fertile emptiness—a pause where new signals can take root. You move from
-completion into readiness. **Why this matters:** Without open space, new beginnings can't land.
+completion into readiness.
+**Why this matters:** Without open space, new beginnings can't land.
 Holding pause enacts The Speed of Trust and Light Before Form—trusting that what's true will emerge
-without force. **Outcomes:**
+without force.
+**Outcomes:**
 
 - Poor: We fill the gap instantly; old patterns repeat under new names.
 - Expected: We rest briefly but stay mentally tethered to the past; readiness builds quietly but

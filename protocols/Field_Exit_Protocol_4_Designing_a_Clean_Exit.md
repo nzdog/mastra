@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: field_exit_protocol_4_designing_a_clean_exit
 title: Field Exit Protocol 4 — Designing a Clean Exit
 version: 1.0.0

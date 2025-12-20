@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: field_exit_protocol_3_extracting_the_gifts_without_carrying_the_pattern
 title: Field Exit Protocol 3 — Extracting the Gifts Without Carrying the Pattern
 version: 1.0.0

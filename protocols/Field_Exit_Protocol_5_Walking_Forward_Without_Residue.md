@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: field_exit_protocol_5_walking_forward_without_residue
 title: Field Exit Protocol 5 — Walking Forward Without Residue
 version: 1.0.0
