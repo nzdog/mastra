@@ -5,6 +5,7 @@
  */
 
 import { ProtocolFrontmatter, ValidationError, ThemeStructure } from './types';
+import { stonesMatch } from './utils';
 
 /**
  * Validate theme content and structure
@@ -171,21 +172,16 @@ function validateThemeBlock(
 
     // WARNING: Stone reference should match stones array
     if (frontmatter.stones && Array.isArray(frontmatter.stones) && frontmatter.stones.length > 0) {
-      const stoneReferenceNormalized = theme.stoneReference.toLowerCase();
-      const stonesMatch = frontmatter.stones.some((stone) => {
-        // Type guard: ensure stone is a string
-        if (typeof stone !== 'string') {
-          return false;
-        }
-        return stone.toLowerCase().includes(stoneReferenceNormalized);
+      const hasMatch = frontmatter.stones.some((stone) => {
+        return stonesMatch(stone, theme.stoneReference);
       });
 
-      if (!stonesMatch) {
+      if (!hasMatch) {
         errors.push({
           severity: 'warning',
           message: `Theme ${themeNum}: Stone reference "${theme.stoneReference}" does not match any stone in frontmatter`,
           location: `Line ${block.startLine + 1}`,
-          suggestion: 'Add matching stone to frontmatter stones array',
+          suggestion: 'Add matching stone to frontmatter stones array or check for typos',
         });
       }
     }
@@ -414,10 +410,7 @@ function countGuidingQuestions(content: string[]): number {
     }
 
     // End of guiding questions section
-    if (
-      inQuestionsSection &&
-      (clean.startsWith('completion prompt:') || clean === '---')
-    ) {
+    if (inQuestionsSection && (clean.startsWith('completion prompt:') || clean === '---')) {
       inQuestionsSection = false;
       break;
     }

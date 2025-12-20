@@ -5,6 +5,7 @@
  */
 
 import { ProtocolFrontmatter, ValidationError } from './types';
+import { normalizeStone, stoneToString } from './utils';
 import * as path from 'path';
 
 /**
@@ -51,7 +52,8 @@ export function validateFrontmatter(
         severity: 'error',
         message: `Invalid id format: "${frontmatter.id}" (must be lowercase_with_underscores)`,
         field: 'id',
-        suggestion: 'Use lowercase letters, numbers, and underscores only (e.g., "my_protocol_name")',
+        suggestion:
+          'Use lowercase letters, numbers, and underscores only (e.g., "my_protocol_name")',
       });
     }
 
@@ -141,7 +143,10 @@ export function validateFrontmatter(
         });
       } else {
         // ERROR: Verify marker exists in markdown (case-insensitive)
-        const markerRegex = new RegExp(`^${section.marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`, 'im');
+        const markerRegex = new RegExp(
+          `^${section.marker.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\s*$`,
+          'im'
+        );
         if (!markerRegex.test(markdownContent)) {
           errors.push({
             severity: 'error',
@@ -178,7 +183,11 @@ export function validateFrontmatter(
   }
 
   // INFO: stones (optional; stone references informational)
-  if (!frontmatter.stones || !Array.isArray(frontmatter.stones) || frontmatter.stones.length === 0) {
+  if (
+    !frontmatter.stones ||
+    !Array.isArray(frontmatter.stones) ||
+    frontmatter.stones.length === 0
+  ) {
     errors.push({
       severity: 'info',
       message: 'Missing optional field: stones',
@@ -189,23 +198,31 @@ export function validateFrontmatter(
     // INFO: Check format "Stone N: Title"
     const stonePattern = /^Stone\s+\d+:\s+.+$/;
     frontmatter.stones.forEach((stone, idx) => {
-      // Ensure stone is a string
-      if (typeof stone !== 'string') {
+      // Normalize stone (handles both strings and objects from YAML parsing)
+      const normalized = normalizeStone(stone);
+
+      if (normalized === null) {
+        // Truly invalid stone type
         errors.push({
           severity: 'info',
-          message: `stones[${idx}]: Invalid type (expected string)`,
+          message: `stones[${idx}]: Invalid type (expected string or valid stone object)`,
           field: 'stones',
-          suggestion: 'Each stone should be a string in format "Stone N: Title"',
+          suggestion:
+            'Each stone should be a string in format "Stone N: Title" (use quotes in YAML to ensure proper parsing)',
         });
         return;
       }
 
-      if (!stonePattern.test(stone)) {
+      // Convert to display format for validation
+      const stoneString = stoneToString(stone);
+
+      if (!stonePattern.test(stoneString)) {
         errors.push({
           severity: 'info',
-          message: `stones[${idx}]: Non-standard format: "${stone}"`,
+          message: `stones[${idx}]: Non-standard format: "${stoneString}"`,
           field: 'stones',
-          suggestion: 'Recommended format: "Stone N: Title"',
+          suggestion:
+            'Recommended format: "Stone N: Title" (use quotes in YAML: - "Stone N: Title")',
         });
       }
     });
