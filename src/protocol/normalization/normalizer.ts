@@ -107,8 +107,8 @@ export class ProtocolNormalizer {
         return { success: true, result };
       }
 
-      // Create backup with timestamp to avoid race conditions
-      const backupPath = `${filePath}.backup.${Date.now()}`;
+      // Create backup (single file, overwrites previous backup)
+      const backupPath = `${filePath}.backup`;
       fs.writeFileSync(backupPath, content, 'utf-8');
 
       // Atomic write: write to temp file then rename

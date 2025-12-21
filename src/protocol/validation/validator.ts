@@ -66,31 +66,47 @@ export class ProtocolValidator {
       try {
         const parsed = matter(fileContent);
 
-        // Runtime type validation for frontmatter
+        // Runtime type validation for frontmatter - accumulate all errors
         const data = parsed.data;
+        const typeErrors: string[] = [];
+
         if (data.schema_version !== undefined && typeof data.schema_version !== 'number') {
-          throw new Error('schema_version must be a number');
+          typeErrors.push('schema_version must be a number');
         }
         if (data.id !== undefined && typeof data.id !== 'string') {
-          throw new Error('id must be a string');
+          typeErrors.push('id must be a string');
         }
         if (data.title !== undefined && typeof data.title !== 'string') {
-          throw new Error('title must be a string');
+          typeErrors.push('title must be a string');
         }
         if (data.version !== undefined && typeof data.version !== 'string') {
-          throw new Error('version must be a string');
+          typeErrors.push('version must be a string');
         }
         if (data.entry_keys !== undefined && !Array.isArray(data.entry_keys)) {
-          throw new Error('entry_keys must be an array');
+          typeErrors.push('entry_keys must be an array');
         }
         if (data.entry_sections !== undefined && !Array.isArray(data.entry_sections)) {
-          throw new Error('entry_sections must be an array');
+          typeErrors.push('entry_sections must be an array');
         }
         if (data.themes !== undefined && !Array.isArray(data.themes)) {
-          throw new Error('themes must be an array');
+          typeErrors.push('themes must be an array');
         }
         if (data.stones !== undefined && !Array.isArray(data.stones)) {
-          throw new Error('stones must be an array');
+          typeErrors.push('stones must be an array');
+        }
+
+        // If there are type errors, report all of them
+        if (typeErrors.length > 0) {
+          typeErrors.forEach((error) => {
+            result.errors.push({
+              severity: 'error',
+              message: `Frontmatter type error: ${error}`,
+              suggestion: 'Check YAML data types in frontmatter',
+            });
+          });
+          result.hasErrors = true;
+          result.errorCount = typeErrors.length;
+          return result;
         }
 
         frontmatter = data as ProtocolFrontmatter;
@@ -99,7 +115,7 @@ export class ProtocolValidator {
         result.errors.push({
           severity: 'error',
           message: `Failed to parse YAML frontmatter: ${error instanceof Error ? error.message : String(error)}`,
-          suggestion: 'Check YAML syntax and data types in frontmatter',
+          suggestion: 'Check YAML syntax in frontmatter',
         });
         result.hasErrors = true;
         result.errorCount = 1;
