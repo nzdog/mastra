@@ -194,7 +194,7 @@ describe('EmailNotifier', () => {
       await expect(notifier.notifySessionStart(notification)).resolves.toBeUndefined();
     });
 
-    it('should format NZ timezone correctly', () => {
+    it('should format NZ timezone correctly', async () => {
       process.env.EMAIL_NOTIFICATIONS_ENABLED = 'true';
       process.env.SMTP_HOST = 'smtp.example.com';
       process.env.SMTP_USER = 'user@example.com';
@@ -208,8 +208,8 @@ describe('EmailNotifier', () => {
       };
 
       // This tests the internal formatNZTime method indirectly
-      // We can't directly test it as it's private, but notifySessionStart uses it
-      expect(() => notifier.notifySessionStart(notification)).not.toThrow();
+      // The method catches errors internally, so it should resolve even if SMTP fails
+      await expect(notifier.notifySessionStart(notification)).resolves.toBeUndefined();
     });
   });
 
