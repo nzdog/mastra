@@ -23,7 +23,7 @@ import type { SessionState } from '../../types';
 // MVE: Import Observer type for session creation
 import type { Observer } from '../../observability/mve-types';
 // Email notifications for session events
-import type { EmailNotifier } from '../../notifications/email-notifier';
+import { EmailNotifier } from '../../notifications/email-notifier';
 
 /**
  * Support type for protocol content
@@ -249,9 +249,6 @@ export function createProtocolRouter(
 ): Router {
   const router = Router();
 
-  // Create singleton EmailNotifier instance for this router
-  const emailNotifier = new EmailNotifier();
-
   // GET /api/protocols - List available protocols (rate-limited)
   router.get('/api/protocols', apiLimiter, (_req: Request, res: Response) => {
     try {
@@ -394,7 +391,7 @@ export function createProtocolRouter(
         );
 
         // Send email notification if enabled (fire-and-forget, non-blocking)
-        if (emailNotifier.isEnabled()) {
+        if (emailNotifier && emailNotifier.isEnabled()) {
           emailNotifier
             .notifySessionStart({
               session_id: session.id,
