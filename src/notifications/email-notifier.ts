@@ -27,13 +27,21 @@ export class EmailNotifier {
 
   private initializeTransporter(): void {
     const host = process.env.SMTP_HOST;
-    const port = parseInt(process.env.SMTP_PORT || '587', 10);
+    const portEnv = process.env.SMTP_PORT;
+    const port = portEnv ? parseInt(portEnv, 10) : 587;
     const secure = process.env.SMTP_SECURE === 'true'; // true for 465, false for other ports
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
-    if (!host || !user || !pass) {
-      console.warn('⚠️  Email notifications enabled but SMTP credentials missing');
+    // Validate port is a valid number and within range
+    const isPortValid = Number.isInteger(port) && port >= 1 && port <= 65535;
+
+    if (!host || !user || !pass || !isPortValid) {
+      if (!isPortValid) {
+        console.warn('⚠️  Email notifications enabled but SMTP_PORT is invalid (must be 1-65535)');
+      } else {
+        console.warn('⚠️  Email notifications enabled but SMTP credentials missing');
+      }
       this.enabled = false;
       return;
     }
