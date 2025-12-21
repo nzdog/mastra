@@ -16,7 +16,7 @@ import * as path from 'path';
 import { ProtocolValidator } from '../protocol/validation';
 import { ProtocolNormalizer } from '../protocol/normalization';
 import { ValidationResult } from '../protocol/validation/types';
-import { NormalizationResult } from '../protocol/normalization/types';
+//import { NormalizationResult } from '../protocol/normalization/types';
 import { error, success, warning, info, header, gray, confirm } from './cli-utils';
 import { formatDiff, formatSummary } from './diff-formatter';
 
