@@ -99,7 +99,8 @@ export class PostgresStore implements MemoryStore {
             encryption_version: encrypted.encryption_version,
             auth_tag: encrypted.auth_tag,
             iv: encrypted.iv,
-            type: record.content.type, // Preserve metadata
+            type: record.content.type, // Preserve type
+            metadata: record.content.metadata, // Preserve metadata
           };
 
           cryptoOpsDuration.observe({ op: 'encrypt' }, Date.now() - encryptStart);
