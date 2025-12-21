@@ -1,8 +1,8 @@
 # Lichen Protocol — Coherence Engine
 
-**Phase 2: Stabilisation + Amplification**
+**Phase 3: Stabilisation + Amplification + Self-Correction**
 
-The Coherence Engine is the real-time stability and momentum regulation layer of the Lichen Protocol. It detects drift, classifies founder integrity state, routes to protocols, prevents collapse, and safely amplifies upward coherence.
+The Coherence Engine is the real-time stability and momentum regulation layer of the Lichen Protocol. It detects drift, classifies founder integrity state, routes to protocols, prevents collapse, safely amplifies upward coherence, and ensures founders never see drift outputs through automatic self-correction.
 
 ---
 
@@ -25,6 +25,14 @@ This is a **deterministic, rules-based system** that implements:
 - ✅ **Amplification Safeguards** (pace lock, embodiment gate, urgency kill-switch, micro-consent)
 - ✅ **Upward Coherence** (safe momentum release)
 - ✅ **Magnification Notes** (non-directive, present-only)
+
+**Phase 3 (Self-Correction):**
+
+- ✅ **Automatic Drift Detection** (7 forbidden pattern categories)
+- ✅ **Self-Correction Loop** (reject, reset, enforce contract, reclassify, regenerate)
+- ✅ **Founder Protection** (zero drift outputs reach founders)
+- ✅ **Drift Monitoring** (tracks detections, corrections, failures)
+- ✅ **Upward Block Validation** (magnification notes & micro-actions checked for drift)
 
 ### What's NOT Implemented (Future Phases)
 
@@ -179,6 +187,25 @@ Test drift detection on arbitrary text.
 }
 ```
 
+### `GET /coherence/debug/drift-monitoring`
+
+**Phase 3:** Monitor drift detection statistics.
+
+**Response:**
+
+```json
+{
+  "monitoring": {
+    "total_drift_detections": 0,
+    "total_corrections": 0,
+    "total_correction_failures": 0,
+    "drift_by_type": {},
+    "last_drift_timestamp": null
+  },
+  "message": "Phase 3 drift monitoring active"
+}
+```
+
 ### `GET /health`
 
 Health check endpoint.
@@ -201,7 +228,7 @@ Health check endpoint.
 ### Run All Tests
 
 ```bash
-npm test  # 105 tests
+npm test  # 126 tests (including Phase 3)
 ```
 
 ### Run Tests in Watch Mode
@@ -231,6 +258,10 @@ npm run test:coverage
 **Phase 2 (17 tests):**
 
 - **Amplification Tests** (`tests/amplification.test.ts`) — Expansion detection, false-high detection, safeguards, upward coherence
+
+**Phase 3 (21 tests):**
+
+- **Self-Correction Tests** (`tests/self_correction.test.ts`) — Drift detection, self-correction loop, founder protection, monitoring, upward block validation
 
 ---
 

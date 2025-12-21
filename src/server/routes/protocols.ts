@@ -249,6 +249,9 @@ export function createProtocolRouter(
 ): Router {
   const router = Router();
 
+  // Create singleton EmailNotifier instance for this router
+  const emailNotifier = new EmailNotifier();
+
   // GET /api/protocols - List available protocols (rate-limited)
   router.get('/api/protocols', apiLimiter, (_req: Request, res: Response) => {
     try {
@@ -389,6 +392,18 @@ export function createProtocolRouter(
           observer,
           emailNotifier
         );
+
+        // Send email notification if enabled (fire-and-forget, non-blocking)
+        if (emailNotifier.isEnabled()) {
+          emailNotifier
+            .notifySessionStart({
+              session_id: session.id,
+              timestamp: new Date(),
+            })
+            .catch((err) => {
+              console.error('❌ Failed to send email notification:', err);
+            });
+        }
 
         // If mode is WALK, skip ENTRY mode and go directly to Theme 1
         if (mode === 'WALK') {

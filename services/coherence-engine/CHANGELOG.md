@@ -2,6 +2,98 @@
 
 All notable changes to the Coherence Engine will be documented in this file.
 
+## [3.0.0] - 2024-11-18
+
+### Phase 3: Drift Guardrails & Self-Correction - COMPLETE ✅
+
+#### Added
+
+**Self-Correction System**
+
+- Complete self-correction loop (reject → reset → enforce contract → reclassify → regenerate)
+- Automatic drift detection across 7 forbidden pattern categories
+- Maximum 3 regeneration attempts before failure
+- Founder protection guarantee: zero drift outputs reach founders
+
+**Drift Detection**
+
+- Future references detection
+- Advisory language detection
+- Motivational language detection
+- Emotional validation detection
+- Therapeutic language detection
+- Strategy/planning detection
+- Reassurance detection
+
+**Monitoring & Observability**
+
+- Drift monitoring statistics tracking
+- Detections, corrections, and failures counted
+- Drift categorized by type
+- Timestamps for last detection
+- New endpoint: `GET /coherence/debug/drift-monitoring`
+
+**API Integration**
+
+- Both `/coherence/stabilise-only` and `/coherence/evaluate` now use self-correction
+- Upward block (Phase 2) validated for drift
+- Magnification notes and micro-actions checked
+- 500 error returned if self-correction fails (system bug detected)
+
+**Testing**
+
+- 21 comprehensive Phase 3 tests
+- Drift detection validation tests
+- Self-correction loop tests
+- Founder protection tests
+- Monitoring tests
+- Contract enforcement tests
+- Upward block drift validation tests
+- **Total: 126 tests** (88 Phase 1 + 17 Phase 2 + 21 Phase 3)
+
+**Documentation**
+
+- PHASE3_NOTES.md with implementation details
+- Updated README with Phase 3 features
+- Updated CHANGELOG
+- API documentation for drift monitoring
+- Test utilities documented
+
+**Test Utilities**
+
+- `injectDriftForTesting()` function for testing self-correction
+- Drift type injection (future, advice, motivation, emotional)
+- Reset drift monitoring for clean test runs
+
+#### Changed
+
+- Server startup message reflects Phase 3
+- All outputs now pass through self-correction before returning
+- API handlers log critical errors for drift correction failures
+- Amplification outputs (upward block) validated for drift
+
+#### Constraints Enforced
+
+- ✅ Present-state only classification
+- ✅ No future references in outputs
+- ✅ No advice, motivation, or therapy
+- ✅ Memory is read-only and non-inferential
+- ✅ Amplification only on STABLE state
+- ✅ Founder-led consent required
+- ✅ Urgency kill-switch active
+- ✅ Output schema lock
+- ✅ **NEW: Automatic drift rejection and regeneration**
+
+#### Technical Notes
+
+- Deterministic output builder shouldn't produce drift (first-attempt success expected)
+- Self-correction is a safety net for future AI-powered output generation
+- Monitoring tracks drift for system health and debugging
+- Tests use drift injection to verify self-correction works
+- Max 3 attempts prevents infinite loops
+
+---
+
 ## [2.0.0] - 2024-11-19
 
 ### Phase 2: Amplification - COMPLETE ✅

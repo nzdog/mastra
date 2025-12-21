@@ -19,7 +19,7 @@ export interface FounderStateInput {
   cognitive: CognitiveState;
   tension_keyword: string;
   conflict_indicator: ConflictIndicator;
-  founder_ready_signal?: boolean; // Optional embodied "yes" for amplification
+  founder_led_readiness_signal?: boolean; // Optional embodied "yes" for amplification
 }
 
 /**
@@ -55,6 +55,7 @@ export function isValidFounderState(state: unknown): state is FounderStateInput 
     validCognitive.includes(s.cognitive) &&
     typeof s.conflict_indicator === 'string' &&
     validConflict.includes(s.conflict_indicator) &&
-    (s.founder_ready_signal === undefined || typeof s.founder_ready_signal === 'boolean')
+    (s.founder_led_readiness_signal === undefined ||
+      typeof s.founder_led_readiness_signal === 'boolean')
   );
 }
