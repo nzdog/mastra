@@ -5,7 +5,7 @@
  */
 
 import * as fs from 'fs';
-import * as path from 'path';
+//import * as path from 'path';
 import { NormalizationResult, NormalizationOptions, NormalizationChange } from './types';
 import {
   normalizeWhitespace,
