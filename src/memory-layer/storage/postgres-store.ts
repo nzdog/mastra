@@ -99,7 +99,8 @@ export class PostgresStore implements MemoryStore {
             encryption_version: encrypted.encryption_version,
             auth_tag: encrypted.auth_tag,
             iv: encrypted.iv,
-            type: record.content.type, // Preserve metadata
+            type: record.content.type, // Preserve type
+            metadata: record.content.metadata, // Preserve metadata
           };
 
           cryptoOpsDuration.observe({ op: 'encrypt' }, Date.now() - encryptStart);
@@ -116,7 +117,7 @@ export class PostgresStore implements MemoryStore {
           consent_family, consent_timestamp, consent_version,
           created_at, updated_at, expires_at, access_count, audit_receipt_id
         ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-        ON CONFLICT (id) DO UPDATE SET
+        ON CONFLICT (id, created_at) DO UPDATE SET
           updated_at = EXCLUDED.updated_at,
           content = EXCLUDED.content,
           access_count = EXCLUDED.access_count

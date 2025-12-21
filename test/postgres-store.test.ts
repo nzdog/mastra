@@ -134,6 +134,9 @@ describe('PostgresStore', () => {
 
   describe('recall()', () => {
     beforeEach(async () => {
+      // Clear database before inserting test records
+      await store.clear();
+
       // Insert test records
       for (let i = 0; i < 5; i++) {
         const record: MemoryRecord = {
@@ -293,6 +296,9 @@ describe('PostgresStore', () => {
 
   describe('count()', () => {
     beforeEach(async () => {
+      // Clear database before inserting test records
+      await store.clear();
+
       for (let i = 0; i < 3; i++) {
         const record: MemoryRecord = {
           id: uuidv4(),

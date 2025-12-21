@@ -20,6 +20,9 @@ import { SessionStore, Session } from '../../session-store';
 import { validateUserInput, validateProtocolSlug, validateSessionId } from '../validation';
 import { validateApiKey } from '../middleware';
 import type { SessionState } from '../../types';
+// MVE: Import Observer type for session creation
+import type { Observer } from '../../observability/mve-types';
+// Email notifications for session events
 import { EmailNotifier } from '../../notifications/email-notifier';
 
 /**
@@ -59,11 +62,15 @@ async function getSession(sessionStore: SessionStore, sessionId: string): Promis
 
 /**
  * Helper: Create new session (async)
+ * MVE: Added optional observer parameter
+ * Added optional emailNotifier parameter for session notifications
  */
 async function createSession(
   apiKey: string,
   sessionStore: SessionStore,
-  protocolSlug?: string
+  protocolSlug?: string,
+  observer?: Observer,
+  emailNotifier?: EmailNotifier
 ): Promise<Session> {
   const loader = new ProtocolLoader();
 
@@ -87,7 +94,8 @@ async function createSession(
 
   const session: Session = {
     id: randomUUID(),
-    agent: new FieldDiagnosticAgent(apiKey, registry, protocolPath),
+    // MVE: Pass observer to agent constructor
+    agent: new FieldDiagnosticAgent(apiKey, registry, protocolPath, observer),
     registry,
     parser,
     created_at: new Date().toISOString(),
@@ -99,6 +107,14 @@ async function createSession(
   console.log(
     `✨ Created new session: ${session.id} (protocol: ${protocolSlug || 'field_diagnostic'})`
   );
+
+  // Send email notification if enabled
+  if (emailNotifier?.isEnabled()) {
+    await emailNotifier.notifySessionStart({
+      session_id: session.id,
+      timestamp: new Date(),
+    });
+  }
 
   return session;
 }
@@ -215,6 +231,8 @@ function formatResponse(
  * @param apiLimiter - Rate limiter for API endpoints
  * @param aiEndpointLimiter - Rate limiter for AI endpoints
  * @param sessionCreationLimiter - Rate limiter for session creation
+ * @param observer - MVE observer for session creation (optional)
+ * @param emailNotifier - Email notifier for session events (optional)
  * @returns Express router with protocol endpoints
  */
 export function createProtocolRouter(
@@ -225,12 +243,11 @@ export function createProtocolRouter(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   aiEndpointLimiter: any,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  sessionCreationLimiter: any
+  sessionCreationLimiter: any,
+  observer?: Observer, // MVE: Observer parameter
+  emailNotifier?: EmailNotifier // Email notifier for session events
 ): Router {
   const router = Router();
-
-  // Create singleton EmailNotifier instance for this router
-  const emailNotifier = new EmailNotifier();
 
   // GET /api/protocols - List available protocols (rate-limited)
   router.get('/api/protocols', apiLimiter, (_req: Request, res: Response) => {
@@ -363,19 +380,15 @@ export function createProtocolRouter(
         }
 
         // Create new session with specified protocol
-        const session = await createSession(apiKey, sessionStore, protocol_slug);
-
-        // Send email notification if enabled (fire-and-forget, non-blocking)
-        if (emailNotifier.isEnabled()) {
+        // MVE: Pass observer to session
+        // Pass email notifier for session notification
+        const session = await createSession(
+          apiKey,
+          sessionStore,
+          protocol_slug,
+          observer,
           emailNotifier
-            .notifySessionStart({
-              session_id: session.id,
-              timestamp: new Date(),
-            })
-            .catch((err) => {
-              console.error('❌ Failed to send email notification:', err);
-            });
-        }
+        );
 
         // If mode is WALK, skip ENTRY mode and go directly to Theme 1
         if (mode === 'WALK') {

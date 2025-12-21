@@ -171,11 +171,8 @@ export class ProtocolParser {
         continue;
       }
 
-      // Stop at Completion Prompts or second horizontal rule
-      if (
-        inThemesSection &&
-        (line.startsWith('## Completion Prompts') || (line.startsWith('---') && i > 20))
-      ) {
+      // Stop at next top-level section (##) after Themes
+      if (inThemesSection && line.match(/^## (?!Themes)/)) {
         // console.log(`   ⏹️  Stopping at line ${i + 1}: "${line.substring(0, 50)}"`);
         if (currentThemeIndex !== null && themeContent.length > 0) {
           theme_chunks.set(currentThemeIndex, this.buildThemeChunk(themeContent));

@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: field_exit_protocol_2_composting_the_old_signal
 title: Field Exit Protocol 2 — Composting the Old Signal
 version: 1.0.0

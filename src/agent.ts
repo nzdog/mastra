@@ -5,6 +5,8 @@ import { loadProtocol, ProtocolParser } from './protocol/parser';
 import { ProtocolRegistry } from './tools/registry';
 import { SessionState, ConversationTurn, Mode, ClassificationResult, ProtocolChunk } from './types';
 import { WalkResponseValidator } from './validator';
+// MVE: Import Observer interface for observability experiment
+import { Observer } from './observability/mve-types';
 
 /**
  * Field Diagnostic Agent - Main conversational agent for the Lichen Protocol
@@ -41,6 +43,8 @@ export class FieldDiagnosticAgent {
   private closeModeTimes: number = 0; // Track how many times CLOSE mode has been entered
   private totalCost: number = 0; // Track cumulative API cost for this session
   private protocolPath: string;
+  // MVE: Observer for tracking agent and field behavior
+  private observer?: Observer;
 
   // Static cache for ENTRY mode responses (identical for all users)
   private static entryResponseCache: Map<string, string> = new Map();
@@ -69,7 +73,12 @@ export class FieldDiagnosticAgent {
    * );
    * ```
    */
-  constructor(apiKey: string, registry?: ProtocolRegistry, protocolPath?: string) {
+  constructor(
+    apiKey: string,
+    registry?: ProtocolRegistry,
+    protocolPath?: string,
+    observer?: Observer
+  ) {
     this.classifier = new IntentClassifier(apiKey);
 
     // Use provided registry or load default field diagnostic protocol
@@ -93,6 +102,9 @@ export class FieldDiagnosticAgent {
 
     // Initialize state
     this.state = this.createInitialState();
+
+    // MVE: Set observer if provided
+    this.observer = observer;
   }
 
   /**
@@ -174,6 +186,18 @@ export class FieldDiagnosticAgent {
       console.log(
         `💰 CLASSIFIER COST: ~$0.0082 | Total session cost: $${this.totalCost.toFixed(4)}`
       );
+
+      // MVE: Start - Log classification result
+      if (this.observer?.isEnabled()) {
+        await this.observer.observe({
+          timestamp: new Date().toISOString(),
+          session_id: this.state.session_id,
+          event_type: 'classification',
+          classification_label: classification.intent,
+          confidence: classification.confidence,
+        });
+      }
+      // MVE: End
     }
 
     // Step 2: Set is_revisiting flag BEFORE any calculations (if user requested a specific theme)
@@ -186,6 +210,17 @@ export class FieldDiagnosticAgent {
 
     // Step 3: Determine mode
     const mode = this.determineMode(classification);
+
+    // MVE: Start - Log mode decision
+    if (this.observer?.isEnabled()) {
+      await this.observer.observe({
+        timestamp: new Date().toISOString(),
+        session_id: this.state.session_id,
+        event_type: 'mode_decision',
+        mode: mode,
+      });
+    }
+    // MVE: End
 
     // CRITICAL: CLOSE mode gets special handling - skip all WALK logic
     if (mode === 'CLOSE') {
@@ -302,6 +337,19 @@ export class FieldDiagnosticAgent {
       if (this.state.last_response === 'theme_questions') {
         this.themeAnswers.set(themeIndexForResponse, userMessage);
         console.log(`📝 AGENT: Stored answer for theme ${themeIndexForResponse}`);
+
+        // MVE: Start - Log theme answer with spotlight detection
+        if (this.observer?.isEnabled()) {
+          await this.observer.observe({
+            timestamp: new Date().toISOString(),
+            session_id: this.state.session_id,
+            event_type: 'theme_answer',
+            theme_index: themeIndexForResponse,
+            raw_text: userMessage,
+            spotlight_flags: this.detectSpotlights(userMessage),
+          });
+        }
+        // MVE: End
 
         // Update highest theme reached ONLY when answering a theme for the first time
         if (themeIndexForResponse > this.highestThemeReached) {
@@ -804,7 +852,10 @@ export class FieldDiagnosticAgent {
    * Create initial session state
    */
   private createInitialState(): SessionState {
+    // MVE: Generate session_id for event logging
+    const { randomUUID } = require('crypto');
     return {
+      session_id: randomUUID(),
       active_protocol: null,
       mode: 'ENTRY',
       theme_index: null,
@@ -819,4 +870,28 @@ export class FieldDiagnosticAgent {
       updated_at: new Date().toISOString(),
     };
   }
+
+  // MVE: Start - Helper method for spotlight pattern detection
+  /**
+   * Detect spotlight patterns in user text (field emergence indicators)
+   */
+  private detectSpotlights(text: string): string[] {
+    const spotlights: string[] = [];
+    const patterns = [
+      { flag: 'should', regex: /\bshould\b/i },
+      { flag: 'always', regex: /\balways\b/i },
+      { flag: 'dont_know', regex: /\bi don't know\b/i },
+      { flag: 'rushing', regex: /\brush(ing|ed)?\b/i },
+      { flag: 'exhausted', regex: /\bexhaust(ed|ing)?\b/i },
+    ];
+
+    for (const { flag, regex } of patterns) {
+      if (regex.test(text)) {
+        spotlights.push(flag);
+      }
+    }
+
+    return spotlights;
+  }
+  // MVE: End
 }

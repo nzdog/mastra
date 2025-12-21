@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: protocol_slug
 title: Protocol Display Name
 version: 1.0.0

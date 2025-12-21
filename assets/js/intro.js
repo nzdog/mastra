@@ -301,17 +301,19 @@ async function loadAndRenderProtocolCards() {
       return;
     }
 
-    // Sort: Field Diagnostic first, then the 5 Field Exit protocols in order
-    const sortedProtocols = data.protocols
-      .sort((a, b) => {
-        if (a.slug === 'field_diagnostic') return -1;
-        if (b.slug === 'field_diagnostic') return 1;
-        // Extract number from field_exit_protocol_N_...
-        const aNum = parseInt(a.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
-        const bNum = parseInt(b.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
-        return aNum - bNum;
-      })
-      .slice(0, 6); // Take only the first 6
+    // Sort: Field Diagnostic first, then the 5 Field Exit protocols in order, then others alphabetically
+    const sortedProtocols = data.protocols.sort((a, b) => {
+      if (a.slug === 'field_diagnostic') return -1;
+      if (b.slug === 'field_diagnostic') return 1;
+      // Extract number from field_exit_protocol_N_...
+      const aNum = parseInt(a.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
+      const bNum = parseInt(b.slug.match(/field_exit_protocol_(\d+)/)?.[1] || '999');
+      if (aNum !== 999 && bNum !== 999) return aNum - bNum;
+      if (aNum !== 999) return -1;
+      if (bNum !== 999) return 1;
+      // Alphabetically for non-field-exit protocols
+      return a.title.localeCompare(b.title);
+    });
 
     // Render each protocol card
     for (const protocol of sortedProtocols) {

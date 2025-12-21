@@ -13,6 +13,7 @@ import { showError } from './utils.js';
  */
 export async function loadProtocols() {
   try {
+    console.log('🔄 FRONTEND: Fetching protocols from API...');
     const response = await fetch(`${API_BASE}/api/protocols`);
 
     // Check HTTP status
@@ -21,11 +22,18 @@ export async function loadProtocols() {
     }
 
     const data = await response.json();
+    console.log('📦 FRONTEND: Received protocol data:', data);
+    console.log(`📊 FRONTEND: Protocol count: ${data.protocols?.length || 0}`);
 
     // Validate response structure
     if (!data.protocols || !Array.isArray(data.protocols)) {
       throw new Error('Invalid protocol data structure');
     }
+
+    // Log each protocol
+    data.protocols.forEach((p, idx) => {
+      console.log(`   ${idx + 1}. ${p.slug}: ${p.title}`);
+    });
 
     if (data.protocols.length > 0) {
       renderProtocolCards(data.protocols);
@@ -47,6 +55,7 @@ export function renderProtocolCards(protocols) {
     return;
   }
 
+  console.log(`🎨 FRONTEND: Rendering ${protocols.length} protocol cards...`);
   protocolGrid.innerHTML = '';
 
   // Sort protocols: Field Diagnostic first, then alphabetically by title
@@ -56,7 +65,13 @@ export function renderProtocolCards(protocols) {
     return a.title.localeCompare(b.title);
   });
 
+  console.log('🔀 FRONTEND: After sorting:');
+  sortedProtocols.forEach((p, idx) => {
+    console.log(`   ${idx + 1}. ${p.slug}: ${p.title}`);
+  });
+
   sortedProtocols.forEach((protocol) => {
+    console.log(`   ✏️  Creating card for: ${protocol.slug}`);
     const card = document.createElement('div');
     card.className = 'protocol-card';
 

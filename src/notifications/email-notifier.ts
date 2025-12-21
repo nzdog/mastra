@@ -11,32 +11,14 @@ export interface SessionNotification {
   timestamp: Date;
 }
 
-/**
- * Escape HTML to prevent injection attacks
- */
-function escapeHtml(unsafe: string): string {
-  return unsafe
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#039;');
-}
-
 export class EmailNotifier {
-  private static readonly MIN_PORT = 1;
-  private static readonly MAX_PORT = 65535;
-  private static readonly DEFAULT_PORT = 587;
-
   private transporter: Transporter | null = null;
   private enabled: boolean;
   private recipient: string;
-  private fromAddress: string;
 
   constructor() {
     this.enabled = process.env.EMAIL_NOTIFICATIONS_ENABLED === 'true';
     this.recipient = process.env.EMAIL_NOTIFICATION_RECIPIENT || 'coherence@lichenprotocol.com';
-    this.fromAddress = process.env.SMTP_USER || 'noreply@lichenprotocol.com';
 
     if (this.enabled) {
       this.initializeTransporter();
@@ -45,29 +27,25 @@ export class EmailNotifier {
 
   private initializeTransporter(): void {
     const host = process.env.SMTP_HOST;
-    const portStr = process.env.SMTP_PORT || String(EmailNotifier.DEFAULT_PORT);
-    const port = parseInt(portStr, 10);
+    const portEnv = process.env.SMTP_PORT;
+    const port = portEnv ? parseInt(portEnv, 10) : 587;
     const secure = process.env.SMTP_SECURE === 'true'; // true for 465, false for other ports
     const user = process.env.SMTP_USER;
     const pass = process.env.SMTP_PASS;
 
-    // Validate SMTP_PORT is a valid number
-    if (isNaN(port) || port < EmailNotifier.MIN_PORT || port > EmailNotifier.MAX_PORT) {
-      console.warn(
-        `⚠️  Invalid SMTP_PORT value: ${portStr}. Using default: ${EmailNotifier.DEFAULT_PORT}`
-      );
+    // Validate port is a valid number and within range
+    const isPortValid = Number.isInteger(port) && port >= 1 && port <= 65535;
+
+    if (!host || !user || !pass || !isPortValid) {
+      if (!isPortValid) {
+        console.warn('⚠️  Email notifications enabled but SMTP_PORT is invalid (must be 1-65535)');
+      } else {
+        console.warn('⚠️  Email notifications enabled but SMTP credentials missing');
+      }
       this.enabled = false;
       return;
     }
 
-    if (!host || !user || !pass) {
-      console.warn('⚠️  Email notifications enabled but SMTP credentials missing');
-      this.enabled = false;
-      return;
-    }
-
-    // SECURITY: Do not log SMTP credentials in production
-    // The credentials are handled securely by nodemailer
     this.transporter = nodemailer.createTransport({
       host,
       port,
@@ -83,31 +61,13 @@ export class EmailNotifier {
 
   /**
    * Send notification when a new session starts
-   * Non-blocking: errors are logged but do not throw
    */
   async notifySessionStart(notification: SessionNotification): Promise<void> {
     if (!this.enabled || !this.transporter) {
       return;
     }
 
-    // Fire-and-forget: don't await, don't block main flow
-    this.sendEmailAsync(notification).catch((error) => {
-      console.error('❌ Failed to send email notification:', error);
-    });
-  }
-
-  /**
-   * Internal async email sending logic
-   */
-  private async sendEmailAsync(notification: SessionNotification): Promise<void> {
-    if (!this.transporter) {
-      return;
-    }
-
     try {
-      // Escape session_id to prevent XSS in HTML emails
-      const safeSessionId = escapeHtml(notification.session_id);
-
       // Convert to NZ time
       const nzTime = this.formatNZTime(notification.timestamp);
 
@@ -147,15 +107,15 @@ Lichen Protocol Diagnostic Engine
     <div class="content">
       <div class="field">
         <div class="field-label">Session ID</div>
-        <div class="field-value">${safeSessionId}</div>
+        <div class="field-value">${notification.session_id}</div>
       </div>
       <div class="field">
         <div class="field-label">Time (NZ)</div>
-        <div class="field-value">${escapeHtml(nzTime)}</div>
+        <div class="field-value">${nzTime}</div>
       </div>
       <div class="field">
         <div class="field-label">Timestamp (UTC)</div>
-        <div class="field-value">${escapeHtml(notification.timestamp.toISOString())}</div>
+        <div class="field-value">${notification.timestamp.toISOString()}</div>
       </div>
     </div>
     <div class="footer">
@@ -167,7 +127,7 @@ Lichen Protocol Diagnostic Engine
       `.trim();
 
       await this.transporter.sendMail({
-        from: `"Lichen Diagnostic Engine" <${this.fromAddress}>`,
+        from: `"Lichen Diagnostic Engine" <${process.env.SMTP_USER}>`,
         to: this.recipient,
         subject,
         text,
@@ -176,23 +136,13 @@ Lichen Protocol Diagnostic Engine
 
       console.log(`📧 Session start notification sent: ${notification.session_id}`);
     } catch (error) {
-      // Re-throw to be caught by the fire-and-forget handler
-      throw error;
+      console.error('❌ Failed to send email notification:', error);
+      // Don't throw - notifications should not break the main flow
     }
   }
 
   /**
    * Format timestamp in NZ time (NZST/NZDT)
-   *
-   * NOTE: This method uses Node.js's Intl.DateTimeFormat (via toLocaleString)
-   * which depends on ICU (International Components for Unicode) data.
-   *
-   * Requirements:
-   * - Node.js must be built with full ICU support (default in Node.js 13+)
-   * - For minimal Docker images, ensure ICU data is included or use full Node.js base image
-   *
-   * If running in environments with limited ICU support, consider using
-   * a library like date-fns-tz for guaranteed timezone formatting.
    */
   private formatNZTime(date: Date): string {
     return date.toLocaleString('en-NZ', {

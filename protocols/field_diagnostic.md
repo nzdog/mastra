@@ -1,4 +1,5 @@
 ---
+schema_version: 1
 id: field_diagnostic
 title: Field Diagnostic Protocol
 version: 1.0.0
@@ -32,8 +33,10 @@ themes:
   - index: 5
     title: Pressure Points
 stones:
+  - Stone 1: Light Before Form
   - Stone 4: Clarity Over Cleverness
   - Stone 5: Presence Is Productivity
+  - Stone 6: Nothing Forced, Nothing Withheld
   - Stone 8: Integrity Is the Growth Strategy
 ---
 
