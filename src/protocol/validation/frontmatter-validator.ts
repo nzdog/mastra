@@ -123,6 +123,13 @@ export function validateFrontmatter(
       field: 'entry_sections',
       suggestion: 'Add entry_sections array defining required top-level sections',
     });
+  } else if (!Array.isArray(frontmatter.entry_sections)) {
+    errors.push({
+      severity: 'error',
+      message: 'entry_sections must be an array',
+      field: 'entry_sections',
+      suggestion: 'Ensure entry_sections is defined as a YAML array',
+    });
   } else {
     // Validate each entry section has title and marker
     frontmatter.entry_sections.forEach((section, idx) => {
@@ -166,6 +173,13 @@ export function validateFrontmatter(
       message: 'Missing optional field: themes',
       field: 'themes',
       suggestion: 'Add themes array for metadata (markdown structure is authoritative)',
+    });
+  } else if (!Array.isArray(frontmatter.themes)) {
+    errors.push({
+      severity: 'error',
+      message: 'themes must be an array',
+      field: 'themes',
+      suggestion: 'Ensure themes is defined as a YAML array',
     });
   } else {
     // INFO: Check sequential indexing (1, 2, 3...)

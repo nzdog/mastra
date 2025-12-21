@@ -45,7 +45,19 @@ export class ProtocolValidator {
         return result;
       }
 
-      const fileContent = fs.readFileSync(filePath, 'utf-8');
+      const fileContent = fs.readFileSync(filePath, 'utf-8').trim();
+
+      // Check for empty files
+      if (fileContent.length === 0) {
+        result.errors.push({
+          severity: 'error',
+          message: 'File is empty',
+          suggestion: 'Add protocol content with YAML frontmatter and markdown sections',
+        });
+        result.hasErrors = true;
+        result.errorCount = 1;
+        return result;
+      }
 
       // Parse frontmatter
       let frontmatter: ProtocolFrontmatter;
@@ -53,13 +65,41 @@ export class ProtocolValidator {
 
       try {
         const parsed = matter(fileContent);
-        frontmatter = parsed.data as ProtocolFrontmatter;
+
+        // Runtime type validation for frontmatter
+        const data = parsed.data;
+        if (data.schema_version !== undefined && typeof data.schema_version !== 'number') {
+          throw new Error('schema_version must be a number');
+        }
+        if (data.id !== undefined && typeof data.id !== 'string') {
+          throw new Error('id must be a string');
+        }
+        if (data.title !== undefined && typeof data.title !== 'string') {
+          throw new Error('title must be a string');
+        }
+        if (data.version !== undefined && typeof data.version !== 'string') {
+          throw new Error('version must be a string');
+        }
+        if (data.entry_keys !== undefined && !Array.isArray(data.entry_keys)) {
+          throw new Error('entry_keys must be an array');
+        }
+        if (data.entry_sections !== undefined && !Array.isArray(data.entry_sections)) {
+          throw new Error('entry_sections must be an array');
+        }
+        if (data.themes !== undefined && !Array.isArray(data.themes)) {
+          throw new Error('themes must be an array');
+        }
+        if (data.stones !== undefined && !Array.isArray(data.stones)) {
+          throw new Error('stones must be an array');
+        }
+
+        frontmatter = data as ProtocolFrontmatter;
         markdownContent = parsed.content;
       } catch (error) {
         result.errors.push({
           severity: 'error',
           message: `Failed to parse YAML frontmatter: ${error instanceof Error ? error.message : String(error)}`,
-          suggestion: 'Check YAML syntax in frontmatter',
+          suggestion: 'Check YAML syntax and data types in frontmatter',
         });
         result.hasErrors = true;
         result.errorCount = 1;
@@ -128,15 +168,20 @@ export class ProtocolValidator {
         throw new Error(`Directory not found: ${dirPath}`);
       }
 
-      const files = fs.readdirSync(dirPath);
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
 
-      for (const file of files) {
-        // Only process .md files, skip template and README
-        if (!file.endsWith('.md') || file === 'PROTOCOL_TEMPLATE.md' || file === 'README.md') {
+      for (const entry of entries) {
+        // Only process regular files (not directories or symlinks)
+        if (!entry.isFile()) {
           continue;
         }
 
-        const filePath = path.join(dirPath, file);
+        // Only process .md files, skip template and README
+        if (!entry.name.endsWith('.md') || entry.name === 'PROTOCOL_TEMPLATE.md' || entry.name === 'README.md') {
+          continue;
+        }
+
+        const filePath = path.join(dirPath, entry.name);
         const result = this.validateFile(filePath);
         results.push(result);
       }

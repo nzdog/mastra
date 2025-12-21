@@ -107,12 +107,23 @@ export class ProtocolNormalizer {
         return { success: true, result };
       }
 
-      // Create backup
-      const backupPath = `${filePath}.backup`;
+      // Create backup with timestamp to avoid race conditions
+      const backupPath = `${filePath}.backup.${Date.now()}`;
       fs.writeFileSync(backupPath, content, 'utf-8');
 
-      // Write normalized content
-      fs.writeFileSync(filePath, result.normalizedContent, 'utf-8');
+      // Atomic write: write to temp file then rename
+      const tempPath = `${filePath}.tmp.${Date.now()}`;
+      try {
+        fs.writeFileSync(tempPath, result.normalizedContent, 'utf-8');
+        fs.renameSync(tempPath, filePath);
+      } finally {
+        // Clean up temp file if it still exists (rename failed)
+        try {
+          fs.unlinkSync(tempPath);
+        } catch {
+          // Ignore - file was successfully renamed
+        }
+      }
 
       return { success: true, result, backupPath };
     } catch (error) {

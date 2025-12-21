@@ -122,6 +122,15 @@ async function main(): Promise<void> {
       ? options.file
       : path.join(process.cwd(), options.file);
 
+    // Security: Prevent path traversal attacks
+    const resolvedPath = path.resolve(filePath);
+    const resolvedProtocolsDir = path.resolve(protocolsDir);
+
+    if (!resolvedPath.startsWith(resolvedProtocolsDir + path.sep) && resolvedPath !== resolvedProtocolsDir) {
+      console.error(error('\n❌ Error: File path must be within protocols directory\n'));
+      process.exit(1);
+    }
+
     console.log(header(`\nValidating ${path.basename(filePath)}...\n`));
     const result = validator.validateFile(filePath);
     results = [result];
