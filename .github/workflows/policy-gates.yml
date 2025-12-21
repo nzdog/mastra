@@ -76,6 +76,43 @@ jobs:
           PGPASSWORD=postgres psql -h localhost -U postgres -d lichen_memory_test -c "CREATE DATABASE root OWNER postgres;" 2>/dev/null || true
           echo "✅ PostgreSQL root user and database created (if needed)"
 
+      - name: Apply database migrations
+        run: |
+          echo "Applying migrations..."
+          set -e  # Exit on error
+          export PGPASSWORD=postgres
+
+          echo "→ Applying 001_create_memory_records.sql..."
+          psql -h localhost -U postgres -d lichen_memory_test -f migrations/001_create_memory_records.sql || { echo "❌ Migration 001 failed"; exit 1; }
+
+          echo "→ Applying 002_partitions.sql..."
+          psql -h localhost -U postgres -d lichen_memory_test -f migrations/002_partitions.sql || { echo "❌ Migration 002 failed"; exit 1; }
+
+          echo "→ Applying 003_add_encryption_version.sql..."
+          psql -h localhost -U postgres -d lichen_memory_test -f migrations/003_add_encryption_version.sql || { echo "❌ Migration 003 failed"; exit 1; }
+
+          echo "✅ All migrations applied successfully"
+
+      - name: Verify database schema
+        run: |
+          echo "Verifying schema..."
+          export PGPASSWORD=postgres
+
+          echo "→ Checking memory_records table..."
+          psql -h localhost -U postgres -d lichen_memory_test -c "\d memory_records"
+
+          echo "→ Verifying table exists..."
+          TABLE_EXISTS=$(psql -h localhost -U postgres -d lichen_memory_test -tAc "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'memory_records');")
+
+          if [ "$TABLE_EXISTS" = "t" ]; then
+            echo "✅ memory_records table exists"
+          else
+            echo "❌ memory_records table NOT found!"
+            exit 1
+          fi
+
+          echo "✅ Schema verified"
+
       # Phase 0 - Foundations Gates
       - name: 'Gate: ADR 0001 exists'
         run: test -f docs/adrs/0001-memory-layer-architecture.md
