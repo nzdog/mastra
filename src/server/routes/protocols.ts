@@ -391,7 +391,7 @@ export function createProtocolRouter(
         );
 
         // Send email notification if enabled (fire-and-forget, non-blocking)
-        if (emailNotifier && emailNotifier.isEnabled()) {
+        if (emailNotifier?.isEnabled()) {
           emailNotifier
             .notifySessionStart({
               session_id: session.id,
