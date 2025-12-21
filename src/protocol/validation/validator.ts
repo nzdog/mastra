@@ -177,7 +177,11 @@ export class ProtocolValidator {
         }
 
         // Only process .md files, skip template and README
-        if (!entry.name.endsWith('.md') || entry.name === 'PROTOCOL_TEMPLATE.md' || entry.name === 'README.md') {
+        if (
+          !entry.name.endsWith('.md') ||
+          entry.name === 'PROTOCOL_TEMPLATE.md' ||
+          entry.name === 'README.md'
+        ) {
           continue;
         }
 

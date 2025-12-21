@@ -126,7 +126,10 @@ async function main(): Promise<void> {
     const resolvedPath = path.resolve(filePath);
     const resolvedProtocolsDir = path.resolve(protocolsDir);
 
-    if (!resolvedPath.startsWith(resolvedProtocolsDir + path.sep) && resolvedPath !== resolvedProtocolsDir) {
+    if (
+      !resolvedPath.startsWith(resolvedProtocolsDir + path.sep) &&
+      resolvedPath !== resolvedProtocolsDir
+    ) {
       console.error(error('\n❌ Error: File path must be within protocols directory\n'));
       process.exit(1);
     }
