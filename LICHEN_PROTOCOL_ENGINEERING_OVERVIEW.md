@@ -30,16 +30,19 @@ The codebase you maintain is **alive**. It must evolve with the field, not drift
 This overview is split into focused guides:
 
 ### Core Concepts
+
 - **[Field Model](./docs/engineering/01-field-model.md)** - What fields are, how they map to engineering concepts
 - **[System Architecture](./docs/engineering/02-architecture.md)** - Layers, invariants, failure modes
 - **[Protocols as Code](./docs/engineering/03-protocols.md)** - Typed workflows, state machines
 
 ### Practice
+
 - **[Encoding Invariants](./docs/engineering/04-invariants.md)** - Mathematical, ethical, operational boundaries
 - **[AI Guardrails](./docs/engineering/05-ai-guardrails.md)** - How AI is constrained and validated
 - **[Operational Rhythms](./docs/engineering/06-rhythms.md)** - Daily/weekly/quarterly/annual practices
 
 ### Onboarding
+
 - **[First 7 Days](./docs/engineering/07-onboarding.md)** - Practical plan for new engineers
 
 ---
@@ -75,6 +78,7 @@ From LICHEN_CODING_PRIMER.md:
 > World-class development means sustainable stewardship of human trust and systemic integrity.
 
 In Lichen terms:
+
 - **Precision**: Type safety, validated invariants, tested boundaries
 - **Empathy**: Human energy conservation, dignity preservation, stress adaptation
 - **Rhythm**: Daily reviews, weekly learning, quarterly renewal, annual evolution

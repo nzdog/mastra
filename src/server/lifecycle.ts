@@ -42,15 +42,17 @@ export async function startServer(
 
     if (hasErrors) {
       console.error('❌ Protocol validation errors at startup:');
-      erroredProtocols.forEach((r: { filename: string; errorCount: number; errors: { message: string }[] }) => {
-        console.error(`  - ${r.filename}: ${r.errorCount} error(s)`);
-        r.errors.slice(0, 3).forEach((e: { message: string }) => {
-          console.error(`    • ${e.message}`);
-        });
-        if (r.errorCount > 3) {
-          console.error(`    ... and ${r.errorCount - 3} more`);
+      erroredProtocols.forEach(
+        (r: { filename: string; errorCount: number; errors: { message: string }[] }) => {
+          console.error(`  - ${r.filename}: ${r.errorCount} error(s)`);
+          r.errors.slice(0, 3).forEach((e: { message: string }) => {
+            console.error(`    • ${e.message}`);
+          });
+          if (r.errorCount > 3) {
+            console.error(`    ... and ${r.errorCount - 3} more`);
+          }
         }
-      });
+      );
 
       // Environment-aware strictness
       const isProduction = process.env.NODE_ENV === 'production';

@@ -157,7 +157,9 @@ async function main(): Promise<void> {
 
     if (result.hasWarnings && !options.quiet) {
       hasAnyWarnings = true;
-      console.log(warning(`${showFile ? `${result.filename}: ` : ''}WARNINGS (${result.warningCount})`));
+      console.log(
+        warning(`${showFile ? `${result.filename}: ` : ''}WARNINGS (${result.warningCount})`)
+      );
 
       result.warnings.forEach((warn) => {
         console.log(`  ⚠️  ${warn.message}`);

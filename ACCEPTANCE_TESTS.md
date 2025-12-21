@@ -16,18 +16,22 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
 ### Steps
 
 1. **Start server**:
+
    ```bash
    npm run server
    ```
 
 2. **Record initial protocol count**:
+
    ```bash
    curl -s http://localhost:3000/api/protocols | jq '.protocols | length'
    ```
+
    Note the count (e.g., 6 protocols).
 
 3. **Create a valid test protocol**:
    Create file `protocols/test_valid_protocol.md`:
+
    ```markdown
    ---
    schema_version: 1
@@ -63,12 +67,14 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
    **Why this matters:** Test why it matters text.
 
    **Outcomes:**
+
    - **Poor:** Test poor outcome
    - **Expected:** Test expected outcome
    - **Excellent:** Test excellent outcome
    - **Transcendent:** Test transcendent outcome
 
    **Guiding Questions:**
+
    - Question 1?
    - Question 2?
    - Question 3?
@@ -77,23 +83,29 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
    ```
 
 4. **Validate the new protocol**:
+
    ```bash
    npm run validate:protocols -- --file protocols/test_valid_protocol.md
    ```
+
    Should output: "✅ test_valid_protocol.md: Valid"
 
 5. **Wait for cache expiry** (5 minutes) OR restart server.
 
 6. **Check protocol list again**:
+
    ```bash
    curl -s http://localhost:3000/api/protocols | jq '.protocols | length'
    ```
+
    Count should increase by 1.
 
 7. **Verify new protocol appears**:
+
    ```bash
    curl -s http://localhost:3000/api/protocols | jq '.protocols[] | select(.id == "test_valid_protocol")'
    ```
+
    Should return the test protocol metadata.
 
 8. **Cleanup**:
@@ -112,18 +124,22 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
 ### Steps
 
 1. **Start server**:
+
    ```bash
    npm run server
    ```
 
 2. **Record initial protocol count**:
+
    ```bash
    curl -s http://localhost:3000/api/protocols | jq '.protocols | length'
    ```
+
    Note the count.
 
 3. **Create an invalid test protocol**:
    Create file `protocols/test_invalid_protocol.md` (missing `schema_version` and `Completion Prompt`):
+
    ```markdown
    ---
    id: test_invalid_protocol
@@ -154,15 +170,18 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
    **Purpose:** Test purpose text.
 
    **Guiding Questions:**
+
    - Question 1?
    - Question 2?
    - Question 3?
    ```
 
 4. **Validate the new protocol** (should fail):
+
    ```bash
    npm run validate:protocols -- --file protocols/test_invalid_protocol.md
    ```
+
    Should output errors like:
    - "❌ Missing required field: schema_version"
    - "❌ Theme 1: Missing semantic field 'Why this matters'"
@@ -173,21 +192,26 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
 
 6. **Check server logs** for validation warnings:
    Should see:
+
    ```
    ⚠️  LOADER (PERMISSIVE): Skipping invalid protocol: test_invalid_protocol.md
       Errors: 4
    ```
 
 7. **Check protocol list**:
+
    ```bash
    curl -s http://localhost:3000/api/protocols | jq '.protocols | length'
    ```
+
    Count should remain the same (not increase).
 
 8. **Verify invalid protocol does NOT appear**:
+
    ```bash
    curl -s http://localhost:3000/api/protocols | jq '.protocols[] | select(.id == "test_invalid_protocol")'
    ```
+
    Should return nothing (empty).
 
 9. **Cleanup**:
@@ -209,18 +233,22 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
    Create `protocols/test_invalid_strict.md` with missing `schema_version`.
 
 2. **Validate it's invalid**:
+
    ```bash
    npm run validate:protocols -- --file protocols/test_invalid_strict.md
    ```
+
    Should show errors.
 
 3. **Start server in strict mode**:
+
    ```bash
    PROTOCOL_VALIDATION_STRICT=true npm run server
    ```
 
 4. **Observe server startup**:
    Should see:
+
    ```
    📋 Validating protocol files at startup...
    ❌ Protocol validation errors at startup:
@@ -253,19 +281,24 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
 ### Steps
 
 1. **Validate all protocols**:
+
    ```bash
    npm run validate:protocols
    ```
+
    Shows validation results for all protocols.
 
 2. **Validate specific file**:
+
    ```bash
    npm run validate:protocols -- --file protocols/field_diagnostic.md
    ```
+
    Shows results for single file.
 
 3. **Create protocol with formatting issues**:
    Create `protocols/test_formatting.md`:
+
    ```markdown
    ---
    schema_version: 1
@@ -293,12 +326,14 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
    **Why this matters:** test
 
    **Outcomes:**
-   -  poor: test
-   -expected: test
+
+   - poor: test
+     -expected: test
    - Excellent: test
    - Transcendent: test
 
    **Guiding Questions:**
+
    - Q1?
    - Q2?
    - Q3?
@@ -307,27 +342,35 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
    ```
 
 4. **Test dry-run normalization**:
+
    ```bash
    npm run validate:protocols -- --file protocols/test_formatting.md --fix --dry-run
    ```
+
    Should show proposed changes (heading spacing, bullet spacing, outcomes casing, trailing whitespace).
 
 5. **Apply fixes**:
+
    ```bash
    npm run validate:protocols -- --file protocols/test_formatting.md --fix --yes
    ```
+
    Should apply changes without prompt.
 
 6. **Verify backup created**:
+
    ```bash
    ls -la protocols/test_formatting.md.backup
    ```
+
    Backup file should exist.
 
 7. **Run normalization again** (idempotency test):
+
    ```bash
    npm run validate:protocols -- --file protocols/test_formatting.md --fix --dry-run
    ```
+
    Should show "No formatting issues found" (idempotent).
 
 8. **Cleanup**:
@@ -341,20 +384,21 @@ Manual acceptance tests to verify the key guarantee: **protocols only appear on 
 
 ## Environment Behavior Matrix Verification
 
-| Test Scenario | NODE_ENV | PROTOCOL_VALIDATION_STRICT | Expected Behavior |
-|---------------|----------|---------------------------|-------------------|
-| Dev default | development | (not set) | Permissive: warn, skip invalid, continue |
-| Dev strict | development | true | Strict: error, block startup |
-| Dev permissive | development | false | Permissive: warn, skip invalid, continue |
-| Prod default | production | (not set) | Strict: error, block startup |
-| Prod strict | production | true | Strict: error, block startup |
-| Prod permissive | production | false | Permissive: warn, skip invalid, continue |
+| Test Scenario   | NODE_ENV    | PROTOCOL_VALIDATION_STRICT | Expected Behavior                        |
+| --------------- | ----------- | -------------------------- | ---------------------------------------- |
+| Dev default     | development | (not set)                  | Permissive: warn, skip invalid, continue |
+| Dev strict      | development | true                       | Strict: error, block startup             |
+| Dev permissive  | development | false                      | Permissive: warn, skip invalid, continue |
+| Prod default    | production  | (not set)                  | Strict: error, block startup             |
+| Prod strict     | production  | true                       | Strict: error, block startup             |
+| Prod permissive | production  | false                      | Permissive: warn, skip invalid, continue |
 
 ---
 
 ## Summary
 
 All acceptance tests should pass to confirm:
+
 - ✅ Discovery-time validation in loader filters invalid protocols
 - ✅ Invalid protocols NEVER appear in `/api/protocols`, even if added after startup
 - ✅ Startup validation provides fast-fail in strict mode

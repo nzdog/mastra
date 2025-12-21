@@ -25,8 +25,7 @@ export function formatDiff(changes: NormalizationChange[]): string {
       );
     } else {
       // Show original and normalized
-      const originalDisplay =
-        change.original.trim() === '' ? '(blank)' : `"${change.original}"`;
+      const originalDisplay = change.original.trim() === '' ? '(blank)' : `"${change.original}"`;
       const normalizedDisplay =
         change.normalized.trim() === '' ? '(blank)' : `"${change.normalized}"`;
 
