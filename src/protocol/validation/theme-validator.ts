@@ -7,6 +7,9 @@
 import { ProtocolFrontmatter, ValidationError, ThemeStructure } from './types';
 import { stonesMatch } from './utils';
 
+// Constants
+const MIN_GUIDING_QUESTIONS = 3;
+
 /**
  * Validate theme content and structure
  */
@@ -278,13 +281,13 @@ function validateThemeBlock(
     const questionsCount = countGuidingQuestions(content);
     theme.guidingQuestionsCount = questionsCount;
 
-    // ERROR: At least 3 questions required
-    if (questionsCount < 3) {
+    // ERROR: At least MIN_GUIDING_QUESTIONS required
+    if (questionsCount < MIN_GUIDING_QUESTIONS) {
       errors.push({
         severity: 'error',
-        message: `Theme ${themeNum}: Guiding Questions must have at least 3 questions (found ${questionsCount})`,
+        message: `Theme ${themeNum}: Guiding Questions must have at least ${MIN_GUIDING_QUESTIONS} questions (found ${questionsCount})`,
         location: `After line ${block.startLine + 1}`,
-        suggestion: 'Add more guiding questions (minimum 3)',
+        suggestion: `Add more guiding questions (minimum ${MIN_GUIDING_QUESTIONS})`,
       });
     }
   }
