@@ -390,18 +390,6 @@ export function createProtocolRouter(
           emailNotifier
         );
 
-        // Send email notification if enabled (fire-and-forget, non-blocking)
-        if (emailNotifier?.isEnabled()) {
-          emailNotifier
-            .notifySessionStart({
-              session_id: session.id,
-              timestamp: new Date(),
-            })
-            .catch((err) => {
-              console.error('❌ Failed to send email notification:', err);
-            });
-        }
-
         // If mode is WALK, skip ENTRY mode and go directly to Theme 1
         if (mode === 'WALK') {
           // Set agent state to WALK mode starting at Theme 1
